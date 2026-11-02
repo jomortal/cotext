@@ -2,7 +2,7 @@
 
 A Bible study app for students learning Biblical Greek and Hebrew.
 
-## The plan (2026-11-01, not started)
+## The plan (2026-11-01; first build 2026-11-02 - see Done below)
 
 - **Core:** an interlinear (original text with English beneath each word) and parsing information for every word - each switched on and off by the reader.
 - **Parsing as shown:** compact, readable without tapping, no spaces - all caps, Stem-Form-PGN with hyphens, e.g. Q-P-3MS (Qal perfect 3ms), QP-P-3MS (Qal passive), HI-W-3MS (Hiphil wayyiqtol), N-MP, a prefix joined with + (ART+N-MP, CONJ+OBJ); verbs coloured by stem. Converted once, when the database is built, from the source's codes.
@@ -18,6 +18,27 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 - **Reader's version:** a selective interlinear - glosses shown only for words rarer than a frequency the reader sets; a button shows everything when unsure. A way to quiz yourself on reading.
 - **Loftier goal:** Bible translation tools - translating from the interlinear into a new version.
 - **Also:** generate PDFs (a print stylesheet first; Typst on the server for book-quality typesetting).
+
+## Done (first build, 2026-11-02)
+
+- **Data:** STEPBible-Data (TAHOT, TAGNT, TBESH, TBESG) built into one SQLite database - words, COTEXT parsing codes and their spelled-out parsing, lexicon, per-lemma frequencies (whole OT / NT and per book). MACULA isn't used yet.
+- **Reader:** pick a book and chapter (‹ › step through); the interlinear as in the mock-ups - original, gloss, parsing code, verbs coloured by stem; a word tapped opens the panel: dictionary form, parsing spelled out, brief lexicon entry.
+- **App:** a PWA, offline after the first load (the database is kept by the service worker).
+- **Not yet:** everything else above - the helps menu (☰ / ⋯), frequency slider, known words, vocab and flashcards, paradigms, verb chart, parsing guide, grammar links, reading aloud, search, fuller lexicons (BDB, Abbott-Smith in full).
+
+## Map
+
+- `pipeline/` - Python (standard library only), run ahead of time. `fetch.py` downloads STEPBible-Data at a pinned commit into `pipeline/downloads/` (gitignored); `build_db.py` builds `public/data/cotext.db` (gitignored; its docstring lists the tables); `morph.py` turns the source's morphology codes into COTEXT's codes and spelled-out parsing (its docstring gives the scheme).
+- `src/` - the app, TypeScript, no framework: `main.ts` (start, the heading, going to a chapter, #Gen.1 links), `db.ts` (the database in SQLite WASM, cached for offline), `reader.ts` (the chapter's interlinear), `panel.ts` (the word's panel), `picker.ts` (books and chapters).
+- `public/` - copied into `dist/` as it is: `index.html`, `style.css` (the look and its colour tokens), `sw.js` (the service worker), `manifest.webmanifest`, `icons/` (placeholders), `fonts/` (Ezra SIL, Gentium - OFL), `sqlite/` (the official SQLite WASM build, 3.54.1, vendored).
+- `design/` - the approved mock-ups, the reference for the look.
+- `build.mjs` - the build (esbuild, the one npm dependency, pinned in `package.json` / `package-lock.json`). `serve.py` - a local server for `dist/`. `NOTICE` - the credits (STEPBible CC BY, fonts, SQLite).
+
+## Build and run
+
+1. `python3 pipeline/build_db.py` - downloads the data (once, about 100 MB) and builds the database (about 15 s).
+2. `npm install` (once), then `npm run build` - into `dist/`.
+3. `python3 serve.py` - http://127.0.0.1:8090/ (another port: `python3 serve.py 8095`). Ports 8000-8002 belong to Numerator's server: never use them.
 
 ## How (proposed, to confirm)
 

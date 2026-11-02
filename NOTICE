@@ -11,5 +11,6 @@ Changes made by COTEXT: the data is reformatted into one SQLite database; morpho
 COTEXT's own codes and spelled out; glosses lose their segment marks; lexicon entries keep only bold, italic and
 line breaks.
 
-Fonts: Ezra SIL and Gentium Plus, (c) SIL International, SIL Open Font License 1.1 (public/fonts/).
-SQLite WebAssembly build: public domain (sqlite.org).
+Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
+(public/fonts/, with their licences).
+SQLite WebAssembly build 3.54.1: public domain (sqlite.org; public/sqlite/).
