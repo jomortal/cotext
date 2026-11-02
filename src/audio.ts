@@ -10,14 +10,14 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - VOICE and READING SPEED (0.3x - 1.2x) in the ⋯ menu, kept on the device: a voice per testament, the device's
+// - VOICE and READING SPEED (0.1x - 1.2x: the slowest the speech engine takes) in the ⋯ menu, kept on the device: a voice per testament, the device's
 //   voices for that testament's language first, starred.
 
 const KEY = "cotext.audio";
 const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.speechSynthesis : undefined;
 
 interface Settings {
-  rate: number;                                  // 0.3 - 1.2
+  rate: number;                                  // 0.1 - 1.2
   voice: { OT?: string; NT?: string };           // voiceURI chosen per testament (none: the first of its language)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
 }
