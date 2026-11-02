@@ -1,6 +1,23 @@
 # COTEXT
 
-A Bible study app. (What it does, who it's for and how it's built are still to be decided - fill in as they are.)
+A Bible study app for students learning Biblical Greek and Hebrew.
+
+## The plan (2026-11-01, not started)
+
+- **Core:** an interlinear (original text with English beneath each word) and parsing information for every word - each switched on and off by the reader.
+- **Verb stems highlighted:** pick stems (Hebrew binyanim - Qal, Niphal, Piel...; Greek tense / voice / mood) and see them marked through the text.
+- **Maybe:** a vocabulary study component (words by frequency, chapter or stem; review).
+- **Loftier goal:** Bible translation tools - translating from the interlinear into a new version.
+- **Also:** generate PDFs (a print stylesheet first; Typst on the server for book-quality typesetting).
+
+## How (proposed, to confirm)
+
+- **Phone and iPad first:** an installable web app (PWA), offline; Capacitor later for the app stores, Tauri for desktop.
+- **TypeScript, minimal dependencies:** no framework (plain DOM / Web Components), one build tool (esbuild or Deno); every outside piece pinned and kept in the repo. The user was put off Node by its many libraries going out of date - keep the list to a handful.
+- **Data:** a word-level database (each word: surface form, lemma, parsing, gloss, lexicon entry, position) in the official SQLite WebAssembly build, with full-text search. Built ahead of time by Python scripts from the source data; the app only downloads the result.
+- **Sources (open, credit required - confirm each LICENSE file):** MACULA Greek and Hebrew (Clear Bible / Biblica, CC BY 4.0: parsing, syntax trees, glosses, semantic domains; Nestle 1904 and SBLGNT, Westminster Leningrad Codex) as the core; STEPBible Data (Tyndale House, CC BY 4.0: TAGNT's textual variants across NA / TR, TAHOT, brief lexicons); public-domain lexicons (BDB, Abbott-Smith, Dodson). Not without a licence: Nestle-Aland / UBS texts, BDAG, HALOT, ETCBC BHSA (non-commercial), the CATSS LXX morphology. A tagged Septuagint isn't openly available yet (STEPBible's TAGOT is coming).
+- **Fonts:** Ezra SIL (Hebrew), Gentium Plus (Greek) - OFL, embeddable.
+- **The old start** (github.com/jomortal/cotext1, a 2021 Electron app): not reused as code; its ideas carry over - a workspace of resizable panels (text, parsing, lexicon, notes side by side), a typeset reading view, USFM import (the ULB, CC BY-SA, as an English text).
 
 ## Working with the user
 
