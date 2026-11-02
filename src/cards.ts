@@ -5,12 +5,12 @@
 //
 // Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
 // chart shows for it, from the same templates (paradigm.ts), shuffled. FILL IN picks the cards' verb: PATTERN - the front
-// the form's pattern, the back its code, its meaning on "do" and the form on the first model root (קָטַל, λύω) - or a
-// model verb - the front the form on that verb, the back its code and its meaning on that verb.
+// the form's pattern, the back its parsing spelled out ("Qal perfect, 3rd masculine singular"), its meaning on "do" and the form on the first model root (קָטַל, λύω) - or a
+// model verb - the front the form on that verb, the back its parsing spelled out and its meaning on that verb.
 
 import { onScreen, currentTestament } from "./study";
 import { sayText } from "./audio";
-import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, type Form } from "./paradigm";
+import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, spellCode, type Form } from "./paradigm";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
@@ -53,7 +53,7 @@ const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { cons
 /** A form's card; filled: on a model verb (its front that verb's form, so the back needs no form of its own). */
 const paradigmCard = (f: Form & { text: string }, hebrew: boolean, filled: boolean): Card => ({
   front: f.pattern,
-  back: `<div class="paradigm">${f.code}</div><div>${f.meaning}</div>${filled ? "" : `<div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`}`,
+  back: `<div class="paradigm">${spellCode (f.code, hebrew)}</div><div>${f.meaning}</div>${filled ? "" : `<div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`}`,
 });
 
 const picked = { OT: 0, NT: 0 };

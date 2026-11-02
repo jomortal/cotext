@@ -409,3 +409,31 @@ export function greekForm (tv: TenseVoice, c: GreekCell, model: GreekModel | nul
 }
 
 export type { Stem, TenseVoice };
+
+/** A paradigm code spelled out, in the words the word panel uses (pipeline/morph.py's): "Q-P-3MS" -> "Qal perfect, 3rd
+ *  masculine singular", "PAP-NSF" -> "Present active participle, nominative singular feminine" - for the flashcards,
+ *  whose forms the text doesn't always have (the database's parsings list only the codes it does). */
+const H_FORMS: Record<string, string> = { P: "perfect", I: "imperfect", W: "wayyiqtol (sequential imperfect)", IMP: "imperative",
+  PTC: "participle", PTP: "passive participle", INC: "infinitive construct", INA: "infinitive absolute" };
+const PERSON: Record<string, string> = { "1": "1st", "2": "2nd", "3": "3rd" };
+const H_GENDER: Record<string, string> = { M: "masculine", F: "feminine", C: "common" };
+const NUMBER: Record<string, string> = { S: "singular", P: "plural" };
+const G_TENSE: Record<string, string> = { P: "Present", I: "Imperfect", F: "Future", A: "Aorist", R: "Perfect", L: "Pluperfect" };
+const G_VOICE: Record<string, string> = { A: "active", M: "middle", P: "passive" };
+const G_MOOD: Record<string, string> = { I: "indicative", S: "subjunctive", M: "imperative", O: "optative", N: "infinitive", P: "participle" };
+const G_CASE: Record<string, string> = { N: "nominative", G: "genitive", D: "dative", A: "accusative", V: "vocative" };
+const G_GENDER: Record<string, string> = { M: "masculine", F: "feminine", N: "neuter" };
+export function spellCode (code: string, hebrew: boolean): string {
+  const parts = code.split ("-");
+  if (hebrew) {
+    const [stem, form, pgn] = parts;
+    const head = `${HEBREW_STEMS.find ((s) => s.code === stem)?.name ?? stem} ${H_FORMS[form] ?? form}`;
+    if (! pgn) return head;
+    const words = pgn.length === 3 ? [PERSON[pgn[0]], H_GENDER[pgn[1]], NUMBER[pgn[2]]] : [H_GENDER[pgn[0]], NUMBER[pgn[1]]];
+    return `${head}, ${words.join (" ")}`;
+  }
+  const [tvm, rest] = parts;
+  const head = `${G_TENSE[tvm[0]] ?? tvm[0]} ${G_VOICE[tvm[1]] ?? tvm[1]} ${G_MOOD[tvm[2]] ?? tvm[2]}`;
+  if (! rest) return head;
+  return `${head}, ${rest.length === 2 ? `${PERSON[rest[0]]} person ${NUMBER[rest[1]]}` : `${G_CASE[rest[0]]} ${NUMBER[rest[1]]} ${G_GENDER[rest[2]]}`}`;
+}
