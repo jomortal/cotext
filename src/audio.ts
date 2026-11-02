@@ -89,7 +89,10 @@ let fromWord: HTMLElement | null = null;           // Reading from a word (its p
 const keep: SpeechSynthesisUtterance[] = [];       // (Held, so a browser can't drop an utterance's events mid-way)
 const playBtn = document.getElementById ("playBtn")!;
 
+let litWord: HTMLElement | null = null;            // The word being read now (a speed change restarts from it)
+
 function light (words: HTMLElement[]) {
+  litWord = words[0] ?? null;
   for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w.reading")) el.classList.remove ("reading");
   for (const w of words) w.classList.add ("reading");
   // Keep the word being read in view (main scrolls: style.css).
@@ -110,10 +113,10 @@ export function stopReading () {
   playBtn.setAttribute ("aria-label", "Read the chapter aloud");
 }
 
-function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null = null) {
+function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null = null, restart = false) {
   const was = control;
   stopReading ();
-  if (was === from || ! synth || ! rows.length) return;
+  if ((was === from && ! restart) || ! synth || ! rows.length) return;
   fromWord = word;
   control = from;
   from.classList.add ("playing");
@@ -242,8 +245,19 @@ const showRate = () => {
   gapIn.value = String (Math.round ((s.gap ?? 0) * 10));
   gapOut.textContent = (s.gap ?? 0) > 0 ? (s.gap ?? 0).toFixed (1) + " s" : "none";
 };
-rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); });
-gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); });
+// A change while reading takes effect at once: reading restarts from the word being read (a moment after the slider
+// stops moving), rather than at the next verse - an utterance keeps the speed it began with.
+let retime = 0;
+function respeak () {
+  clearTimeout (retime);
+  retime = window.setTimeout (() => {
+    if (! control || ! litWord) return;
+    const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")], row = litWord.closest<HTMLElement> (".vrow");
+    if (row) start (control, rows.slice (rows.indexOf (row)), litWord, true);
+  }, 250);
+}
+rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); respeak (); });
+gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); respeak (); });
 showRate ();
 
 if (! synth) for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
