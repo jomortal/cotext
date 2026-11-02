@@ -147,3 +147,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .arrow { color: var(--soft); }
 /* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
+
+/* The word's panel: its first row the word, its root and Close; under it I know this word. */
+#sheet > .acts { display: flex; gap: 8px; margin-top: 8px; }
+#sheet .top { align-items: center; }
