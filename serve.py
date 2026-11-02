@@ -1,7 +1,7 @@
 """Serves dist/ for trying COTEXT locally: python3 serve.py [port]  (default 8090, this machine only).
 
 Python's own server, with .wasm served as application/wasm (SQLite's WebAssembly build needs it) and nothing
-cached by the browser, so a rebuild shows on reload. (The service worker still keeps its own copy: a new build's
+kept by the browser or Cloudflare, so a rebuild shows on reload. (The service worker still keeps its own copy: a new build's
 worker takes over on the next load.)
 """
 import functools
@@ -18,7 +18,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                       ".mjs": "text/javascript", ".js": "text/javascript", ".webmanifest": "application/manifest+json"}
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "no-store")     # (Nothing kept on the way: not by the browser, not by Cloudflare)
         super().end_headers()
 
 

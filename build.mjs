@@ -31,6 +31,14 @@ const walk = (dir) => {
   }
 };
 walk ("dist");
+// The page asks for its script and styles by their content's hash (app.js?v=...): a browser or a cache on the way
+// (Cloudflare's) can never hand back an old copy of one with a new page - each build's are new addresses.
+{
+  let html = fs.readFileSync ("dist/index.html", "utf8");
+  for (const f of ["app.js", "style.css"])
+    html = html.replace (`"${f}"`, `"${f}?v=${hash (fs.readFileSync (path.join ("dist", f))).slice (0, 12)}"`);
+  fs.writeFileSync ("dist/index.html", html);
+}
 const shell = files.filter ((f) => ! f.startsWith ("data/") && ! f.endsWith (".map") && f !== "sw.js");
 const shellHash = hash (Buffer.concat (shell.map ((f) => fs.readFileSync (path.join ("dist", f)))));
 const sw = fs.readFileSync ("dist/sw.js", "utf8")
