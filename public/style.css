@@ -23,9 +23,13 @@
   --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
   --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark }
 
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%;
-       padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40vh max(16px, env(safe-area-inset-left, 0px)); }
-main { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+/* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
+   follows the page's own scrolling, so with the page held still it has nothing to act on. */
+html, body { position: fixed; inset: 0; overflow: hidden; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
+main { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;
+       padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40vh max(16px, env(safe-area-inset-left, 0px));
+       display: grid; grid-template-columns: minmax(0, 760px); justify-content: center; align-content: start; gap: 14px; }
 h1 { font-size: 17px; margin: 0; }
 p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .credit { margin-top: 24px; font-size: 11px; }

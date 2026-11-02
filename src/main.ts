@@ -29,7 +29,7 @@ function go (b: Book, c: number) {
   setTestament (b.testament);
   showChapter (chapterEl, b, c, chapterWords (db, b.id, c), (w, el) => showPanel (db, w, el));
   applyHelps ();
-  window.scrollTo (0, 0);
+  document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }

@@ -42,7 +42,7 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   // Keep the word in view above the sheet.
   requestAnimationFrame (() => {
     const over = wordEl.getBoundingClientRect ().bottom - (window.innerHeight - sheet.offsetHeight) + 12;
-    if (over > 0) window.scrollBy ({ top: over, behavior: "smooth" });
+    if (over > 0) document.querySelector ("main")!.scrollBy ({ top: over, behavior: "smooth" });     // (main scrolls: style.css)
   });
 }
 
