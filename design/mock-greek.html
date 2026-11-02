@@ -1,0 +1,447 @@
+<title>COTEXT GNT Mock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:wght@400;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: two verses as an interlinear, left to right - each word a column: Greek, gloss, parsing. */
+:root { --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: #dedad2; --qal: #2d6cdf; --stem2: #b5462e;
+        --heb: "Gentium Book Plus", "Gentium Plus", serif; --ui: "Inter", system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28; --qal: #7ea6ff; --stem2: #f08a70; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28; --qal: #7ea6ff; --stem2: #f08a70; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--ui);
+       padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 17px; margin: 0; }
+.ref { font-size: 12px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
+.verse { direction: ltr; display: flex; flex-wrap: wrap; gap: 14px 12px; }
+.w { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.heb { font-family: var(--heb); font-size: 28px; line-height: 1.5; }
+.gloss { font-size: 13px; color: var(--soft); direction: ltr; }
+.parse { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
+.verb .parse { color: var(--qal); }
+p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
+.w { cursor: pointer; border-radius: 8px; padding: 2px 4px; }
+.w.known .gloss, .w.known .parse { visibility: hidden; }
+.seg { display: inline-flex; gap: 4px; }
+/* The study menu's icons: one stroke drawing each, in the text's colour (a mask over currentColor). */
+#drawerPanel .pill { display: flex; align-items: center; gap: 10px; }
+#drawerPanel .pill::before { content: ""; flex: none; width: 20px; height: 20px; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+#homeBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M12 6c-2-1.5-5-2-8-1.5v14c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-14c-3-.5-6 0-8 1.5z'/%3E%3Cpath d='M12 6v14'/%3E%3C/svg%3E"); }
+#myVocab { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='14' height='14' rx='2'/%3E%3Cpath d='M7 6V4h12a2 2 0 0 1 2 2v12h-4'/%3E%3C/svg%3E"); }
+#paradigms { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-dasharray='2.2 1.8'%3E%3Crect x='2.5' y='8' width='5.5' height='7' rx='1'/%3E%3Crect x='9.25' y='8' width='5.5' height='7' rx='1'/%3E%3Crect x='16' y='8' width='5.5' height='7' rx='1'/%3E%3C/svg%3E"); }
+#chartBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E"); }
+#guideBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10'/%3E%3C/svg%3E"); }
+.w.reading { background: color-mix(in srgb, var(--qal) 28%, transparent); }
+.pattern { font-family: var(--heb); font-size: 40px; direction: ltr; display: inline-flex; align-items: flex-end; gap: 2px; }
+.slot { display: inline-grid; place-items: end center; width: .72em; height: 1.05em; border: 2px dotted var(--soft); border-radius: 4px; margin: 0 1px; line-height: 1; position: relative; }
+.slot .v { position: absolute; bottom: -.62em; left: 0; right: 0; text-align: center; }
+.slot .v.above { bottom: auto; top: -.55em; }
+.paradigm { font-weight: 700; letter-spacing: .02em; font-size: 18px; }
+body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible; opacity: .55; }
+.bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.pill[aria-pressed="true"] { border-color: var(--qal); color: var(--qal); }
+.w.on { background: color-mix(in srgb, var(--qal) 14%, transparent); }
+#sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0,0,0,.18);
+         padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); max-height: 85vh; overflow-y: auto; transition: max-height .2s; }
+#sheet .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+#sheet .lemma { font-family: var(--heb); font-size: 30px; }
+#sheet .full { font-weight: 600; font-size: 15px; margin-top: 4px; }
+#sheet .src { font-size: 11px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 12px; }
+#sheet .def { font-size: 14px; line-height: 1.55; margin-top: 4px; }
+.term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+#grammar { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: grid; place-items: end center; padding: 0 0 env(safe-area-inset-bottom, 0px); }
+#grammar[hidden] { display: none; }
+#grammar .card { background: var(--bg); width: 100%; max-width: 760px; max-height: 70vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 18px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+#grammar h2 { font-size: 16px; margin: 0; }
+#grammar .sec { font-size: 11px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+#grammar .body { font-size: 14px; line-height: 1.6; margin-top: 10px; }
+#sheet button { font: inherit; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 999px; padding: 4px 12px; }
+</style>
+<main>
+  <h1>Interlinear with parsing (mock-up)</h1>
+  <div style="display:flex;justify-content:space-between"><button class="pill" id="drawerBtn" aria-label="Study tools" aria-expanded="false" style="font-size:18px;line-height:1;padding:6px 12px">☰</button><button class="pill" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Menu" style="font-size:18px;line-height:1;padding:6px 12px">⋯</button></div>
+  <div class="bar" id="options" hidden style="align-items:center"><button class="pill" id="showAll" aria-pressed="false">Show helps</button><button class="pill" id="mine" aria-pressed="true">My selections</button><button class="pill" id="scope" aria-pressed="false">Frequency: whole NT</button><button class="pill" id="myVocab">My vocab</button><button class="pill" id="paradigms">Verb paradigms</button><button class="pill" id="guideBtn">Parsing guide</button><button class="pill" id="chartBtn">Verb chart</button>
+    <label for="voicePick" style="display:grid;gap:4px;font-size:12px;color:var(--soft)">Voice<select id="voicePick" style="font:inherit;font-size:13px;padding:4px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></select></label>
+    <label for="rate" style="display:grid;gap:4px;font-size:12px;color:var(--soft);min-width:140px">Reading speed <b id="rateOut" style="color:var(--fg)"></b><input id="rate" type="range" min="30" max="120" value="80"></label>
+    <label for="freq" style="display:grid;gap:4px;flex:1;min-width:200px;font-size:12px;color:var(--soft)"><span id="freqOut"></span> <a href="#" id="cardsLink" style="color:var(--qal)" hidden>Flashcards for these words →</a><input id="freq" type="range" min="0" max="100" value="0"></label></div>
+  <div class="ref" style="display:flex;gap:10px;align-items:center">John 1:1 <button class="pill read" data-verse="0">▶ Read</button></div>
+  <div class="verse">
+    <div class="w"><span class="heb">Ἐν</span><span class="gloss">in</span><span class="parse">PREP</span></div>
+    <div class="w"><span class="heb">ἀρχῇ</span><span class="gloss">beginning</span><span class="parse">N-DSF</span></div>
+    <div class="w verb"><span class="heb">ἦν</span><span class="gloss">was</span><span class="parse">IAI-3S</span></div>
+    <div class="w"><span class="heb">ὁ</span><span class="gloss">the</span><span class="parse">T-NSM</span></div>
+    <div class="w"><span class="heb">λόγος,</span><span class="gloss">Word</span><span class="parse">N-NSM</span></div>
+    <div class="w"><span class="heb">καὶ</span><span class="gloss">and</span><span class="parse">CONJ</span></div>
+    <div class="w"><span class="heb">ὁ</span><span class="gloss">the</span><span class="parse">T-NSM</span></div>
+    <div class="w"><span class="heb">λόγος</span><span class="gloss">Word</span><span class="parse">N-NSM</span></div>
+    <div class="w verb"><span class="heb">ἦν</span><span class="gloss">was</span><span class="parse">IAI-3S</span></div>
+    <div class="w"><span class="heb">πρὸς</span><span class="gloss">with</span><span class="parse">PREP</span></div>
+    <div class="w"><span class="heb">τὸν</span><span class="gloss">the</span><span class="parse">T-ASM</span></div>
+    <div class="w"><span class="heb">θεόν,</span><span class="gloss">God</span><span class="parse">N-ASM</span></div>
+    <div class="w"><span class="heb">καὶ</span><span class="gloss">and</span><span class="parse">CONJ</span></div>
+    <div class="w"><span class="heb">θεὸς</span><span class="gloss">God</span><span class="parse">N-NSM</span></div>
+    <div class="w verb"><span class="heb">ἦν</span><span class="gloss">was</span><span class="parse">IAI-3S</span></div>
+    <div class="w"><span class="heb">ὁ</span><span class="gloss">the</span><span class="parse">T-NSM</span></div>
+    <div class="w"><span class="heb">λόγος.</span><span class="gloss">Word</span><span class="parse">N-NSM</span></div>
+  </div>
+  <div class="ref" style="display:flex;gap:10px;align-items:center">John 1:3 <button class="pill read" data-verse="1">▶ Read</button></div>
+  <div class="verse">
+    <div class="w"><span class="heb">πάντα</span><span class="gloss">all things</span><span class="parse">A-NPN</span></div>
+    <div class="w"><span class="heb">δι᾽</span><span class="gloss">through</span><span class="parse">PREP</span></div>
+    <div class="w"><span class="heb">αὐτοῦ</span><span class="gloss">him</span><span class="parse">P-GSM</span></div>
+    <div class="w verb"><span class="heb">ἐγένετο</span><span class="gloss">came into being</span><span class="parse">ADI-3S</span></div>
+  </div>
+  <p>Tap a word for its lexicon entry and its parsing spelled out.</p>
+  <p>Robinson-style codes, all caps: tense, voice, mood - person, number (IAI-3S: imperfect active indicative, 3rd singular); nouns case, number, gender (N-DSF). Verbs coloured.</p>
+</main>
+<div id="cards" hidden style="position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:24px">
+  <div style="display:grid;gap:18px;justify-items:center;text-align:center;max-width:420px;width:100%">
+    <div class="src" id="cardCount"></div>
+    <div id="card" style="cursor:pointer;width:100%;min-height:220px;border:1px solid var(--line);border-radius:18px;display:grid;place-items:center;padding:20px">
+      <div><div class="lemma" id="cardHeb" style="font-family:var(--heb);font-size:40px"></div><div id="cardBack" hidden style="margin-top:10px;font-size:15px;line-height:1.5"></div><div class="src" id="cardHint" style="margin-top:12px">Tap to turn over</div></div>
+    </div>
+    <div style="display:flex;gap:10px"><button class="pill" id="cardAgain">Again</button><button class="pill" id="cardGot">Got it</button><button class="pill" id="cardsClose">Done</button></div>
+  </div>
+</div>
+<div id="drawer" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50">
+  <nav id="drawerPanel" style="position:absolute;top:0;bottom:0;left:0;width:min(280px,80vw);background:var(--bg);border-right:1px solid var(--line);padding:calc(18px + env(safe-area-inset-top, 0px)) 16px 24px max(16px, env(safe-area-inset-left, 0px));display:grid;align-content:start;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b>Study</b><button class="pill" id="drawerClose" aria-label="Close">✕</button></div>
+  </nav>
+</div>
+<div id="guide" hidden style="position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px))">
+  <div style="max-width:640px;margin:0 auto;display:grid;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h1>Parsing guide</h1><button class="pill" id="guideClose">Done</button></div>
+    <p>A verb reads <b>TENSE VOICE MOOD-PERSON NUMBER</b>, a noun <b>PART-CASE NUMBER GENDER</b>. Example: <b>IAI-3S</b> = imperfect active indicative, 3rd singular: "he was".</p>
+    <div id="guideBody" style="display:grid;gap:18px"></div>
+  </div>
+</div>
+<div id="chart" hidden style="position:fixed;inset:0;background:var(--bg);overflow:auto;padding:20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px))">
+  <div style="max-width:720px;margin:0 auto;display:grid;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h1>Verb chart</h1><span style="display:flex;gap:8px;align-items:center"><select id="chartVerb" style="font:inherit;font-size:14px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></select><button class="pill" id="chartClose">Done</button></span></div>
+    <p>The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on "do".</p>
+    <div style="overflow-x:auto"><table id="chartTable" style="border-collapse:collapse;width:100%;min-width:420px"></table></div>
+  </div>
+</div>
+<div id="grammar" hidden><div class="card"><div class="top" style="display:flex;justify-content:space-between;gap:12px"><div><h2 id="gTitle"></h2><div class="sec" id="gSec"></div></div><button id="gClose">Back</button></div><div class="body" id="gBody"></div></div></div>
+<div id="sheet" hidden>
+  <div class="top"><span class="lemma" id="lemma"></span><span style="display:flex;gap:8px;align-items:center"><button class="pill" id="addVocab">+ My vocab</button><button class="pill" id="knowIt">I know this word</button><button id="close">Close</button></span></div>
+  <div class="full" id="full"></div>
+  <div class="src" id="src">Concise lexicon (written for this mock-up)</div>
+  <div class="def" id="def"></div>
+  <div id="gInline" hidden style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><div><div style="font-weight:600;font-size:15px" id="giTitle"></div><div class="src" style="margin-top:2px" id="giSec"></div></div><button id="giClose">Hide</button></div>
+    <div class="def" id="giBody" style="margin-top:8px"></div>
+  </div>
+</div>
+<script>
+// Mock data: each word's dictionary form, its parsing spelled out, and a short sense summary standing in for BDB's entry.
+const entries = [["ἐν", "Preposition (with dative)", "in, on, among; by means of; (of time) during."], ["ἀρχή", "Noun, dative singular feminine", "beginning, origin; first place; rule, ruler."], ["εἰμί", "Imperfect active indicative, 3rd singular", "to be, exist; to be present; (with a noun) to be something."], ["ὁ", "Article, nominative singular masculine", "the."], ["λόγος", "Noun, nominative singular masculine", "word, saying, message; account, reason; in John, the Word."], ["καί", "Conjunction", "and, also, even."], ["ὁ", "Article, nominative singular masculine", "the."], ["λόγος", "Noun, nominative singular masculine", "word, message; the Word."], ["εἰμί", "Imperfect active indicative, 3rd singular", "to be, exist."], ["πρός", "Preposition (with accusative)", "to, toward; with, in the company of; against."], ["ὁ", "Article, accusative singular masculine", "the."], ["θεός", "Noun, accusative singular masculine", "God; a god."], ["καί", "Conjunction", "and, also, even."], ["θεός", "Noun, nominative singular masculine", "God; a god."], ["εἰμί", "Imperfect active indicative, 3rd singular", "to be, exist."], ["ὁ", "Article, nominative singular masculine", "the."], ["λόγος", "Noun, nominative singular masculine", "word, message; the Word."], ["πᾶς", "Adjective, nominative plural neuter", "all, every, whole; (neuter plural) all things."], ["διά", "Preposition (with genitive)", "through, by means of; (with accusative) because of."], ["αὐτός", "Pronoun, genitive singular masculine", "he, she, it; self; the same."], ["γίνομαι", "Aorist middle indicative, 3rd singular (deponent)", "to become, come into being, be made; to happen."]];     // (In the words' order)
+const sheet = document.getElementById ("sheet");
+let picked = null;
+const list = Object.values (entries);     // (In the words' order: matched by place, not by spelling)
+document.querySelectorAll (".w").forEach ((w, i) => w.addEventListener ("click", () => {
+  const e = list[i];
+  if (! e) return;
+  picked?.classList.remove ("on");
+  picked = w; w.classList.add ("on");
+  ["lemma", "def"].forEach ((id) => document.getElementById (id).textContent = e[id === "lemma" ? 0 : 2]);
+  showParsing (e[1]);
+  document.getElementById ("gInline").hidden = true;
+  sheet.hidden = false;
+}));
+// The parsing spelled out, its grammar terms tappable: each opens a summary of that term's section in Gesenius'
+// Greek Grammar (Smyth). (Mock-up: the summaries are written for it, not Smyth's own text.)
+const grammar = {"Imperfect": ["The imperfect", "Smyth §§1889-1908", "Past action seen as going on - was being, used to, kept doing. Formed with the augment (ἐ-) and the present stem: ἔλυον, 'I was loosing'. With εἰμί, simply 'was'."], "Aorist": ["The aorist", "Smyth §§1923-1937", "An action viewed as a whole, without regard to its duration - in the indicative usually past: 'came into being'. The commonest past tense of narrative."], "middle": ["The middle voice", "Smyth §§1713-1734", "The subject acts on or for itself, or is involved in the action. Some verbs, like γίνομαι, have middle forms with an active sense (deponents)."], "active": ["The active voice", "Smyth §1704", "The subject does the action."], "indicative": ["The indicative", "Smyth §§1770-1786", "The mood of statements and questions of fact."], "3rd singular": ["Person and number", "Smyth §§949-957", "Greek verbs mark person and number by their endings: -ει / -ε(ν) for he, she, it."], "nominative": ["The nominative", "Smyth §§938-940", "The case of the subject and of what's said of it: ὁ λόγος, 'the Word' (subject); θεός, 'God' (predicate)."], "accusative": ["The accusative", "Smyth §§1551-1633", "The case of the direct object, of extent, and after some prepositions - πρὸς τὸν θεόν, 'with God'."], "genitive": ["The genitive", "Smyth §§1289-1449", "The case of possession and source - 'of' - and after some prepositions: δι᾽ αὐτοῦ, 'through him'."], "dative": ["The dative", "Smyth §§1450-1550", "The case of the indirect object, means, and place or time - ἐν ἀρχῇ, 'in the beginning'."]};     // (Summaries written for the mock-up; section numbers to verify)
+function showParsing (text) {
+  const full = document.getElementById ("full");
+  full.textContent = "";
+  const terms = Object.keys (grammar).sort ((a, b) => b.length - a.length);
+  let rest = text;
+  while (rest.length) {
+    const hit = terms.map ((t) => [t, rest.indexOf (t)]).filter (([, i]) => i >= 0).sort ((a, b) => a[1] - b[1])[0];
+    if (! hit) { full.append (rest); break; }
+    const [t, i] = hit;
+    full.append (rest.slice (0, i));
+    const s = document.createElement ("span"); s.className = "term"; s.textContent = t;
+    s.addEventListener ("click", () => openGrammar (t));
+    full.append (s);
+    rest = rest.slice (i + t.length);
+  }
+}
+function openGrammar (t) {
+  const [title, sec, body] = grammar[t];
+  // (Under the word's info, in the same panel: it grows upward to make room.)
+  document.getElementById ("giTitle").textContent = title;
+  document.getElementById ("giSec").textContent = sec;
+  document.getElementById ("giBody").textContent = body;
+  document.getElementById ("gInline").hidden = false;
+  document.querySelectorAll (".term").forEach ((s) => s.style.fontWeight = s.textContent === t ? "700" : "");
+}
+document.getElementById ("giClose").addEventListener ("click", () => { document.getElementById ("gInline").hidden = true; document.querySelectorAll (".term").forEach ((s) => s.style.fontWeight = ""); });
+document.getElementById ("gClose").addEventListener ("click", () => document.getElementById ("grammar").hidden = true);
+// Known words: marked from a word's panel, by its dictionary form - every form of it, everywhere, loses its gloss and
+// parsing; "Show helps for known words" brings them back, faded, for when you're unsure.
+const known = new Set();
+const words = [...document.querySelectorAll (".w")];
+// How often each word's dictionary form occurs in the Greek NT (rounded, for the mock-up), in the words' order. The
+// slider hides helps for words occurring at least its number of times (0: none hidden), on a curve from 12,000 to 10.
+// Counted over the whole NT or this book alone (FREQUENCY: JOHN - its own vocabulary, for book-specific study).
+const scopes = {
+  ot: { name: "whole NT", counts: [2752, 55, 2462, 19867, 330, 9161, 19867, 330, 2462, 700, 19867, 1317, 9161, 1317, 2462, 19867, 330, 1243, 667, 5597, 669], top: 20000,
+        points: [[1, 5400], [10, 1100], [50, 310], [100, 160], [500, 30], [1000, 15], [5000, 3], [19000, 1]] },
+  book: { name: "John", counts: [226, 8, 445, 2200, 40, 813, 2200, 40, 445, 101, 2200, 83, 813, 83, 445, 2200, 40, 63, 59, 750, 51], top: 2300,
+        points: [[1, 1000], [5, 330], [10, 200], [50, 50], [100, 30], [500, 6], [1000, 2], [2200, 1]] },
+};
+let scope = scopes.ot, counts = scope.counts;
+const freqLimit = () => { const v = Number (document.getElementById ("freq").value); return v <= 0 ? Infinity : Math.max (1, Math.round (scope.top * Math.pow (2 / scope.top, v / 100))); };
+// How many words (dictionary forms) occur at least `f` times - the vocabulary to learn, by frequency, to read every
+// word whose helps are hidden. Rough estimates (the real app counts them), log-log between these points.
+function wordsToLearn (f) {
+  const learnPoints = scope.points;
+  if (f <= 1) return learnPoints[0][1];
+  for (let k = 1; k < learnPoints.length; k++) {
+    const [f0, n0] = learnPoints[k - 1], [f1, n1] = learnPoints[k];
+    if (f <= f1) return Math.round (Math.exp (Math.log (n0) + (Math.log (n1) - Math.log (n0)) * (Math.log (f) - Math.log (f0)) / (Math.log (f1) - Math.log (f0))));
+  }
+  return 1;
+}
+function markKnown() {
+  const limit = freqLimit();
+  document.getElementById ("cardsLink").hidden = limit === Infinity;
+  document.getElementById ("freqOut").innerHTML = limit === Infinity ? "Helps for every word"
+      : `Helps hidden for words occurring <b style="color:var(--fg)">${limit.toLocaleString()}+</b> times - learn the <b style="color:var(--fg)">${wordsToLearn (limit).toLocaleString()}</b> most common words ${scope === scopes.book ? "in " + scope.name : "in the NT"} to read them`;
+  words.forEach ((w, i) => { w.classList.toggle ("known", isHidden (i)); w.classList.toggle ("override", mine && modes.has (list[i]?.[0])); });
+  if (! picked) return;
+  document.getElementById ("knowIt").textContent = isHidden (words.indexOf (picked)) ? "Show helps" : "I know this word";
+}
+// The slider decides each word's helps; a word's panel button flips it by hand (by dictionary form: SHOW or HIDE).
+// MY SELECTIONS at the top turns all the hand-set ones on or off at once - off, the
+// slider alone decides (they're kept, for turning back on).
+const modes = new Map();
+let mine = true;
+function isHidden (i) {
+  const mode = (mine && modes.get (list[i]?.[0])) || "auto";
+  return mode === "hide" || (mode === "auto" && counts[i] >= freqLimit());
+}
+document.getElementById ("knowIt").addEventListener ("click", () => {
+  const i = words.indexOf (picked), lemma = list[i][0], hidden = isHidden (i);
+  modes.delete (lemma);
+  if (isHidden (i) === hidden) modes.set (lemma, hidden ? "show" : "hide");     // (Back to the slider if that flips it; otherwise set by hand)
+  mine = true; document.getElementById ("mine").setAttribute ("aria-pressed", "true");
+  markKnown();
+});
+// FLASHCARDS FOR THESE WORDS: the words the slider has hidden helps for - the ones you'd need to know - one card a
+// dictionary form, most frequent first; front the word, back its meaning and count. AGAIN puts it at the back, GOT IT
+// takes it out.
+let deck = [];
+function cardsFor() {
+  const seen = new Map();
+  words.forEach ((w, i) => { if (counts[i] >= freqLimit() && ! seen.has (list[i][0])) seen.set (list[i][0], [list[i][0], w.querySelector (".gloss").textContent, counts[i]]); });
+  return [...seen.values()].sort ((a, b) => b[2] - a[2]);
+}
+function showCard() {
+  if (! deck.length) { document.getElementById ("cardHeb").textContent = "✓"; document.getElementById ("cardBack").hidden = false; document.getElementById ("cardBack").textContent = "All done"; document.getElementById ("cardCount").textContent = ""; return; }
+  if (deck[0].paradigm) {
+    const [code, meaning, parts, example] = deck[0].paradigm;
+    document.getElementById ("cardHeb").innerHTML = patternHtml (parts);
+    document.getElementById ("cardBack").innerHTML = `<div class="paradigm">${code}</div><div>${meaning}</div><div style="font-family:var(--heb);font-size:26px;margin-top:6px">${example}</div>`;
+    document.getElementById ("cardBack").hidden = true;
+    document.getElementById ("cardCount").textContent = `${deck.length} to go`;
+    return;
+  }
+  const [heb, gloss, n] = deck[0];
+  document.getElementById ("cardHeb").textContent = heb;
+  document.getElementById ("cardBack").textContent = `${gloss} · ${n.toLocaleString()} times in ${scope === scopes.book ? scope.name : "the NT"}`;
+  document.getElementById ("cardBack").hidden = true;
+  document.getElementById ("cardCount").textContent = `${deck.length} to go`;
+}
+document.getElementById ("cardsLink").addEventListener ("click", (e) => { e.preventDefault(); deck = cardsFor(); showCard(); document.getElementById ("cards").hidden = false; });
+// VERB PARADIGMS: each card a form's pattern - the root's three letters as empty dotted squares, its vowels in place
+// (below each square, or above for holem), the form's own letters as written - turned over: its parsing (Q-P-3MS),
+// what it means with "do" (he did), and the pattern on קטל. A slot: [vowel marks, "above"?]; a string: letters as written.
+// (Greek: the stem one dotted square, the endings and augment written; the model λύω, 'loose'.)
+const paradigms = [["PAI-1S", "I do", [[""], "ω"], "λύω"], ["PAI-2S", "you do", [[""], "εις"], "λύεις"], ["PAI-3S", "he does", [[""], "ει"], "λύει"], ["PAI-1P", "we do", [[""], "ομεν"], "λύομεν"], ["PAI-2P", "you (pl.) do", [[""], "ετε"], "λύετε"], ["PAI-3P", "they do", [[""], "ουσι(ν)"], "λύουσι(ν)"], ["IAI-3S", "he was doing", ["ἐ", [""], "ε(ν)"], "ἔλυε(ν)"], ["AAI-3S", "he did", ["ἐ", [""], "σε(ν)"], "ἔλυσε(ν)"], ["FAI-3S", "he will do", [[""], "σει"], "λύσει"], ["PPI-3S", "it is being done", [[""], "εται"], "λύεται"]];
+function patternHtml (parts) {
+  return `<span class="pattern">${parts.map ((p) => typeof p === "string" ? `<span>${p}</span>`
+           : `<span class="slot">${p[0] ? `<span class="v${p[1] ? " above" : ""}"> ${p[0]}</span>` : ""}</span>`).join ("")}</span>`;
+}
+document.getElementById ("paradigms").addEventListener ("click", () => {
+  deck = paradigms.map ((p) => ({ paradigm: p }));
+  showCard(); document.getElementById ("cards").hidden = false;
+});
+// READ: the verse spoken by the device's own Greek voice (modern pronunciation), a word at a time so each lights as
+// it's heard, as monotonic Greek. Tapped again while reading: stops.
+let reading = null;
+// The text a modern Greek voice reads well: monotonic - breathings and the iota subscript dropped, circumflex and grave
+// turned acute, a one-syllable word unaccented, punctuation and the elision mark removed (polytonic marks made some
+// voices read words oddly, or backwards).
+function monotonic (word) {
+  let t = word.normalize ("NFD").replace (/[̓̔̓ͅ]/g, "").replace (/[͂̀]/g, "́").replace (/[.,;·᾽’ʼ]/g, "");
+  const syllables = (t.replace (/[̀-ͯ]/g, "").toLowerCase().match (/αι|ει|οι|υι|αυ|ευ|ηυ|ου|[αεηιουω]/g) || []).length;     // (Diphthongs one syllable)
+  if (syllables <= 1) t = t.replace (/́/g, "");
+  return t.normalize ("NFC");
+}
+function stopReading() {
+  speechSynthesis.cancel();
+  document.querySelectorAll (".w.reading").forEach ((w) => w.classList.remove ("reading"));
+  document.querySelectorAll (".read").forEach ((b) => b.textContent = "▶ Read");
+  reading = null;
+}
+document.querySelectorAll (".read").forEach ((b) => b.addEventListener ("click", () => {
+  const was = reading;
+  stopReading();
+  if (was === b) return;
+  if (! ("speechSynthesis" in window)) { b.textContent = "No voice here"; return; }
+  reading = b;
+  const voices = speechSynthesis.getVoices();
+  b.textContent = `■ Stop (${voices.length} voices, ${voices.filter ((v) => v.lang.startsWith ("el")).length} Greek)`;
+  speechSynthesis.resume();     // (iOS: a paused queue stays silent)
+  const verseWords = [...document.querySelectorAll (".verse")[Number (b.dataset.verse)].querySelectorAll (".w")];
+  const all = speechSynthesis.getVoices(), voice = all.find ((v) => v.voiceURI === document.getElementById ("voicePick").value) || all.find ((v) => v.lang.startsWith ("el"));
+  // Spoken in groups: a word of one letter (ὁ) goes with the next one (ο λόγος) - alone, voices spell the letter out ("omicron")
+  // instead of saying it; the group's words light together.
+  const groups = [];
+  verseWords.forEach ((w) => {
+    const last = groups[groups.length - 1];
+    if (last && last.pending) { last.words.push (w); last.pending = false; }
+    else groups.push ({ words: [w], pending: monotonic (w.querySelector (".heb").textContent).normalize ("NFD").replace (/[\u0300-\u036f]/g, "").length === 1 });
+  });
+  groups.forEach ((g, k) => {
+    const u = new SpeechSynthesisUtterance (g.words.map ((w) => monotonic (w.querySelector (".heb").textContent)).join (" "));
+    u.lang = voice?.lang || "el-GR"; if (voice) u.voice = voice; u.rate = Number (document.getElementById ("rate").value) / 100;
+    u.onstart = () => { verseWords.forEach ((x) => x.classList.toggle ("reading", g.words.includes (x))); };
+    u.onerror = (e) => { b.textContent = "Voice error: " + (e.error || "unknown"); };
+    if (k === groups.length - 1) u.onend = () => { if (reading === b) stopReading(); };
+    speechSynthesis.speak (u);
+  });
+}));
+// VOICE and READING SPEED: the device's Greek voices first (then every other voice, for trying), and the speed 0.3x - 1.2x.
+function fillVoices() {
+  const pick = document.getElementById ("voicePick"), was = pick.value;
+  const all = speechSynthesis.getVoices().slice().sort ((a, b) => (b.lang.startsWith ("el") - a.lang.startsWith ("el")) || a.lang.localeCompare (b.lang));
+  pick.innerHTML = all.length ? all.map ((v) => `<option value="${v.voiceURI}">${v.lang.startsWith ("el") ? "★ " : ""}${v.name} (${v.lang})</option>`).join ("") : "<option>No voices found</option>";
+  if (was) pick.value = was;
+}
+if ("speechSynthesis" in window) { fillVoices(); speechSynthesis.onvoiceschanged = fillVoices; }
+const rateOut = () => document.getElementById ("rateOut").textContent = (Number (document.getElementById ("rate").value) / 100).toFixed (1) + "x";
+document.getElementById ("rate").addEventListener ("input", rateOut); rateOut();
+// VERB CHART: the present and aorist active indicative, a row for each person and number - each cell the pattern (the
+// stem a dotted square, the endings and augment written), its parsing and its meaning on "do"; a verb picked fills it
+// with its real forms (accents placed: the present's on its stem, the aorist's recessive).
+const chartRows = [["1S", "ω", "σα", "I do", "I did"], ["2S", "εις", "σας", "you do", "you did"], ["3S", "ει", "σε(ν)", "he does", "he did"],
+                   ["1P", "ομεν", "σαμεν", "we do", "we did"], ["2P", "ετε", "σατε", "you (pl.) do", "you (pl.) did"], ["3P", "ουσι(ν)", "σαν", "they do", "they did"]];
+const chartVerbs = [["", "Pattern (⬚)", "do", "did", "does", null], ["λυ", "λύω - loose", "loose", "loosed", "looses", ["λύ", "ἔλυ", "ἐλύ"]], ["πιστευ", "πιστεύω - believe", "believe", "believed", "believes", ["πιστεύ", "ἐπίστευ", "ἐπιστεύ"]], ["παιδευ", "παιδεύω - train", "train", "trained", "trains", ["παιδεύ", "ἐπαίδευ", "ἐπαιδεύ"]]];
+let chartVerb = chartVerbs[0];
+function chartCell (form, pgn, ending, meaning, aorist) {
+  const [, , base, past, third, stems] = chartVerb;
+  const english = meaning.replace (/\bdoes\b/, third).replace (/\bdid\b/, past).replace (/\bdo\b/, base);
+  const longEnding = ending === "σαμεν" || ending === "σατε";
+  const word = stems ? `<span class="pattern"><span style="color:var(--qal)">${aorist ? stems[longEnding ? 2 : 1] : stems[0]}</span>${ending}</span>`
+                     : patternHtml (aorist ? ["ἐ", [""], ending] : [[""], ending]);
+  return `<td style="padding:12px 8px 10px;border-top:1px solid var(--line);text-align:center"><div style="font-size:.75em;padding-bottom:.4em">${word}</div><div class="parse" style="font-size:12px;margin-top:6px">${form}-${pgn}</div><div style="font-size:13px;color:var(--soft)">${english}</div></td>`;
+}
+function fillChart() {
+  document.getElementById ("chartTable").innerHTML = `<tr><th></th><th style="padding:6px;font-size:12px;color:var(--soft)">PRESENT</th><th style="padding:6px;font-size:12px;color:var(--soft)">AORIST</th></tr>`
+    + chartRows.map (([pgn, pres, aor, mp, ma]) => `<tr><th class="parse" style="padding:6px;font-size:12px;border-top:1px solid var(--line)">${pgn}</th>${chartCell ("PAI", pgn, pres, mp, false)}${chartCell ("AAI", pgn, aor, ma, true)}</tr>`).join ("");
+}
+const chartPick = document.getElementById ("chartVerb");
+chartPick.innerHTML = chartVerbs.map ((v, i) => `<option value="${i}">${v[1]}</option>`).join ("");
+chartPick.addEventListener ("change", () => { chartVerb = chartVerbs[Number (chartPick.value)]; fillChart(); });
+fillChart();
+document.getElementById ("chartBtn").addEventListener ("click", () => document.getElementById ("chart").hidden = false);
+document.getElementById ("chartClose").addEventListener ("click", () => document.getElementById ("chart").hidden = true);
+// PARSING GUIDE: every abbreviation, by what it marks.
+const guide = [["Parts of speech", [["V", "verb"], ["N", "noun"], ["A", "adjective"], ["T", "definite article (the)"], ["P", "pronoun"], ["PREP", "preposition"], ["CONJ", "conjunction"], ["ADV", "adverb"], ["PRT", "particle"]]], ["Tense (first letter of a verb's code)", [["P", "present"], ["I", "imperfect"], ["F", "future"], ["A", "aorist"], ["R", "perfect"], ["L", "pluperfect"]]], ["Voice (second)", [["A", "active"], ["M", "middle"], ["P", "passive"], ["D", "middle deponent (middle form, active sense)"], ["O", "passive deponent"]]], ["Mood (third)", [["I", "indicative"], ["S", "subjunctive"], ["O", "optative"], ["M", "imperative"], ["N", "infinitive"], ["P", "participle"]]], ["Person and number", [["1 / 2 / 3", "first / second / third person"], ["S / P", "singular / plural"], ["3S", "he, she, it"], ["1P", "we"]]], ["Nouns, adjectives, articles: case, number, gender", [["N / G / D / A / V", "nominative / genitive / dative / accusative / vocative"], ["S / P", "singular / plural"], ["M / F / N", "masculine / feminine / neuter"], ["N-DSF", "noun, dative singular feminine"], ["T-ASM", "article, accusative singular masculine"]]], ["Examples", [["IAI-3S", "imperfect active indicative, 3rd singular: he was"], ["ADI-3S", "aorist middle-deponent indicative, 3rd singular: he became"], ["PAI-1S", "present active indicative, 1st singular: I do"]]]];
+document.getElementById ("guideBody").innerHTML = guide.map (([title, rows]) => `<section style="display:grid;gap:6px"><div class="ref">${title}</div>${rows.map (([code, text]) => `<div style="display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr);gap:12px;border-top:1px solid var(--line);padding-top:6px"><b class="parse" style="font-size:14px">${code}</b><span style="font-size:14px">${text}</span></div>`).join ("")}</section>`).join ("");
+document.getElementById ("guideBtn").addEventListener ("click", () => document.getElementById ("guide").hidden = false);
+document.getElementById ("guideClose").addEventListener ("click", () => document.getElementById ("guide").hidden = true);
+// MY VOCAB: words added from their panels (+ MY VOCAB) are being learned; GOT IT on a card marks a word known - its
+// helps then hidden (as "I know this word"). MY VOCAB opens the learning words as cards; its label counts both.
+const learning = new Set();
+function vocabLabel() {
+  const knownCount = [...modes.values()].filter ((m) => m === "hide").length;
+  document.getElementById ("myVocab").textContent = `My vocab · ${learning.size} learning · ${knownCount} known`;
+  if (picked) document.getElementById ("addVocab").textContent = learning.has (list[words.indexOf (picked)][0]) ? "✓ In my vocab" : "+ My vocab";
+}
+document.getElementById ("addVocab").addEventListener ("click", () => {
+  const lemma = list[words.indexOf (picked)][0];
+  learning.has (lemma) ? learning.delete (lemma) : learning.add (lemma);
+  vocabLabel();
+});
+document.getElementById ("myVocab").addEventListener ("click", () => {
+  const seen = new Map();
+  words.forEach ((w, i) => { if (learning.has (list[i][0]) && ! seen.has (list[i][0])) seen.set (list[i][0], [list[i][0], w.querySelector (".gloss").textContent, counts[i]]); });
+  deck = [...seen.values()];
+  showCard(); document.getElementById ("cards").hidden = false;
+});
+document.getElementById ("card").addEventListener ("click", () => document.getElementById ("cardBack").hidden = false);
+document.getElementById ("cardAgain").addEventListener ("click", () => { if (deck.length) deck.push (deck.shift()); showCard(); });
+document.getElementById ("cardGot").addEventListener ("click", () => {
+  const card = deck.shift();
+  const [lemma] = Array.isArray (card) ? card : [];
+  if (lemma) { learning.delete (lemma); modes.set (lemma, "hide"); markKnown(); vocabLabel(); }     // (Known now: its helps hidden)
+  showCard();
+});
+document.getElementById ("cardsClose").addEventListener ("click", () => document.getElementById ("cards").hidden = true);
+document.getElementById ("scope").addEventListener ("click", (e) => {
+  scope = scope === scopes.ot ? scopes.book : scopes.ot;
+  counts = scope.counts;
+  e.target.textContent = "Frequency: " + scope.name;
+  e.target.setAttribute ("aria-pressed", String (scope === scopes.book));
+  markKnown();
+});
+document.getElementById ("mine").addEventListener ("click", (e) => {
+  mine = ! mine;
+  e.target.setAttribute ("aria-pressed", String (mine));
+  markKnown();
+});
+document.getElementById ("showAll").addEventListener ("click", (e) => {
+  const on = ! document.body.classList.contains ("showAll");
+  document.body.classList.toggle ("showAll", on);
+  e.target.setAttribute ("aria-pressed", String (on));
+});
+words.forEach ((w) => w.addEventListener ("click", () => { markKnown(); vocabLabel(); }));
+document.getElementById ("freq").addEventListener ("input", markKnown);
+// The left ☰ drawer: the study tools - My vocab, Verb paradigms, Verb chart, Parsing guide (moved out of ⋯, which
+// keeps what the text shows). Picking one closes the drawer.
+{
+  const panel = document.getElementById ("drawerPanel"), drawer = document.getElementById ("drawer");
+  // GREEK NT first: back to the text, every study screen closed.
+  const home = document.createElement ("button");
+  home.className = "pill"; home.id = "homeBtn"; home.textContent = "GREEK NT";
+  home.addEventListener ("click", () => { for (const o of ["cards", "guide", "chart"]) document.getElementById (o).hidden = true; });
+  panel.append (home);
+  // Each study screen shows ☰ at its top left too, to move between them; one opens at a time.
+  const screens = ["cards", "guide", "chart"];
+  for (const o of screens) {
+    const box = document.getElementById (o), menu = document.createElement ("button");
+    menu.className = "pill"; menu.textContent = "☰"; menu.setAttribute ("aria-label", "Study tools");
+    menu.style.cssText = "position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));left:max(14px, env(safe-area-inset-left, 0px));font-size:18px;line-height:1;padding:6px 12px";
+    menu.addEventListener ("click", () => drawer.hidden = false);
+    box.style.paddingTop = "60px";
+    box.prepend (menu);
+  }
+  for (const id of ["myVocab", "paradigms", "chartBtn", "guideBtn"])
+    document.getElementById (id).addEventListener ("click", () => { for (const o of screens) document.getElementById (o).hidden = true; }, true);     // (Before its own: the one picked then opens alone)
+  for (const id of ["homeBtn", "myVocab", "paradigms", "chartBtn", "guideBtn"]) {
+    const b = document.getElementById (id);
+    b.style.justifySelf = "stretch"; b.style.textAlign = "left"; b.style.padding = "10px 14px"; b.style.fontSize = "14px";
+    panel.append (b);
+    b.addEventListener ("click", () => drawer.hidden = true);
+  }
+  document.getElementById ("drawerBtn").addEventListener ("click", () => drawer.hidden = false);
+  document.getElementById ("drawerClose").addEventListener ("click", () => drawer.hidden = true);
+  drawer.addEventListener ("click", (e) => { if (e.target === drawer) drawer.hidden = true; });
+}
+document.getElementById ("knowIt").addEventListener ("click", () => vocabLabel());
+vocabLabel();
+// The helps' controls (Show helps, My selections, the slider) hidden until HELPS is tapped.
+document.getElementById ("optionsBtn").addEventListener ("click", (e) => {
+  const box = document.getElementById ("options"), open = box.hidden;
+  box.hidden = ! open;
+  e.target.setAttribute ("aria-expanded", String (open));
+  e.target.textContent = open ? "✕" : "⋯";     // (⋯ the menu; ✕ while open, to close it)
+});
+markKnown();
+document.getElementById ("close").addEventListener ("click", () => { sheet.hidden = true; picked?.classList.remove ("on"); });
+</script>
