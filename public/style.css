@@ -231,3 +231,8 @@ table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
 .cardBar { justify-content: center; }
 .cardBar .pill { font-size: 14px; padding: 7px 16px; }
 .cardCount { margin-top: 0; }
+
+/* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
+.guideLang { font-size: 15px; margin: 14px 0 0; }
+.guideRow { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
+.guideRow .parse { font-size: 13px; overflow-wrap: anywhere; }

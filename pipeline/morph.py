@@ -72,6 +72,16 @@ ADJECTIVES = {"a": ("ADJ", "adjective"), "c": ("NUM", "cardinal number"), "o": (
 PRONOUNS = {"p": ("PRON", "personal pronoun"), "d": ("DEM", "demonstrative pronoun"),
             "f": ("INDF", "indefinite pronoun"), "i": ("INTG", "interrogative pronoun"),
             "r": ("REL", "relative pronoun")}
+OTHERS = {"R": ("PREP", "preposition"), "Rd": ("PREP+ART", "preposition with the article"),
+          "C": ("CONJ", "conjunction"), "D": ("ADV", "adverb")}
+# For the Parsing guide only (guide()): what the main stems and forms mean, on "do".
+STEM_SENSE = {"Q": "simple active - he did", "QP": "simple passive - he was done", "N": "simple passive or reflexive - he was done",
+              "P": "intensive active - he did (intensively)", "PU": "intensive passive - he was done (intensively)",
+              "HI": "causative active - he caused to do", "HO": "causative passive - he was caused to do",
+              "HT": "reflexive - he did himself"}
+FORM_SENSE = {"P": "he did", "WP": "and he will do", "I": "he will do", "W": "and he did", "WI": "and he will do",
+              "COH": "let me / us do", "J": "let him do", "IMP": "do!", "PTC": "doing", "PTP": "done", "INA": "surely do",
+              "INC": "to do"}
 
 
 def _pgn(s):
@@ -136,12 +146,16 @@ def _main(seg, aramaic):
         code, name = PARTICLES.get(rest[:1], ("PART", "particle"))
         return code, name.capitalize(), ""
     if kind == "R":
-        return ("PREP+ART", "Preposition with the article", "") if rest == "d" else ("PREP", "Preposition", "")
-    if kind == "C":
-        return "CONJ", "Conjunction", ""
-    if kind == "D":
-        return "ADV", "Adverb", ""
+        code, name = OTHERS["Rd" if rest == "d" else "R"]
+        return code, name.capitalize(), ""
+    if kind in OTHERS:
+        code, name = OTHERS[kind]
+        return code, name.capitalize(), ""
     return seg.upper(), seg, ""
+
+
+SUFFIXES = {"Sd": ("DIR", "with directional he"), "Sh": ("PAR", "with paragogic he"),
+            "Sn": ("PAR", "with paragogic nun"), "Ta": ("ART", "with the article (emphatic)")}
 
 
 def _suffix(seg):
@@ -149,8 +163,7 @@ def _suffix(seg):
     if seg.startswith("Sp"):
         c, w = _pgn(seg[2:])
         return c, f"with {w} suffix"
-    return {"Sd": ("DIR", "with directional he"), "Sh": ("PAR", "with paragogic he"),
-            "Sn": ("PAR", "with paragogic nun"), "Ta": ("ART", "with the article (emphatic)")}.get(seg, (seg.upper(), seg))
+    return SUFFIXES.get(seg, (seg.upper(), seg))
 
 
 def _is_suffix(seg):
@@ -257,6 +270,45 @@ def greek(morph):
         words = " ".join([KEPT[k] for k in kept] + [name])
         return code, (words + (f", {detail}" if detail else "")).capitalize(), ""
     return morph, morph, ""
+
+
+def guide():
+    """The Parsing guide: every part of the codes above, for the app's screen (build_db.py's guide table) - made from
+    the same tables the codes are, so it can't drift from them. Yields (lang 'H' / 'G', group, code, meaning) in the
+    screen's order; a code used for several things (DEM: pronoun or particle) once, its meanings joined."""
+    def merged(lang, group, pairs):
+        out = {}
+        for code, meaning in pairs:
+            if code and meaning not in out.setdefault(code, []):
+                out[code].append(meaning)
+        for code, meanings in out.items():
+            yield lang, group, code, " / ".join(meanings)
+
+    yield "H", "How a code reads", "Q-P-3MS", "a verb: stem - form - person, gender, number (Qal perfect, 3rd masculine singular: he did)"
+    yield "H", "How a code reads", "N-MP", "anything else: part of speech - gender, number (noun, masculine plural)"
+    yield "H", "How a code reads", "+", "joins a prefix or suffix to its word: ART+N-MP (the + noun), N-MS+3MS (noun with his)"
+    yield from merged("H", "Parts of speech", [("STEM-FORM-PGN", "verb (as above)")] + [
+        (c, n) for t in (NOUNS, NAMES, ADJECTIVES, PRONOUNS, PARTICLES) for c, n in t.values()]
+        + [OTHERS[k] for k in ("R", "C", "D")])
+    yield from merged("H", "Stems", [(c, n + (f" - {STEM_SENSE[c]}" if c in STEM_SENSE else "")) for c, n in HEBREW_STEMS.values()])
+    yield from merged("H", "Stems (Aramaic)", ARAMAIC_STEMS.values())
+    yield from merged("H", "Forms", [(c, n + (f" - {FORM_SENSE[c]}" if c in FORM_SENSE else "")) for c, n in FORMS.values()])
+    yield from merged("H", "Person, gender, number", [(k.upper(), v) for t in (PERSON, GENDER, NUMBER) for k, v in t.items()])
+    yield from merged("H", "Nouns' state", [(k.upper(), v) for k, v in STATE.items() if v])
+    yield from merged("H", "Prefixes", [v for v in PREFIXES.values() if v[0]])
+    yield from merged("H", "Suffixes", [("+3MS", "a pronoun suffix, by person, gender, number (his)")] + list(SUFFIXES.values()))
+
+    yield "G", "How a code reads", "PAI-3S", "a verb: tense, voice, mood - person, number (present active indicative, 3rd singular)"
+    yield "G", "How a code reads", "PAP-NSM", "a participle: tense, voice, mood - case, number, gender"
+    yield "G", "How a code reads", "N-DSF", "anything else: part of speech - case, number, gender (noun, dative singular feminine)"
+    yield from merged("G", "Parts of speech", [("TVM-PN", "verb (as above)")] + list(GREEK_PARTS.items()) + list(WORDS.items()))
+    yield from merged("G", "Tense", list(TENSE.items()) + [("2", "second (aorist, future, perfect): before the tense - 2AAI")])
+    yield from merged("G", "Voice", VOICE.items())
+    yield from merged("G", "Mood", MOOD.items())
+    yield from merged("G", "Person, number", list(GPERSON.items()) + list(GNUM.items()))
+    yield from merged("G", "Case", CASE.items())
+    yield from merged("G", "Gender", GGEN.items())
+    yield from merged("G", "Endings kept", KEPT.items())
 
 
 if __name__ == "__main__":

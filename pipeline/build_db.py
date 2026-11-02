@@ -14,6 +14,8 @@ Tables:
   lexicon   strong -> lemma (dictionary form), translit, gloss, entry (the brief lexicon's text: plain, with <b>, <i>
             and <br> only), concise (the meaning to memorise, a few words: concise())
   freq      strong, book (0: the whole OT or NT), count - how often each lemma occurs
+  guide     lang ('H' / 'G'), grp, ord, code, meaning - the Parsing guide: every part of the codes, from morph.py's
+            tables (morph.guide)
   form_freq strong, code (COTEXT's parsing code), book (0: the whole OT or NT), count - how often each lemma occurs
             in that exact form (the helps' slider hides a word's parsing by it: src/helps.ts)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
@@ -191,6 +193,7 @@ def build():
         CREATE TABLE lexicon (strong TEXT PRIMARY KEY, lemma TEXT, translit TEXT, gloss TEXT, entry TEXT, concise TEXT)
                               WITHOUT ROWID;
         CREATE TABLE freq (strong TEXT, book INTEGER, count INTEGER, PRIMARY KEY (strong, book)) WITHOUT ROWID;
+        CREATE TABLE guide (lang TEXT, grp TEXT, ord INTEGER PRIMARY KEY, code TEXT, meaning TEXT);
         CREATE TABLE form_freq (strong TEXT, code TEXT, book INTEGER, count INTEGER,
                                 PRIMARY KEY (book, strong, code)) WITHOUT ROWID;
     """)
@@ -229,6 +232,7 @@ def build():
     db.executemany("INSERT INTO lexicon VALUES (?,?,?,?,?,?)", lex_rows)
     db.executemany("INSERT INTO freq VALUES (?,?,?)", [(s, b, c) for (s, b), c in counts.items()])
     db.executemany("INSERT INTO form_freq VALUES (?,?,?,?)", [(s, k, b, c) for (s, k, b), c in form_counts.items()])
+    db.executemany("INSERT INTO guide VALUES (?,?,?,?,?)", [(l, g, i, c, m) for i, (l, g, c, m) in enumerate(morph.guide())])
     grammar_counts = grammar.build(db, parsings, greek)
     db.executescript("""
         CREATE VIEW words_full AS

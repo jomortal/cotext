@@ -12,6 +12,7 @@ import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
 import { initChart, setChartPassage } from "./chart";
 import "./cards";     // (Registers the Verb paradigms screen)
+import { initGuide } from "./guide";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -68,6 +69,7 @@ async function start () {
   status.hidden = true;
   initGrammar (db);
   initChart (db);
+  initGuide (db);
   books = db.all ("SELECT id, code, name, testament, chapters FROM books ORDER BY id") as unknown as Book[];
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }
