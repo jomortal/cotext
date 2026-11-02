@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141412" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<!-- Home Screen app: no system bar at the top (no blurred strip) - the page runs up under the clock and keeps its own
+     content clear of it (style.css: env(safe-area-inset-top)). iOS reads this when the icon is added. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>COTEXT</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
