@@ -1,6 +1,8 @@
 // The database: public/data/cotext.db (built by pipeline/build_db.py) opened in memory in the official SQLite
-// WebAssembly build (public/sqlite/, vendored from sqlite.org). The service worker keeps the file for offline use, so
-// it downloads once per database version.
+// WebAssembly build (public/sqlite/, vendored from sqlite.org). Kept on the device once per database version - the page
+// reads its own copy first (Cache Storage, or IndexedDB where there's none) before the network, so an app update, a
+// reload, or a browser without the service worker (Chrome and app web views on iOS - Vider) doesn't download it again.
+// Older versions' copies are deleted once a new one is kept.
 
 /** The database's version, set by build.mjs from its contents: a new database gets a new URL (and cache). */
 declare const DB_VERSION: string;
@@ -18,9 +20,7 @@ export async function openDb (onProgress: (fraction: number) => void): Promise<D
   const sqliteUrl = "./sqlite/sqlite3.mjs";
   const init = (await import (sqliteUrl)).default;
   const url = `data/cotext.db?v=${DB_VERSION}`;
-  const [sqlite3, bytes] = await Promise.all ([init ({ print: () => {}, printErr: console.error }),
-                                               download (url, onProgress)]);
-  keepOffline (url, bytes);
+  const [sqlite3, bytes] = await Promise.all ([init ({ print: () => {}, printErr: console.error }), kept (url, onProgress)]);
   const db = new sqlite3.oo1.DB ();
   const p = sqlite3.wasm.allocFromTypedArray (bytes);
   const { capi } = sqlite3;
@@ -32,14 +32,54 @@ export async function openDb (onProgress: (fraction: number) => void): Promise<D
   };
 }
 
-/** On the first visit the service worker isn't yet in charge of the page, so the page caches the database itself -
- *  in the cache the worker reads it from (public/sw.js: "cotext-data-" + its version). */
-async function keepOffline (url: string, bytes: Uint8Array) {
+/** The database's bytes: the device's copy of this version if there is one, else downloaded and kept. Cache Storage
+ *  first (the cache the service worker reads too - public/sw.js: "cotext-data-" + the version), IndexedDB where there's
+ *  no Cache Storage; neither (a private window): just downloaded. */
+async function kept (url: string, onProgress: (fraction: number) => void): Promise<Uint8Array> {
+  const name = `cotext-data-${DB_VERSION}`, key = new URL (url, location.href).href;
   try {
-    const cache = await caches.open (`cotext-data-${DB_VERSION}`);
-    if (! await cache.match (url))
-      await cache.put (new URL (url, location.href).href, new Response (bytes, { headers: { "Content-Type": "application/octet-stream" } }));
-  } catch { /* no Cache Storage (private mode, plain http): it downloads again next time */ }
+    const cache = await caches.open (name);
+    const hit = await cache.match (key);
+    if (hit) { onProgress (1); return new Uint8Array (await hit.arrayBuffer ()); }
+    const bytes = await download (url, onProgress);
+    await cache.put (key, new Response (bytes, { headers: { "Content-Type": "application/octet-stream" } }));
+    for (const k of await caches.keys ()) if (k.startsWith ("cotext-data-") && k !== name) await caches.delete (k);
+    return bytes;
+  } catch { /* no Cache Storage: IndexedDB below */ }
+  try {
+    const db = await idb ();
+    const hit = await idbGet (db, DB_VERSION);
+    if (hit) { onProgress (1); return hit; }
+    const bytes = await download (url, onProgress);
+    await idbReplace (db, DB_VERSION, bytes);
+    return bytes;
+  } catch { return download (url, onProgress); }
+}
+
+function idb (): Promise<IDBDatabase> {
+  return new Promise ((ok, fail) => {
+    const r = indexedDB.open ("cotext", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore ("db");
+    r.onsuccess = () => ok (r.result);
+    r.onerror = () => fail (r.error);
+  });
+}
+function idbGet (db: IDBDatabase, k: string): Promise<Uint8Array | undefined> {
+  return new Promise ((ok, fail) => {
+    const r = db.transaction ("db").objectStore ("db").get (k);
+    r.onsuccess = () => ok (r.result as Uint8Array | undefined);
+    r.onerror = () => fail (r.error);
+  });
+}
+/** Keeps this version's bytes, the older versions' deleted. */
+function idbReplace (db: IDBDatabase, k: string, bytes: Uint8Array): Promise<void> {
+  return new Promise ((ok, fail) => {
+    const t = db.transaction ("db", "readwrite"), store = t.objectStore ("db");
+    store.clear ();
+    store.put (bytes, k);
+    t.oncomplete = () => ok ();
+    t.onerror = () => fail (t.error);
+  });
 }
 
 /** The file's bytes, reporting progress when the server gives its length. */
