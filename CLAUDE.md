@@ -17,7 +17,7 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 - **Data:** a word-level database (each word: surface form, lemma, parsing, gloss, lexicon entry, position) in the official SQLite WebAssembly build, with full-text search. Built ahead of time by Python scripts from the source data; the app only downloads the result.
 - **Sources (open, credit required - confirm each LICENSE file):** MACULA Greek and Hebrew (Clear Bible / Biblica, CC BY 4.0: parsing, syntax trees, glosses, semantic domains; Nestle 1904 and SBLGNT, Westminster Leningrad Codex) as the core; STEPBible Data (Tyndale House, CC BY 4.0: TAGNT's textual variants across NA / TR, TAHOT, brief lexicons); public-domain lexicons (BDB, Abbott-Smith, Dodson). Not without a licence: Nestle-Aland / UBS texts, BDAG, HALOT, ETCBC BHSA (non-commercial), the CATSS LXX morphology. A tagged Septuagint isn't openly available yet (STEPBible's TAGOT is coming).
 - **Fonts:** Ezra SIL (Hebrew), Gentium Plus (Greek) - OFL, embeddable.
-- **The old start** (github.com/jomortal/cotext1, a 2021 Electron app): not reused as code; its ideas carry over - a workspace of resizable panels (text, parsing, lexicon, notes side by side), a typeset reading view, USFM import (the ULB, CC BY-SA, as an English text).
+- **The old start** (github.com/jomortal/cotext1, a 2021 Electron desktop app): not carried over. COTEXT is redesigned from scratch for mobile first; the old desktop design (resizable side-by-side panels) isn't the model.
 
 ## Working with the user
 
