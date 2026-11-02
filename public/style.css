@@ -153,7 +153,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* The word's panel, its head as two rows lined up: the word as written with Close, then its root (dictionary form)
    with I know this word - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
-#sheet .heads > .pill { justify-self: end; }
+#sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
+#sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 /* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
    colour, the one open bold; the panel stays at most half the screen, scrolling. */
@@ -236,3 +237,7 @@ table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
 .guideLang { font-size: 15px; margin: 14px 0 0; }
 .guideRow { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .guideRow .parse { font-size: 13px; overflow-wrap: anywhere; }
+
+/* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
+.vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
+.vocabRow .n { color: var(--soft); font-size: 12px; }
