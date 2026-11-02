@@ -6,7 +6,8 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 
 - **Core:** an interlinear (original text with English beneath each word) and parsing information for every word - each switched on and off by the reader.
 - **Verb stems highlighted:** pick stems (Hebrew binyanim - Qal, Niphal, Piel...; Greek tense / voice / mood) and see them marked through the text.
-- **Maybe:** a vocabulary study component (words by frequency, chapter or stem; review).
+- **Vocab:** flashcards for any range (a book, a chapter, any span) and by frequency.
+- **Reader's version:** a selective interlinear - glosses shown only for words rarer than a frequency the reader sets; a button shows everything when unsure. A way to quiz yourself on reading.
 - **Loftier goal:** Bible translation tools - translating from the interlinear into a new version.
 - **Also:** generate PDFs (a print stylesheet first; Typst on the server for book-quality typesetting).
 
