@@ -1,4 +1,5 @@
-// The reader: one chapter as an interlinear - each verse its reference, then its words, each word a column of the
+// The reader: one chapter as an interlinear - each verse its number in the margin (right for Hebrew, left for Greek:
+// where the line starts), then its words, each word a column of the
 // original, its English gloss and COTEXT's parsing code (design/mock-hebrew.html, mock-greek.html). Hebrew runs right
 // to left, Greek left to right. A verb's code is coloured by its stem (Hebrew) - or the one verb colour (Greek) -
 // from the parsings table's stem group (style.css: .stem-qal, .stem-piel...).
@@ -28,12 +29,12 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
   for (const w of words) {
     if (w.verse !== verse) {
       verse = w.verse;
-      const ref = document.createElement ("div");
-      ref.className = "ref";
-      ref.textContent = `${book.name} ${chapter}:${verse}`;
+      const row = document.createElement ("div");     // (Its direction puts the number first: right for Hebrew, left for Greek)
+      row.className = "vrow " + (hebrew ? "he" : "gr");
       verseEl = document.createElement ("div");
       verseEl.className = "verse " + (hebrew ? "he" : "gr");
-      el.append (ref, verseEl);
+      row.append (span ("vnum", String (verse)), verseEl);
+      el.append (row);
     }
     const wordEl = document.createElement ("div");
     wordEl.className = "w" + (w.stem ? ` verb stem-${w.stem}` : "");
