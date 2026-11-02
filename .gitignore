@@ -1,0 +1,5 @@
+pipeline/downloads/
+pipeline/__pycache__/
+node_modules/
+dist/
+public/data/

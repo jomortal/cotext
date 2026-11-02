@@ -1,0 +1,15 @@
+COTEXT - credits for the data and fonts it uses
+
+Text, morphology, glosses and lexicons: STEPBible Data (www.STEPBible.org), created at Tyndale House, Cambridge,
+licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://github.com/STEPBible/STEPBible-Data
+(commit be4191f0082aeedddb0eff0c02c966292b2bd641, 2026-10-24).
+  - TAHOT: Translators Amalgamated Hebrew OT - the Leningrad codex (via OpenScriptures' WLC), ETCBC morphology.
+  - TAGNT: Translators Amalgamated Greek NT - English glosses based on the Berean Study Bible, with permission.
+  - TBESH / TBESG: Translators Brief lexicons of Extended Strong's for Hebrew and Greek. TBESH's meanings are based
+    on the Abridged BDB by Online Bible (Larry Pierce); TBESG's on Abbott-Smith.
+Changes made by COTEXT: the data is reformatted into one SQLite database; morphology codes are converted into
+COTEXT's own codes and spelled out; glosses lose their segment marks; lexicon entries keep only bold, italic and
+line breaks.
+
+Fonts: Ezra SIL and Gentium Plus, (c) SIL International, SIL Open Font License 1.1 (public/fonts/).
+SQLite WebAssembly build: public domain (sqlite.org).
