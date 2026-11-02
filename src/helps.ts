@@ -1,7 +1,10 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
-// - the frequency slider hides helps for words occurring N+ times - counted by lemma (the extended Strong's key, so
-//   every form of a word together) over the whole OT / NT or the book shown (FREQUENCY);
-// - a word's panel flips one word by hand ("I know this word" / "Show helps"), on top of the slider;
+// - the frequency slider, one number N for words and forms: a word's gloss hides when its lemma (the extended Strong's
+//   key, every form together) occurs N+ times; its parsing code when the lemma in that exact form (lemma + COTEXT's
+//   code, the database's form_freq) does - so a rare form of a common word keeps its parsing. Counted over the whole
+//   OT / NT or the book shown (FREQUENCY);
+// - a word's panel flips one word by hand: "I know this word" hides its gloss everywhere (its parsing still by the
+//   form rule above), "Show helps" shows both, on top of the slider;
 // - MY SELECTIONS off ignores those hand choices (kept, for turning back on); SHOW HELPS shows every hidden help, faded.
 // Settings and choices are kept on the device (localStorage).
 
@@ -22,8 +25,9 @@ const s: Settings = { slider: 0, scope: "whole", showAll: false, mine: true, mod
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } catch { /* private mode: not kept */ } };
 
-/** One scope's counts: each lemma's, and all of them sorted high to low (for "learn the X most common"). */
-interface Counts { byStrong: Map<string, number>; sorted: number[]; }
+/** One scope's counts: each lemma's, each lemma + form's (key strong|code), and the lemmas' sorted high to low (for
+ *  "learn the X most common"). */
+interface Counts { byStrong: Map<string, number>; byForm: Map<string, number>; sorted: number[]; }
 const cache = new Map<string, Counts> ();
 let db: Db;
 let book: Book;
@@ -38,7 +42,12 @@ function counts (): Counts {
       ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC", [book.id])
       : db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong LIKE ? ORDER BY count DESC",
                 [book.testament === "OT" ? "H%" : "G%"]);
-    c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])), sorted: rows.map ((r) => Number (r.count)) };
+    const forms = s.scope === "book"
+      ? db.all ("SELECT strong, code, count FROM form_freq WHERE book = ?", [book.id])
+      : db.all ("SELECT strong, code, count FROM form_freq WHERE book = 0 AND strong LIKE ?", [book.testament === "OT" ? "H%" : "G%"]);
+    c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
+          byForm: new Map (forms.map ((r) => [r.strong + "|" + r.code, Number (r.count)])),
+          sorted: rows.map ((r) => Number (r.count)) };
     cache.set (key, c);
   }
   return c;
@@ -60,12 +69,43 @@ function wordsAtLeast (n: number): number {
   return lo;
 }
 
-/** Whether a word's helps are hidden: its hand choice (if MY SELECTIONS), else the slider. */
+/** Whether a word's gloss is hidden: its hand choice (if MY SELECTIONS), else the slider by its lemma's count. */
 export function isHidden (strong: string): boolean {
   const mode = s.mine ? s.modes[strong] : undefined;
   if (mode) return mode === "hide";
   return (counts ().byStrong.get (strong) ?? 0) >= limit ();
 }
+
+/** Whether a word's parsing is hidden: "Show helps" by hand shows it; otherwise the slider by the lemma's count in this
+ *  form (whether or not the word is known by hand: a known word's rare forms keep their parsing). */
+export function isFormHidden (strong: string, code: string): boolean {
+  if (s.mine && s.modes[strong] === "show") return false;
+  return (counts ().byForm.get (strong + "|" + code) ?? 0) >= limit ();
+}
+
+/** Marks a word known by hand (a vocab flashcard's GOT IT): its gloss hidden, as "I know this word". */
+export function setKnown (strong: string) {
+  s.modes[strong] = "hide";
+  s.mine = true;
+  changed ();
+}
+
+/** The words known by hand ("I know this word", GOT IT), by Strong's key. */
+export function knownWords (): string[] {
+  return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
+}
+
+/** The words whose gloss the slider alone hides in the scope shown (book or testament), most frequent first, with
+ *  their counts - "Flashcards for these words" (vocab.ts). */
+export function sliderWords (): [string, number][] {
+  const n = limit (), out: [string, number][] = [];
+  if (n === Infinity) return out;
+  for (const [k, c] of counts ().byStrong) if (c >= n) out.push ([k, c]);
+  return out.sort ((a, b) => b[1] - a[1]);
+}
+
+/** A lemma's count in the scope shown. */
+export function wordCount (strong: string): number { return counts ().byStrong.get (strong) ?? 0; }
 
 /** The panel's button: flips the word. If the slider alone would now give the flipped state, the hand choice is
  *  dropped (back to the slider); otherwise it's set. MY SELECTIONS turns on, so the choice shows. */
@@ -83,10 +123,13 @@ export function onHelpsChange (f: () => void) { listeners.push (f); }
 /** The passage shown changed: book-scoped counts follow it. */
 export function setBook (theDb: Db, b: Book) { db = theDb; book = b; }
 
-/** Marks the chapter's words: .known on those whose helps are hidden (style.css hides or fades them). */
+/** Marks the chapter's words: .known on those whose gloss is hidden, .knownForm on those whose parsing is (style.css
+ *  hides or fades them). */
 export function applyHelps () {
-  for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w"))
+  for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w")) {
     el.classList.toggle ("known", isHidden (el.dataset.strong!));
+    el.classList.toggle ("knownForm", isFormHidden (el.dataset.strong!, el.dataset.code ?? ""));
+  }
   document.body.classList.toggle ("showAll", s.showAll);
   updateMenu ();
 }
@@ -115,7 +158,7 @@ function updateMenu () {
   slider.value = String (s.slider);
   const n = limit ();
   freqOut.innerHTML = n === Infinity ? "Helps for every word"
-    : `Helps hidden for words occurring <b>${n.toLocaleString ()}+</b> times - learn the <b>${wordsAtLeast (n).toLocaleString ()}</b>`
+    : `Helps hidden for words and forms occurring <b>${n.toLocaleString ()}+</b> times - learn the <b>${wordsAtLeast (n).toLocaleString ()}</b>`
       + ` most common words in ${s.scope === "book" ? book.name : "the " + book.testament} to read them`;
 }
 
