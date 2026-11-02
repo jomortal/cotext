@@ -86,6 +86,7 @@ function utterance (text: string): SpeechSynthesisUtterance {
 let session = 0;
 let control: HTMLElement | null = null;
 let queue: HTMLElement[] = [];                     // .vrow elements still to read
+let fromWord: HTMLElement | null = null;           // Reading from a word (its panel's ▶): its verse read from it, not its start
 const keep: SpeechSynthesisUtterance[] = [];       // (Held, so a browser can't drop an utterance's events mid-way)
 const playBtn = document.getElementById ("playBtn")!;
 
@@ -100,6 +101,7 @@ function light (words: HTMLElement[]) {
 export function stopReading () {
   session++;
   queue = [];
+  fromWord = null;
   keep.length = 0;
   synth?.cancel ();
   light ([]);
@@ -109,10 +111,11 @@ export function stopReading () {
   playBtn.setAttribute ("aria-label", "Read the chapter aloud");
 }
 
-function start (from: HTMLElement, rows: HTMLElement[]) {
+function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null = null) {
   const was = control;
   stopReading ();
   if (was === from || ! synth || ! rows.length) return;
+  fromWord = word;
   control = from;
   from.classList.add ("playing");
   if (from === playBtn) { playBtn.textContent = "■"; playBtn.setAttribute ("aria-label", "Stop reading"); }
@@ -126,7 +129,10 @@ function next (id: number) {
   if (id !== session) return;
   const row = queue.shift ();
   if (! row) { stopReading (); return; }
-  const gs = groups ([...row.querySelectorAll<HTMLElement> (".w")]);
+  let ws = [...row.querySelectorAll<HTMLElement> (".w")];
+  if (fromWord && ws.includes (fromWord)) ws = ws.slice (ws.indexOf (fromWord));
+  fromWord = null;
+  const gs = groups (ws);
   if (! gs.length) { next (id); return; }
   const v = voice ();
   if ((s.gap ?? 0) > 0 || (v && s.noBoundary.includes (v.voiceURI))) wordByWord (id, gs);
@@ -206,6 +212,13 @@ playBtn.addEventListener ("click", () => {
   const first = Math.max (0, rows.findIndex ((r) => r.getBoundingClientRect ().bottom > top + 8));
   start (playBtn, rows.slice (first));
 });
+/** The word panel's ▶: reads on from that word to the chapter's end (tapped again: stops). */
+export function readFrom (wordEl: HTMLElement) {
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const row = wordEl.closest<HTMLElement> (".vrow");
+  const btn = document.getElementById ("readFromBtn")!;
+  start (btn, row ? rows.slice (rows.indexOf (row)) : [], wordEl);
+}
 document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   const num = (e.target as HTMLElement).closest<HTMLElement> (".vnum");
   if (num) start (num, [num.parentElement!]);

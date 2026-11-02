@@ -6,7 +6,7 @@
 import type { Db } from "./db";
 import type { Word } from "./reader";
 import { isHidden, flip, onHelpsChange } from "./helps";
-import { sayWord } from "./audio";
+import { readFrom, sayWord } from "./audio";
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
@@ -20,6 +20,7 @@ let pickedStrong = "";
 document.getElementById ("close")!.addEventListener ("click", hidePanel);
 knowIt.addEventListener ("click", () => flip (pickedStrong));
 document.getElementById ("speakBtn")!.addEventListener ("click", () => { if (picked) sayWord (picked); });
+document.getElementById ("readFromBtn")!.addEventListener ("click", () => { if (picked) readFrom (picked); });     // (Reads on from the word)
 const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps" : "I know this word"; };
 onHelpsChange (() => { if (picked) label (); });
 
