@@ -12,6 +12,7 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 - **Verb stems highlighted:** pick stems (Hebrew binyanim - Qal, Niphal, Piel...; Greek tense / voice / mood) and see them marked through the text.
 - **Vocab:** flashcards for any range (a book, a chapter, any span) and by frequency.
 - **Verb paradigm flashcards:** a form's pattern - the root's letters as empty dotted squares with their vowels, the form's own letters (prefixes, endings) written - and, turned over, its parsing with its meaning on "do": Q-P-3MS, "he did" (and the pattern on a model root).
+- **Spoken answers:** on a vocab flashcard, say the English meaning instead of tapping - the browser's own speech recognition (Safari on iPhone / iPad included; audio goes to Apple), matched leniently against the word's glosses and lexicon senses ("create" / "created" / "to create"), showing what it heard; the reader can still mark it right or wrong.
 - **My vocab:** each person's own list - words added from a word's panel are being learned; a flashcard marked GOT IT (or "I know this word") is known, its helps then hidden. Counts of learning / known; the learning words as a deck. Kept per person (and synced, once there are accounts).
 - **Reader's version:** a selective interlinear - glosses shown only for words rarer than a frequency the reader sets; a button shows everything when unsure. A way to quiz yourself on reading.
 - **Loftier goal:** Bible translation tools - translating from the interlinear into a new version.
