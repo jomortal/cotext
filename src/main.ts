@@ -50,7 +50,7 @@ function step (dir: number) {
 }
 
 async function start () {
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register ("sw.js").catch (() => {});
+  registerWorker();
   try {
     db = await openDb ((f) => { status.textContent = `Loading the text… ${Math.round (f * 100)}%`; });
   } catch (e) {
@@ -70,3 +70,21 @@ async function start () {
 }
 
 start ();
+
+/** The service worker, and staying up to date: a Home Screen app has no reload, so a new version must arrive by itself.
+    Each time the app opens or comes back to the front it asks for a new worker (registration.update); a new one takes
+    over at once (sw.js: skipWaiting, clients.claim), and when it does the page reloads into the new version - once,
+    keeping its place (the chapter is in the address: #Gen.1). The first worker ever taking over doesn't reload. */
+function registerWorker() {
+  if (! ("serviceWorker" in navigator)) return;
+  const hadWorker = !! navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener ("controllerchange", () => {
+    if (! hadWorker || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register ("sw.js").then ((reg) => {
+    document.addEventListener ("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch (() => {}); });
+  }).catch (() => {});
+}
