@@ -11,7 +11,7 @@
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
 // - The device's voice for the language (Hebrew he, Greek el - one each). READING SPEED (0.1x - 1x) and SPACE BETWEEN
-//   WORDS (0 - 2 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
+//   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
 
 const KEY = "cotext.audio";
@@ -236,13 +236,14 @@ new MutationObserver (place).observe (sheet, { attributes: true, attributeFilter
 const rate = document.getElementById ("rate") as HTMLInputElement;
 const rateOut = document.getElementById ("rateOut")!;
 
-// READING SPEED: 10 - 100 is 0.1x - 1x. SPACE BETWEEN WORDS: 0 - 20 is 0 - 2 s (0: none, read normally).
+// READING SPEED: 10 - 100 is 0.1x - 1x. SPACE BETWEEN WORDS: 0 - 10 is 0 - 1 s (0: none, read normally).
 const gapIn = document.getElementById ("gap") as HTMLInputElement, gapOut = document.getElementById ("gapOut")!;
 const showRate = () => {
   s.rate = Math.min (1, Math.max (0.1, s.rate));
   rate.value = String (Math.round (s.rate * 100));
   rateOut.textContent = s.rate.toFixed (1) + "x";
-  gapIn.value = String (Math.round ((s.gap ?? 0) * 10));
+  s.gap = Math.min (1, s.gap ?? 0);
+  gapIn.value = String (Math.round (s.gap * 10));
   gapOut.textContent = (s.gap ?? 0) > 0 ? (s.gap ?? 0).toFixed (1) + " s" : "none";
 };
 // A change while reading takes effect at once: reading restarts from the word being read (a moment after the slider
