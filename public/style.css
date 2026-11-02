@@ -28,14 +28,14 @@
 html, body { position: fixed; inset: 0; overflow: hidden; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
 main { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;
-       padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40vh max(16px, env(safe-area-inset-left, 0px));
+       padding: 0 max(16px, env(safe-area-inset-right, 0px)) 40vh max(16px, env(safe-area-inset-left, 0px));     /* (No top padding: the heading is flush with the top - .head) */
        display: grid; grid-template-columns: minmax(0, 760px); justify-content: center; align-content: start; gap: 14px; }
 h1 { font-size: 17px; margin: 0; }
 p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .credit { margin-top: 24px; font-size: 11px; }
 
 /* The heading: ☰ (the study drawer), ‹ passage ›, ⋯ (the helps' menu, opening under it). */
-.head { display: grid; gap: 10px; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 5; }
+.head { display: grid; gap: 10px; position: sticky; top: 0; background: var(--bg); padding: calc(6px + env(safe-area-inset-top, 0px)) 0 6px; z-index: 5; }     /* (Flush with the top, under the clock when there is one) */
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .head .nav { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .head .row .pill, .pill.icon { font-size: 18px; line-height: 1; padding: 6px 14px; }
