@@ -1,12 +1,12 @@
 // The word's panel: a sheet from the bottom when a word is tapped - its dictionary form, its parsing spelled out
 // ("Qal perfect, 3rd masculine singular") and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); 🔊 says just the word (audio.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); 🔊 says just the word, the one by the dictionary form says that (audio.ts). Close (or tapping the word again) hides it.
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
 import { isHidden, flip, onHelpsChange } from "./helps";
-import { sayWord } from "./audio";
+import { sayText, sayWord } from "./audio";
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
@@ -20,6 +20,7 @@ let pickedStrong = "";
 document.getElementById ("close")!.addEventListener ("click", hidePanel);
 knowIt.addEventListener ("click", () => flip (pickedStrong));
 document.getElementById ("speakBtn")!.addEventListener ("click", () => { if (picked) sayWord (picked); });
+document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText (lemmaEl.textContent ?? ""));     // (The dictionary form)
 const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps" : "I know this word"; };
 onHelpsChange (() => { if (picked) label (); });
 

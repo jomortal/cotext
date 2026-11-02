@@ -201,6 +201,16 @@ export function sayWord (wordEl: HTMLElement) {
   synth.speak (u);
 }
 
+/** The panel's speaker beside the dictionary form: says that form (the root), as reading would. */
+export function sayText (text: string) {
+  if (! synth || ! text) return;
+  stopReading ();
+  synth.resume ();
+  const u = utterance (testament === "OT" ? hebrewSpoken (text) : monotonic (text));
+  keep.push (u);
+  synth.speak (u);
+}
+
 /** The testament shown: voices and their language follow it. Called on each chapter shown (reading stops). */
 export function setAudioTestament (t: "OT" | "NT") {
   stopReading ();
