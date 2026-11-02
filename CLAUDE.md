@@ -11,6 +11,7 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 - **Grammar from the word's panel:** each part of the spelled-out parsing tappable (Qal, perfect, 3ms...) - opens that part's explanation from an open grammar: Gesenius' Hebrew Grammar (Kautzsch-Cowley 1910, public domain) for Hebrew, Smyth (1920; Perseus, CC BY-SA) or Robertson (1914) for Greek - linked by their numbered sections (§).
 - **Verb stems highlighted:** pick stems (Hebrew binyanim - Qal, Niphal, Piel...; Greek tense / voice / mood) and see them marked through the text.
 - **Vocab:** flashcards for any range (a book, a chapter, any span) and by frequency.
+- **Verb paradigm flashcards:** a form's pattern - the root's letters as empty dotted squares with their vowels, the form's own letters (prefixes, endings) written - and, turned over, its parsing with its meaning on "do": Q-P-3MS, "he did" (and the pattern on a model root).
 - **My vocab:** each person's own list - words added from a word's panel are being learned; a flashcard marked GOT IT (or "I know this word") is known, its helps then hidden. Counts of learning / known; the learning words as a deck. Kept per person (and synced, once there are accounts).
 - **Reader's version:** a selective interlinear - glosses shown only for words rarer than a frequency the reader sets; a button shows everything when unsure. A way to quiz yourself on reading.
 - **Loftier goal:** Bible translation tools - translating from the interlinear into a new version.
