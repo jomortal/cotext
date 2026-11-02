@@ -217,12 +217,15 @@ export function sayWord (wordEl: HTMLElement) {
   synth.speak (u);
 }
 
-/** The panel's speaker beside the dictionary form: says that form (the root), as reading would. */
+/** The panel's speaker beside the dictionary form, and a vocab card's: says that form (the root), as reading would. */
 export function sayText (text: string) {
   if (! synth || ! text) return;
   stopReading ();
   synth.resume ();
-  const u = utterance (testament === "OT" ? hebrewSpoken (text) : monotonic (text));
+  // (The article's dictionary form ὁ alone is spelled out by the voice - "omicron" - so it's said as dictionaries give
+  // the article: ὁ, ἡ, τό.)
+  const greek = monotonic (text);
+  const u = utterance (testament === "OT" ? hebrewSpoken (text) : greek === "ο" ? "ο, η, το" : greek);
   keep.push (u);
   synth.speak (u);
 }
