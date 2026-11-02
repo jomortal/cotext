@@ -4,12 +4,13 @@
 // that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
 //
 // Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
-// chart shows for it, from the same templates (paradigm.ts): the front its pattern, the back its code, its meaning on
-// "do" and the form on the model root (קָטַל, λύω), shuffled.
+// chart shows for it, from the same templates (paradigm.ts), shuffled. FILL IN picks the cards' verb: PATTERN - the front
+// the form's pattern, the back its code, its meaning on "do" and the form on the first model root (קָטַל, λύω) - or a
+// model verb - the front the form on that verb, the back its code and its meaning on that verb.
 
 import { onScreen, currentTestament } from "./study";
 import { sayText } from "./audio";
-import { HEBREW_STEMS, GREEK_TENSES, hebrewCells, hebrewForm, greekCells, greekForm, type Form } from "./paradigm";
+import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, type Form } from "./paradigm";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
@@ -49,35 +50,43 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
 /** A fresh order each time a deck opens. */
 const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor (Math.random () * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-const paradigmCard = (f: Form & { text: string }, hebrew: boolean): Card => ({
+/** A form's card; filled: on a model verb (its front that verb's form, so the back needs no form of its own). */
+const paradigmCard = (f: Form & { text: string }, hebrew: boolean, filled: boolean): Card => ({
   front: f.pattern,
-  back: `<div class="paradigm">${f.code}</div><div>${f.meaning}</div><div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`,
+  back: `<div class="paradigm">${f.code}</div><div>${f.meaning}</div>${filled ? "" : `<div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`}`,
 });
 
 const picked = { OT: 0, NT: 0 };
+const fillIn = { OT: -1, NT: -1 };     // (FILL IN, by testament: -1 the pattern, else a model verb's index)
 
 function paradigms (body: HTMLElement) {
   const t = currentTestament (), hebrew = t === "OT";
   const names = hebrew ? HEBREW_STEMS.map ((s) => s.name) : GREEK_TENSES.map ((x) => x.name);
-  body.innerHTML = `<div class="chartPick"><label>${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="deckPick">${names.map ((n, i) => `<option value="${i}">${n}</option>`).join ("")}</select></label></div>
-    <p>Each card a form's pattern; turned over, its parsing, its meaning on "do" and the form on ${hebrew ? "קָטַל" : "λύω"}.</p><div class="deck"></div>`;
-  const pick = body.querySelector<HTMLSelectElement> ("#deckPick")!;
+  body.innerHTML = `<div class="chartPick"><label>${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="deckPick">${names.map ((n, i) => `<option value="${i}">${n}</option>`).join ("")}</select></label>
+    <label>Fill in<select class="choose" id="fillPick"><option value="-1">Pattern</option>${(hebrew ? HEBREW_MODELS.map ((m) => `${m.root} - ${m.english[0]}`)
+      : GREEK_MODELS.map ((m) => `${m.lemma} - ${m.english[0]}`)).map ((m, i) => `<option value="${i}">${m}</option>`).join ("")}</select></label></div>
+    <p>Each card a form - its pattern, or on the verb picked in Fill in; turned over, its parsing and meaning (on a pattern, also the form on ${hebrew ? "קָטַל" : "λύω"}).</p><div class="deck"></div>`;
+  const pick = body.querySelector<HTMLSelectElement> ("#deckPick")!, fill_ = body.querySelector<HTMLSelectElement> ("#fillPick")!;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
   const fill = () => {
     let cards: Card[];
     if (hebrew) {
       const stem = HEBREW_STEMS[picked.OT], c = hebrewCells (stem);
       const cells = [...Object.values (c.grid).flatMap ((g) => Object.values (g)), ...c.ptc, ...(c.ptp ?? []), c.inc, c.ina];
-      cards = cells.map ((x) => paradigmCard (hebrewForm (stem, x, null), true));
+      const m = HEBREW_MODELS[fillIn.OT] ?? null;
+      cards = cells.map ((x) => paradigmCard (hebrewForm (stem, x, m), true, !! m));
     } else {
       const tv = GREEK_TENSES[picked.NT], c = greekCells (tv);
       const cells = [...Object.values (c.grid).flatMap ((g) => Object.values (g)), ...(c.inf ? [c.inf] : []), ...c.ptc];
-      cards = cells.map ((x) => paradigmCard (greekForm (tv, x, null), false));
+      const m = GREEK_MODELS[fillIn.NT] ?? null;
+      cards = cells.map ((x) => paradigmCard (greekForm (tv, x, m), false, !! m));
     }
     showDeck (deckEl, shuffle (cards));
   };
   pick.value = String (picked[t]);
   pick.addEventListener ("change", () => { picked[t] = Number (pick.value); fill (); });
+  fill_.value = String (fillIn[t]);
+  fill_.addEventListener ("change", () => { fillIn[t] = Number (fill_.value); fill (); });
   fill ();
 }
 
