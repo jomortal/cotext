@@ -88,9 +88,3 @@ function registerWorker() {
     document.addEventListener ("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch (() => {}); });
   }).catch (() => {});
 }
-
-// The heading's height (it grows when the helps' menu opens): main starts under it (style.css: --head-h).
-{
-  const head = document.querySelector (".head") as HTMLElement;
-  new ResizeObserver (() => document.documentElement.style.setProperty ("--head-h", head.offsetHeight + "px")).observe (head);
-}
