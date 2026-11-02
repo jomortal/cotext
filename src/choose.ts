@@ -1,6 +1,6 @@
 // The pickers (every <select class="choose">: the Verb chart's stem and verb, the paradigms' stem and FILL IN, My
 // vocab's frequency lists, the LEXICON and GRAMMAR settings) shown as COTEXT's own: a button with the choice, tapped to
-// open the choices as a plain list just under it (no animation - iOS's own picker grows out of the control as a
+// open the choices as a plain list just under it, over the page (no animation - iOS's own picker grows out of the control as a
 // bubble), the current one marked; a choice tapped is picked and the list closes, as does tapping the button again or
 // anywhere else. The <select> stays, hidden, as the value: its change event and value work as before, so the screens'
 // code is unchanged (setting value or selectedIndex updates the button too).
@@ -15,7 +15,10 @@ function enhance (sel: HTMLSelectElement) {
   btn.type = "button"; btn.className = "choose chooseBtn"; btn.setAttribute ("aria-expanded", "false");
   const list = document.createElement ("div");
   list.className = "chooseList"; list.hidden = true;
-  sel.after (btn, list);
+  const wrap = document.createElement ("span");     // (The list placed from it, over what's under)
+  wrap.className = "chooseWrap";
+  wrap.append (btn, list);
+  sel.after (wrap);
   const label = () => { btn.textContent = LABEL (sel); };
   // (Set from code: the button follows. The prototype's own setter still sets the select.)
   for (const prop of ["value", "selectedIndex"] as const) {

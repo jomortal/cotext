@@ -242,11 +242,13 @@ table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
 .vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .vocabRow .n { color: var(--soft); font-size: 12px; }
-/* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (in the page,
-   pushing what follows down), at most half the screen tall, scrolling; the current choice in the picked colour. */
+/* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it, over what
+   follows, at most half the screen tall, scrolling; the current choice in the picked colour. */
+.chooseWrap { position: relative; display: block; }
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
-.chooseList { display: grid; max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px;
+.chooseList { display: grid; position: absolute; top: 100%; left: 0; right: 0; min-width: 10em; z-index: 20;
+              box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px;
               border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .chooseList[hidden] { display: none; }
 .chooseList .ref { padding: 6px 10px 2px; margin: 0; }
