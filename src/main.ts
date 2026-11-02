@@ -11,6 +11,7 @@ import { setTestament } from "./study";
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
 import { initChart, setChartPassage } from "./chart";
+import "./cards";     // (Registers the Verb paradigms screen)
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
