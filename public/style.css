@@ -200,7 +200,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .heWord { font-family: var(--heb); font-size: 1.3em; font-weight: 400; }
 .grWord { font-family: var(--grk); font-size: 1.15em; font-weight: 400; }
 
-/* The Verb chart (chart.ts): its pickers, then the tables - scrolling sideways on a narrow screen (the screen itself
+/* The Verb chart (chart.ts): its pickers, then its one column of forms - scrolling sideways if ever too wide (the screen itself
    never wider than the window). */
 #screen .pickerCard { grid-template-columns: minmax(0, 1fr); }
 #screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -212,7 +212,8 @@ table.chart { border-collapse: collapse; width: 100%; }
 table.chart th { padding: 6px; font-size: 11px; color: var(--soft); font-weight: 600; letter-spacing: .04em; }
 table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: 1px solid var(--line); }
 table.chart th.parse { color: var(--fg); font-size: 12px; }
-table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--line); text-align: center; vertical-align: top; min-width: 6.5em; }
+table.chart th.group { text-align: left; color: var(--fg); font-size: 12px; letter-spacing: .08em; padding: 18px 6px 6px; border-top: 0; }     /* (Each group's heading: PERFECT, PARTICIPLE...) */
+table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--line); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
 table.chart .cForm { min-height: 1.5em; }
 table.chart .parse { font-size: 12px; font-weight: 700; letter-spacing: .02em; margin-top: 6px; }
 table.chart .mean { font-size: 12px; color: var(--soft); }

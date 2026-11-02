@@ -1,9 +1,8 @@
-// The Verb chart (☰ > Verb chart; design/mock-hebrew.html, mock-greek.html): one stem's forms (Hebrew) or one tense and
-// voice's (Greek) as a grid - Hebrew: a row per person / gender / number, columns perfect, imperfect, wayyiqtol and
-// imperative (the imperative in the 2nd person's rows; none for the Pual and Hophal), then a small table of the
-// participles (and the Qal's passive one) and the infinitives; Greek: a row per person and number, columns
-// indicative, subjunctive and imperative where the tense has them, then the infinitive and the participle's nominative
-// singulars and masculine genitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
+// The Verb chart (☰ > Verb chart): one stem's forms (Hebrew) or one tense and voice's (Greek) in one column down the
+// page, a heading for each group and a row per form - Hebrew: perfect, imperfect, wayyiqtol and imperative (the 2nd
+// person's; none for the Pual and Hophal), each a row per person / gender / number, then the participles (and the
+// Qal's passive one) and the infinitives; Greek: indicative, subjunctive and imperative where the tense has them, a row
+// per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
 //
 // The verb picker fills it: "Pattern" (dotted squares), a model verb (the templates filled: paradigm.ts), the verbs of
 // the chapter shown, or any verb typed (its consonants or letters, matched to the lexicon's dictionary forms). A verb
@@ -136,7 +135,11 @@ function cellHtml (f: Form, verb: Verb, hebrew: boolean): string {
   return `<td><div class="cForm">${shown}</div><div class="parse">${f.code}</div><div class="mean">${esc (f.meaning)}</div></td>`;
 }
 
-const head = (cols: string[]) => `<tr><th></th>${cols.map ((c) => `<th>${c}</th>`).join ("")}</tr>`;
+/** The chart: one column, each group (PERFECT, IMPERFECT... PARTICIPLE) a heading and its forms down the page, each
+ *  row its label (3MS, NOM. M.) and its cell. */
+type Group = [string, [string, string][]];
+const column = (groups: Group[]) => `<div class="chartScroll"><table class="chart">${groups.filter ((g) => g[1].length).map (([name, rows]) =>
+  `<tr><th class="group" colspan="2">${name}</th></tr>${rows.map (([l, cell]) => `<tr><th class="parse">${l}</th>${cell}</tr>`).join ("")}`).join ("")}</table></div>`;
 
 function hebrewTables (verb: Verb, stemIdx: number): string {
   const stem = HEBREW_STEMS[stemIdx];
@@ -145,17 +148,15 @@ function hebrewTables (verb: Verb, stemIdx: number): string {
   const form = (cell: Parameters<typeof hebrewForm>[1]) => cellHtml (hebrewForm (stem, cell, model), verb, true);
   const cols: [string, string][] = [["P", "PERFECT"], ["I", "IMPERFECT"], ["W", "WAYYIQTOL"]];
   if (stem.IMP) cols.push (["IMP", "IMPERATIVE"]);
-  const rows = HEBREW_PGN.map ((pgn) => `<tr><th class="parse">${pgn}</th>${cols.map (([k]) => {
+  const groups: Group[] = cols.map (([k, name]) => [name, HEBREW_PGN.flatMap ((pgn): [string, string][] => {
     const cell = c.grid[k][pgn];
-    if (cell) return form (cell);
-    return k === "P" && pgn === "3FP" ? `<td class="same">= 3CP above</td>` : `<td></td>`;
-  }).join ("")}</tr>`).join ("");
-  const small = [`<tr><th>PARTICIPLE</th>${c.ptc.map (form).join ("")}</tr>`];
-  if (c.ptp) small.push (`<tr><th>PASSIVE PARTICIPLE</th>${c.ptp.map (form).join ("")}</tr>`);
-  small.push (`<tr><th>INFINITIVE CONSTRUCT</th>${form (c.inc)}<td colspan="3"></td></tr>`,
-              `<tr><th>INFINITIVE ABSOLUTE</th>${form (c.ina)}<td colspan="3"></td></tr>`);
-  return `<div class="chartScroll"><table class="chart">${head (cols.map ((x) => x[1]))}${rows}</table></div>
-          <div class="chartScroll"><table class="chart small">${head (HEBREW_GN)}${small.join ("")}</table></div>`;
+    if (cell) return [[pgn, form (cell)]];
+    return k === "P" && pgn === "3FP" ? [[pgn, `<td class="same">= 3CP above</td>`]] : [];
+  })]);
+  groups.push (["PARTICIPLE", c.ptc.map ((x, i) => [HEBREW_GN[i], form (x)])]);
+  if (c.ptp) groups.push (["PASSIVE PARTICIPLE", c.ptp.map ((x, i) => [HEBREW_GN[i], form (x)])]);
+  groups.push (["INFINITIVE", [["CONSTRUCT", form (c.inc)], ["ABSOLUTE", form (c.ina)]]]);
+  return column (groups);
 }
 
 function greekTables (verb: Verb, tvIdx: number): string {
@@ -163,16 +164,13 @@ function greekTables (verb: Verb, tvIdx: number): string {
   const model = verb.kind === "model" ? GREEK_MODELS[verb.i] : null;
   const c = greekCells (tv);
   const form = (cell: Parameters<typeof greekForm>[1]) => cellHtml (greekForm (tv, cell, model), verb, false);
-  const cols = (["I", "S", "M"] as const).filter ((m) => c.grid[m]);
   const names = { I: "INDICATIVE", S: "SUBJUNCTIVE", M: "IMPERATIVE" };
-  const rows = GREEK_PN.map ((pn) => `<tr><th class="parse">${pn}</th>${cols.map ((m) => c.grid[m][pn] ? form (c.grid[m][pn]) : "<td></td>").join ("")}</tr>`).join ("");
-  let small = "";
-  if (c.ptc.length || c.inf) {
-    small = `<div class="chartScroll"><table class="chart small">${head (["NOM. M.", "NOM. F.", "NOM. N.", "GEN. M."])}
-      ${c.ptc.length ? `<tr><th>PARTICIPLE</th>${c.ptc.map (form).join ("")}</tr>` : ""}
-      ${c.inf ? `<tr><th>INFINITIVE</th>${form (c.inf)}<td colspan="3"></td></tr>` : ""}</table></div>`;
-  }
-  return `<div class="chartScroll"><table class="chart">${head (cols.map ((m) => names[m]))}${rows}</table></div>${small}`;
+  const groups: Group[] = (["I", "S", "M"] as const).filter ((m) => c.grid[m]).map ((m) =>
+    [names[m], GREEK_PN.filter ((pn) => c.grid[m][pn]).map ((pn): [string, string] => [pn, form (c.grid[m][pn])])]);
+  const ptcHeads = ["NOM. M.", "NOM. F.", "NOM. N.", "GEN. M."];
+  groups.push (["PARTICIPLE", c.ptc.map ((x, i) => [ptcHeads[i], form (x)])]);
+  if (c.inf) groups.push (["INFINITIVE", [["", form (c.inf)]]]);
+  return column (groups);
 }
 
 /** The screen: the pickers, what the verb is, and its tables. */
