@@ -229,9 +229,11 @@ document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   if (num) start (num, [num.parentElement!]);
 });
 
-// While the word's panel (#sheet) is open, ▶ sits just above it.
+// The play bar sits above the word's panel in the page's column (style.css); with the panel open it leaves the home
+// indicator's room to it.
 const sheet = document.getElementById ("sheet")!;
-const place = () => { playBtn.style.setProperty ("--above", sheet.hidden ? "0px" : sheet.offsetHeight + "px"); };
+const playBar = document.getElementById ("playBar")!;
+const place = () => { playBar.classList.toggle ("above", ! sheet.hidden); };     // (The panel under it: no home-indicator room)
 new ResizeObserver (place).observe (sheet);
 new MutationObserver (place).observe (sheet, { attributes: true, attributeFilter: ["hidden"] });
 
@@ -264,4 +266,4 @@ rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save
 gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); respeak (); });
 showRate ();
 
-if (! synth) for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
+if (! synth) for (const el of [playBar, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
