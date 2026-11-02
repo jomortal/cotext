@@ -10,7 +10,8 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - VOICE and READING SPEED (0.1x - 1.2x: the slowest the speech engine takes) in the ⋯ menu, kept on the device: a voice per testament, the device's
+// - VOICE and READING SPEED (0.1x - 1.2x - the slowest the speech engine takes - and, slower still, a pause between words of up to
+// 2 s at the slider's bottom: read a word at a time) in the ⋯ menu, kept on the device: a voice per testament, the device's
 //   voices for that testament's language first, starred.
 
 const KEY = "cotext.audio";
@@ -18,6 +19,7 @@ const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.
 
 interface Settings {
   rate: number;                                  // 0.1 - 1.2
+  gap?: number;                                  // seconds between words (0: none; then read a word at a time)
   voice: { OT?: string; NT?: string };           // voiceURI chosen per testament (none: the first of its language)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
 }
@@ -127,7 +129,7 @@ function next (id: number) {
   const gs = groups ([...row.querySelectorAll<HTMLElement> (".w")]);
   if (! gs.length) { next (id); return; }
   const v = voice ();
-  if (v && s.noBoundary.includes (v.voiceURI)) wordByWord (id, gs);
+  if ((s.gap ?? 0) > 0 || (v && s.noBoundary.includes (v.voiceURI))) wordByWord (id, gs);
   else wholeVerse (id, gs, v);
 }
 
@@ -164,14 +166,18 @@ function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v
 }
 
 function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
-  gs.forEach ((g, k) => {
-    const u = utterance (g.text);
-    u.onstart = () => { if (id === session) light (g.words); };
+  const gap = (s.gap ?? 0) * 1000;
+  const say = (k: number) => {
+    if (id !== session) return;
+    if (k >= gs.length) { next (id); return; }
+    const u = utterance (gs[k].text);
+    u.onstart = () => { if (id === session) light (gs[k].words); };
     u.onerror = (e) => { if (id === session && e.error !== "interrupted" && e.error !== "canceled") stopReading (); };
-    if (k === gs.length - 1) u.onend = () => next (id);
+    u.onend = () => { if (gap) setTimeout (() => say (k + 1), gap); else say (k + 1); };     // (The pause between words, if any)
     keep.push (u);
     synth!.speak (u);
-  });
+  };
+  say (0);
 }
 
 /** The panel's speaker: says the word (a Greek one-letter word with the next, as when reading). */
@@ -227,8 +233,18 @@ function fillVoices () {
   if (v) voicePick.value = v.voiceURI;
 }
 voicePick.addEventListener ("change", () => { s.voice[testament] = voicePick.value; save (); stopReading (); });
-const showRate = () => { rate.value = String (Math.round (s.rate * 100)); rateOut.textContent = s.rate.toFixed (1) + "x"; };
-rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); });
+// The slider: 10 - 120 the speed (0.1x - 1.2x); below 10, the slowest speed and a pause between words, 0.2 s a step (2 s at 0).
+const showRate = () => {
+  const gap = s.gap ?? 0;
+  rate.value = String (gap > 0 ? Math.round (10 - gap / 0.2) : Math.round (s.rate * 100));
+  rateOut.textContent = gap > 0 ? `0.1x + ${gap.toFixed (1)} s a word` : s.rate.toFixed (1) + "x";
+};
+rate.addEventListener ("input", () => {
+  const v = Number (rate.value);
+  s.rate = Math.max (0.1, v / 100);
+  s.gap = v < 10 ? (10 - v) * 0.2 : 0;
+  save (); showRate ();
+});
 showRate ();
 
 if (synth) { fillVoices (); synth.addEventListener ("voiceschanged", fillVoices); }
