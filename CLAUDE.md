@@ -6,6 +6,7 @@ A Bible study app for students learning Biblical Greek and Hebrew.
 
 - **Core:** an interlinear (original text with English beneath each word) and parsing information for every word - each switched on and off by the reader.
 - **Parsing as shown:** compact, readable without tapping, no spaces - all caps, Stem-Form-PGN with hyphens, e.g. Q-P-3MS (Qal perfect 3ms), QP-P-3MS (Qal passive), HI-W-3MS (Hiphil wayyiqtol), N-MP, a prefix joined with + (ART+N-MP, CONJ+OBJ); verbs coloured by stem. Converted once, when the database is built, from the source's codes.
+- **A word tapped:** its fuller definition from BDB (Hebrew; public domain - Open Scriptures' digital BDB, linked by STEPBible's extended Strong's, which TAHOT says are "extended for BDB"), and its parsing spelled out (Qal perfect, 3rd masculine singular). Greek's fuller lexicon to choose (Abbott-Smith, public domain, likely).
 - **Verb stems highlighted:** pick stems (Hebrew binyanim - Qal, Niphal, Piel...; Greek tense / voice / mood) and see them marked through the text.
 - **Vocab:** flashcards for any range (a book, a chapter, any span) and by frequency.
 - **Reader's version:** a selective interlinear - glosses shown only for words rarer than a frequency the reader sets; a button shows everything when unsure. A way to quiz yourself on reading.
