@@ -84,14 +84,20 @@ export function isFormHidden (strong: string, code: string): boolean {
   return (counts ().byForm.get (strong + "|" + code) ?? 0) >= limit ();
 }
 
-/** Marks a word known by hand (a vocab flashcard's GOT IT): its gloss hidden, as "I know this word". */
+/** Marks a word known by hand (as "I know this word"; a slider deck's REMOVE FROM LIST): its gloss hidden. */
 export function setKnown (strong: string) {
   s.modes[strong] = "hide";
   s.mine = true;
   changed ();
 }
 
-/** The words known by hand ("I know this word", GOT IT), by Strong's key. */
+/** No longer known by hand: the slider decides its helps again. */
+export function unsetKnown (strong: string) {
+  delete s.modes[strong];
+  changed ();
+}
+
+/** The words known by hand ("I know this word"), by Strong's key. */
 export function knownWords (): string[] {
   return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
 }

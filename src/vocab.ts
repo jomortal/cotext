@@ -1,15 +1,15 @@
 // My vocab (☰ > My vocab): each person's own list. A word's panel adds it ("+ My vocab": learning; "✓ In my vocab"
-// takes it off again); "I know this word" or a flashcard's GOT IT makes it known - known is the helps' own hand choice
+// takes it off again); "I know this word" makes it known - known is the helps' own hand choice
 // (helps.ts: its gloss then hidden), so the two never disagree, and a known word leaves the learning list. The screen,
 // for the testament shown: how many are learning and known, each list (the word, its concise meaning, how often it
 // occurs in the whole testament), and three decks - the learning words, the known ones, and "Flashcards for these
 // words": the words the ⋯ slider hides in the book or testament (its FREQUENCY), most frequent first (also from ⋯).
-// A card's front the word, turned over its concise meaning and count; GOT IT marks it known. Kept on the device.
+// A card's front the word, turned over its concise meaning and count; REMOVE FROM LIST takes it off that list. Kept on the device.
 
 import type { Db } from "./db";
 import { onScreen, currentTestament, openScreen } from "./study";
 import { showDeck, type Card } from "./cards";
-import { knownWords, setKnown, sliderWords, onHelpsChange } from "./helps";
+import { knownWords, setKnown, unsetKnown, sliderWords, onHelpsChange } from "./helps";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -78,19 +78,25 @@ function draw (body: HTMLElement) {
     const w = d.get (k)!;
     return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
   }).join ("") || "<p>None yet.</p>";
-  body.innerHTML = `<p><b>${learn.length.toLocaleString ()}</b> learning · <b>${known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); GOT IT on a card, or I know this word, makes a word known - its gloss then hidden.</p>
+  body.innerHTML = `<p><b>${learn.length.toLocaleString ()}</b> learning · <b>${known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden. On a card, Remove from list takes it off that list.</p>
     <div class="bar"><button class="pill" data-d="learn">Learning words as flashcards</button><button class="pill" data-d="known">Known words as flashcards</button>
       <button class="pill" data-d="slider">Flashcards for the slider's ${slider.length.toLocaleString ()} words</button></div>
     <div class="deck"></div>
     <div class="ref">Learning</div>${list (learn)}
     <div class="ref">Known</div>${list (known)}`;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
-  const got = (c: WordCard) => { delete learning[c.strong]; save (); setKnown (c.strong); };
   const open = (which: string) => {
+    // REMOVE FROM LIST: off the list the deck is - learning (off My vocab), known (no longer known: its helps back), the
+    // slider's (known: its gloss stays hidden, as the slider has it, and it leaves this deck).
+    const remove = (c: WordCard) => {
+      if (which === "learn") { delete learning[c.strong]; save (); }
+      else if (which === "known") unsetKnown (c.strong);
+      else { delete learning[c.strong]; save (); setKnown (c.strong); }
+    };
     const cards = which === "learn" ? cardsFor ([...learn].sort (byCount)) : which === "known" ? cardsFor ([...known].sort (byCount))
       : cardsFor (slider.map ((x) => x[0]), new Map (slider));
     if (! cards.length) { deckEl.innerHTML = `<p>${which === "slider" ? "The slider hides no words: move it in ⋯ first." : "No words here yet."}</p>`; return; }
-    showDeck (deckEl, cards, got);
+    showDeck (deckEl, cards, remove);
   };
   for (const b of body.querySelectorAll<HTMLElement> ("[data-d]")) b.addEventListener ("click", () => open (b.dataset.d!));
   if (startSlider) { startSlider = false; open ("slider"); }

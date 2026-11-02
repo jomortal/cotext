@@ -1,6 +1,7 @@
-// Flashcards (design/mock-hebrew.html's cards): one card at a time - its front, tapped to turn it over (its back
-// shown under it); AGAIN puts it at the back of the deck, GOT IT takes it out (and tells the deck's owner: vocab.ts
-// marks the word known); "N to go", then "All done". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
+// Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it), tapped again to turn it
+// back. BACK and NEXT step through the deck (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
+// order at the first card, REMOVE FROM LIST takes the card out (and tells the deck's owner: vocab.ts takes the word off
+// that list). "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
 //
 // Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
 // chart shows for it, from the same templates (paradigm.ts): the front its pattern, the back its code, its meaning on
@@ -11,28 +12,32 @@ import { HEBREW_STEMS, GREEK_TENSES, hebrewCells, hebrewForm, greekCells, greekF
 
 export interface Card { front: string; back: string; /* HTML */ }
 
-/** Shows a deck in el; onGot gets each card marked GOT IT. */
-export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onGot?: (c: C) => void) {
-  const deck = [...cards];
+/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST. */
+export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void) {
+  const first = [...cards];
+  let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div>
     <div class="src cardHint">Tap to turn over</div></div>
-    <div class="bar cardBar"><button class="pill" data-k="again">Again</button><button class="pill" data-k="got">Got it</button><span class="src cardCount"></span></div>`;
+    <div class="bar cardBar"><button class="pill" data-k="back">Back</button><span class="src cardCount"></span><button class="pill" data-k="next">Next</button></div>
+    <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button><button class="pill" data-k="remove">Remove from list</button></div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!, hint = el.querySelector<HTMLElement> (".cardHint")!;
-  const count = el.querySelector<HTMLElement> (".cardCount")!, bar = el.querySelector<HTMLElement> (".cardBar")!;
+  const count = el.querySelector<HTMLElement> (".cardCount")!;
   const show = () => {
-    if (! deck.length) {
-      front.textContent = "✓"; back.hidden = false; back.textContent = "All done"; hint.hidden = true; bar.hidden = true;
-      return;
-    }
-    front.innerHTML = deck[0].front; back.innerHTML = deck[0].back; back.hidden = true; hint.hidden = false;
-    count.textContent = `${deck.length.toLocaleString ()} to go`;
+    if (! deck.length) { front.textContent = "✓"; back.hidden = false; back.textContent = "No cards left"; hint.hidden = true; count.textContent = ""; return; }
+    at = (at + deck.length) % deck.length;
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; hint.hidden = false;
+    count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
-  const turn = () => { if (deck.length) { back.hidden = false; hint.hidden = true; } };
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; hint.hidden = ! back.hidden ? true : false; } };     // (Tapped again: turned back)
   card.addEventListener ("click", turn);
-  card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") turn (); });
-  bar.querySelector ("[data-k=again]")!.addEventListener ("click", () => { if (deck.length) deck.push (deck.shift ()!); show (); });
-  bar.querySelector ("[data-k=got]")!.addEventListener ("click", () => { const c = deck.shift (); if (c) onGot?.(c); show (); });
+  card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault (); turn (); } });
+  const on = (k: string, f: () => void) => el.querySelector (`[data-k=${k}]`)!.addEventListener ("click", () => { f (); show (); });
+  on ("back", () => { at--; });
+  on ("next", () => { at++; });
+  on ("shuffle", () => { deck = shuffle (deck); at = 0; });
+  on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
+  on ("remove", () => { const [c] = deck.splice (at, 1); if (c) onRemove?.(c); });
   show ();
 }
 
