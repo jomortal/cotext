@@ -204,7 +204,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    never wider than the window). */
 #screen .pickerCard { grid-template-columns: minmax(0, 1fr); }
 #screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.chartPick { display: flex; flex-wrap: wrap; gap: 10px; }
+.chartPick { display: flex; flex-wrap: wrap; gap: 10px; align-items: start; }     /* (start: a picker's open list never stretches the one beside it) */
 .chartPick label { display: grid; gap: 4px; font-size: 12px; color: var(--soft); flex: 1 1 140px; min-width: 0; }
 .chartPick .choose { width: 100%; box-sizing: border-box; }
 .chartScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
@@ -242,3 +242,15 @@ table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
 .vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .vocabRow .n { color: var(--soft); font-size: 12px; }
+/* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (in the page,
+   pushing what follows down), at most half the screen tall, scrolling; the current choice in the picked colour. */
+.chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
+.chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
+.chooseList { display: grid; max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px;
+              border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.chooseList[hidden] { display: none; }
+.chooseList .ref { padding: 6px 10px 2px; margin: 0; }
+.chooseItem { font: inherit; font-size: 14px; text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
+              background: transparent; color: var(--fg); cursor: pointer; }
+.chooseItem:first-child { border-top: 0; }
+.chooseItem[aria-pressed="true"] { color: var(--qal); font-weight: 600; }

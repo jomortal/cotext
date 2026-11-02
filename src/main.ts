@@ -14,6 +14,7 @@ import { initChart, setChartPassage } from "./chart";
 import "./cards";     // (Registers the Verb paradigms screen)
 import { initGuide } from "./guide";
 import { initVocab } from "./vocab";
+import { initChoose } from "./choose";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -72,6 +73,7 @@ async function start () {
   initChart (db);
   initGuide (db);
   initVocab (db);
+  initChoose ();
   books = db.all ("SELECT id, code, name, testament, chapters FROM books ORDER BY id") as unknown as Book[];
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }
