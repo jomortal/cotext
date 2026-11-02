@@ -1,5 +1,5 @@
-// Choosing a passage: the heading's button opens a full-screen list - the books (Old Testament, New Testament),
-// then the chosen book's chapters - and picking a chapter goes there.
+// Choosing a passage: the heading's button opens a full-screen list - the books (Old Testament, New Testament), one
+// under another, then the chosen book's chapters (numbers) - and picking a chapter goes there.
 
 import type { Book } from "./reader";
 
@@ -22,9 +22,12 @@ function showBooks (books: Book[], go: (book: Book, chapter: number) => void) {
     h.className = "src";
     h.textContent = heading;
     const list = document.createElement ("div");
-    list.className = "choices";
-    for (const b of books.filter ((b) => b.testament === testament))
-      list.append (pill (b.name, () => (b.chapters === 1 ? (picker.hidden = true, go (b, 1)) : showChapters (b, books, go))));
+    list.className = "chooseList inline";     // (A vertical list, a row per book: the pickers' list, style.css)
+    for (const b of books.filter ((b) => b.testament === testament)) {
+      const row = pill (b.name, () => (b.chapters === 1 ? (picker.hidden = true, go (b, 1)) : showChapters (b, books, go)));
+      row.className = "chooseItem";
+      list.append (row);
+    }
     body.append (h, list);
   }
 }
