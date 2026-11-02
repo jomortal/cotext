@@ -104,7 +104,6 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
 #sheet { flex: none; background: var(--bg); border-top: 1px solid var(--line); max-height: 55vh; overflow-y: auto;
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
-#sheet .acts { display: flex; gap: 8px; align-items: center; flex: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 #sheet .lemma { font-family: var(--grk); font-size: 30px; }
@@ -147,12 +146,11 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid colour shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
-#sheet .forms { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }     /* (The word as written, then its dictionary form) */
 #sheet .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker) */
-#sheet .arrow { color: var(--soft); }
 /* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
-/* The word's panel: its first row the word, its root and Close; under it I know this word. */
-#sheet > .acts { display: flex; gap: 8px; margin-top: 8px; }
-#sheet .top { align-items: center; }
+/* The word's panel, its head as two rows lined up: the word as written with Close, then its root (dictionary form)
+   with I know this word - each with its speaker; the buttons in a column at the right. */
+#sheet .heads { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
+#sheet .heads > .pill { justify-self: end; }

@@ -1,7 +1,7 @@
 // The word's panel: a sheet from the bottom when a word is tapped - its dictionary form, its parsing spelled out
 // ("Qal perfect, 3rd masculine singular") and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the word as written, then its dictionary form, each with a speaker that says it (audio.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts). Close (or tapping the word again) hides it.
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
