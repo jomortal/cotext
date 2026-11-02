@@ -14,8 +14,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, ▶ (read aloud), the word's
-     panel, the passage picker, the study drawer and its screens. -->
+<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, ▶ (read aloud) and the
+     notes' icon, the notes panel (commentaries and apparatus), the word's panel, the passage picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
     <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
@@ -41,9 +41,15 @@
 <main>
   <p id="status">Loading the text…</p>
   <div id="chapter"></div>
-  <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0). Grammars: Gesenius' Hebrew Grammar (Kautzsch-Cowley, 1910; public domain; text from Wikisource); Smyth's Greek Grammar (1920; Perseus Digital Library, Tufts University, CC BY-SA 3.0).</p>
+  <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0). Grammars: Gesenius' Hebrew Grammar (Kautzsch-Cowley, 1910; public domain; text from Wikisource); Smyth's Greek Grammar (1920; Perseus Digital Library, Tufts University, CC BY-SA 3.0). Commentaries and apparatus: each credited under its notes.</p>
 </main>
-<div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button></div>
+<div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries and apparatus" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button></div>
+<section id="notes" hidden>
+  <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill" id="notesClose">Close</button></div>
+  <div class="src" id="notesRef"></div>
+  <div class="gBody" id="notesBody"></div>
+  <p class="credit" id="notesCredit"></p>
+</section>
 <div id="sheet" hidden>
   <div class="heads">
     <span class="root"><span class="lemma" id="form"></span><button class="pill icon" id="speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><button class="pill" id="close">Close</button>

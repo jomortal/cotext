@@ -23,6 +23,25 @@ Grammars (the word's panel links each term of a parsing to its section):
   is converted from Beta Code to Unicode; Gesenius' Bible references are written out from the transcription's
   templates; bibliographic tags are dropped.
 
+Commentaries and apparatus (the notes panel; each source its own file, public/data/notes/<id>.db - pipeline/notes.py):
+  - unfoldingWord Translation Notes (git.door43.org/unfoldingWord/en_tn, commit bf603342, 2026-11-02), (c) 2022
+    unfoldingWord, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). The original work by
+    unfoldingWord is available from https://www.unfoldingword.org/utn. This adaptation is shared under the same licence.
+  - Tyndale Open Study Notes (release 1.25), (c) 2022 Tyndale House Publishers, licensed CC BY-SA 4.0. Adapted from
+    Tyndale Open Study Notes; the original work by Tyndale House Publishers is available for free at
+    http://www.tyndaleopenresources.com. This adaptation is shared under the same licence.
+  - C. F. Keil and F. Delitzsch, Biblical Commentary on the Old Testament (English translation, 1866-): public domain.
+    Text from CrossWire's SWORD module KD 2.0 (crosswire.org; its text from Wikisource), versified by SWORD's canon.h.
+  - Marvin R. Vincent, Word Studies in the New Testament (1887-1900): public domain. Text from the MySword module VWS
+    1.2.1 (mysword.info).
+  - SBLGNT apparatus: Michael W. Holmes, ed., The Greek New Testament: SBL Edition (Society of Biblical Literature and
+    Logos Bible Software, 2010), licensed CC BY 4.0 (github.com/LogosBible/SBLGNT, commit d7f35adc).
+  - Editions and variants: STEPBible Data's TAGNT and TAHOT (above, CC BY 4.0).
+  Changes made by COTEXT: each source is reformatted into a database keyed by verse; markup is reduced to paragraphs,
+  bold, italics, tables and footnotes; cross-references are kept as their text; Translation Notes' book and chapter
+  introductions and support references are left out; TAGNT's and TAHOT's edition lists and variants are written out
+  as sentences per verse; the SBLGNT apparatus's units are kept as printed.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 SQLite WebAssembly build 3.54.1: public domain (sqlite.org; public/sqlite/).

@@ -100,6 +100,7 @@ function light (words: HTMLElement[]) {
   litWord = words[0] ?? null;
   for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w.reading")) el.classList.remove ("reading");
   for (const w of words) w.classList.add ("reading");
+  document.dispatchEvent (new Event ("cotext:reading"));     // (The notes panel follows the verse being read: notes.ts)
   // Keep the word being read in view (main scrolls: style.css).
   const main = document.querySelector ("main")!, r = words[0]?.getBoundingClientRect (), m = main.getBoundingClientRect ();
   if (r && (r.top < m.top || r.bottom > m.bottom - 80)) words[0].scrollIntoView ({ block: "center", behavior: "smooth" });
@@ -285,4 +286,5 @@ rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save
 gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); respeak (); });
 showRate ();
 
-if (! synth) for (const el of [playBar, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
+// (No voices: ▶ hidden, the play bar kept for the notes' icon beside it.)
+if (! synth) for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;

@@ -20,6 +20,8 @@ Tables:
             in that exact form (the helps' slider hides a word's parsing by it: src/helps.ts)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
             (Gesenius, Smyth): made by grammar.py, whose docstring describes them
+  note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
+            made by notes.py, whose docstring describes them and their table
   words_full  a view: each word with its parsing and lemma.
 
 Versification is the English Bibles' (NRSV), as the source gives it first; the Hebrew's own verse numbers differ in
@@ -41,6 +43,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import fetch  # noqa: E402
 import grammar  # noqa: E402
 import morph  # noqa: E402
+import notes  # noqa: E402
 
 ROOT = pathlib.Path(__file__).parent.parent
 OUT = ROOT / "public" / "data" / "cotext.db"
@@ -234,6 +237,7 @@ def build():
     db.executemany("INSERT INTO form_freq VALUES (?,?,?,?)", [(s, k, b, c) for (s, k, b), c in form_counts.items()])
     db.executemany("INSERT INTO guide VALUES (?,?,?,?,?)", [(l, g, i, c, m) for i, (l, g, c, m) in enumerate(morph.guide())])
     grammar_counts = grammar.build(db, parsings, greek)
+    note_counts = notes.build(db, [code for code, _ in BOOKS])
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
@@ -245,7 +249,8 @@ def build():
     tmp.replace(OUT)
     print(f"{OUT} - {OUT.stat().st_size / 1e6:.1f} MB; {len(lex_rows)} lexicon entries "
           f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
-          + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()))
+          + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()) + "; notes "
+          + ", ".join(f"{k} {n} ({b / 1e6:.1f} MB)" for k, (n, b) in note_counts.items()))
 
 
 if __name__ == "__main__":

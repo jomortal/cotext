@@ -1,6 +1,7 @@
 // COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1), else the last
 // one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across books), its
-// middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts).
+// middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
+// the icon beside it opens the notes panel (notes.ts).
 
 import { openDb, type Db } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
@@ -15,6 +16,7 @@ import "./cards";     // (Registers the Verb paradigms screen)
 import { initGuide } from "./guide";
 import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
+import { initNotes, setNotesPassage } from "./notes";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -41,6 +43,7 @@ function go (b: Book, c: number) {
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
   applyHelps ();
   document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
+  setNotesPassage (b, c);     // (After the scroll to the top: the notes panel shows the first verse)
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }
@@ -73,6 +76,7 @@ async function start () {
   initChart (db);
   initGuide (db);
   initVocab (db);
+  initNotes (db);
   initChoose ();
   books = db.all ("SELECT id, code, name, testament, chapters FROM books ORDER BY id") as unknown as Book[];
   let last: string | null = null;
