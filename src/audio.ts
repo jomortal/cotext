@@ -188,7 +188,7 @@ function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
   say (0);
 }
 
-/** The panel's ▶: says just the word (a Greek one-letter word with the next, as when reading). */
+/** The panel's 🔊: says just the word (a Greek one-letter word with the next, as when reading). */
 export function sayWord (wordEl: HTMLElement) {
   if (! synth) return;
   stopReading ();
