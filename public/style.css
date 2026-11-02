@@ -140,7 +140,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
-#screenMenu { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }
+#screenMenu { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }     /* (Fixed: stays in the upper right as the screen scrolls) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's colour, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid colour shows nothing. */
@@ -152,9 +152,10 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 
 /* The word's panel, its head as two rows lined up: the word as written with Close, then its root (dictionary form)
    with I know this word - each with its speaker; the buttons in a column at the right. */
-#sheet .heads { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
+#sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
 #sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+#sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
    colour, the one open bold; the panel stays at most half the screen, scrolling. */

@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise or full by LEXICON (below); the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise or full by LEXICON (below); the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). Close (or tapping the word again) hides it.
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
@@ -10,6 +10,14 @@ import { isHidden, flip, onHelpsChange } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { showParsing, hideGrammar } from "./grammar";
 import { setVocabWord } from "./vocab";
+import { chartStemOf, openChartFor } from "./chart";
+
+// A verb's "Verb chart", right of its dictionary form's speaker: the chart opened on this verb at its stem.
+const chartBtn = document.createElement ("button");
+chartBtn.className = "pill"; chartBtn.textContent = "Verb chart"; chartBtn.hidden = true;
+document.getElementById ("speakRoot")!.after (chartBtn);
+let chartFor: [string, string] | null = null;
+chartBtn.addEventListener ("click", () => { if (chartFor) { hidePanel (); openChartFor (...chartFor); } });
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
@@ -62,6 +70,8 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   pickedStrong = w.strong;
   label ();
   setVocabWord (w.strong);     // (+ My vocab: vocab.ts)
+  chartFor = w.stem && chartStemOf (w.strong, w.code) >= 0 ? [w.strong, w.code] : null;
+  chartBtn.hidden = ! chartFor;
   const hebrew = w.strong.startsWith ("H");
   const [lex] = db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]);
   const [parsing] = db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]);

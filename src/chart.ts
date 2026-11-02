@@ -8,11 +8,12 @@
 // the chapter shown, or any verb typed (its consonants or letters, matched to the lexicon's dictionary forms). A verb
 // from the text shows its actual forms as the text has them: per cell the commonest spelling of that lemma (every
 // sense of its Strong's number) with exactly that code (no prefix or suffix), accents and punctuation stripped, and
-// how often that code occurs; "–" where it never does. The stem picker then counts its forms in each stem.
+// how often that code occurs; "–" where it never does. The stem picker then counts its forms in each stem. A verb's
+// panel (panel.ts) opens the chart on that verb, at its own stem (openChartFor).
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
-import { onScreen, currentTestament } from "./study";
+import { onScreen, currentTestament, openScreen } from "./study";
 import { HEBREW_STEMS, HEBREW_MODELS, HEBREW_PGN, HEBREW_GN, GREEK_TENSES, GREEK_MODELS, GREEK_PN, GREEK_PTC,
          hebrewCells, hebrewForm, greekCells, greekForm, type Form } from "./paradigm";
 
@@ -112,6 +113,25 @@ function verbsMatching (typed: string, t: "OT" | "NT"): [string, string, string]
 function textVerb (base: string): Verb {
   const [lex] = db.all ("SELECT lemma, concise, gloss FROM lexicon WHERE strong = ? OR strong GLOB ? ORDER BY strong LIMIT 1", [base, base + "[A-Z]"]);
   return { kind: "text", base, lemma: String (lex?.lemma ?? base), gloss: String (lex?.concise || lex?.gloss || "") };
+}
+
+/** A verb's stem or tense and voice in the chart (its index), from its COTEXT code ("CONJ+Q-W-3MS" -> Qal, "AAI-3S"
+ *  -> Aorist active); -1 if the chart has none (an Aramaic stem, a form it doesn't set out). */
+export function chartStemOf (strong: string, code: string): number {
+  if (strong.startsWith ("H")) {
+    for (const part of code.split ("+")) { const i = HEBREW_STEMS.findIndex ((s) => s.code === part.split ("-")[0]); if (i >= 0) return i; }
+    return -1;
+  }
+  const [k] = greekKeys (code);
+  return k ? GREEK_TENSES.findIndex ((t) => t.code === k.slice (0, 2)) : -1;
+}
+
+/** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked. */
+export function openChartFor (strong: string, code: string) {
+  const st = state[strong.startsWith ("H") ? "OT" : "NT"];
+  st.stem = Math.max (0, chartStemOf (strong, code));
+  st.verb = textVerb (baseOf (strong));
+  openScreen ("Verb chart");
 }
 
 /** The chapter's verbs, each once (by Strong's number), in order. */
