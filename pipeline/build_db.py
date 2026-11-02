@@ -90,7 +90,17 @@ def hebrew_words():
             exp = re.search(r"\{" + re.escape(strong) + r"=([^=]*)=([^}]*)\}", c[11]) if len(c) > 11 else None
             lemma, short = (exp.group(1), exp.group(2)) if exp else ("", "")
             yield (BOOK_ID[book], int(ch), int(v), int(n), text, c[2].replace("/", ""), gloss_text(c[3]), strong,
-                   c[5], lemma, short)
+                   fix_morph(strong, c[5]), lemma, short)
+
+
+# Source tags corrected, by lemma: TAHOT's morphology (from ETCBC) tags בֵּין "between" (H0996) as a cardinal number
+# (Acmsc) - shown as NUM-MSC; it's a preposition, so its part is made R (PREP), any prefix kept (HC/R: CONJ+PREP).
+MORPH_FIXES = {"H0996": (r"(^H|/)A[cgoa][mfcb][spd][acd]", r"\1R")}
+
+
+def fix_morph(strong, mcode):
+    fix = MORPH_FIXES.get(re.sub(r"[A-Z]$", "", strong))     # (By the Strong's number, its sense letter dropped: H0996G)
+    return re.sub(fix[0], fix[1], mcode) if fix else mcode
 
 
 def greek_words():
