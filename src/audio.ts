@@ -5,8 +5,8 @@
 //   tapped again stops. While the word's panel is open, ▶ sits just above it.
 // - The word's panel's speaker says that word (sayWord).
 // - Each verse is spoken as one utterance, its words lit by the voice's word-boundary events. A voice that gives none
-//   (no boundary within a second of starting) is remembered, and its verses are spoken a word at a time instead - the
-//   verse it was found on restarted that way.
+//   (no boundary within a second of starting) is remembered, and its words are lit on a clock instead (each word's share
+//   of the time by its length, at the reading speed) - the verse still one utterance, read smoothly.
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
@@ -123,7 +123,9 @@ function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null
   if (from === playBtn) { playBtn.textContent = "■"; playBtn.setAttribute ("aria-label", "Stop reading"); }
   queue = rows;
   synth.resume ();     // (iOS: a paused queue stays silent)
-  next (session);
+  // (A breath after cancel before speaking again: iOS can drop, or hold back, an utterance spoken straight after one.)
+  const id = session;
+  setTimeout (() => next (id), 60);
 }
 
 /** Reads the next verse in the queue, or ends the session. */
@@ -136,9 +138,10 @@ function next (id: number) {
   fromWord = null;
   const gs = groups (ws);
   if (! gs.length) { next (id); return; }
-  const v = voice ();
-  if ((s.gap ?? 0) > 0 || (v && s.noBoundary.includes (v.voiceURI))) wordByWord (id, gs);
-  else wholeVerse (id, gs, v);
+  // A space between words: a word at a time with that pause. None: the verse as one utterance - never word by word,
+  // which pauses between words of its own.
+  if ((s.gap ?? 0) > 0) wordByWord (id, gs);
+  else wholeVerse (id, gs, voice ());
 }
 
 function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v: SpeechSynthesisVoice | undefined) {
@@ -154,17 +157,25 @@ function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v
     while (k + 1 < starts.length && starts[k + 1] <= e.charIndex) k++;
     if (k !== lit) { lit = k; light (gs[k].words); }
   };
+  // A voice without word timing (no boundary events - remembered): the words lit on a clock instead, each group's
+  // share of the time by its length, at the reading speed - close enough to follow, the verse still read smoothly.
+  const clock = () => {
+    if (! v || ! s.noBoundary.includes (v.voiceURI)) return;
+    const msPerChar = 75 / s.rate;
+    let at = 0;
+    gs.forEach ((g, k) => {
+      setTimeout (() => { if (id === session && ! ended && k > lit) { lit = k; light (g.words); } }, at);
+      at += (g.text.length + 1) * msPerChar;
+    });
+  };
   u.onstart = () => {
     if (id !== session) return;
     lit = 0; light (gs[0].words);
+    clock ();
     setTimeout (() => {
-      if (id !== session || sawBoundary || ! v) return;
-      // No word timing from this voice: remembered, and this verse (unless already over) restarted a word at a time.
-      if (! s.noBoundary.includes (v.voiceURI)) { s.noBoundary.push (v.voiceURI); save (); }
-      if (ended) return;
-      const restart = ++session;
-      synth!.cancel ();
-      wordByWord (restart, gs);
+      if (id !== session || sawBoundary || ! v || s.noBoundary.includes (v.voiceURI)) return;
+      s.noBoundary.push (v.voiceURI); save ();     // (No word timing after a second: from now on, the clock)
+      clock ();
     }, 1000);
   };
   u.onend = () => { ended = true; next (id); };
@@ -260,7 +271,7 @@ function respeak () {
     if (! control || ! litWord) return;
     const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")], row = litWord.closest<HTMLElement> (".vrow");
     if (row) start (control, rows.slice (rows.indexOf (row)), litWord, true);
-  }, 250);
+  }, 120);
 }
 rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); respeak (); });
 gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); respeak (); });
