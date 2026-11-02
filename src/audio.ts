@@ -85,7 +85,7 @@ function utterance (text: string): SpeechSynthesisUtterance {
 let session = 0;
 let control: HTMLElement | null = null;
 let queue: HTMLElement[] = [];                     // .vrow elements still to read
-let fromWord: HTMLElement | null = null;           // Reading from a word (its panel's ▶): its verse read from it, not its start
+let fromWord: HTMLElement | null = null;           // Reading restarted mid-verse (a speed change): its verse read from it, not its start
 const keep: SpeechSynthesisUtterance[] = [];       // (Held, so a browser can't drop an utterance's events mid-way)
 const playBtn = document.getElementById ("playBtn")!;
 
@@ -188,7 +188,7 @@ function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
   say (0);
 }
 
-/** The panel's speaker: says the word (a Greek one-letter word with the next, as when reading). */
+/** The panel's ▶: says just the word (a Greek one-letter word with the next, as when reading). */
 export function sayWord (wordEl: HTMLElement) {
   if (! synth) return;
   stopReading ();
@@ -214,13 +214,6 @@ playBtn.addEventListener ("click", () => {
   const first = Math.max (0, rows.findIndex ((r) => r.getBoundingClientRect ().bottom > top + 8));
   start (playBtn, rows.slice (first));
 });
-/** The word panel's ▶: reads on from that word to the chapter's end (tapped again: stops). */
-export function readFrom (wordEl: HTMLElement) {
-  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
-  const row = wordEl.closest<HTMLElement> (".vrow");
-  const btn = document.getElementById ("readFromBtn")!;
-  start (btn, row ? rows.slice (rows.indexOf (row)) : [], wordEl);
-}
 document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   const num = (e.target as HTMLElement).closest<HTMLElement> (".vnum");
   if (num) start (num, [num.parentElement!]);
