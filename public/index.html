@@ -40,7 +40,7 @@
 <main>
   <p id="status">Loading the text…</p>
   <div id="chapter"></div>
-  <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).</p>
+  <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0). Grammars: Gesenius' Hebrew Grammar (Kautzsch-Cowley, 1910; public domain; text from Wikisource); Smyth's Greek Grammar (1920; Perseus Digital Library, Tufts University, CC BY-SA 3.0).</p>
 </main>
 <div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button></div>
 <div id="sheet" hidden>
@@ -51,6 +51,11 @@
   <div class="full" id="full"></div>
   <div class="src" id="src"></div>
   <div class="def" id="def"></div>
+  <button class="pill" id="moreDef">More</button>
+  <div id="gInline" hidden>
+    <div class="top"><div><div class="gTitle" id="giTitle"></div><div class="src" id="giSec"></div></div><button class="pill" id="giClose">Hide</button></div>
+    <div class="gBody" id="giBody"></div>
+  </div>
 </div>
 <div id="picker" hidden>
   <div class="pickerCard">
@@ -66,6 +71,14 @@
     <button class="pill" id="paradigms" data-screen="Verb paradigms">Verb paradigms</button>
     <button class="pill" id="chartBtn" data-screen="Verb chart">Verb chart</button>
     <button class="pill" id="guideBtn" data-screen="Parsing guide">Parsing guide</button>
+    <div class="settings">
+      <b>Settings</b>
+      <label for="lexiconPick">Lexicon<select id="lexiconPick" class="choose">
+        <option value="concise">Concise: the meaning to learn</option>
+        <option value="full">STEPBible brief lexicon, full entry</option>
+      </select></label>
+      <label for="grammarPick">Grammar<select id="grammarPick" class="choose"></select></label>
+    </div>
   </nav>
 </div>
 <div id="screen" hidden>

@@ -2,6 +2,7 @@
 // (HEBREW OT or GREEK NT, by the testament shown: back to reading, any study screen closed), then the study screens:
 // My vocab, Verb paradigms, Verb chart, Parsing guide. Those aren't built yet: each opens a screen of its own, with
 // ☰ at its top left (to move between them), saying it's coming. Picking an item, ✕ or tapping outside closes it.
+// Under them, the settings: LEXICON (panel.ts) and GRAMMAR (grammar.ts), each a menu that applies at once.
 
 const drawer = document.getElementById ("drawer")!;
 const homeBtn = document.getElementById ("homeBtn")!;

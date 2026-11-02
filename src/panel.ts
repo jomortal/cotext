@@ -1,12 +1,14 @@
 // The word's panel: a sheet from the bottom when a word is tapped - its dictionary form, its parsing spelled out
-// ("Qal perfect, 3rd masculine singular") and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
+// ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
+// and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise or full by LEXICON (below); the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts). Close (or tapping the word again) hides it.
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
 import { isHidden, flip, onHelpsChange } from "./helps";
 import { sayText, sayWord } from "./audio";
+import { showParsing, hideGrammar } from "./grammar";
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
@@ -25,6 +27,32 @@ document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText 
 const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps" : "I know this word"; };
 onHelpsChange (() => { if (picked) label (); });
 
+// LEXICON (in the ☰ drawer's settings): what the panel shows of the word's lexicon entry - "concise", the meaning to
+// learn (a few words: build_db.py's concise()), with More opening the full entry for this word only; or "full", the
+// brief lexicon's whole entry. Kept on the device.
+const LEX_KEY = "cotext.lexicon";
+const lexPick = document.getElementById ("lexiconPick") as HTMLSelectElement;
+const moreBtn = document.getElementById ("moreDef")!;
+let lexicon = "concise";
+try { lexicon = localStorage.getItem (LEX_KEY) === "full" ? "full" : "concise"; } catch { /* private mode */ }
+lexPick.value = lexicon;
+lexPick.addEventListener ("change", () => {
+  lexicon = lexPick.value;
+  try { localStorage.setItem (LEX_KEY, lexicon); } catch { /* private mode: not kept */ }
+  if (picked) showEntry (lexicon === "full");
+});
+let entry = { concise: "", full: "", hebrew: true };
+moreBtn.addEventListener ("click", () => showEntry (moreBtn.textContent === "More"));
+
+/** The entry, concise or full; under the concise one More (Less under a full one opened by it). */
+function showEntry (full: boolean) {
+  srcEl.textContent = ! full ? "Meaning" : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
+  // The entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything else).
+  if (full) defEl.innerHTML = entry.full; else defEl.textContent = entry.concise;
+  moreBtn.hidden = lexicon === "full" || entry.full === entry.concise;
+  moreBtn.textContent = full ? "Less" : "More";
+}
+
 export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   if (picked === wordEl && ! sheet.hidden) { hidePanel (); return; }
   picked?.classList.remove ("on");
@@ -33,16 +61,15 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   pickedStrong = w.strong;
   label ();
   const hebrew = w.strong.startsWith ("H");
-  const [lex] = db.all ("SELECT lemma, gloss, entry FROM lexicon WHERE strong = ?", [w.strong]);
-  const [parsing] = db.all ("SELECT spelled FROM parsings WHERE morph = ?", [w.morph]);
+  const [lex] = db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]);
+  const [parsing] = db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]);
   lemmaEl.textContent = String (lex?.lemma ?? w.text);
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
   formEl.textContent = w.text;
   formEl.dir = lemmaEl.dir;
-  fullEl.textContent = String (parsing?.spelled ?? "");
-  srcEl.textContent = hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
-  // The entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything else).
-  defEl.innerHTML = String (lex?.entry || lex?.gloss || "");
+  showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
+  entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""), hebrew };
+  showEntry (lexicon === "full");
   sheet.hidden = false;
   sheet.scrollTop = 0;
   // Keep the word in view above the sheet.
@@ -54,6 +81,7 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
 
 export function hidePanel () {
   sheet.hidden = true;
+  hideGrammar ();
   picked?.classList.remove ("on");
   picked = null;
 }

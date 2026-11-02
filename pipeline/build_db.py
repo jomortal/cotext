@@ -1,6 +1,8 @@
-"""Builds COTEXT's database, public/data/cotext.db, from the STEPBible-Data files (fetched first if missing).
+"""Builds COTEXT's database, public/data/cotext.db, from the STEPBible-Data files and the grammars (fetched first if
+missing).
 
-Run: python3 pipeline/build_db.py   (Python's standard library only; about a minute)
+Run: python3 pipeline/build_db.py   (Python's standard library only; about a minute; the grammars' first download
+a few minutes more - grammar.py)
 
 Tables:
   books     id (1-39 OT, 40-66 NT), code (Gen, Jhn - the source's), name, testament ('OT' / 'NT'), chapters
@@ -10,8 +12,10 @@ Tables:
   parsings  per source code: code (COTEXT's: Q-P-3MS, ART+N-MP, IAI-3S, N-DSF), spelled ("Qal perfect, 3rd masculine
             singular"), stem (the verb's colour group in the reader: qal, piel, hiphil... ; Greek verbs 'verb'; else '')
   lexicon   strong -> lemma (dictionary form), translit, gloss, entry (the brief lexicon's text: plain, with <b>, <i>
-            and <br> only)
+            and <br> only), concise (the meaning to memorise, a few words: concise())
   freq      strong, book (0: the whole OT or NT), count - how often each lemma occurs
+  grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
+            (Gesenius, Smyth): made by grammar.py, whose docstring describes them
   words_full  a view: each word with its parsing and lemma.
 
 Versification is the English Bibles' (NRSV), as the source gives it first; the Hebrew's own verse numbers differ in
@@ -31,6 +35,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import fetch  # noqa: E402
+import grammar  # noqa: E402
 import morph  # noqa: E402
 
 ROOT = pathlib.Path(__file__).parent.parent
@@ -129,8 +134,33 @@ def entry_html(s):
     return "<br>".join(line.strip() for line in s.split("\n") if line.strip())
 
 
+def concise(strong, gloss, entry, most=4):
+    """The meaning to memorise: a few words - the brief lexicon's gloss ("land: country/planet" -> "land, country,
+    planet"), then, for a Hebrew word that isn't a name, the senses of its entry's first numbered line ("1) to create,
+    shape, form"), each once, notes in brackets and anything with a reference or Hebrew / Greek dropped; at most
+    `most` of them. בָּרָא "to create, shape, form"; דָּבָר "word, speech, speaking, thing"; λόγος "word"."""
+    items, seen = [], set()
+
+    def add(t):
+        t = re.sub(r"\([^)]*\)|\[[^]]*\]|<[^>]*>", "", t)
+        t = re.sub(r"\s+", " ", t).strip(" ,;.:-")
+        key = re.sub(r"^(to|a|an|the) ", "", t.lower())
+        if t and len(t.split()) <= 4 and not re.search(r"[\u0590-\u05FF\u0370-\u03FF\u1F00-\u1FFF\d]", t) \
+                and key not in seen:
+            seen.add(key)
+            items.append(t)
+
+    for part in re.split(r"[:/]", gloss or ""):
+        add(part)
+    first = next((line for line in (entry or "").split("<br>") if re.match(r"\s*1\)", line)), "")
+    if strong.startswith("H") and first and gloss[:1].islower():
+        for part in re.split(r"[,;]", first[first.index(")") + 1:]):
+            add(part)
+    return ", ".join(items[:most]) or gloss
+
+
 def lexicon_rows(name):
-    """TBESH / TBESG: dStrong -> (lemma, translit, gloss, entry)."""
+    """TBESH / TBESG: dStrong -> (lemma, translit, gloss, entry, concise)."""
     out = {}
     with open(DL / name, encoding="utf-8-sig") as f:
         for line in f:
@@ -139,7 +169,8 @@ def lexicon_rows(name):
                 continue
             key = c[1].split("=")[0].strip()
             if key and key not in out:
-                out[key] = (c[3], c[4], c[6], entry_html(c[7]) if len(c) > 7 else "")
+                entry = entry_html(c[7]) if len(c) > 7 else ""
+                out[key] = (c[3], c[4], c[6], entry, concise(key, c[6], entry))
     return out
 
 
@@ -155,13 +186,15 @@ def build():
         CREATE TABLE words (book INTEGER, chapter INTEGER, verse INTEGER, word INTEGER, text TEXT, translit TEXT,
                             gloss TEXT, strong TEXT, morph TEXT, PRIMARY KEY (book, chapter, verse, word)) WITHOUT ROWID;
         CREATE TABLE parsings (morph TEXT PRIMARY KEY, code TEXT, spelled TEXT, stem TEXT) WITHOUT ROWID;
-        CREATE TABLE lexicon (strong TEXT PRIMARY KEY, lemma TEXT, translit TEXT, gloss TEXT, entry TEXT) WITHOUT ROWID;
+        CREATE TABLE lexicon (strong TEXT PRIMARY KEY, lemma TEXT, translit TEXT, gloss TEXT, entry TEXT, concise TEXT)
+                              WITHOUT ROWID;
         CREATE TABLE freq (strong TEXT, book INTEGER, count INTEGER, PRIMARY KEY (strong, book)) WITHOUT ROWID;
     """)
     lex = {**lexicon_rows("TBESH.txt"), **lexicon_rows("TBESG.txt")}
     counts = collections.Counter()
     chapters = collections.defaultdict(int)
     parsings = {}
+    greek = set()     # (Which source codes are Greek: TAGNT's)
     extra_lex = {}
     for source, convert in ((hebrew_words(), morph.hebrew), (greek_words(), morph.greek)):
         rows = []
@@ -171,11 +204,13 @@ def build():
             rows.append((book, ch, v, place[(book, ch, v)], text, translit, gloss, strong, mcode))
             if mcode not in parsings:
                 parsings[mcode] = convert(mcode)
+                if convert is morph.greek:
+                    greek.add(mcode)
             counts[(strong, 0)] += 1
             counts[(strong, book)] += 1
             chapters[book] = max(chapters[book], ch)
             if strong not in lex and strong not in extra_lex:
-                extra_lex[strong] = (lemma, "", short, "")
+                extra_lex[strong] = (lemma, "", short, "", short)
         db.executemany("INSERT INTO words (book, chapter, verse, word, text, translit, gloss, strong, morph) "
                        "VALUES (?,?,?,?,?,?,?,?,?)", rows)
     db.executemany("INSERT INTO books VALUES (?,?,?,?,?)",
@@ -183,8 +218,9 @@ def build():
     db.executemany("INSERT INTO parsings VALUES (?,?,?,?)", [(k, *v) for k, v in parsings.items()])
     used = {s for (s, _) in counts}
     lex_rows = [(k, *v) for k, v in {**lex, **extra_lex}.items() if k in used]
-    db.executemany("INSERT INTO lexicon VALUES (?,?,?,?,?)", lex_rows)
+    db.executemany("INSERT INTO lexicon VALUES (?,?,?,?,?,?)", lex_rows)
     db.executemany("INSERT INTO freq VALUES (?,?,?)", [(s, b, c) for (s, b), c in counts.items()])
+    grammar_counts = grammar.build(db, parsings, greek)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
@@ -195,7 +231,8 @@ def build():
     db.close()
     tmp.replace(OUT)
     print(f"{OUT} - {OUT.stat().st_size / 1e6:.1f} MB; {len(lex_rows)} lexicon entries "
-          f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes")
+          f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
+          + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()))
 
 
 if __name__ == "__main__":

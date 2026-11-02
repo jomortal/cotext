@@ -11,6 +11,18 @@ Changes made by COTEXT: the data is reformatted into one SQLite database; morpho
 COTEXT's own codes and spelled out; glosses lose their segment marks; lexicon entries keep only bold, italic and
 line breaks.
 
+Grammars (the word's panel links each term of a parsing to its section):
+  - Gesenius' Hebrew Grammar, edited and enlarged by E. Kautzsch, translated by A. E. Cowley (2nd English edition,
+    Oxford, 1910): public domain. Text from the English Wikisource transcription (en.wikisource.org, "Gesenius'
+    Hebrew Grammar"), at the page revisions listed in pipeline/gesenius_revisions.json.
+  - Herbert Weir Smyth, A Greek Grammar for Colleges (American Book Company, 1920): the Perseus Digital Library's
+    edition (Perseus:text:1999.04.0007), Trustees of Tufts University, licensed CC BY-SA 3.0 US
+    (https://creativecommons.org/licenses/by-sa/3.0/us/). Its sections as they're kept in COTEXT's database (the
+    grammar_sections table, Smyth's rows) are shared under the same licence.
+  Changes made by COTEXT: the sections are reduced to paragraphs, bold, italics, tables and footnotes; Smyth's Greek
+  is converted from Beta Code to Unicode; Gesenius' Bible references are written out from the transcription's
+  templates; bibliographic tags are dropped.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 SQLite WebAssembly build 3.54.1: public domain (sqlite.org; public/sqlite/).

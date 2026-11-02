@@ -97,11 +97,11 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
 .w.reading { background: color-mix(in srgb, var(--qal) 28%, transparent); }
 .vnum { cursor: pointer; }
 .vnum.playing { color: var(--qal); }
-#voicePick { font: inherit; font-size: 13px; padding: 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); max-width: 100%; }
+#voicePick, .choose { font: inherit; font-size: 13px; padding: 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); max-width: 100%; }
 #audioSettings { flex: 1 1 100%; }
 
 /* The word's panel: a sheet from the bottom. */
-#sheet { flex: none; background: var(--bg); border-top: 1px solid var(--line); max-height: 55vh; overflow-y: auto;
+#sheet { position: relative; flex: none; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
@@ -154,3 +154,29 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    with I know this word - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill { justify-self: end; }
+
+/* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
+   colour, the one open bold; the panel stays at most half the screen, scrolling. */
+#sheet .term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+#sheet .term.on { font-weight: 700; }
+#gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+#gInline[hidden] { display: none; }
+#gInline .top { align-items: start; }
+.gTitle { font-weight: 600; font-size: 15px; }
+#gInline .src { margin-top: 2px; }
+.gBody { font-size: 14px; line-height: 1.55; margin-top: 8px; }
+.gBody p { color: var(--fg); font-size: inherit; margin: 0 0 8px; }
+.gHead { font-weight: 600; margin: 14px 0 6px; }
+.gNum { margin-inline-end: 6px; }
+.gBody.one .gNum { display: none; }     /* (One section: its § is in the line above) */
+.gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
+.gBody .grc { font-family: var(--grk); font-size: 1.05em; }
+.gBody table { border-collapse: collapse; margin: 6px 0 10px; font-size: 13px; }
+.gBody td { padding: 2px 8px 2px 0; vertical-align: top; }
+.gBody sup { font-size: .7em; }
+
+/* The drawer's settings (LEXICON, GRAMMAR): under the study items, each a label over its menu. */
+#drawerPanel .settings { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+#drawerPanel .settings label { display: grid; gap: 4px; font-size: 12px; color: var(--soft); }
+#moreDef { margin-top: 8px; }
+#moreDef[hidden] { display: none; }

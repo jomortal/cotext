@@ -9,6 +9,7 @@ import { openPicker } from "./picker";
 import { setBook, applyHelps } from "./helps";
 import { setTestament } from "./study";
 import { setAudioTestament } from "./audio";
+import { initGrammar, setGrammarTestament } from "./grammar";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -29,6 +30,7 @@ function go (b: Book, c: number) {
   setBook (db, b);
   setTestament (b.testament);
   setAudioTestament (b.testament);     // (Reading stops)
+  setGrammarTestament (b.testament);
   showChapter (chapterEl, b, c, chapterWords (db, b.id, c), (w, el) => showPanel (db, w, el));
   applyHelps ();
   document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
@@ -60,6 +62,7 @@ async function start () {
     return;
   }
   status.hidden = true;
+  initGrammar (db);
   books = db.all ("SELECT id, code, name, testament, chapters FROM books ORDER BY id") as unknown as Book[];
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }
