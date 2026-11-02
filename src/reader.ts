@@ -37,6 +37,7 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     }
     const wordEl = document.createElement ("div");
     wordEl.className = "w" + (w.stem ? ` verb stem-${w.stem}` : "");
+    wordEl.dataset.strong = w.strong;     // the lemma's key: helps.ts hides helps by it
     wordEl.append (span ("orig", w.text), span ("gloss", w.gloss), span ("parse", w.code ?? ""));
     wordEl.addEventListener ("click", () => onTap (w, wordEl));
     verseEl!.append (wordEl);

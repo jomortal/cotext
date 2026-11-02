@@ -1,11 +1,13 @@
 // COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1), else the last
 // one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across books), its
-// middle button opens the picker.
+// middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts).
 
 import { openDb, type Db } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker } from "./picker";
+import { setBook, applyHelps } from "./helps";
+import { setTestament } from "./study";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -23,7 +25,10 @@ function go (b: Book, c: number) {
   hidePanel ();
   placeBtn.textContent = `${b.name} ${c}`;
   document.title = `${b.name} ${c} - COTEXT`;
+  setBook (db, b);
+  setTestament (b.testament);
   showChapter (chapterEl, b, c, chapterWords (db, b.id, c), (w, el) => showPanel (db, w, el));
+  applyHelps ();
   window.scrollTo (0, 0);
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
