@@ -141,3 +141,6 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
 /* The strip under the clock (the top safe area) painted solid in the page's colour, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid colour shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
+
+/* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
+.pill .ico { width: 1.1em; height: 1.1em; display: block; }
