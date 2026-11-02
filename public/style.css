@@ -87,9 +87,12 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
    while it's open (--above: the panel's height); the word being spoken lit, the verse number tapped in the qal colour. */
 /* The play bar and the word's panel: in the page's column under the text (body: heading, main, play bar, panel), not
    over it - the text area ends above them, so nothing covers the text; the panel opening pushes the play bar up. */
-#playBar { flex: none; display: flex; justify-content: center; background: var(--bg); border-top: 1px solid var(--line);
-           padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
-#playBar.above { padding-bottom: 8px; }     /* (The panel under it takes the home indicator's room) */
+/* Its size and look the heading's (6 px above and below, the heading's pills, no border), down against the screen's
+   bottom - into the home indicator's room, keeping just clear of the indicator itself. */
+#playBar { flex: none; display: flex; justify-content: center; background: var(--bg);
+           padding: 6px 0 max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px)); }
+#playBar.above { padding-bottom: 6px; }     /* (The panel under it takes the home indicator's room) */
+#playBar .pill { font-size: 18px; line-height: 1; padding: 6px 14px; min-width: 2.4em; }
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], #speakBtn[hidden] { display: none; }
 .w.reading { background: color-mix(in srgb, var(--qal) 28%, transparent); }
 .vnum { cursor: pointer; }
