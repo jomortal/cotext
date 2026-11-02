@@ -137,7 +137,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 #chartBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E"); }
 #guideBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10'/%3E%3C/svg%3E"); }
 
-/* A study screen (not built yet): full screen, ☰ at its top left to move between them. */
+/* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
 #screenMenu { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }
@@ -180,3 +180,40 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #drawerPanel .settings label { display: grid; gap: 4px; font-size: 12px; color: var(--soft); }
 #moreDef { margin-top: 8px; }
 #moreDef[hidden] { display: none; }
+
+/* A verb form's pattern (paradigm.ts; the Verb chart and the paradigm cards): the root's letters (Hebrew) or the stem
+   (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the Qal's
+   colour. */
+.pattern { display: inline-flex; align-items: flex-end; gap: 2px; font-size: 30px; line-height: 1.2; white-space: nowrap; }
+.pattern.he { font-family: var(--heb); direction: rtl; padding: .45em 0 .6em; }     /* (Room for the squares' vowels, over and under) */
+.pattern.he.filled { padding: 0; }
+.pattern.gr { font-family: var(--grk); }
+.pattern.filled { display: inline; }
+.slot { display: inline-grid; place-items: end center; width: .72em; height: 1.05em; border: 2px dotted var(--soft); border-radius: 4px;
+        margin: 0 1px; line-height: 1; position: relative; box-sizing: border-box; }
+.slot.wide { width: 1.6em; }
+.slot.small { width: .5em; height: .8em; }
+.slot .v { position: absolute; bottom: -.62em; left: 0; right: 0; text-align: center; }
+.slot .v.above { bottom: auto; top: -.55em; }
+.rootL { color: var(--qal); }
+.heWord { font-family: var(--heb); font-size: 1.3em; font-weight: 400; }
+.grWord { font-family: var(--grk); font-size: 1.15em; font-weight: 400; }
+
+/* The Verb chart (chart.ts): its pickers, then the tables - scrolling sideways on a narrow screen (the screen itself
+   never wider than the window). */
+#screen .pickerCard { grid-template-columns: minmax(0, 1fr); }
+#screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.chartPick { display: flex; flex-wrap: wrap; gap: 10px; }
+.chartPick label { display: grid; gap: 4px; font-size: 12px; color: var(--soft); flex: 1 1 140px; min-width: 0; }
+.chartPick .choose { width: 100%; box-sizing: border-box; }
+.chartScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+table.chart { border-collapse: collapse; width: 100%; }
+table.chart th { padding: 6px; font-size: 11px; color: var(--soft); font-weight: 600; letter-spacing: .04em; }
+table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: 1px solid var(--line); }
+table.chart th.parse { color: var(--fg); font-size: 12px; }
+table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--line); text-align: center; vertical-align: top; min-width: 6.5em; }
+table.chart .cForm { min-height: 1.5em; }
+table.chart .parse { font-size: 12px; font-weight: 700; letter-spacing: .02em; margin-top: 6px; }
+table.chart .mean { font-size: 12px; color: var(--soft); }
+table.chart .count { display: block; font-size: 11px; color: var(--soft); }
+table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
