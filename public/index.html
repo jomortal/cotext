@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, the word's
+<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, ▶ (read aloud), the word's
      panel, the passage picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
@@ -31,6 +31,10 @@
     <button class="pill" id="mine" aria-pressed="true">My selections</button>
     <button class="pill" id="scope" aria-pressed="false">Frequency: whole OT</button>
     <label class="freq" for="freq"><span id="freqOut"></span><input id="freq" type="range" min="0" max="100" value="0"></label>
+    <span class="bar" id="audioSettings">
+      <label class="freq" for="voicePick">Voice<select id="voicePick"></select></label>
+      <label class="freq" for="rate">Reading speed <b id="rateOut"></b><input id="rate" type="range" min="30" max="120" value="80"></label>
+    </span>
   </div>
 </header>
 <main>
@@ -38,8 +42,9 @@
   <div id="chapter"></div>
   <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).</p>
 </main>
+<button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button>
 <div id="sheet" hidden>
-  <div class="top"><span class="lemma" id="lemma"></span><span class="acts"><button class="pill" id="knowIt">I know this word</button><button class="pill" id="close">Close</button></span></div>
+  <div class="top"><span class="lemma" id="lemma"></span><span class="acts"><button class="pill icon" id="speakBtn" aria-label="Say the word">🔊</button><button class="pill" id="knowIt">I know this word</button><button class="pill" id="close">Close</button></span></div>
   <div class="full" id="full"></div>
   <div class="src" id="src"></div>
   <div class="def" id="def"></div>

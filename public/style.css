@@ -83,6 +83,17 @@ body.showAll .w.known .gloss, body.showAll .w.known .parse { visibility: visible
 .stem-hophal .parse { color: var(--hophal); }
 .stem-other .parse { color: var(--other); }
 
+/* Reading aloud (audio.ts): ▶ fixed at the bottom, centred, clear of the home indicator - above the word's panel
+   while it's open (--above: the panel's height); the word being spoken lit, the verse number tapped in the qal colour. */
+#playBtn { position: fixed; left: 50%; transform: translateX(-50%); z-index: 11; background: var(--bg);
+           bottom: calc(max(var(--above, 0px), env(safe-area-inset-bottom, 0px)) + 12px); box-shadow: 0 2px 10px rgba(0,0,0,.15); }
+#playBtn[hidden], #audioSettings[hidden], #speakBtn[hidden] { display: none; }
+.w.reading { background: color-mix(in srgb, var(--qal) 28%, transparent); }
+.vnum { cursor: pointer; }
+.vnum.playing { color: var(--qal); }
+#voicePick { font: inherit; font-size: 13px; padding: 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); max-width: 100%; }
+#audioSettings { flex: 1 1 100%; }
+
 /* The word's panel: a sheet from the bottom. */
 #sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line);
          box-shadow: 0 -8px 24px rgba(0,0,0,.18); max-height: 55vh; overflow-y: auto; z-index: 10;
