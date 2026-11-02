@@ -54,11 +54,12 @@ function counts (): Counts {
 }
 
 /** The slider's limit: helps hidden at this count and above (Infinity: none). A log curve, so each step of the
- *  slider is the same ratio: 1 the most frequent word's count, 100 two. */
+ *  slider is the same ratio: 1 the most frequent word's count, 99 two; 100 (all the way over) one - every help hidden. */
 function limit (): number {
   if (s.slider <= 0) return Infinity;
+  if (s.slider >= 100) return 1;
   const top = Math.max (2, counts ().sorted[0] ?? 2);
-  return Math.max (2, Math.round (top * Math.pow (2 / top, s.slider / 100)));
+  return Math.max (2, Math.round (top * Math.pow (2 / top, s.slider / 99)));
 }
 
 /** How many lemmas occur at least n times (sorted is high to low: a binary search for the first below n). */
@@ -157,7 +158,7 @@ function updateMenu () {
   scopeBtn.setAttribute ("aria-pressed", String (s.scope === "book"));
   slider.value = String (s.slider);
   const n = limit ();
-  freqOut.innerHTML = n === Infinity ? "Helps for every word"
+  freqOut.innerHTML = n === Infinity ? "Helps for every word" : n === 1 ? "No helps"
     : `Helps hidden for words and forms occurring <b>${n.toLocaleString ()}+</b> times - learn the <b>${wordsAtLeast (n).toLocaleString ()}</b>`
       + ` most common words in ${s.scope === "book" ? book.name : "the " + book.testament} to read them`;
 }
