@@ -1,0 +1,85 @@
+/* COTEXT's look, after the approved mock-ups (design/): warm paper, one serif for each language, a sans for the rest;
+   light and dark from the device's setting. Colours and fonts are tokens here, used by name below. */
+
+@font-face { font-family: "Ezra SIL"; src: url("fonts/EzraSIL.woff") format("woff"); font-display: swap; }
+@font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+/* Verb colours: one per stem group (pipeline/morph.py's STEM_GROUP) - the simple stem (Qal) blue, as in the mock-ups;
+   its passive, the Niphal, the Piel and Pual, the Hithpael, the Hiphil and Hophal each their own; rarer stems "other".
+   Greek verbs all take the Qal's blue (group "verb"). */
+:root {
+  --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: #dedad2;
+  --qal: #2d6cdf; --qal-pass: #5b7fbf; --niphal: #1f8a8a; --piel: #b5462e; --pual: #c0703a; --hithpael: #8a3fa8;
+  --hiphil: #2e8a3e; --hophal: #6f8f2a; --other: #8a6d1f;
+  --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28;
+  --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
+  --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28;
+  --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
+  --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark }
+
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%;
+       padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40vh max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font-size: 17px; margin: 0; }
+p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
+.credit { margin-top: 24px; font-size: 11px; }
+
+/* The heading: ‹ passage › */
+.head { display: flex; justify-content: space-between; align-items: center; gap: 8px; position: sticky; top: 0;
+        background: var(--bg); padding: 6px 0; z-index: 5; }
+.head .pill { font-size: 18px; line-height: 1; padding: 6px 14px; }
+.head .place { font-size: 15px; font-weight: 600; flex: 0 1 auto; }
+
+.pill { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--fg);
+        border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.pill[aria-pressed="true"] { border-color: var(--qal); color: var(--qal); }
+
+/* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
+.ref { font-size: 12px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 8px; }
+.verse { display: flex; flex-wrap: wrap; gap: 14px 12px; }
+.verse.he { direction: rtl; }
+.verse.gr { direction: ltr; }
+.w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: 8px; padding: 2px 4px; }
+.w.on { background: color-mix(in srgb, var(--qal) 14%, transparent); }
+.orig { font-size: 28px; line-height: 1.5; }
+.he .orig { font-family: var(--heb); }
+.gr .orig { font-family: var(--grk); font-size: 26px; }
+.gloss { font-size: 13px; color: var(--soft); direction: ltr; text-align: center; }
+.parse { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
+.stem-qal .parse, .stem-verb .parse { color: var(--qal); }
+.stem-qal-pass .parse { color: var(--qal-pass); }
+.stem-niphal .parse { color: var(--niphal); }
+.stem-piel .parse { color: var(--piel); }
+.stem-pual .parse { color: var(--pual); }
+.stem-hithpael .parse { color: var(--hithpael); }
+.stem-hiphil .parse { color: var(--hiphil); }
+.stem-hophal .parse { color: var(--hophal); }
+.stem-other .parse { color: var(--other); }
+
+/* The word's panel: a sheet from the bottom. */
+#sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line);
+         box-shadow: 0 -8px 24px rgba(0,0,0,.18); max-height: 55vh; overflow-y: auto; z-index: 10;
+         padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+#sheet[hidden], #picker[hidden], #status[hidden] { display: none; }
+#sheet > * { max-width: 760px; margin-inline: auto; }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+#sheet .lemma { font-family: var(--grk); font-size: 30px; }
+#sheet .lemma[dir="rtl"] { font-family: var(--heb); }
+#sheet .full { font-weight: 600; font-size: 15px; margin-top: 4px; }
+.src { font-size: 11px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 12px; }
+#sheet .def { font-size: 14px; line-height: 1.55; margin-top: 4px; font-family: var(--ui); }
+#sheet .def b { font-family: var(--grk); }
+
+/* The passage picker: full screen, books then chapters. */
+#picker { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 20;
+          padding: calc(18px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+.pickerCard { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices .pill { font-size: 14px; padding: 7px 14px; }
+.choices.numbers .pill { min-width: 3em; }

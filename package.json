@@ -1,0 +1,13 @@
+{
+  "name": "cotext",
+  "private": true,
+  "description": "COTEXT - a Bible study app for students of Biblical Hebrew and Greek",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "python3 serve.py"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
