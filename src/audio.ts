@@ -10,15 +10,15 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - VOICE and READING SPEED (0.1x - 1.2x - the slowest the speech engine takes - and, slower still, a pause between words of up to
-// 2 s at the slider's bottom: read a word at a time) in the ⋯ menu, kept on the device: a voice per testament, the device's
+// - VOICE and READING SPEED (0.1x - 1x) and SPACE BETWEEN WORDS (0 - 2 s; 0 reads normally, a verse at a time - any space reads
+// a word at a time with that pause) in the ⋯ menu, kept on the device: a voice per testament, the device's
 //   voices for that testament's language first, starred.
 
 const KEY = "cotext.audio";
 const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.speechSynthesis : undefined;
 
 interface Settings {
-  rate: number;                                  // 0.1 - 1.2
+  rate: number;                                  // 0.1 - 1
   gap?: number;                                  // seconds between words (0: none; then read a word at a time)
   voice: { OT?: string; NT?: string };           // voiceURI chosen per testament (none: the first of its language)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
@@ -246,18 +246,17 @@ function fillVoices () {
   if (v) voicePick.value = v.voiceURI;
 }
 voicePick.addEventListener ("change", () => { s.voice[testament] = voicePick.value; save (); stopReading (); });
-// The slider: 10 - 120 the speed (0.1x - 1.2x); below 10, the slowest speed and a pause between words, 0.2 s a step (2 s at 0).
+// READING SPEED: 10 - 100 is 0.1x - 1x. SPACE BETWEEN WORDS: 0 - 20 is 0 - 2 s (0: none, read normally).
+const gapIn = document.getElementById ("gap") as HTMLInputElement, gapOut = document.getElementById ("gapOut")!;
 const showRate = () => {
-  const gap = s.gap ?? 0;
-  rate.value = String (gap > 0 ? Math.round (10 - gap / 0.2) : Math.round (s.rate * 100));
-  rateOut.textContent = gap > 0 ? `0.1x + ${gap.toFixed (1)} s a word` : s.rate.toFixed (1) + "x";
+  s.rate = Math.min (1, Math.max (0.1, s.rate));
+  rate.value = String (Math.round (s.rate * 100));
+  rateOut.textContent = s.rate.toFixed (1) + "x";
+  gapIn.value = String (Math.round ((s.gap ?? 0) * 10));
+  gapOut.textContent = (s.gap ?? 0) > 0 ? (s.gap ?? 0).toFixed (1) + " s" : "none";
 };
-rate.addEventListener ("input", () => {
-  const v = Number (rate.value);
-  s.rate = Math.max (0.1, v / 100);
-  s.gap = v < 10 ? (10 - v) * 0.2 : 0;
-  save (); showRate ();
-});
+rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); });
+gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); });
 showRate ();
 
 if (synth) { fillVoices (); synth.addEventListener ("voiceschanged", fillVoices); }
