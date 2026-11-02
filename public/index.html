@@ -16,24 +16,24 @@
 <body>
 <!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, the word's
      panel, the passage picker, the study drawer and its screens. -->
+<header class="head">
+  <div class="row">
+    <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
+    <span class="nav">
+      <button class="pill" id="prev" aria-label="Previous chapter">‹</button>
+      <button class="pill place" id="place">COTEXT</button>
+      <button class="pill" id="next" aria-label="Next chapter">›</button>
+    </span>
+    <button class="pill icon" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Helps">⋯</button>
+  </div>
+  <div class="bar" id="options" hidden>
+    <button class="pill" id="showAll" aria-pressed="false">Show helps</button>
+    <button class="pill" id="mine" aria-pressed="true">My selections</button>
+    <button class="pill" id="scope" aria-pressed="false">Frequency: whole OT</button>
+    <label class="freq" for="freq"><span id="freqOut"></span><input id="freq" type="range" min="0" max="100" value="0"></label>
+  </div>
+</header>
 <main>
-  <header class="head">
-    <div class="row">
-      <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
-      <span class="nav">
-        <button class="pill" id="prev" aria-label="Previous chapter">‹</button>
-        <button class="pill place" id="place">COTEXT</button>
-        <button class="pill" id="next" aria-label="Next chapter">›</button>
-      </span>
-      <button class="pill icon" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Helps">⋯</button>
-    </div>
-    <div class="bar" id="options" hidden>
-      <button class="pill" id="showAll" aria-pressed="false">Show helps</button>
-      <button class="pill" id="mine" aria-pressed="true">My selections</button>
-      <button class="pill" id="scope" aria-pressed="false">Frequency: whole OT</button>
-      <label class="freq" for="freq"><span id="freqOut"></span><input id="freq" type="range" min="0" max="100" value="0"></label>
-    </div>
-  </header>
   <p id="status">Loading the text…</p>
   <div id="chapter"></div>
   <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).</p>
