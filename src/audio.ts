@@ -10,9 +10,9 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept, maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - VOICE and READING SPEED (0.1x - 1x) and SPACE BETWEEN WORDS (0 - 2 s; 0 reads normally, a verse at a time - any space reads
-// a word at a time with that pause) in the ⋯ menu, kept on the device: a voice per testament, the device's
-//   voices for that testament's language first, starred.
+// - The device's voice for the language (Hebrew he, Greek el - one each). READING SPEED (0.1x - 1x) and SPACE BETWEEN
+//   WORDS (0 - 2 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
+//   menu, kept on the device.
 
 const KEY = "cotext.audio";
 const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.speechSynthesis : undefined;
@@ -20,10 +20,9 @@ const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.
 interface Settings {
   rate: number;                                  // 0.1 - 1
   gap?: number;                                  // seconds between words (0: none; then read a word at a time)
-  voice: { OT?: string; NT?: string };           // voiceURI chosen per testament (none: the first of its language)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
 }
-const s: Settings = { rate: 0.8, voice: {}, noBoundary: [] };
+const s: Settings = { rate: 0.8, noBoundary: [] };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } catch { /* private mode: not kept */ } };
 
@@ -69,7 +68,7 @@ function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[]
 
 function voice (): SpeechSynthesisVoice | undefined {
   const all = synth?.getVoices () ?? [];
-  return all.find ((v) => v.voiceURI === s.voice[testament]) ?? all.find ((v) => v.lang.startsWith (lang ()));
+  return all.find ((v) => v.lang.startsWith (lang ()));     // (The device's voice for the language: Hebrew or Greek)
 }
 
 function utterance (text: string): SpeechSynthesisUtterance {
@@ -202,7 +201,7 @@ export function sayWord (wordEl: HTMLElement) {
 /** The testament shown: voices and their language follow it. Called on each chapter shown (reading stops). */
 export function setAudioTestament (t: "OT" | "NT") {
   stopReading ();
-  if (t !== testament) { testament = t; fillVoices (); }
+  if (t !== testament) testament = t;
 }
 
 // ▶: the chapter from the first verse whose line shows at the top of the view; a verse number: that verse.
@@ -230,22 +229,10 @@ const place = () => { playBtn.style.setProperty ("--above", sheet.hidden ? "0px"
 new ResizeObserver (place).observe (sheet);
 new MutationObserver (place).observe (sheet, { attributes: true, attributeFilter: ["hidden"] });
 
-// The ⋯ menu's VOICE and READING SPEED.
-const voicePick = document.getElementById ("voicePick") as HTMLSelectElement;
+// The ⋯ menu's READING SPEED and SPACE BETWEEN WORDS.
 const rate = document.getElementById ("rate") as HTMLInputElement;
 const rateOut = document.getElementById ("rateOut")!;
 
-function fillVoices () {
-  const l = lang ();
-  const all = (synth?.getVoices () ?? []).slice ().sort ((a, b) =>
-    Number (b.lang.startsWith (l)) - Number (a.lang.startsWith (l)) || a.lang.localeCompare (b.lang) || a.name.localeCompare (b.name));
-  voicePick.textContent = "";
-  for (const v of all) voicePick.append (new Option (`${v.lang.startsWith (l) ? "★ " : ""}${v.name} (${v.lang})`, v.voiceURI));
-  if (! all.length) voicePick.append (new Option ("No voices found", ""));
-  const v = voice ();
-  if (v) voicePick.value = v.voiceURI;
-}
-voicePick.addEventListener ("change", () => { s.voice[testament] = voicePick.value; save (); stopReading (); });
 // READING SPEED: 10 - 100 is 0.1x - 1x. SPACE BETWEEN WORDS: 0 - 20 is 0 - 2 s (0: none, read normally).
 const gapIn = document.getElementById ("gap") as HTMLInputElement, gapOut = document.getElementById ("gapOut")!;
 const showRate = () => {
@@ -259,5 +246,4 @@ rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save
 gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); });
 showRate ();
 
-if (synth) { fillVoices (); synth.addEventListener ("voiceschanged", fillVoices); }
-else for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
+if (! synth) for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
