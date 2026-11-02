@@ -82,49 +82,64 @@ document.getElementById ("sliderCards")!.addEventListener ("click", () => {
   openSliderDeck ();
 });
 
-function draw (body: HTMLElement) {
+/** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / I KNOW THIS WORD). */
+function lists () {
   const t = currentTestament (), prefix = t === "OT" ? "H" : "G";
   const known = knownWords ().filter ((k) => k.startsWith (prefix));
   const learn = Object.keys (learning).filter ((k) => k.startsWith (prefix) && ! known.includes (k));
-  const slider = sliderWords ();
-  const ranked = toLearn (prefix, known), lists = Math.ceil (ranked.length / LIST);
-  pickedList[t] = Math.min (pickedList[t], Math.max (0, lists - 1));
+  const ranked = toLearn (prefix, known);
   const d = details ([...learn, ...known]);
   const byCount = (a: string, b: string) => (d.get (b)?.count ?? 0) - (d.get (a)?.count ?? 0);
-  const list = (keys: string[]) => keys.filter ((k) => d.has (k)).sort (byCount).map ((k) => {
-    const w = d.get (k)!;
-    return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
-  }).join ("") || "<p>None yet.</p>";
-  body.innerHTML = `<p><b>${learn.length.toLocaleString ()}</b> learning · <b>${known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden. On a card, Remove from list takes it off that list; on a frequency list's card, I know this word makes it known.</p>
-    <div class="chartPick"><label>Frequency lists<select class="choose" id="freqPick">${Array.from ({ length: lists }, (_, i) =>
-      `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, ranked.length).toLocaleString ()}</option>`).join ("")}</select></label>
+  return { t, known: known.filter ((k) => d.has (k)).sort (byCount), learn: learn.filter ((k) => d.has (k)).sort (byCount), ranked, d,
+           slider: sliderWords (), count: Math.ceil (ranked.length / LIST) };
+}
+
+function draw (body: HTMLElement) {
+  const t = currentTestament ();
+  body.innerHTML = `<p class="vocabCount"></p>
+    <div class="chartPick"><label>Frequency lists<select class="choose" id="freqPick"></select></label>
       <button class="pill" data-d="freq">Flashcards for this list</button></div>
     <div class="bar"><button class="pill" data-d="learn">Learning words as flashcards</button><button class="pill" data-d="known">Known words as flashcards</button>
-      <button class="pill" data-d="slider">Flashcards for the slider's ${slider.length.toLocaleString ()} words</button></div>
+      <button class="pill" data-d="slider" id="sliderDeck"></button></div>
     <div class="deck"></div>
-    <div class="ref">Learning</div>${list (learn)}
-    <div class="ref">Known</div>${list (known)}`;
+    <div class="vocabLists"></div>`;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
+  const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!;
+  // Everything but the deck shown, from the lists as they are now: a card made known moves into Known at once, and the
+  // frequency lists move up (the deck open keeps its cards until it's opened again).
+  const refresh = () => {
+    const l = lists ();
+    pickedList[t] = Math.min (pickedList[t], Math.max (0, l.count - 1));
+    body.querySelector (".vocabCount")!.innerHTML = `<b>${l.learn.length.toLocaleString ()}</b> learning · <b>${l.known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden. On a card, Remove from list takes it off that list; on a frequency list's card, I know this word makes it known.`;
+    freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
+      `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
+    freqPick.value = String (pickedList[t]);
+    body.querySelector ("#sliderDeck")!.textContent = `Flashcards for the slider's ${l.slider.length.toLocaleString ()} words`;
+    const rows = (keys: string[]) => keys.map ((k) => {
+      const w = l.d.get (k)!;
+      return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
+    }).join ("") || "<p>None yet.</p>";
+    body.querySelector (".vocabLists")!.innerHTML = `<div class="ref">Learning</div>${rows (l.learn)}<div class="ref">Known</div>${rows (l.known)}`;
+  };
   const open = (which: string) => {
     // REMOVE FROM LIST: off the list the deck is - learning (off My vocab), known (no longer known: its helps back), the
     // slider's (known: its gloss stays hidden, as the slider has it, and it leaves this deck); a frequency list's card
-    // I KNOW THIS WORD: known, into the known stack (the lists move up when next drawn).
+    // I KNOW THIS WORD: known, into the known stack.
     const remove = (c: WordCard) => {
-      if (which === "freq") { delete learning[c.strong]; save (); setKnown (c.strong); }
-      else if (which === "learn") { delete learning[c.strong]; save (); }
+      if (which === "learn") { delete learning[c.strong]; save (); }
       else if (which === "known") unsetKnown (c.strong);
       else { delete learning[c.strong]; save (); setKnown (c.strong); }
+      refresh ();
     };
-    const cards = which === "learn" ? cardsFor ([...learn].sort (byCount)) : which === "known" ? cardsFor ([...known].sort (byCount))
-      : which === "freq" ? cardsFor (ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST))
-      : cardsFor (slider.map ((x) => x[0]));
+    const l = lists ();
+    const cards = cardsFor (which === "learn" ? l.learn : which === "known" ? l.known
+      : which === "freq" ? l.ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST) : l.slider.map ((x) => x[0]));
     if (! cards.length) { deckEl.innerHTML = `<p>${which === "slider" ? "The slider hides no words: move it in ⋯ first." : "No words here yet."}</p>`; return; }
     showDeck (deckEl, cards, remove, which === "freq" ? "I know this word" : undefined);
   };
-  const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!;
-  freqPick.value = String (pickedList[t]);
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); open ("freq"); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-d]")) b.addEventListener ("click", () => open (b.dataset.d!));
+  refresh ();
   if (startSlider) { startSlider = false; open ("slider"); }
 }
 
