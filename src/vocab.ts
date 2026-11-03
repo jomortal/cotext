@@ -92,7 +92,7 @@ function draw (body: HTMLElement) {
   const t = currentTestament ();
   body.innerHTML = `<div class="bar"><button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
       <button class="pill" data-list="freq">Words by frequency</button></div>
-    <div class="chartPick" id="freqRow"><label>Words<select class="choose" id="freqPick"></select></label></div>
+    <div class="chartPick" id="freqRow"><label><select class="choose" id="freqPick" aria-label="Words by frequency"></select></label></div>
     <div class="deck"></div>
     <div class="bar"><button class="pill" id="reverse">English to ${t === "OT" ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
     <div class="vocabLists"></div>`;
