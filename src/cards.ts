@@ -19,7 +19,7 @@ export interface Card { front: string; back: string; /* HTML */ }
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
   const first = [...cards];
   let deck = [...cards], at = 0;
-  el.innerHTML = `<div class="card" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
+  el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
     <div class="bar cardBar"><button class="pill" data-k="back">Back</button><span class="src cardCount"></span><button class="pill" data-k="next">Next</button></div>
     <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button><button class="pill" data-k="remove">${removeLabel}</button></div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
