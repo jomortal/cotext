@@ -5,7 +5,7 @@
 // per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
 //
 // The verb picker fills it: "Pattern" (dotted squares), a model verb (the templates filled: paradigm.ts), the verbs of
-// the chapter shown, or any verb typed (its consonants or letters, matched to the lexicon's dictionary forms). A verb
+// the chapter shown, or the word's own (its panel's Verb chart). A verb
 // from the text shows its actual forms as the text has them: per cell the commonest spelling of that lemma (every
 // sense of its Strong's number) with exactly that code (no prefix or suffix), accents and punctuation stripped, and
 // how often that code occurs; where it never does, the form filled in from the verb's root by the regular pattern
@@ -82,34 +82,6 @@ function stemCounts (base: string): number[] {
 
 // ---- Finding verbs ----
 
-let lexCache: { OT: [string, string, string][]; NT: [string, string, string][] } | null = null;     // [base, lemma, its letters]
-let verbBases: Set<string> | null = null;
-
-/** A dictionary form reduced to its letters, for matching what's typed: Hebrew without points (final letters as the
- *  others), Greek without accents or breathings, lower case, σ for ς. */
-const letters = (s: string) => s.normalize ("NFD").replace (/[֑-ׇ\p{M}]/gu, "").toLowerCase ()
-  .replace (/[ךםןףץς]/g, (c) => ({ ך: "כ", ם: "מ", ן: "נ", ף: "פ", ץ: "צ", ς: "σ" } as Record<string, string>)[c]).replace (/\s/g, "");
-
-function verbsMatching (typed: string, t: "OT" | "NT"): [string, string, string][] {
-  if (! verbBases) {
-    verbBases = new Set (db.all (`SELECT DISTINCT f.strong FROM form_freq f JOIN parsings p ON p.code = f.code
-                                  WHERE f.book = 0 AND p.stem != ''`).map ((r) => baseOf (String (r.strong))));
-  }
-  if (! lexCache) {
-    lexCache = { OT: [], NT: [] };
-    const seen = new Set<string> ();
-    for (const r of db.all ("SELECT strong, lemma FROM lexicon ORDER BY strong")) {
-      const base = baseOf (String (r.strong));
-      if (seen.has (base) || ! verbBases.has (base)) continue;
-      seen.add (base);
-      lexCache[base.startsWith ("H") ? "OT" : "NT"].push ([base, String (r.lemma), letters (String (r.lemma))]);
-    }
-  }
-  const want = letters (typed);
-  if (! want) return [];
-  const list = lexCache[t];
-  return [...list.filter ((v) => v[2] === want), ...list.filter ((v) => v[2] !== want && v[2].startsWith (want))].slice (0, 8);
-}
 
 function textVerb (base: string): Verb {
   const [lex] = db.all ("SELECT lemma, concise, gloss FROM lexicon WHERE strong = ? OR strong GLOB ? ORDER BY strong LIMIT 1", [base, base + "[A-Z]"]);
@@ -217,18 +189,13 @@ function render (body: HTMLElement) {
       `<button class="pill" data-stem="${i}" aria-pressed="${i === st.stem}">${n}${counts ? ` (${counts[i].toLocaleString ()})` : ""}</button>`).join ("")}</div>
     <div class="chartPick">
       <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
-      <label>Type a verb<input class="choose" id="chartType" type="text" lang="${hebrew ? "he" : "el"}" dir="${hebrew ? "rtl" : "ltr"}"
-        autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${hebrew ? "הלך" : "λέγω"}"></label>
     </div>
-    <div class="choices" id="chartFound"></div>
     <p>${verb.kind === "text"
       ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it.`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
     ${hebrew ? hebrewTables (verb, st.stem) : greekTables (verb, st.stem)}`;
   const verbPick = body.querySelector<HTMLSelectElement> ("#chartVerb")!;
-  const typed = body.querySelector<HTMLInputElement> ("#chartType")!;
-  const found = body.querySelector<HTMLElement> ("#chartFound")!;
   verbPick.value = value;
   // The stems (or tenses and voices) a row of buttons, the one shown lit; a tap shows that one.
   for (const b of body.querySelectorAll<HTMLElement> ("[data-stem]")) b.addEventListener ("click", () => { st.stem = Number (b.dataset.stem); render (body); });
@@ -236,18 +203,6 @@ function render (body: HTMLElement) {
     const v = verbPick.value;
     st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : textVerb (v.slice (1));
     render (body);
-  });
-  const pick = (base: string) => { st.verb = textVerb (base); render (body); };
-  typed.addEventListener ("input", () => {
-    const hits = verbsMatching (typed.value, t);
-    found.innerHTML = hits.map (([b, lemma]) => `<button class="pill" data-base="${b}"><span class="${hebrew ? "he" : "gr"}Word">${esc (lemma)}</span></button>`).join ("")
-      || (typed.value.trim () ? `<p>No verb found.</p>` : "");
-    for (const btn of found.querySelectorAll<HTMLElement> ("[data-base]")) btn.addEventListener ("click", () => pick (btn.dataset.base!));
-  });
-  typed.addEventListener ("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    const [hit] = verbsMatching (typed.value, t);
-    if (hit) pick (hit[0]);
   });
 }
 
