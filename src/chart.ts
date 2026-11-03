@@ -1,8 +1,8 @@
 // The Verb chart (☰ > Verb chart): one stem's forms (Hebrew) or one tense and voice's (Greek) in one column down the
 // page, a heading for each group and a row per form - Hebrew: perfect, imperfect, wayyiqtol and imperative (the 2nd
 // person's; none for the Pual and Hophal), each a row per person / gender / number, then the participles (and the
-// Qal's passive one) and the infinitives; Greek: indicative, subjunctive and imperative where the tense has them, a row
-// per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
+// Qal's passive one) and the infinitives; Greek (picked by a row each for tense, voice and mood - one mood, or all):
+// indicative, subjunctive and imperative where the tense has them, a row per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
 //
 // The verb picker fills it: "Pattern" (dotted squares), a model verb (the templates filled: paradigm.ts), the verbs of
 // the chapter shown, or the word's own (its panel's Verb chart). A verb
