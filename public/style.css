@@ -10,7 +10,7 @@
    Greek verbs all take the Qal's blue (group "verb"). */
 :root {
   --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: transparent;     /* (Borders and dividing lines: none shown, the user's choice - transparent, so nothing moves) */
-  --edge: #dedad2;     /* (The borders kept: flashcards and the menus - ⋯, ☰, the pickers and their lists) */
+  --edge: #dedad2;     /* (The borders kept: flashcards, the Verb chart and the menus - ⋯, ☰, the pickers and their lists) */
   --qal: #2d6cdf; --qal-pass: #5b7fbf; --niphal: #1f8a8a; --piel: #b5462e; --pual: #c0703a; --hithpael: #8a3fa8;
   --hiphil: #2e8a3e; --hophal: #6f8f2a; --other: #8a6d1f;
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
@@ -281,10 +281,10 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .chartScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
 table.chart { border-collapse: collapse; width: 100%; }
 table.chart th { padding: 6px; font-size: 11px; color: var(--soft); font-weight: 600; letter-spacing: .04em; }
-table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: 1px solid var(--line); }
+table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: 1px solid var(--edge); }
 table.chart th.parse { color: var(--fg); font-size: 12px; }
 table.chart th.group { text-align: left; color: var(--fg); font-size: 12px; letter-spacing: .08em; padding: 18px 6px 6px; border-top: 0; }     /* (Each group's heading: PERFECT, PARTICIPLE...) */
-table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--line); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
+table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--edge); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
 table.chart .cForm { min-height: 1.5em; }
 table.chart .parse { font-size: 12px; font-weight: 700; letter-spacing: .02em; margin-top: 6px; }
 table.chart .mean { font-size: 12px; color: var(--soft); }
