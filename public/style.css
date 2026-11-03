@@ -115,13 +115,13 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 /* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
    never over the text;
    at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
-   least a third (main's min-height); its picker and Close, the verse, the notes (a grammar section's look:
+   least a third (main's min-height); its picker and Close (frozen at the top), the verse, the notes (a grammar section's look:
    .gBody), the source's credit. The home indicator's room is its own: it's always the last. */
 #notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;
          padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
-#notes .top { align-items: center; }
+#notes .top { align-items: center; position: sticky; top: -12px; z-index: 2; background: var(--bg); margin-top: -12px; padding: 12px 0 8px; }     /* (Frozen: the picker and Close stay at the top while the notes scroll; -12px the panel's own top padding) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 10px; }
