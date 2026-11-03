@@ -5,7 +5,7 @@
 //   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
 // - a word's panel flips one word by hand: "I know this word" hides its gloss everywhere (its parsing still by the
 //   form rule above), "Show helps" shows both, on top of the slider;
-// - MY SELECTIONS off ignores those hand choices (kept, for turning back on); SHOW HELPS shows every hidden help, faded.
+// - MY SELECTIONS off ignores those hand choices (kept, for turning back on).
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
 
@@ -17,7 +17,6 @@ const KEY = "cotext.helps";
 interface Settings {
   slider: number;                       // how many of the most common words the slider hides: 0 none, 20s up to 1,000
   scope: "whole" | "book";              // frequency counted over the whole testament or the book shown
-  showAll: boolean;                     // SHOW HELPS: hidden helps shown, faded
   mine: boolean;                        // MY SELECTIONS: the hand choices apply
   modes: Record<string, "show" | "hide">;   // hand choices, by Strong's key
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
@@ -26,7 +25,7 @@ interface Settings {
   verbColors?: boolean;                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
 }
 
-const s: Settings = { slider: 0, scope: "whole", showAll: false, mine: true, modes: {} };
+const s: Settings = { slider: 0, scope: "whole", mine: true, modes: {} };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } catch { /* private mode: not kept */ } };
 
@@ -137,7 +136,6 @@ export function applyHelps () {
     el.classList.toggle ("known", isHidden (el.dataset.strong!));
     el.classList.toggle ("knownForm", isFormHidden (el.dataset.strong!, el.dataset.code ?? ""));
   }
-  document.body.classList.toggle ("showAll", s.showAll);
   document.body.classList.toggle ("noGloss", s.gloss === false);
   document.body.classList.toggle ("noParse", s.parse === false);
   document.body.classList.toggle ("showTranslit", s.translit === true);
@@ -154,7 +152,6 @@ function changed () {
 // The ⋯ menu (index.html's #options).
 const optionsBtn = document.getElementById ("optionsBtn")!;
 const options = document.getElementById ("options")!;
-const showAllBtn = document.getElementById ("showAll")!;
 const glossBtn = document.getElementById ("showGloss")!, parseBtn = document.getElementById ("showParse")!;
 const translitBtn = document.getElementById ("showTranslit")!, colorsBtn = document.getElementById ("verbColors")!;
 const mineBtn = document.getElementById ("mine")!;
@@ -163,7 +160,6 @@ const slider = document.getElementById ("freq") as HTMLInputElement;
 const freqOut = document.getElementById ("freqOut")!;
 
 function updateMenu () {
-  showAllBtn.setAttribute ("aria-pressed", String (s.showAll));
   glossBtn.setAttribute ("aria-pressed", String (s.gloss !== false));
   parseBtn.setAttribute ("aria-pressed", String (s.parse !== false));
   translitBtn.setAttribute ("aria-pressed", String (s.translit === true));
@@ -187,7 +183,6 @@ optionsBtn.addEventListener ("click", () => {
   optionsBtn.setAttribute ("aria-expanded", String (open));
   optionsBtn.textContent = open ? "✕" : "⋯";     // ⋯ opens the menu; ✕ while open closes it
 });
-showAllBtn.addEventListener ("click", () => { s.showAll = ! s.showAll; changed (); });
 // INTERLINEAR, PARSING and TRANSLITERATION: each shows or hides that line of every word (the body's noGloss, noParse,
 // showTranslit: style.css), over what the slider and the hand choices hide.
 glossBtn.addEventListener ("click", () => { s.gloss = s.gloss === false; changed (); });
