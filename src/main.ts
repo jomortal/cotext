@@ -11,6 +11,7 @@ import { setBook, applyHelps } from "./helps";
 import { setTestament } from "./study";
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
+import { setFontTestament } from "./fonts";
 import { initChart, setChartPassage } from "./chart";
 import "./cards";     // (Registers the Verb paradigms screen)
 import { initGuide } from "./guide";
@@ -39,6 +40,7 @@ function go (b: Book, c: number) {
   setTestament (b.testament);
   setAudioTestament (b.testament);     // (Reading stops)
   setGrammarTestament (b.testament);
+  setFontTestament (b.testament);
   const words = chapterWords (db, b.id, c);
   setChartPassage (words);     // (The Verb chart offers the chapter's verbs)
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
