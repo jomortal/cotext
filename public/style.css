@@ -20,7 +20,8 @@
      prose read (an entry, a grammar section, a note); l headings and the menus' items (☰, the books and chapters).
      The text itself (the interlinear's words, a card's word) is sized on its own. */
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
-  --fs-icon: 22px;     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
+  --fs-icon: 22px;
+  --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -82,9 +83,9 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 .verse.gr { direction: ltr; }
 .w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: 8px; padding: 2px 4px; }
 .w.on { background: color-mix(in oklch, var(--accent) 14%, transparent); }
-.orig { font-size: 28px; line-height: 1.5; }
+.orig { font-size: var(--word-he); line-height: 1.5; }
 .he .orig { font-family: var(--heb); }
-.gr .orig { font-family: var(--grk); font-size: 26px; }
+.gr .orig { font-family: var(--grk); font-size: var(--word-gr); }
 .gloss { font-size: var(--fs-s); color: var(--soft); direction: ltr; text-align: center; }
 .translit { display: none; font-size: var(--fs-xs); font-style: italic; color: var(--soft); direction: ltr; text-align: center; }
 /* The ⋯ menu's INTERLINEAR, PARSING and TRANSLITERATION (helps.ts): each word's lines shown or not. */
@@ -159,8 +160,8 @@ body.noVerbColors .w .parse { color: inherit; }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-#sheet .lemma { font-family: var(--grk); font-size: 30px; }
-#sheet .lemma[dir="rtl"] { font-family: var(--heb); }
+#sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
+#sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
 #sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; }
 .src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 12px; }
 #sheet .def { font-size: var(--fs-m); line-height: 1.55; margin-top: 4px; font-family: var(--ui); }
