@@ -30,9 +30,26 @@ let testament: "OT" | "NT" = "OT";
 const lang = () => (testament === "OT" ? "he" : "el");
 
 /** The divine name read as a Jewish reader says it: יהוה (with any prefix: לַיהוָה) as אֲדֹנָי, Adonai - or, pointed
- *  with Elohim's hiriq (יֱהוִה, where Adonai stands beside it), as אֱלֹהִים. As written the voice said "Yehovah". */
+ *  with Elohim's hiriq (יֱהוִה, where Adonai stands beside it), as אֱלֹהִים - or as DIVINE NAME picks (below). As written
+ *  the voice said "Yehovah". */
 const NAME = /\u05d9[\u0591-\u05c7]*\u05d4[\u0591-\u05c7]*\u05d5[\u0591-\u05c7]*\u05d4[\u0591-\u05c7]*/g;
-const sayName = (word: string) => word.replace (NAME, (m) => m.includes ("\u05b4") ? "\u05d0\u05b1\u05dc\u05b9\u05d4\u05b4\u05d9\u05dd" : "\u05d0\u05b2\u05d3\u05b9\u05e0\u05b8\u05d9");
+const sayName = (word: string) => word.replace (NAME, (m) => m.includes ("\u05b4") ? "\u05d0\u05b1\u05dc\u05b9\u05d4\u05b4\u05d9\u05dd" : nameSaid ());
+
+// DIVINE NAME (☰ settings): how the name is read aloud - Adonai (the default, as Jewish readers say it), or Yahweh
+// in one of three spellings, to hear which the device's voice says well. Kept on the device.
+const NAME_KEY = "cotext.divineName";
+const NAME_CHOICES: [string, string, string][] = [     // [key, label, what's spoken]
+  ["adonai", "Adonai (אֲדֹנָי)", "\u05d0\u05b2\u05d3\u05b9\u05e0\u05b8\u05d9"],
+  ["yahweh", "Yahweh (יַהְוֶה)", "\u05d9\u05b7\u05d4\u05b0\u05d5\u05b6\u05d4"],
+  ["yahweh2", "Yahweh (יַהוֶה)", "\u05d9\u05b7\u05d4\u05d5\u05b6\u05d4"],
+  ["latin", "Yahweh (in Latin letters)", "Yahweh"]];
+let nameKey = "adonai";
+try { nameKey = localStorage.getItem (NAME_KEY) ?? "adonai"; } catch { /* private mode */ }
+const nameSaid = () => (NAME_CHOICES.find ((c) => c[0] === nameKey) ?? NAME_CHOICES[0])[2];
+const namePick = document.getElementById ("namePick") as HTMLSelectElement;
+for (const [k, l] of NAME_CHOICES) namePick.append (new Option (l, k));
+namePick.value = nameKey;
+namePick.addEventListener ("change", () => { nameKey = namePick.value; try { localStorage.setItem (NAME_KEY, nameKey); } catch { /* private mode */ } });
 
 /** The Hebrew a modern voice reads: accents and marks stripped, vowels kept, maqaf a space - except a word starting
  *  with alef and an "e" vowel (segol, tsere, hataf segol: אֶל, אֶת, אֵין), spoken without its vowels: pointed, the
