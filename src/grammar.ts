@@ -2,7 +2,7 @@
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section opens under the word's info, in the same
 // panel - its heading, the grammar and §, its text - the term bold; HIDE closes it. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
-// GRAMMAR in the word's panel, by the parsing, one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
+// GRAMMAR in the grammar section's box (shown once a term is tapped), one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
 // grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
 
 import type { Db } from "./db";
@@ -27,9 +27,13 @@ document.getElementById ("giClose")!.addEventListener ("click", hideGrammar);
 pick.addEventListener ("change", () => {
   picked[lang] = pick.value;
   try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
-  if (shown) showParsing (...shown);     // (The word's parsing linked again, to the grammar now picked)
+  // The word's parsing linked again to the grammar now picked, and the term open reopened in it (if it has it).
+  const key = openKey;
+  if (shown) showParsing (...shown);
+  if (key) (shown?.[0].querySelector<HTMLElement> (`.term[data-key="${key}"]`))?.click ();
 });
 let shown: Parameters<typeof showParsing> | null = null;     // (The parsing the panel shows: its links follow GRAMMAR)
+let openKey = "";     // (The term whose section is open: "" none)
 
 export function initGrammar (theDb: Db) {
   db = theDb;
@@ -72,6 +76,7 @@ export function showParsing (el: HTMLElement, spelled: string, terms: string | n
     el.append (spelled.slice (at, a));
     const s = document.createElement ("span");
     s.className = "term";
+    s.dataset.key = key;
     s.textContent = spelled.slice (a, b);
     s.addEventListener ("click", () => openSection (g, key, s));
     el.append (s);
@@ -103,6 +108,7 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
     }
   }
   if (! blocks.length) return;
+  openKey = key;
   const name = grammars.find ((g) => g.id === grammar)?.name ?? grammar;
   titleEl.textContent = title;
   secEl.textContent = `${name} ${count > 1 ? "§§" : "§"}${labels.join (", ")}`;
@@ -117,6 +123,7 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
 
 export function hideGrammar () {
   box.hidden = true;
+  openKey = "";
   for (const t of sheet.querySelectorAll (".term.on")) t.classList.remove ("on");
 }
 
