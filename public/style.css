@@ -37,7 +37,8 @@
 html, body { position: fixed; inset: 0; overflow: hidden; }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
-main { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;
+main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto;     /* (The text never less than a third of the screen: the panels below shrink first) */
+       -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
        display: grid; grid-template-columns: minmax(0, 760px); justify-content: center; align-content: start; gap: 14px; }
 h1 { font-size: 17px; margin: 0; }
@@ -121,9 +122,10 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 
 /* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
    never over the text;
-   at most a third of the screen, scrolling; its picker and Close, the verse, the notes (a grammar section's look:
+   at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
+   least a third (main's min-height); its picker and Close, the verse, the notes (a grammar section's look:
    .gBody), the source's credit. The home indicator's room is its own: it's always the last. */
-#notes { flex: none; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 36vh; max-height: 36dvh; overflow-y: auto;
+#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;
          padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
@@ -139,7 +141,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 #notes .credit { margin-top: 12px; }
 
 /* The word's panel: a sheet from the bottom. */
-#sheet { position: relative; flex: none; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
+#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
