@@ -19,9 +19,13 @@ Grammars (the word's panel links each term of a parsing to its section):
     edition (Perseus:text:1999.04.0007), Trustees of Tufts University, licensed CC BY-SA 3.0 US
     (https://creativecommons.org/licenses/by-sa/3.0/us/). Its sections as they're kept in COTEXT's database (the
     grammar_sections table, Smyth's rows) are shared under the same licence.
+  - J. Gresham Machen, New Testament Greek for Beginners (Macmillan, 1923): public domain in the United States. Text
+    from the transcription at machengreek.com (made from the Internet Archive's scan), its lessons' text as pinned in
+    pipeline/machen_pins.json; the site's own summaries, drills and answers are not used.
   Changes made by COTEXT: the sections are reduced to paragraphs, bold, italics, tables and footnotes; Smyth's Greek
   is converted from Beta Code to Unicode; Gesenius' Bible references are written out from the transcription's
-  templates; bibliographic tags are dropped.
+  templates; bibliographic tags are dropped; Machen's sections are his lessons' numbered paragraphs, each
+  under its lesson's title.
 
 Commentaries and apparatus (the notes panel; each source its own file, public/data/notes/<id>.db - pipeline/notes.py):
   - unfoldingWord Translation Notes (git.door43.org/unfoldingWord/en_tn, commit bf603342, 2026-11-02), (c) 2022

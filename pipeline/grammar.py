@@ -9,14 +9,24 @@ Sources (digital text, not scans), fetched once into pipeline/downloads/ and pin
   Smyth's A Greek Grammar for Colleges (1920) - the Perseus Digital Library's TEI edition (text 1999.04.0007), CC BY-SA
     3.0 US (Perseus's texts' licence): credit and share-alike apply to the grammar's data in the database. Its Greek
     is Beta Code, turned into Unicode here. Pinned by the file's SHA-256.
+  Machen's New Testament Greek for Beginners (1923) - public domain in the US; the transcription at machengreek.com
+    (from the Internet Archive's scan, Greek in Unicode), one page per lesson (0-33: the Introduction and Lessons
+    I-XXXIII; not the paradigms or vocabularies at the back). Only the book's text is taken - the site's own summary
+    boxes, vocabularies, drills and answers are left out. Pinned by each lesson's text's SHA-256 in machen_pins.json
+    (written by the first fetch). The transcription has OCR slips and leaves out some of the book's tables ("A table
+    appears here in the book").
+
+Not found as clean, open digital text (scans or poor OCR only): Goodwin's Greek Grammar, Nunn's Elements of New
+Testament Greek, Davidson's Introductory Hebrew Grammar, Harper's Elements of Hebrew.
 
 Tables (made by build(), in the main database):
-  grammars          id ('gesenius', 'smyth'), name (as the panel shows it), lang ('H' / 'G'), credit
+  grammars          id ('gesenius', 'smyth', 'machen'), name (as the panel shows it), lang ('H' / 'G'), credit;
+                    its rowid GRAMMARS' order, the order GRAMMAR lists them (a language's first the default)
   grammar_sections  grammar, seq (its order), label (the section's number: '43', '84a', '1889'), heading, body
                     (HTML: <p>, <b>, <i>, <table>/<tr>/<td>, <span class=he|grc> round Hebrew / Greek; nothing else)
-  grammar_terms     key (a parsing term: 'stem:Qal', 'form:perfect'...), grammar, first, last (seqs: the sections
-                    shown), title (the panel's heading) - a key may have several rows (shown in order); a term with
-                    no good section has none
+  grammar_terms     key (a parsing term: 'heb:stem:qal', 'grc:mood:subjunctive'...), grammar, part, first, last
+                    (seqs: the sections shown) - a key may have several rows, its parts (shown in order); a term
+                    with no good section in a grammar has none there
   parsings.terms    (a column added to build_db's table) JSON [[start, end, key], ...]: where each term sits in the
                     spelled-out parsing, in UTF-16 offsets as the browser counts them
 """
@@ -35,6 +45,7 @@ import urllib.request
 HERE = pathlib.Path(__file__).parent
 DOWNLOADS = HERE / "downloads"
 PIN_GESENIUS = HERE / "gesenius_revisions.json"
+PIN_MACHEN = HERE / "machen_pins.json"
 UA = {"User-Agent": "COTEXT-pipeline/0.1 (Bible study app build; one-off fetch)"}
 
 # ---- Fetching ----
@@ -218,6 +229,40 @@ def fetch_smyth():
     return f
 
 
+MACHEN_URL = "https://machengreek.com/lesson/{}/"
+MACHEN_LESSONS = range(34)       # (0: the Introduction; 1-33: Lessons I-XXXIII)
+
+
+def _machen_text(page):
+    """A lesson page's book text: its prose and the notes after it (what's pinned and parsed)."""
+    a = page.index('<div class="prose">')
+    return page[a:page.index("</section>", a)]
+
+
+def fetch_machen():
+    """Each lesson's page into downloads/machen/<n>.html; its text checked against machen_pins.json (written by the
+    first fetch). Returns {lesson: html}."""
+    out = DOWNLOADS / "machen"
+    out.mkdir(parents=True, exist_ok=True)
+    pins = json.loads(PIN_MACHEN.read_text()) if PIN_MACHEN.exists() else {}
+    pages = {}
+    for n in MACHEN_LESSONS:
+        f = out / f"{n}.html"
+        if not f.exists():
+            print(f"downloading Machen, lesson {n}")
+            f.write_bytes(_get(MACHEN_URL.format(n)))
+            time.sleep(1)
+        pages[n] = f.read_text(encoding="utf-8")
+    got = {str(n): hashlib.sha256(_machen_text(p).encode()).hexdigest() for n, p in pages.items()}
+    if not pins:
+        PIN_MACHEN.write_text(json.dumps(got, indent=1) + "\n", encoding="utf-8")
+    elif got != pins:
+        bad = [n for n in got if got[n] != pins.get(n)]
+        raise SystemExit(f"Machen: lessons {', '.join(bad)} not as pinned (machen_pins.json). Delete their files in "
+                         f"{out} to fetch again, or check the new text and its hashes into machen_pins.json.")
+    return pages
+
+
 def _seq_key(label):
     m = re.match(r"(\d+)([a-z]?)", label)
     return (int(m.group(1)), m.group(2))
@@ -256,7 +301,7 @@ def tidy(body):
 class _GesParser(html.parser.HTMLParser):
     """A rendered section as COTEXT's light HTML. Skipped: styles, page numbers, citation brackets and back-links. Each
     margin letter (a, b, c... - what "§43c" points to) kept, bold, as its paragraph's mark; footnotes kept at the end,
-    numbered as their marks in the text."""
+    numbered as their marks in the text. (Machen's lessons go through it too: their tags are a subset.)"""
 
     KEEP = {"p": "p", "i": "i", "em": "i", "b": "b", "strong": "b", "table": "table", "tr": "tr", "td": "td",
             "th": "td", "br": "br", "sup": "sup", "sub": "sub"}
@@ -332,6 +377,38 @@ def gesenius_sections(fetched):
         body = re.sub(r"^([^<].*?)(?=<p>|$)", r"<p>\1</p>", body, count=1)
         body = re.sub(r"<p><b>([a-z]{1,2})</b></p><p>", r"<p><b>\1</b> ", body)
         rows.append((label, heading, mark_scripts(body)))
+    return rows
+
+
+# ---- Machen (machengreek.com's lesson pages) ----
+
+def machen_sections(pages):
+    """[(label, heading, body)] in the book's order: each <article> of a lesson's prose a § (its number its label), the
+    lesson's title its heading. The site's own summary boxes (<details> with no table - lists restating the text) go;
+    a box holding one of the book's tables keeps the table, its caption a line in italics before it. Each footnote
+    goes to the end of its section, numbered as its mark; links to the site's paradigms go."""
+    rows = []
+    for n in MACHEN_LESSONS:
+        page = pages[n]
+        heading = html.unescape(re.sub(r"<[^>]+>", "", re.search(r"<h1>(.*?)</h1>", page, re.S).group(1))).strip()
+        text = _machen_text(page)
+        notes = {}
+        for sec, k, note in re.findall(r'<li id="note-(\d+)-(\d+)"[^>]*>(.*?)</li>', text, re.S):
+            note = re.sub(r'<a class="footnotes__back".*?</a>', "", note, flags=re.S).strip()
+            notes.setdefault(sec, []).append(f"<p><sup>{k}</sup> {re.sub(r'</?p>', '', note)}</p>")
+        for art in re.findall(r'<article class="prose__section">(.*?)</article>', text, re.S):
+            label = re.search(r'<h3 class="prose__number">§(\d+)', art).group(1)
+            art = re.sub(r"<h3 .*?</h3>", "", art, count=1, flags=re.S)
+            art = re.sub(r"<details(?:(?!<table).)*?</details>", "", art, flags=re.S)
+            art = re.sub(r"<summary>.*?</summary>", "", art, flags=re.S)
+            art = re.sub(r"<figcaption>(.*?)</figcaption>", r"<p><i>\1</i></p>", art, flags=re.S)
+            art = re.sub(r'\s*(?:—\s*)?<a [^>]*prose__omitted-link[^>]*>.*?</a>', "", art, flags=re.S)
+            art = re.sub(r'<a class="notemark"[^>]*>(\d+)</a>', r"<sup>\1</sup>", art)
+            p = _GesParser()
+            p.feed(art + "".join(notes.get(label, [])))
+            body = tidy("".join(p.out))
+            body = re.sub(r"\$(?=\d)", "§", body)            # (an OCR slip: "see $51" for "see §51")
+            rows.append((label, heading, mark_scripts(body)))
     return rows
 
 
@@ -631,6 +708,62 @@ SMYTH_MAP = {
     "grc:interrogative": [("2650", "2655")],           # Questions introduced by interrogative particles
 }
 
+# Machen teaches the forms lesson by lesson, so a term often has a part for each lesson that covers it (the present's
+# active, then its middle and passive). Keys with no section of their own here (particle, correlative pronoun) are
+# left out, so the term isn't underlined while Machen is picked.
+MACHEN_MAP = {
+    "grc:tense:present:ind": [("17", "22"), ("109", "113")],         # Present Active Indicative; Present Middle and Passive
+    "grc:tense:imperfect:ind": [("122", "134"), ("137", "144")],     # Imperfect Active Indicative; Imperfect Middle and Passive
+    "grc:tense:future:ind": [("151", "164"), ("200", "200")],        # Future Active and Middle; the future passive
+    "grc:tense:aorist:ind": [("167", "183"), ("187", "194"), ("197", "199")],   # First Aorist; Second Aorist; Aorist Passive
+    "grc:tense:perfect:ind": [("426", "453")],         # The Perfect Tense
+    "grc:tense:pluperfect:ind": [("450", "450")],      # (the pluperfect: too rare to learn)
+    "grc:tense:other": [("233", "233"), ("254", "254"), ("283", "283"), ("299", "299"), ("420", "420")],
+    #     (a tense outside the indicative: the participle's time relative to the leading verb; no time in the
+    #     subjunctive, infinitive or imperative - only the kind of action)
+    "grc:second": [("187", "190"), ("440", "440")],    # Second Aorist (a way of forming the aorist); the second perfect
+    "grc:voice:active": [("17", "17"), ("109", "109")],              # tense, voice and mood; the three voices
+    "grc:voice:middle": [("109", "111")],              # Present Middle and Passive Indicative (the middle's meaning, forms)
+    "grc:voice:passive": [("109", "109"), ("112", "113")],
+    "grc:voice:middle or passive": [("109", "113")],
+    "grc:voice:middle deponent": [("116", "116"), ("164", "164")],   # Deponent Verbs; deponent in one tense only
+    "grc:voice:passive deponent": [("116", "116"), ("207", "207")],  # ...; deponents with passive forms
+    "grc:voice:middle or passive deponent": [("116", "116"), ("207", "208")],
+    "grc:mood:indicative": [("17", "17")],             # tense, voice and mood
+    "grc:mood:subjunctive": [("269", "290")],          # The Subjunctive Mood
+    "grc:mood:optative": [("550", "550")],             # The Optative Mood
+    "grc:mood:imperative": [("404", "423")],           # The Imperative Mood
+    "grc:mood:infinitive": [("295", "305")],           # The Present and Aorist Infinitives; The Articular Infinitive
+    "grc:mood:participle": [("226", "239")],           # Present Participles. Use of Participles
+    "grc:person": [("19", "19")],                      # first, second, third person; singular and plural
+    "grc:number": [("19", "19"), ("27", "27")],        # ...; the noun's gender, number and case
+    "grc:gender": [("27", "28")],                      # ...; the three genders
+    "grc:case:nominative": [("30", "30"), ("34", "34"), ("99", "99")],   # the five cases; subject and object; εἰμί
+    "grc:case:genitive": [("35", "35"), ("82", "82")],               # possession; the case of separation
+    "grc:case:dative": [("36", "36"), ("115", "115")],               # the indirect object; the dative of means
+    "grc:case:accusative": [("34", "34"), ("382", "382")],           # the object; extent of space or time
+    "grc:case:vocative": [("37", "37")],               # direct address
+    "grc:article": [("63", "67")],                     # The Article (its declension, use)
+    "grc:noun": [("25", "30")],                        # The Second Declension (declensions; gender, number, case)
+    "grc:adjective": [("66", "76")],                   # Agreement; Attributive and Predicate Positions; Substantive Use
+    "grc:personal pronoun": [("94", "97")],            # Personal Pronouns
+    "grc:possessive pronoun": [("473", "474")],        # the possessive adjectives ἐμός, σός...
+    "grc:reflexive pronoun": [("337", "342")],         # the reflexive pronouns
+    "grc:reciprocal pronoun": [("343", "343")],        # ἀλλήλων
+    "grc:demonstrative pronoun": [("102", "104")],     # Demonstrative Pronouns
+    "grc:interrogative pronoun": [("385", "387"), ("390", "390")],   # Interrogative Pronouns
+    "grc:indefinite pronoun": [("388", "390")],        # Indefinite Pronouns
+    "grc:relative pronoun": [("395", "401")],          # Relative Pronouns; Conditional Relative Clauses
+    "grc:preposition": [("80", "88")],                 # Prepositions
+    "grc:conjunction": [("91", "91"), ("146", "148")], # postpositive δέ; Uses of καί and οὐδέ
+    "grc:adverb": [("463", "466")],                    # adverbs (forms, comparison; of place with the genitive)
+    "grc:conditional": [("289", "290"), ("551", "551")],             # present and future conditions; Contrary to Fact
+    "grc:comparative": [("456", "462")],               # Comparison of Adjectives; Genitive of Comparison and ἤ
+    "grc:superlative": [("456", "458")],
+    "grc:negative": [("118", "118"), ("256", "256")],  # The Position of οὐ; The Negatives οὐ and μή
+    "grc:interrogative": [("478", "479")],             # questions expecting a negative (μή) or positive (οὐ) answer
+}
+
 HEB_MAIN_STEMS = {"qal", "qal passive", "niphal", "piel", "pual", "hiphil", "hophal", "hithpael"}
 PERFECTS, IMPERFECTS = {"perfect", "weqatal"}, {"imperfect", "wayyiqtol", "weyiqtol", "jussive", "cohortative"}
 
@@ -757,7 +890,7 @@ def term_spans(code, spelled, greek):
         parts = code.split("-")
         mood = parts[1].lstrip("2")[2:3] if parts[0] == "V" and len(parts) > 1 else ""
         rx, rules, ctx = GREEK_RX, GREEK_RULES, {"mood": mood}
-    known = set(GESENIUS_MAP) | set(SMYTH_MAP)
+    known = set(GESENIUS_MAP) | set(SMYTH_MAP) | set(MACHEN_MAP)
     out = []
     for m in rx.finditer(spelled):
         key = rules[int(m.lastgroup[1:])][1]
@@ -772,15 +905,19 @@ GRAMMARS = [
      "text from English Wikisource"),
     ("smyth", "Smyth", "G", "H. W. Smyth, A Greek Grammar for Colleges (1920); Perseus Digital Library, Tufts "
      "University, CC BY-SA 3.0 US"),
+    ("machen", "Machen", "G", "J. Gresham Machen, New Testament Greek for Beginners (1923); public domain; text from "
+     "machengreek.com"),
 ]
+MAPS = {"gesenius": GESENIUS_MAP, "smyth": SMYTH_MAP, "machen": MACHEN_MAP}
 
 
 def build(db, parsings, greek):
     """The grammar tables, and parsings.terms. `parsings`: {source morph code: (code, spelled, stem)}; `greek`: the
     set of those codes that are Greek (TAGNT's)."""
-    sections = {"gesenius": gesenius_sections(fetch_gesenius()), "smyth": smyth_sections(fetch_smyth())}
+    sections = {"gesenius": gesenius_sections(fetch_gesenius()), "smyth": smyth_sections(fetch_smyth()),
+                "machen": machen_sections(fetch_machen())}
     db.executescript("""
-        CREATE TABLE grammars (id TEXT PRIMARY KEY, name TEXT, lang TEXT, credit TEXT) WITHOUT ROWID;
+        CREATE TABLE grammars (id TEXT PRIMARY KEY, name TEXT, lang TEXT, credit TEXT);   -- (rowid: GRAMMARS' order)
         CREATE TABLE grammar_sections (grammar TEXT, seq INTEGER, label TEXT, heading TEXT, body TEXT,
                                        PRIMARY KEY (grammar, seq)) WITHOUT ROWID;
         CREATE TABLE grammar_terms (key TEXT, grammar TEXT, part INTEGER, first INTEGER, last INTEGER,
@@ -792,7 +929,7 @@ def build(db, parsings, greek):
         db.executemany("INSERT INTO grammar_sections VALUES (?,?,?,?,?)",
                        [(g, i, label, h, body) for i, (label, h, body) in enumerate(rows)])
         seq = {label: i for i, (label, _, _) in enumerate(rows)}
-        for key, ranges in {"gesenius": GESENIUS_MAP, "smyth": SMYTH_MAP}[g].items():
+        for key, ranges in MAPS[g].items():
             for part, (a, b) in enumerate(ranges):
                 db.execute("INSERT INTO grammar_terms VALUES (?,?,?,?,?)", (key, g, part, seq[a], seq[b]))
     db.executemany("UPDATE parsings SET terms = ? WHERE morph = ?",

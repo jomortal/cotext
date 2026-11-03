@@ -2,8 +2,8 @@
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section opens under the word's info, in the same
 // panel - its heading, the grammar and §, its text - the term bold; HIDE closes it. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
-// GRAMMAR in the ☰ drawer's settings, one choice per language (Gesenius for Hebrew, Smyth for Greek - the list is the grammars table's, so
-// another grammar there is simply another choice), kept on the device.
+// GRAMMAR in the ☰ drawer's settings, one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
+// grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
 
 import type { Db } from "./db";
 
@@ -31,7 +31,7 @@ pick.addEventListener ("change", () => {
 
 export function initGrammar (theDb: Db) {
   db = theDb;
-  grammars = db.all ("SELECT id, name, lang FROM grammars") as unknown as typeof grammars;
+  grammars = db.all ("SELECT id, name, lang FROM grammars ORDER BY rowid")     /* (the pipeline's order: a language's first is the default) */ as unknown as typeof grammars;
 }
 
 /** The grammar choice follows the text: Hebrew grammars for the OT, Greek for the NT. */

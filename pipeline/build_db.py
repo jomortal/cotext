@@ -19,7 +19,7 @@ Tables:
   form_freq strong, code (COTEXT's parsing code), book (0: the whole OT or NT), count - how often each lemma occurs
             in that exact form (the helps' slider hides a word's parsing by it: src/helps.ts)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
-            (Gesenius, Smyth): made by grammar.py, whose docstring describes them
+            (Gesenius, Smyth, Machen): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table
   words_full  a view: each word with its parsing and lemma.
