@@ -16,6 +16,7 @@ import "./cards";     // (Registers the Verb paradigms screen)
 import { initGuide } from "./guide";
 import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
+import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
 
 const status = document.getElementById ("status")!;
