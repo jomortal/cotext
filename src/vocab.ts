@@ -6,11 +6,11 @@
 // next word moves up, so list 1 is always the 20 most frequent still to learn) -, each list (the word, its concise
 // meaning, how often it occurs in the whole testament), and three decks - the learning words, the known ones, and
 // "Flashcards for these words": the words the ⋯ slider hides in the book or testament (its FREQUENCY), most frequent
-// first (also from ⋯). A card's front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that
+// first. A card's front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that
 // list (on a frequency list's card, I KNOW THIS WORD: made known, into the known stack). Kept on the device.
 
 import type { Db } from "./db";
-import { onScreen, currentTestament, openScreen } from "./study";
+import { onScreen, currentTestament } from "./study";
 import { showDeck, type Card } from "./cards";
 import { knownWords, setKnown, unsetKnown, sliderWords, onHelpsChange } from "./helps";
 
@@ -74,13 +74,6 @@ function toLearn (prefix: string, known: string[]): string[] {
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList = { OT: 0, NT: 0 };   // (The frequency list picked, by testament: 0 the first)
 
-let startSlider = false;
-/** ⋯'s "Flashcards for these words": My vocab opened on that deck. */
-export function openSliderDeck () { startSlider = true; openScreen ("My vocab"); }
-document.getElementById ("sliderCards")!.addEventListener ("click", () => {
-  document.getElementById ("optionsBtn")!.click ();     // (⋯ closes)
-  openSliderDeck ();
-});
 
 /** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / I KNOW THIS WORD). */
 function lists () {
@@ -140,7 +133,6 @@ function draw (body: HTMLElement) {
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); open ("freq"); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-d]")) b.addEventListener ("click", () => open (b.dataset.d!));
   refresh ();
-  if (startSlider) { startSlider = false; open ("slider"); }
 }
 
 onScreen ("My vocab", draw);
