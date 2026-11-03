@@ -1,6 +1,6 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
-// - the frequency slider, moved along how much of the text its words cover (0-100% of the scope's words, every
-//   occurrence counted), each position the next multiple of 20 words (as My vocab's frequency lists) reaching it: it hides the gloss of the N most
+// - the frequency slider, in even steps of words: 20s up to 1,000 (as My vocab's frequency lists), 40s up to 3,000,
+//   then every word at the end - with how much of the text they cover (every occurrence counted) shown: it hides the gloss of the N most
 //   common lemmas (the extended Strong's key, every form together), and the parsing code of a lemma in a form (lemma +
 //   COTEXT's code, the database's form_freq) occurring as often as the Nth word does - so a rare form of a common word
 //   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
@@ -16,7 +16,7 @@ import type { Book } from "./reader";
 const KEY = "cotext.helps";
 
 interface Settings {
-  slider: number;                       // how many of the most common words the slider hides: 0 none, a multiple of 20
+  slider: number;                       // how many of the most common words the slider hides: 0 none, 20s to 1,000, 40s to 3,000, 1e9 every word
   scope: "whole" | "book";              // frequency counted over the whole testament or the book shown
   showAll: boolean;                     // SHOW HELPS: hidden helps shown, faded
   mine: boolean;                        // MY SELECTIONS: the hand choices apply
@@ -67,15 +67,13 @@ function hiddenWords (): number { return Math.min (s.slider, counts ().sorted.le
 /** How much of the scope's text the n most common words make up, 0-1. */
 function coverage (n: number): number { const c = counts ().cum; return c[Math.min (n, c.length - 1)] / (c[c.length - 1] || 1); }
 
-/** The slider at position v (0-1000, coverage in tenths of a percent): the fewest words, a multiple of 20, that
- *  cover that much (a binary search on cum); 0 none. */
-function wordsFor (v: number): number {
-  if (v <= 0) return 0;
-  const c = counts ().cum, want = v / 1000 * c[c.length - 1];
-  let lo = 1, hi = c.length - 1;
-  while (lo < hi) { const m = (lo + hi) >> 1; if (c[m] >= want) hi = m; else lo = m + 1; }
-  return Math.ceil (lo / 20) * 20;
-}
+/** The slider's positions: 0 none, 1-50 20 to 1,000 words in 20s, 51-100 1,040 to 3,000 in 40s, 101 every word.
+ *  A scope with fewer words ends sooner: its last position (sliderMax) every word. */
+const ALL = 1e9;     // (Every word: a number, as JSON keeps no Infinity)
+const wordsAt = (pos: number) => pos <= 0 ? 0 : pos <= 50 ? pos * 20 : pos <= 100 ? 1000 + (pos - 50) * 40 : ALL;
+const posOf = (n: number) => n <= 0 ? 0 : n <= 1000 ? Math.ceil (n / 20) : n <= 3000 ? 50 + Math.ceil ((n - 1000) / 40) : 101;
+function sliderMax (): number { return Math.min (101, posOf (counts ().sorted.length)); }
+function wordsFor (pos: number): number { return pos >= sliderMax () ? ALL : wordsAt (pos); }
 
 /** The parsing's limit: a form's parsing hidden at this count and above - the last hidden word's count (Infinity:
  *  none hidden; all the way over, 1: every parsing). */
@@ -186,7 +184,8 @@ function updateMenu () {
   scopeBtn.textContent = `Frequency: ${where}`;
   scopeBtn.setAttribute ("aria-pressed", String (s.scope === "book"));
   const all = counts ().sorted.length, n = hiddenWords ();
-  slider.value = String (Math.round (coverage (n) * 1000));     // (The thumb where its words' coverage is: it snaps there)
+  slider.max = String (sliderMax ());
+  slider.value = String (n >= all ? sliderMax () : posOf (n));
   const pct = coverage (n) * 100, inWhat = s.scope === "book" ? book.name : "the " + book.testament;
   freqOut.innerHTML = n === 0 ? "Helps for every word" : n >= all ? "No helps"
     : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}`
