@@ -1,6 +1,6 @@
 // The notes panel: free commentaries, text-critical apparatuses and English translations beside the text, following it. The icon right of
-// ▶ in the play bar opens and closes it; it takes its place in the page's column under the play bar (above the word's
-// panel when that's open - nothing floats over the text), at most about a third of the screen, scrolling.
+// ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
+// panel when that's open - nothing floats over the text), at most half the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   COMMENTARIES, APPARATUS and TRANSLATIONS - the database's note_sources (pipeline/notes.py) - so swapping one is a tap; the choice
 //   is kept per testament on the device.

@@ -303,13 +303,6 @@ document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   if (num) start (num, [num.parentElement!]);
 });
 
-// The play bar sits above the word's panel in the page's column (style.css); with the panel open it leaves the home
-// indicator's room to it.
-const sheet = document.getElementById ("sheet")!;
-const playBar = document.getElementById ("playBar")!;
-const place = () => { playBar.classList.toggle ("above", ! sheet.hidden); };     // (The panel under it: no home-indicator room)
-new ResizeObserver (place).observe (sheet);
-new MutationObserver (place).observe (sheet, { attributes: true, attributeFilter: ["hidden"] });
 
 // The ⋯ menu's READING SPEED and SPACE BETWEEN WORDS.
 const rate = document.getElementById ("rate") as HTMLInputElement;
