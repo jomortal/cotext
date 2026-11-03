@@ -225,11 +225,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #gInline[hidden] { display: none; }
 #sheet.grammarOpen > :not(#gInline) { display: none; }
 #sheet.grammarOpen #gInline { border-top: 0; margin-top: 0; padding-top: 0; }
-/* HIDE frozen at the panel's upper right while the section scrolls: sticky in a row of no height (so the title runs
-   beside it, kept clear of it by its padding). */
-#gInline .giHide { position: sticky; top: 0; z-index: 3; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; }
-#gInline .giHide .pill { background: var(--bg); box-shadow: 0 0 0 6px var(--bg); }     /* (A margin of the page's color, so text scrolling under it doesn't touch it) */
-#gInline .top { padding-right: 72px; }
+/* The section's heading, § and HIDE frozen at the panel's top while its text scrolls under them (-16px the panel's own
+   top padding; the shadow covers the sliver Safari's rounding leaves). */
+#sheet.grammarOpen #gInline .top { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin-top: -16px; padding: 16px 0 8px; box-shadow: 0 -4px 0 var(--bg); }
 #gInline .top { align-items: start; }
 .gTitle { font-weight: 600; font-size: 15px; }
 #gInline .src { margin-top: 2px; }
