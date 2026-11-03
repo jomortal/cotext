@@ -9,17 +9,17 @@
    its passive, the Niphal, the Piel and Pual, the Hithpael, the Hiphil and Hophal each their own; rarer stems "other".
    Greek verbs all take the Qal's blue (group "verb"). */
 :root {
-  --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: #dedad2;
+  --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: transparent;     /* (Borders and dividing lines: none shown, the user's choice - transparent, so nothing moves) */
   --qal: #2d6cdf; --qal-pass: #5b7fbf; --niphal: #1f8a8a; --piel: #b5462e; --pual: #c0703a; --hithpael: #8a3fa8;
   --hiphil: #2e8a3e; --hophal: #6f8f2a; --other: #8a6d1f;
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28;
+  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent;
   --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
   --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: #2c2b28;
+  --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent;
   --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
   --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark }
 
@@ -63,7 +63,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .pill { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--fg);
         border-radius: 999px; padding: 5px 12px; cursor: pointer; }
 .pill:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
-.pill[aria-pressed="true"] { border-color: var(--qal); color: var(--qal); }
+.pill[aria-pressed="true"] { border-color: var(--line); color: var(--qal); }     /* (Picked: its text in the Qal's blue) */
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 .ref { font-size: 12px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 8px; }
