@@ -58,4 +58,6 @@ Commentaries and apparatus (the notes panel; each source its own file, public/da
 
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
+The logo: the Fraktur C (U+212D) from STIX Two Math, (c) the STIX Fonts project, SIL Open Font License 1.1, drawn as
+an outline in public/icons/.
 SQLite WebAssembly build 3.54.1: public domain (sqlite.org; public/sqlite/).
