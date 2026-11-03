@@ -41,10 +41,20 @@ Commentaries and apparatus (the notes panel; each source its own file, public/da
   - SBLGNT apparatus: Michael W. Holmes, ed., The Greek New Testament: SBL Edition (Society of Biblical Literature and
     Logos Bible Software, 2010), licensed CC BY 4.0 (github.com/LogosBible/SBLGNT, commit d7f35adc).
   - Editions and variants: STEPBible Data's TAGNT and TAHOT (above, CC BY 4.0).
+  - English translations, from eBible.org's USFM downloads (ebible.org/Scriptures, the files as pinned by hash in
+    pipeline/notes.py, 2026-11-02): the World English Bible (public domain; "World English Bible" is a trademark of
+    eBible.org), the Berean Standard Bible (public domain, BSB Publishing), the King James Version (1769 text, public
+    domain outside the UK), the American Standard Version (1901), Young's Literal Translation and the Darby
+    Translation (all public domain), and the Literal Standard Version, copyright (c) 2020 Covenant Press (lsvbible.com),
+    licensed CC BY-SA 4.0 - changed by COTEXT as below (the original licensor doesn't necessarily endorse the changes),
+    this adaptation shared under the same licence.
   Changes made by COTEXT: each source is reformatted into a database keyed by verse; markup is reduced to paragraphs,
   bold, italics, tables and footnotes; cross-references are kept as their text; Translation Notes' book and chapter
   introductions and support references are left out; TAGNT's and TAHOT's edition lists and variants are written out
-  as sentences per verse; the SBLGNT apparatus's units are kept as printed.
+  as sentences per verse; the SBLGNT apparatus's units are kept as printed; the translations' footnotes, cross-references, headings
+  and Strong's tags are left out, each verse kept as a paragraph (poetry lines as line breaks), and a few verses
+  shown under the text's verse numbers where a translation numbers them otherwise. The translations' words are
+  otherwise unchanged.
 
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
