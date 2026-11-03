@@ -900,13 +900,13 @@ def term_spans(code, spelled, greek):
     return out
 
 
-GRAMMARS = [
+GRAMMARS = [     # (A language's first is its default: Machen for Greek, the user's choice)
     ("gesenius", "Gesenius", "H", "Gesenius' Hebrew Grammar, ed. E. Kautzsch, tr. A. E. Cowley (1910); public domain; "
      "text from English Wikisource"),
-    ("smyth", "Smyth", "G", "H. W. Smyth, A Greek Grammar for Colleges (1920); Perseus Digital Library, Tufts "
-     "University, CC BY-SA 3.0 US"),
     ("machen", "Machen", "G", "J. Gresham Machen, New Testament Greek for Beginners (1923); public domain; text from "
      "machengreek.com"),
+    ("smyth", "Smyth", "G", "H. W. Smyth, A Greek Grammar for Colleges (1920); Perseus Digital Library, Tufts "
+     "University, CC BY-SA 3.0 US"),
 ]
 MAPS = {"gesenius": GESENIUS_MAP, "smyth": SMYTH_MAP, "machen": MACHEN_MAP}
 
