@@ -168,6 +168,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
 #screenMenu { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
+#screenClose { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's colour, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid colour shows nothing. */

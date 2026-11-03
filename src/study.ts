@@ -1,7 +1,7 @@
 // The study menu: ☰ opens a drawer from the left, above everything (design/mock-hebrew.html) - first the text itself
 // (HEBREW OT or GREEK NT, by the testament shown: back to reading, any study screen closed), then the study screens:
 // My vocab, Verb paradigms, Verb chart, Parsing guide. Each opens full screen, with ☰ at its top left (to move between
-// them); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts), each for the
+// them) and ✕ at its top right (back to the text); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts), each for the
 // testament shown; one not built says it's coming. Picking an item, ✕ or tapping outside closes the drawer.
 // Under them, the settings: LEXICON (panel.ts) and GRAMMAR (grammar.ts), each a menu that applies at once.
 
@@ -42,5 +42,6 @@ document.getElementById ("screenMenu")!.addEventListener ("click", open);
 document.getElementById ("drawerClose")!.addEventListener ("click", close);
 drawer.addEventListener ("click", (e) => { if (e.target === drawer) close (); });
 homeBtn.addEventListener ("click", () => { screen.hidden = true; close (); });
+document.getElementById ("screenClose")!.addEventListener ("click", () => { screen.hidden = true; });     // (✕: back to the text)
 for (const b of document.querySelectorAll<HTMLElement> ("#drawerPanel [data-screen]"))
   b.addEventListener ("click", () => { openScreen (b.dataset.screen!); close (); });
