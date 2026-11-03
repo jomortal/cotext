@@ -5,7 +5,7 @@
 //   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
 // - a word's panel flips one word by hand: "I know this word" hides its gloss everywhere (its parsing still by the
 //   form rule above), "Show helps" shows both, on top of the slider;
-// - MY SELECTIONS off ignores those hand choices (kept, for turning back on).
+// - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on).
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
 
@@ -17,7 +17,7 @@ const KEY = "cotext.helps";
 interface Settings {
   slider: number;                       // how many of the most common words the slider hides: 0 none, 20s up to 1,000
   scope: "whole" | "book";              // frequency counted over the whole testament or the book shown
-  mine: boolean;                        // MY SELECTIONS: the hand choices apply
+  mine: boolean;                        // HIDE KNOWN WORDS: the hand choices apply
   modes: Record<string, "show" | "hide">;   // hand choices, by Strong's key
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
   parse?: boolean;                      // PARSING: each word's code shown (default on)
@@ -78,7 +78,7 @@ function limit (): number {
   return n <= 0 ? Infinity : n >= c.sorted.length ? 1 : c.sorted[n - 1];
 }
 
-/** Whether a word's gloss is hidden: its hand choice (if MY SELECTIONS), else the slider by its lemma's place. */
+/** Whether a word's gloss is hidden: its hand choice (if HIDE KNOWN WORDS), else the slider by its lemma's place. */
 export function isHidden (strong: string): boolean {
   const mode = s.mine ? s.modes[strong] : undefined;
   if (mode) return mode === "hide";
@@ -114,7 +114,7 @@ export function knownWords (): string[] {
 export function wordCount (strong: string): number { return counts ().byStrong.get (strong) ?? 0; }
 
 /** The panel's button: flips the word. If the slider alone would now give the flipped state, the hand choice is
- *  dropped (back to the slider); otherwise it's set. MY SELECTIONS turns on, so the choice shows. */
+ *  dropped (back to the slider); otherwise it's set. HIDE KNOWN WORDS turns on, so the choice shows. */
 export function flip (strong: string) {
   const hidden = isHidden (strong);
   delete s.modes[strong];
