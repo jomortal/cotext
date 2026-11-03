@@ -57,6 +57,14 @@ function showEntry (full: boolean) {
 const bare = (t: string) => t.normalize ("NFD").replace (/[\u0591-\u05af\u05bd\u05be\u05c0\u05c3-\u05c6]/g, "").replace (/\u0300/g, "\u0301")
   .replace (/[^\p{L}\p{M}]/gu, "").toLowerCase ().normalize ("NFC");
 
+// The divine name (H3068, H3069): a note on how it's said - its vowels are a reminder to read another word, so
+// written out as it stands it gives the hybrid "Jehovah"; the voice says Adonai (audio.ts' sayName).
+const nameNote = document.getElementById ("nameNote")!;
+const NAME_NOTE: Record<string, string> = {
+  H3068: "Pronunciation: יהוה (YHWH) is God's personal name. Out of reverence it isn't spoken: the text gives it the vowels of אֲדֹנָי (Adonai, \"Lord\"), a reminder to say Adonai - many say HaShem (\"the Name\"). Its own pronunciation was lost; scholars reconstruct it as Yahweh. Read with Adonai's vowels as written, it gives the hybrid \"Jehovah\". COTEXT's voice says Adonai.",
+  H3069: "Pronunciation: יהוה (YHWH), God's personal name, here with the vowels of אֱלֹהִים (Elohim, \"God\") - written so where אֲדֹנָי (Adonai, \"Lord\") stands beside it (\"Lord GOD\"), so it's said Elohim rather than Adonai twice - as COTEXT's voice says it. Its own pronunciation was lost; scholars reconstruct it as Yahweh.",
+};
+
 export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   if (picked === wordEl && ! sheet.hidden) { hidePanel (); return; }
   picked?.classList.remove ("on");
@@ -78,6 +86,9 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   // this word; otherwise Close on the word's line.
   const one = bare (w.text) === bare (lemmaEl.textContent ?? "");
   formEl.parentElement!.hidden = one;
+  const note = NAME_NOTE[w.strong.match (/^H\d+/)?.[0] ?? ""];
+  nameNote.textContent = note ?? "";
+  nameNote.hidden = ! note;
   // (One line: the buttons Close, I know this word, + My vocab from the right - .btns.rev, so + My vocab is the one to
   // wrap onto a second line on a narrow screen, Close staying beside I know this word.)
   const btns = knowIt.parentElement!, add = document.getElementById ("addVocab")!;

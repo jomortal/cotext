@@ -192,6 +192,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
 #sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+#sheet .nameNote { font-size: 13px; line-height: 1.5; color: var(--soft); margin: 10px 0 0; }     /* (The divine name's note: panel.ts) */
+#sheet .nameNote[hidden] { display: none; }
 #sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (Close beside I know this word: panel.ts) */
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 

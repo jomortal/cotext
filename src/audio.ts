@@ -8,7 +8,7 @@
 //   (no boundary within a second of starting) is remembered, and its words are lit on a clock instead (each word's share
 //   of the time by its length, at the reading speed) - the verse still one utterance, read smoothly.
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
-//   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
+//   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
 // - The device's voice for the language (Hebrew he, Greek el - one each). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
@@ -29,13 +29,18 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } cat
 let testament: "OT" | "NT" = "OT";
 const lang = () => (testament === "OT" ? "he" : "el");
 
+/** The divine name read as a Jewish reader says it: יהוה (with any prefix: לַיהוָה) as אֲדֹנָי, Adonai - or, pointed
+ *  with Elohim's hiriq (יֱהוִה, where Adonai stands beside it), as אֱלֹהִים. As written the voice said "Yehovah". */
+const NAME = /\u05d9[\u0591-\u05c7]*\u05d4[\u0591-\u05c7]*\u05d5[\u0591-\u05c7]*\u05d4[\u0591-\u05c7]*/g;
+const sayName = (word: string) => word.replace (NAME, (m) => m.includes ("\u05b4") ? "\u05d0\u05b1\u05dc\u05b9\u05d4\u05b4\u05d9\u05dd" : "\u05d0\u05b2\u05d3\u05b9\u05e0\u05b8\u05d9");
+
 /** The Hebrew a modern voice reads: accents and marks stripped, vowels kept, maqaf a space - except a word starting
  *  with alef and an "e" vowel (segol, tsere, hataf segol: אֶל, אֶת, אֵין), spoken without its vowels: pointed, the
  *  he-IL voice says it "eh-el", an extra glottal syllable in front; unpointed, "el" (heard on the user's device,
  *  2026-11-02). אֱלֹהִים is said right either way and kept; a word with any other first vowel is kept pointed
  *  (אֲשֶׁר unpointed is misread). */
 function hebrewSpoken (word: string): string {
-  return word.replace (/[\u0591-\u05af\u05bd\u05c0\u05c3-\u05c6]/g, "").replace (/\u05be/g, " ").replace (/\s+[\u05e4\u05e1]$/, "").trim ()
+  return sayName (word).replace (/[\u0591-\u05af\u05bd\u05c0\u05c3-\u05c6]/g, "").replace (/\u05be/g, " ").replace (/\s+[\u05e4\u05e1]$/, "").trim ()
              .split (/\s+/).map ((w) => /^\u05d0[\u05b1\u05b5\u05b6]/.test (w) && ! /^\u05d0\u05b1\u05dc\u05b9\u05d4/.test (w)
                ? w.replace (/[\u05b0-\u05bc\u05c1\u05c2\u05c7]/g, "") : w).join (" ");
 }
