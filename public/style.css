@@ -58,6 +58,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .freq { display: grid; gap: 4px; flex: 1; min-width: 200px; font-size: 12px; color: var(--soft); }
 .freq b { color: var(--fg); }
 .freq input { width: 100%; accent-color: var(--qal); }
+.freq[for="freq"] { flex: 1 1 100%; }     /* (The frequency slider: a line of its own, the full width) */
 
 .pill { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--fg);
         border-radius: 999px; padding: 5px 12px; cursor: pointer; }
