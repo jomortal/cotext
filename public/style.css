@@ -143,9 +143,11 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The word's panel: a sheet from the bottom. */
 #sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-/* The word, its dictionary form and its parsing spelled out, frozen at the panel's top: the definition (and a grammar
-   section) scrolls under them. -16px the panel's own top padding; the shadow covers the sliver Safari's rounding leaves. */
-#sheet .sheetTop { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin-top: -16px; padding: 16px 0 8px; box-shadow: 0 -4px 0 var(--bg); }
+/* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls: sticky in a row of
+   no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
+#sheet .xRow { position: sticky; top: 0; z-index: 3; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; }
+#sheet .xRow .pill { background: var(--bg); box-shadow: 0 0 0 6px var(--bg); }     /* (Text scrolling under it kept off it) */
+#sheet .heads.one, #gInline .top { padding-right: 52px; }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
@@ -208,14 +210,14 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
-/* The word's panel, its head as two rows lined up: the word as written with ✕, then its root (dictionary form)
-   with I know this word - each with its speaker; the buttons in a column at the right. */
+/* The word's panel, its head as two rows lined up: the word as written (✕ over its right, .xRow), then its root
+   (dictionary form) with I know this word - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
+#sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */
 #sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 #sheet .nameNote { font-size: 13px; line-height: 1.5; color: var(--soft); margin: 10px 0 0; }     /* (The divine name's note: panel.ts) */
 #sheet .nameNote[hidden] { display: none; }
-#sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (✕ beside I know this word: panel.ts) */
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the Qal's color; one tapped, its
@@ -227,9 +229,6 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #gInline[hidden] { display: none; }
 #sheet.grammarOpen > :not(#gInline) { display: none; }
 #sheet.grammarOpen #gInline { border-top: 0; margin-top: 0; padding-top: 0; }
-/* The section's heading, § and ✕ frozen at the panel's top while its text scrolls under them (-16px the panel's own
-   top padding; the shadow covers the sliver Safari's rounding leaves). */
-#sheet.grammarOpen #gInline .top { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin-top: -16px; padding: 16px 0 8px; box-shadow: 0 -4px 0 var(--bg); }
 #gInline .top { align-items: start; }
 .gTitle { font-weight: 600; font-size: 15px; }
 #gInline .src { margin-top: 2px; }

@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (with ✕; left out when it's the dictionary form itself, ✕ then beside I know this word), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (left out when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
@@ -22,7 +22,6 @@ chartBtn.addEventListener ("click", () => { if (chartFor) { hidePanel (); openCh
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
 const formEl = document.getElementById ("form")!;     // (The word as it stands in the text, before its dictionary form)
-const closeBtn = document.getElementById ("close")!;
 const fullEl = document.getElementById ("full")!;
 const srcEl = document.getElementById ("src")!;
 const defEl = document.getElementById ("def")!;
@@ -136,18 +135,13 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
   formEl.textContent = w.text;
   formEl.dir = lemmaEl.dir;
-  // The word as written left out when it's the dictionary form itself (λόγος, בֵּן): one line, ✕ beside I know
-  // this word; otherwise ✕ on the word's line.
+  // The word as written left out when it's the dictionary form itself (λόγος, בֵּן): one line, kept clear of the ✕.
   const one = bare (w.text) === bare (lemmaEl.textContent ?? "");
   formEl.parentElement!.hidden = one;
+  formEl.parentElement!.parentElement!.classList.toggle ("one", one);
   const note = NAME_NOTE[w.strong.match (/^H\d+/)?.[0] ?? ""];
   nameNote.textContent = note ?? "";
   nameNote.hidden = ! note;
-  // (One line: the buttons ✕, I know this word, + My vocab from the right - .btns.rev, so + My vocab is the one to
-  // wrap onto a second line on a narrow screen, ✕ staying beside I know this word.)
-  const btns = knowIt.parentElement!, add = document.getElementById ("addVocab")!;
-  if (one) { btns.prepend (closeBtn, knowIt); btns.classList.add ("rev"); }
-  else { btns.append (add, knowIt); formEl.parentElement!.after (closeBtn); btns.classList.remove ("rev"); }
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
   entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""),
             bdb: String (bdb?.entries ?? ""), hebrew };
