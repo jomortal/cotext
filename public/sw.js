@@ -2,8 +2,8 @@
 // build.mjs fills in the three placeholders below: a hash of the app's files, the database's version and the list of
 // the app's files. The app's files are cached together under their hash, the database on its own under
 // its version, so an app update doesn't download the database again; old caches are deleted once a new worker runs.
-// The notes panel's sources (data/notes/) are left to the page, which keeps each in its own "cotext-notes-" cache
-// (src/db.ts) - the worker neither caches nor deletes them.
+// The notes panel's sources and BDB's entries (data/notes/) are left to the page, which keeps each in its own
+// "cotext-notes-" cache (src/db.ts) - the worker neither caches nor deletes them.
 const SHELL = "cotext-shell-__SHELL__";
 const DATA = "cotext-data-__DATA__";
 const FILES = __FILES__;

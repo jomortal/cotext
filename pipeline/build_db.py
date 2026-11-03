@@ -22,6 +22,8 @@ Tables:
             (Gesenius, Smyth, Machen): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table
+  bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
+            public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
   words_full  a view: each word with its parsing and lemma.
 
 Versification is the English Bibles' (NRSV), as the source gives it first; the Hebrew's own verse numbers differ in
@@ -40,6 +42,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import bdb  # noqa: E402
 import fetch  # noqa: E402
 import grammar  # noqa: E402
 import morph  # noqa: E402
@@ -238,6 +241,7 @@ def build():
     db.executemany("INSERT INTO guide VALUES (?,?,?,?,?)", [(l, g, i, c, m) for i, (l, g, c, m) in enumerate(morph.guide())])
     grammar_counts = grammar.build(db, parsings, greek)
     note_counts = notes.build(db, [code for code, _ in BOOKS])
+    bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
@@ -250,7 +254,8 @@ def build():
     print(f"{OUT} - {OUT.stat().st_size / 1e6:.1f} MB; {len(lex_rows)} lexicon entries "
           f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
           + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()) + "; notes "
-          + ", ".join(f"{k} {n} ({b / 1e6:.1f} MB)" for k, (n, b) in note_counts.items()))
+          + ", ".join(f"{k} {n} ({b / 1e6:.1f} MB)" for k, (n, b) in note_counts.items())
+          + f"; BDB {bdb_entries} entries for {bdb_keys} Strong's keys ({bdb_bytes / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":

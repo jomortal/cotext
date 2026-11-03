@@ -56,6 +56,15 @@ Commentaries and apparatus (the notes panel; each source its own file, public/da
   shown under the text's verse numbers where a translation numbers them otherwise. The translations' words are
   otherwise unchanged.
 
+Lexicon (a Hebrew word's BDB, public/data/notes/bdb.db - pipeline/bdb.py):
+  - Francis Brown, S. R. Driver and Charles A. Briggs, A Hebrew and English Lexicon of the Old Testament (Oxford,
+    1906): public domain. Text and its Strong's index from the Open Scriptures Hebrew Bible project's HebrewLexicon
+    (github.com/openscriptures/HebrewLexicon, commit 21c9add, 2019-09-02: BrownDriverBriggs.xml, LexicalIndex.xml),
+    licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) - credit: the Open Scriptures Hebrew Bible
+    Project. Its transcription is a work in progress: many entries are an outline only (senses and meanings).
+  Changes made by COTEXT: the entries' markup is reduced to Hebrew and Greek spans, bold, italics and nested senses;
+  page breaks and the transcription's status marks are dropped; entries are keyed by STEPBible's extended Strong's.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as

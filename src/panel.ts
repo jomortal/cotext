@@ -2,9 +2,9 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one; the word as written (with Close; left out when it's the dictionary form itself, Close then beside I know this word), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (with Close; left out when it's the dictionary form itself, Close then beside I know this word), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). Close (or tapping the word again) hides it.
 
-import type { Db } from "./db";
+import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
 import { isHidden, flip, onHelpsChange } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -38,18 +38,58 @@ const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps
 onHelpsChange (() => { if (picked) label (); });
 
 // The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the brief lexicon's full
-// entry for this word (Less closing it).
+// entry for this word and BDB (a Hebrew word with one) its full Brown-Driver-Briggs entry - or entries, where BDB
+// splits the Strong's number -, its credit under it; Less goes back to the meaning. BDB's entries are their own file
+// (data/notes/bdb.db: pipeline/bdb.py), downloaded the first time BDB is tapped and kept (db.ts: openNotesDb).
 const moreBtn = document.getElementById ("moreDef")!;
-let entry = { concise: "", full: "", hebrew: true };
-moreBtn.addEventListener ("click", () => showEntry (moreBtn.textContent === "More"));
+const bdbBtn = document.getElementById ("bdbBtn")!;
+const bdbCredit = document.getElementById ("bdbCredit")!;
+type Shown = "concise" | "full" | "bdb";
+let entry = { concise: "", full: "", bdb: "", hebrew: true };     // (bdb: the word's BDB ids, space-separated; "" none)
+let shown: Shown = "concise";
+let mainDb: Db | null = null;
+let bdbDb: Promise<Db> | null = null;     // (BDB's file, once opened)
+moreBtn.addEventListener ("click", () => showEntry (shown === "concise" ? "full" : "concise"));
+bdbBtn.addEventListener ("click", () => showEntry ("bdb"));
 
-/** The entry, concise or full; under the concise one More (Less under a full one opened by it). */
-function showEntry (full: boolean) {
-  srcEl.textContent = ! full ? "Meaning" : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
-  // The entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything else).
-  if (full) defEl.innerHTML = entry.full; else defEl.textContent = entry.concise;
-  moreBtn.hidden = entry.full === entry.concise;
-  moreBtn.textContent = full ? "Less" : "More";
+/** The entry, concise, full or BDB's; under the concise one More (Less under the others), and BDB where there's one. */
+function showEntry (to: Shown) {
+  shown = to;
+  srcEl.textContent = to === "concise" ? "Meaning" : to === "bdb" ? "Brown-Driver-Briggs"
+    : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
+  // The brief lexicon's entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything
+  // else); BDB's the few tags bdb.py writes, its Hebrew and Greek styled as a grammar's (.gBody).
+  defEl.classList.toggle ("gBody", to === "bdb");
+  if (to === "full") defEl.innerHTML = entry.full;
+  else if (to === "concise") defEl.textContent = entry.concise;
+  else showBdb ();
+  bdbCredit.hidden = to !== "bdb";
+  moreBtn.hidden = to === "concise" && entry.full === entry.concise;
+  moreBtn.textContent = to === "concise" ? "More" : "Less";
+  bdbBtn.hidden = ! entry.bdb || to === "bdb";
+}
+
+/** The word's BDB entries into the panel - BDB's file loaded first if it isn't yet (its progress shown). */
+async function showBdb () {
+  const ids = entry.bdb.split (" "), word = picked;
+  const still = () => shown === "bdb" && picked === word;     // (Another word, or Less, while it loaded: left alone)
+  try {
+    if (! bdbDb) {
+      const [f] = mainDb!.all ("SELECT file, version FROM bdb_file");
+      bdbDb = openNotesDb ("bdb", String (f.file), String (f.version), (p) => {
+        if (still ()) defEl.textContent = `Loading BDB… ${Math.round (p * 100)}%`;
+      });
+      bdbDb.catch (() => { bdbDb = null; });     // (Tried again on the next tap)
+    }
+    defEl.textContent = "Loading BDB…";
+    const db = await bdbDb;
+    if (! still ()) return;
+    const byId = new Map (db.all (`SELECT id, html FROM entries WHERE id IN (${ids.map (() => "?").join (",")})`, ids)
+      .map ((r) => [String (r.id), String (r.html)]));
+    defEl.innerHTML = ids.map ((i) => byId.get (i) ?? "").join ("");
+  } catch {
+    if (still ()) defEl.textContent = "BDB couldn't be loaded.";
+  }
 }
 
 /** A word as compared with its dictionary form: Hebrew's accents, meteg, maqaf and punctuation dropped; Greek's
@@ -78,6 +118,8 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   const hebrew = w.strong.startsWith ("H");
   const [lex] = db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]);
   const [parsing] = db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]);
+  const [bdb] = hebrew ? db.all ("SELECT entries FROM bdb WHERE strong = ?", [w.strong]) : [];
+  mainDb = db;
   lemmaEl.textContent = String (lex?.lemma ?? w.text);
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
   formEl.textContent = w.text;
@@ -95,8 +137,9 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   if (one) { btns.prepend (closeBtn, knowIt); btns.classList.add ("rev"); }
   else { btns.append (add, knowIt); formEl.parentElement!.after (closeBtn); btns.classList.remove ("rev"); }
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
-  entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""), hebrew };
-  showEntry (false);
+  entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""),
+            bdb: String (bdb?.entries ?? ""), hebrew };
+  showEntry ("concise");
   sheet.hidden = false;
   sheet.scrollTop = 0;
   // Keep the word in view above the sheet.
