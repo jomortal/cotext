@@ -27,7 +27,9 @@ function enhance (sel: HTMLSelectElement) {
   }
   new MutationObserver (label).observe (sel, { childList: true, subtree: true });     // (Options filled in later: GRAMMAR)
   sel.addEventListener ("change", label);
-  const close = () => { list.hidden = true; btn.setAttribute ("aria-expanded", "false"); };
+  // Open, the list is moved to the end of the page, so it's over everything (no panel's layer under another's: the
+  // notes panel's under the play bar, a sticky ✕); closed, it goes back beside its button.
+  const close = () => { list.hidden = true; btn.setAttribute ("aria-expanded", "false"); if (list.parentElement !== wrap) wrap.append (list); };
   // Fixed to the screen, under the button - or over it when there's more room above (a picker near the bottom, as
   // the notes panel's) - and no taller than the room there, so its last choice can always be reached; not clipped by
   // a scrolling panel it's in. Scrolling it never scrolls what's behind (overscroll contained, style.css); anything
@@ -44,7 +46,7 @@ function enhance (sel: HTMLSelectElement) {
   btn.addEventListener ("click", (e) => {
     e.stopPropagation ();
     if (! list.hidden) { close (); return; }
-    for (const l of document.querySelectorAll<HTMLElement> (".chooseList")) l.hidden = true;     // (One open at a time)
+    for (const l of document.querySelectorAll<HTMLElement> (".chooseList:not(.inline)")) l.hidden = true;     // (One open at a time)
     list.innerHTML = "";
     for (const el of sel.children) {
       const opts = el instanceof HTMLOptGroupElement ? [...el.children] : [el];
@@ -60,6 +62,7 @@ function enhance (sel: HTMLSelectElement) {
         list.append (b);
       }
     }
+    document.body.append (list);
     list.hidden = false; btn.setAttribute ("aria-expanded", "true");
     place ();
     list.querySelector<HTMLElement> ("[aria-pressed=true]")?.scrollIntoView ({ block: "nearest" });
