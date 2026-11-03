@@ -10,7 +10,7 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - The device's voice for the language (Hebrew he, Greek el), or the one picked in ⋯ (VOICE, below). READING SPEED (0.1x - 1x) and SPACE BETWEEN
+// - The device's voice for the language (Hebrew he, Greek el), its own settings' choice (GETTING OTHER VOICES in ⋯ says how to change it). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
 
@@ -23,7 +23,6 @@ interface Settings {
   rate: number;                                  // 0.1 - 1
   gap?: number;                                  // seconds between words (0: none; then read a word at a time)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
-  voices?: Record<string, string>;               // VOICE (the ⋯ menu): the voice picked, by language (he, el) - its voiceURI
 }
 const s: Settings = { rate: 0.8, noBoundary: [] };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
@@ -96,51 +95,33 @@ function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[]
   return out;
 }
 
-function voice (): SpeechSynthesisVoice | undefined {
-  const all = synth?.getVoices () ?? [];
-  // VOICE's pick; else none set - the utterance's language alone, so the device uses the voice chosen for it in its
-  // own settings (a downloaded Enhanced or male voice the browser doesn't list still speaks).
-  return all.find ((v) => v.voiceURI === s.voices?.[lang ()]);
-}
+/** No voice named: the utterance's language alone, so the device reads with the voice chosen for that language in its
+ *  own settings (a downloaded or male voice Safari doesn't list to pages still speaks). GETTING OTHER VOICES (⋯) says
+ *  how to change it. */
+function voice (): SpeechSynthesisVoice | undefined { return undefined; }
 
-// VOICE (the ⋯ menu, with READING SPEED): the device's voices for the text shown's language (Hebrew or Greek), the first "The device's" -
-// its default; filled when the voices load (they arrive late on some browsers) and when the testament changes. "Getting
-// other voices" opens the steps for downloading the device's own other voices.
-const voicePick = document.getElementById ("voicePick") as HTMLSelectElement;
-function fillVoices () {
-  const mine = (synth?.getVoices () ?? []).filter ((v) => v.lang.startsWith (lang ()));
-  voicePick.replaceChildren (new Option ("The device's (as set in its Settings)", ""), ...mine.map ((v) => new Option (v.name, v.voiceURI)));
-  voicePick.value = mine.some ((v) => v.voiceURI === s.voices?.[lang ()]) ? s.voices![lang ()] : "";
-  voicePick.closest ("label")!.firstChild!.textContent = testament === "OT" ? "Hebrew voice" : "Greek voice";
-}
-voicePick.addEventListener ("change", () => {
-  s.voices = { ...s.voices, [lang ()]: voicePick.value };
-  if (! voicePick.value) delete s.voices[lang ()];
-  save ();
-});
-synth?.addEventListener?.("voiceschanged", fillVoices);
-fillVoices ();
-// LOOK FOR VOICES AGAIN: the device asked again (a voice downloaded meanwhile); GETTING OTHER VOICES: the steps (⋯ closes).
-document.getElementById ("voiceAgain")!.addEventListener ("click", () => {
-  synth?.cancel ();
-  fillVoices ();
-  setTimeout (fillVoices, 500);     // (Some browsers fill the list a moment after it's asked for)
-});
 document.getElementById ("voiceHelp")!.addEventListener ("click", () => {
-  document.getElementById ("optionsBtn")!.click ();
+  document.getElementById ("optionsBtn")!.click ();     // (⋯ closes)
   openScreen ("Getting other voices");
 });
 
 onScreen ("Getting other voices", (body) => {
-  body.innerHTML = `<p>COTEXT reads aloud with the device's own voices. Others - more voices, and Enhanced or Premium ones - are free from Apple:</p>
+  body.innerHTML = `<p>COTEXT reads aloud with the voice your device uses for each language, as set in its own settings. To change it on an iPhone or iPad (Apple's voices are free):</p>
     <ol class="steps">
       <li>Open <b>Settings</b>, then <b>Accessibility</b>, then <b>Spoken Content</b> (on iOS 26 it may be <b>Read &amp; Speak</b>), then <b>Voices</b>.</li>
-      <li>Tap <b>Greek</b> (and then <b>Hebrew</b>).</li>
-      <li>Tap a voice marked <b>Enhanced</b> or <b>Premium</b> to download it - Melina for Greek, Carmit for Hebrew. They're about 100-400 MB: use Wi-Fi.</li>
-      <li>Select it there (it gets the tick), so it's the language's voice.</li>
-      <li>In COTEXT, leave ⋯ > ${testament === "OT" ? "Hebrew" : "Greek"} voice on <b>The device's</b>: the voice you selected is the one that reads. (Safari doesn't list every downloaded voice to web pages, so it may not appear by name - it still speaks.) If it doesn't, close the app (or Safari) completely and open it again.</li>
+      <li>Tap <b>Greek</b> or <b>Hebrew</b>.</li>
+      <li>Tap a voice to download it - an <b>Enhanced</b> or <b>Premium</b> one sounds the most natural. They're about 100-400 MB: use Wi-Fi.</li>
+      <li>Select it, so it gets the tick: that's the voice COTEXT now reads with. If it doesn't change, close the app (or Safari) completely and open it again.</li>
     </ol>
-    <p>Each device keeps its own voices: do the same on the iPad. On a Mac: System Settings > Accessibility > Spoken Content > System voice > Manage Voices.</p>`;
+    <p><b>Siri voices</b> can't be used: Apple keeps them for Siri and its own reading, and doesn't let apps or web pages speak with them - a Siri voice selected for a language leaves COTEXT on that language's other voice.</p>
+    <p>Each device keeps its own voices: do the same on the iPad. On a Mac: System Settings > Accessibility > Spoken Content > System voice > Manage Voices.</p>
+    <p><b>Android</b> (the names differ a little from phone to phone):</p>
+    <ol class="steps">
+      <li>Open <b>Settings</b> and search for <b>Text-to-speech</b> (usually under <b>System</b> > <b>Languages</b>, or <b>Accessibility</b>; on Samsung, <b>General management</b> > <b>Language</b>).</li>
+      <li>Make the preferred engine <b>Speech Services by Google</b>, then tap its ⚙ and <b>Install voice data</b>.</li>
+      <li>Pick <b>Greek</b> or <b>Hebrew</b>, download it, and choose one of its voices.</li>
+      <li>Close the browser completely and open COTEXT again: it reads with that voice.</li>
+    </ol>`;
 });
 
 function utterance (text: string): SpeechSynthesisUtterance {
@@ -306,7 +287,7 @@ export function sayText (text: string) {
 /** The testament shown: voices and their language follow it. Called on each chapter shown (reading stops). */
 export function setAudioTestament (t: "OT" | "NT") {
   stopReading ();
-  if (t !== testament) { testament = t; fillVoices (); }
+  if (t !== testament) testament = t;
 }
 
 // ▶: the chapter from the first verse whose line shows at the top of the view; a verse number: that verse.
