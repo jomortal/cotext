@@ -1,5 +1,5 @@
 // The study menu: ☰ opens a drawer from the left, above everything (design/mock-hebrew.html) - the study screens:
-// My vocab, Verb paradigms, Verb chart, Parsing guide. Each opens full screen, with ☰ at its top left (to move between
+// Vocab, Verb paradigms, Verb chart, Parsing guide. Each opens full screen, with ☰ at its top left (to move between
 // them) and ✕ at its top right (back to the text); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts), each for the
 // testament shown; one not built says it's coming. Picking an item, ✕ or tapping outside closes the drawer.
 

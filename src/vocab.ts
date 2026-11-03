@@ -1,7 +1,6 @@
-// My vocab (☰ > My vocab): each person's own list. A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
+// Vocab (☰ > Vocab): each person's own list (My vocab). A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
 // again); "I know this word" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
-// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: how many are in my
-// vocab and known, then three lists - MY VOCAB, KNOWN WORDS and WORDS BY FREQUENCY (the testament's words not yet
+// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: three lists - MY VOCAB, KNOWN WORDS and WORDS BY FREQUENCY (the testament's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
 // moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
@@ -91,8 +90,7 @@ function lists () {
 
 function draw (body: HTMLElement) {
   const t = currentTestament ();
-  body.innerHTML = `<p class="vocabCount"></p>
-    <div class="bar"><button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
+  body.innerHTML = `<div class="bar"><button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
       <button class="pill" data-list="freq">Words by frequency</button></div>
     <div class="chartPick" id="freqRow"><label>Words<select class="choose" id="freqPick"></select></label></div>
     <div class="deck"></div>
@@ -110,7 +108,6 @@ function draw (body: HTMLElement) {
   const refresh = () => {
     const l = lists ();
     pickedList[t] = Math.min (pickedList[t], Math.max (0, l.count - 1));
-    body.querySelector (".vocabCount")!.innerHTML = `<b>${l.learn.length.toLocaleString ()}</b> in my vocab · <b>${l.known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden.`;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.setAttribute ("aria-pressed", String (b.dataset.list === picked));
     freqRow.style.display = picked === "freq" ? "" : "none";     // (Its 20s only for Words by frequency)
     freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
@@ -146,4 +143,4 @@ function draw (body: HTMLElement) {
   open ();
 }
 
-onScreen ("My vocab", draw);
+onScreen ("Vocab", draw);
