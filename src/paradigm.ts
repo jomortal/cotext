@@ -216,7 +216,7 @@ export const HEBREW_MODELS: HebrewModel[] = [
 ];
 const rootLetters = (root: string) => root.match (/.[ׁׂ]?/g)!;     // (Each letter with its shin / sin dot)
 
-/** A Hebrew cell as the screens show it: the pattern, or with a model verb its form (rootL coloured); text: the form
+/** A Hebrew cell as the screens show it: the pattern, or with a model verb its form (rootL colored); text: the form
  *  as plain text (the flashcards' "on a model root"). */
 export function hebrewForm (stem: Stem, c: HebrewCell, model: HebrewModel | null): Form & { text: string } {
   const parts = parse (c.template);
@@ -392,7 +392,7 @@ export function greekForm (tv: TenseVoice, c: GreekCell, model: GreekModel | nul
   const plain = (s: string) => s.replace (/̄/g, "").normalize ("NFC");
   const aug = tv.augment && c.mood === "I";
   const pattern = model
-    ? (() => {     // (The model's stem coloured: the word split where its stem ends)
+    ? (() => {     // (The model's stem colored: the word split where its stem ends)
         const full = word (model), cut = [...plain ((aug ? "ἐ" : "") + (tv.redup ? model.redup : "") + (tv.long ? model.stem : model.short))].length;
         const chars = [...full.normalize ("NFD")];
         let base = 0, at = 0;

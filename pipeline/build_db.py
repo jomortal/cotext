@@ -10,7 +10,7 @@ Tables:
             text (pointed Hebrew / accented Greek, with its punctuation), translit, gloss (English), strong (the
             extended Strong's of the word's root - the lexicon's key), morph (the source's code)
   parsings  per source code: code (COTEXT's: Q-P-3MS, ART+N-MP, IAI-3S, N-DSF), spelled ("Qal perfect, 3rd masculine
-            singular"), stem (the verb's colour group in the reader: qal, piel, hiphil... ; Greek verbs 'verb'; else '')
+            singular"), stem (the verb's color group in the reader: qal, piel, hiphil... ; Greek verbs 'verb'; else '')
   lexicon   strong -> lemma (dictionary form), translit, gloss, entry (the brief lexicon's text: plain, with <b>, <i>
             and <br> only), concise (the meaning to memorise, a few words: concise())
   freq      strong, book (0: the whole OT or NT), count - how often each lemma occurs

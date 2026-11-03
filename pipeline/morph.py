@@ -18,7 +18,7 @@ GENDER = {"m": "masculine", "f": "feminine", "c": "common", "b": "masculine or f
 NUMBER = {"s": "singular", "p": "plural", "d": "dual"}
 STATE = {"a": "", "c": "construct", "d": "determined"}
 
-# Stem letter -> (COTEXT code, name). The code's colour group is the first entry of STEM_GROUP that matches.
+# Stem letter -> (COTEXT code, name). The code's color group is the first entry of STEM_GROUP that matches.
 HEBREW_STEMS = {
     "q": ("Q", "Qal"), "N": ("N", "Niphal"), "p": ("P", "Piel"), "P": ("PU", "Pual"), "h": ("HI", "Hiphil"),
     "H": ("HO", "Hophal"), "t": ("HT", "Hithpael"), "o": ("PO", "Polel"), "O": ("POL", "Polal"),
@@ -37,7 +37,7 @@ ARAMAIC_STEMS = {
     "c": ("TIP", "Tiphel"), "m": ("POE", "Poel"), "l": ("PALP", "Palpel"), "L": ("ITPP", "Ithpalpel"),
     "O": ("ITPOL", "Ithpolel"), "G": ("ITTA", "Ittaphal"),
 }
-# The stem's colour in the reader (a CSS class): the simple stem, its passive, the intensive, its passive, the
+# The stem's color in the reader (a CSS class): the simple stem, its passive, the intensive, its passive, the
 # reflexive, the causative, its passive; any other stem "other".
 STEM_GROUP = {
     "Q": "qal", "PE": "qal", "QP": "qal-pass", "PEI": "qal-pass", "N": "niphal", "HTPE": "niphal", "ITPE": "niphal",

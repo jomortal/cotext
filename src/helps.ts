@@ -23,6 +23,7 @@ interface Settings {
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
   parse?: boolean;                      // PARSING: each word's code shown (default on)
   translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it (default off)
+  verbColors?: boolean;                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
 }
 
 const s: Settings = { slider: 0, scope: "whole", showAll: false, mine: true, modes: {} };
@@ -145,6 +146,7 @@ export function applyHelps () {
   document.body.classList.toggle ("noGloss", s.gloss === false);
   document.body.classList.toggle ("noParse", s.parse === false);
   document.body.classList.toggle ("showTranslit", s.translit === true);
+  document.body.classList.toggle ("noVerbColors", s.verbColors === false);
   updateMenu ();
 }
 
@@ -159,7 +161,7 @@ const optionsBtn = document.getElementById ("optionsBtn")!;
 const options = document.getElementById ("options")!;
 const showAllBtn = document.getElementById ("showAll")!;
 const glossBtn = document.getElementById ("showGloss")!, parseBtn = document.getElementById ("showParse")!;
-const translitBtn = document.getElementById ("showTranslit")!;
+const translitBtn = document.getElementById ("showTranslit")!, colorsBtn = document.getElementById ("verbColors")!;
 const mineBtn = document.getElementById ("mine")!;
 const scopeBtn = document.getElementById ("scope")!;
 const slider = document.getElementById ("freq") as HTMLInputElement;
@@ -170,6 +172,7 @@ function updateMenu () {
   glossBtn.setAttribute ("aria-pressed", String (s.gloss !== false));
   parseBtn.setAttribute ("aria-pressed", String (s.parse !== false));
   translitBtn.setAttribute ("aria-pressed", String (s.translit === true));
+  colorsBtn.setAttribute ("aria-pressed", String (s.verbColors !== false));
   mineBtn.setAttribute ("aria-pressed", String (s.mine));
   const where = s.scope === "book" ? book.name : `whole ${book.testament}`;
   scopeBtn.textContent = `Frequency: ${where}`;
@@ -193,6 +196,8 @@ showAllBtn.addEventListener ("click", () => { s.showAll = ! s.showAll; changed (
 glossBtn.addEventListener ("click", () => { s.gloss = s.gloss === false; changed (); });
 parseBtn.addEventListener ("click", () => { s.parse = s.parse === false; changed (); });
 translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true; changed (); });
+// VERB COLORS: the verbs' parsing colored by form (Hebrew) or tense (Greek), or all plain (body.noVerbColors).
+colorsBtn.addEventListener ("click", () => { s.verbColors = s.verbColors === false; changed (); });
 mineBtn.addEventListener ("click", () => { s.mine = ! s.mine; changed (); });
 scopeBtn.addEventListener ("click", () => { s.scope = s.scope === "book" ? "whole" : "book"; changed (); });
 slider.addEventListener ("input", () => { s.slider = Number (slider.value); changed (); });

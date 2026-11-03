@@ -1,11 +1,11 @@
 /* COTEXT's look, after the approved mock-ups (design/): warm paper, one serif for each language, a sans for the rest;
-   light and dark from the device's setting. Colours and fonts are tokens here, used by name below. */
+   light and dark from the device's setting. Colors and fonts are tokens here, used by name below. */
 
 @font-face { font-family: "Ezra SIL"; src: url("fonts/EzraSIL.woff") format("woff"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
-/* Verb colours: one per stem group (pipeline/morph.py's STEM_GROUP) - the simple stem (Qal) blue, as in the mock-ups;
+/* Verb colors: one per stem group (pipeline/morph.py's STEM_GROUP) - the simple stem (Qal) blue, as in the mock-ups;
    its passive, the Niphal, the Piel and Pual, the Hithpael, the Hiphil and Hophal each their own; rarer stems "other".
    Greek verbs all take the Qal's blue (group "verb"). */
 :root {
@@ -38,7 +38,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 
 /* The heading: ☰ (the study drawer), ‹ passage ›, ⋯ (the helps' menu, opening under it). */
 /* Above the scrolling text, not inside it: the body a column - the heading, then main filling the rest and scrolling
-   on its own - so the text can't go above or behind it, whatever its height; under the clock it's the heading's own colour. */
+   on its own - so the text can't go above or behind it, whatever its height; under the clock it's the heading's own color. */
 .head { flex: none; z-index: 5; display: grid; gap: 10px; background: var(--bg);
         padding: calc(6px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) 6px max(16px, env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -79,18 +79,18 @@ body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
 /* Helps hidden (helps.ts: the slider or "I know this word"); SHOW HELPS brings them back, faded. */
 .w.known .gloss, .w.knownForm .parse { visibility: hidden; }     /* (helps.ts: the gloss by the word, the parsing by its form) */
 body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: visible; opacity: .55; }
-.stem-qal .parse, .stem-verb .parse { color: var(--qal); }
-.stem-qal-pass .parse { color: var(--qal-pass); }
-.stem-niphal .parse { color: var(--niphal); }
-.stem-piel .parse { color: var(--piel); }
-.stem-pual .parse { color: var(--pual); }
-.stem-hithpael .parse { color: var(--hithpael); }
-.stem-hiphil .parse { color: var(--hiphil); }
-.stem-hophal .parse { color: var(--hophal); }
-.stem-other .parse { color: var(--other); }
+/* VERB COLORS (reader.ts's verbForm; off: body.noVerbColors): Hebrew by form, Greek by tense. */
+.vf-wayyiqtol .parse, .vf-aorist .parse { color: var(--piel); }
+.vf-qatal .parse, .vf-present .parse { color: var(--qal); }
+.vf-weqatal .parse, .vf-pluperfect .parse { color: var(--hithpael); }
+.vf-yiqtol .parse, .vf-imperfect .parse { color: var(--niphal); }
+.vf-volitive .parse, .vf-future .parse { color: var(--pual); }
+.vf-participle .parse, .vf-perfect .parse { color: var(--hiphil); }
+.vf-infinitive .parse { color: var(--other); }
+body.noVerbColors .w .parse { color: inherit; }
 
 /* Reading aloud (audio.ts): ▶ fixed at the bottom, centred, clear of the home indicator - above the word's panel
-   while it's open (--above: the panel's height); the word being spoken lit, the verse number tapped in the qal colour. */
+   while it's open (--above: the panel's height); the word being spoken lit, the verse number tapped in the qal color. */
 /* The play bar and the word's panel: in the page's column under the text (body: heading, main, play bar, panel), not
    over it - the text area ends above them, so nothing covers the text; the panel opening pushes the play bar up. */
 /* Its size and look the heading's (6 px above and below, the heading's pills, no border), down against the screen's
@@ -157,7 +157,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 .choices.numbers .pill { min-width: 3em; }
 
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
-   each, a mask over the text's colour). */
+   each, a mask over the text's color). */
 #drawer { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 50; }
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); background: var(--bg);
                border-right: 1px solid var(--line); display: grid; align-content: start; gap: 10px; overflow-y: auto;
@@ -184,13 +184,13 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 #screenMenu { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
 #screenClose { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }     /* (✕: back to the text; fixed like the ☰) */
 
-/* The strip under the clock (the top safe area) painted solid in the page's colour, over whatever scrolls beneath:
-   iPadOS draws a blur there in Home Screen apps, and a blur over one solid colour shows nothing. */
+/* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
+   iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
 #sheet .root, .cardFront .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
 #sheet .root[hidden] { display: none; }     /* (The word as written, when it's the dictionary form: panel.ts) */
-/* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
+/* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
 /* The word's panel, its head as two rows lined up: the word as written with Close, then its root (dictionary form)
@@ -204,7 +204,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
-   colour, the one open bold; the panel stays at most half the screen, scrolling. */
+   color, the one open bold; the panel stays at most half the screen, scrolling. */
 #sheet .term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 #sheet .term.on { font-weight: 700; }
 #gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
@@ -231,7 +231,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 
 /* A verb form's pattern (paradigm.ts; the Verb chart and the paradigm cards): the root's letters (Hebrew) or the stem
    (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the Qal's
-   colour. */
+   color. */
 .pattern { display: inline-flex; align-items: flex-end; gap: 2px; font-size: 30px; line-height: 1.2; white-space: nowrap; }
 .pattern.he { font-family: var(--heb); direction: rtl; padding: .45em 0 .6em; }     /* (Room for the squares' vowels, over and under) */
 .pattern.he.filled { padding: 0; }
@@ -291,7 +291,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .vocabRow .n { color: var(--soft); font-size: 12px; }
 /* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (over it near
-   the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked colour. */
+   the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
