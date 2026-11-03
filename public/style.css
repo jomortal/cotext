@@ -196,7 +196,7 @@ body.noVerbColors .w .parse { color: inherit; }
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
-#sheet .root, .cardFront .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
+#sheet .root, .card .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
 #sheet .root[hidden] { display: none; }     /* (The word as written, when it's the dictionary form: panel.ts) */
 /* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
@@ -288,6 +288,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cardBack { font-size: 15px; line-height: 1.5; display: grid; gap: 4px; }
 .cardBack[hidden], .cardHint[hidden], .cardBar[hidden] { display: none; }
 .cardBack .heWord { font-size: 28px; } .cardBack .grWord { font-size: 24px; }
+.cardBack .root .heWord, .cardBack .root .grWord { font-size: 44px; }     /* (My vocab reversed: the word on the back, as big as a front) */
+.card .meaning { font-size: 24px; line-height: 1.3; }     /* (A vocab card's English, either side) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: 18px; }
 .cardBar { justify-content: center; }
 .cardBar .pill { font-size: 14px; padding: 7px 16px; }

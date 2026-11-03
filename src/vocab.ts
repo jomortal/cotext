@@ -5,7 +5,7 @@
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
 // moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
-// front the word with a speaker that says it, turned over its concise meaning alone (the word hidden); REMOVE FROM LIST takes it off that list
+// front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
 // (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
 
 import type { Db } from "./db";
@@ -59,8 +59,8 @@ function cardsFor (strongs: string[]): WordCard[] {
   const d = details (strongs), hebrew = currentTestament () === "OT";
   return strongs.filter ((k) => d.has (k)).map ((k) => {
     const w = d.get (k)!;
-    return { strong: k, back: `<div>${esc (w.meaning)}</div>`,
-             front: `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><button class="pill icon" data-say="${esc (w.lemma)}" aria-label="Say the word">${SPEAKER}</button></span>` };
+    const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><button class="pill icon" data-say="${esc (w.lemma)}" aria-label="Say the word">${SPEAKER}</button></span>`, meaning = `<div class="meaning">${esc (w.meaning)}</div>`;
+    return reversed ? { strong: k, front: meaning, back: word } : { strong: k, front: word, back: meaning };
   });
 }
 
@@ -73,6 +73,7 @@ function toLearn (prefix: string, known: string[]): string[] {
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList = { OT: 0, NT: 0 };   // (The frequency list picked, by testament: 0 the first)
 let picked = "freq";                   // (The list shown: learn - My vocab -, known, or freq - Words by frequency)
+let reversed = false;                  // (ENGLISH TO HEBREW / GREEK: the cards' front the meaning, turned over the word)
 let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
 
 
@@ -95,7 +96,7 @@ function draw (body: HTMLElement) {
       <button class="pill" data-list="freq">Words by frequency</button></div>
     <div class="chartPick" id="freqRow"><label>Words<select class="choose" id="freqPick"></select></label></div>
     <div class="deck"></div>
-    <div class="bar"><button class="pill" id="showList">Show list</button></div>
+    <div class="bar"><button class="pill" id="reverse">English to ${t === "OT" ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
     <div class="vocabLists"></div>`;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
   const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!;
@@ -117,6 +118,7 @@ function draw (body: HTMLElement) {
     freqPick.value = String (pickedList[t]);
     const d = picked === "freq" ? details (words (l)) : l.d;
     listBtn.setAttribute ("aria-pressed", String (listShown));
+    body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
     listEl.style.display = listShown ? "" : "none";
     listEl.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
       const w = d.get (k)!;
@@ -137,6 +139,7 @@ function draw (body: HTMLElement) {
     showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined, true);     // (Turned over: only the English)
   };
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
+  body.querySelector ("#reverse")!.addEventListener ("click", () => { reversed = ! reversed; refresh (); open (); });
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); refresh (); open (); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.addEventListener ("click", () => { picked = b.dataset.list!; refresh (); open (); });
   refresh ();
