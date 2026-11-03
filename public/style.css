@@ -41,6 +41,13 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
    on its own - so the text can't go above or behind it, whatever its height; under the clock it's the heading's own color. */
 .head { flex: none; z-index: 5; display: grid; gap: 10px; background: var(--bg);
         padding: calc(6px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) 6px max(16px, env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
+.head { position: relative; }
+/* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
+   the screen, scrolling. */
+#options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box; background: var(--bg);
+           border-bottom: 1px solid var(--line); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: contain;
+           padding: 8px max(16px, env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) 12px max(16px, env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
+#options[hidden] { display: none; }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .head .nav { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .head .row .pill, .pill.icon { font-size: 18px; line-height: 1; padding: 6px 14px; }
