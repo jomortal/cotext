@@ -73,7 +73,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
 .w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: 8px; padding: 2px 4px; }
-.w.on { background: color-mix(in srgb, var(--qal) 14%, transparent); }
+.w.on { background: color-mix(in oklch, var(--qal) 14%, transparent); }
 .orig { font-size: 28px; line-height: 1.5; }
 .he .orig { font-family: var(--heb); }
 .gr .orig { font-family: var(--grk); font-size: 26px; }
@@ -115,7 +115,7 @@ body.noVerbColors .w .parse { color: inherit; }
 #sheet:not([hidden]) + #notes:not([hidden]) { border-top: 1px solid var(--edge); }
 #sheet:not([hidden]) ~ #playBar, #notes:not([hidden]) + #playBar { border-top: 1px solid var(--edge); }
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], #speakBtn[hidden] { display: none; }
-.w.reading { background: color-mix(in srgb, var(--qal) 28%, transparent); }
+.w.reading { background: color-mix(in oklch, var(--qal) 28%, transparent); }
 .vnum { cursor: pointer; }
 .vnum.playing { color: var(--qal); }
 #voicePick, .choose { font: inherit; font-size: 13px; padding: 4px; border-radius: 8px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); max-width: 100%; }
