@@ -11,6 +11,7 @@
 
 import type { Db } from "./db";
 import type { Book } from "./reader";
+import { onScreen, openScreen } from "./study";
 
 const KEY = "cotext.helps";
 
@@ -190,6 +191,29 @@ parseBtn.addEventListener ("click", () => { s.parse = s.parse === false; changed
 translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true; changed (); });
 // VERB COLORS: the verbs' parsing colored by form (Hebrew) or tense (Greek), or all plain (body.noVerbColors).
 colorsBtn.addEventListener ("click", () => { s.verbColors = s.verbColors === false; changed (); });
+// ABOUT VERB COLORS: what each color means (reader.ts's verbForm groups, style.css's .vf- colors), Hebrew then Greek.
+document.getElementById ("aboutColors")!.addEventListener ("click", () => { optionsBtn.click (); openScreen ("About verb colors"); });
+const KEY_ROWS = (rows: [string, string, string][]) => `<div class="colorKey">${rows.map (([vf, name, what]) =>
+  `<div class="vf-${vf}"><span class="parse">${name}</span><span>${what}</span></div>`).join ("")}</div>`;
+onScreen ("About verb colors", (body) => {
+  body.innerHTML = `<p>Each verb's parsing is colored by what matters most for following a passage: in Hebrew its form, in Greek its tense. Turn the colors off with <b>Verb colors</b> in the ⋯ menu.</p>
+    <div class="ref">Hebrew: the verb's form</div>${KEY_ROWS ([
+      ["wayyiqtol", "Wayyiqtol", "\"And he did…\": the main line of a story, each event after the last"],
+      ["qatal", "Qatal (perfect)", "an action as a whole - background, or done before"],
+      ["weqatal", "Weqatal", "\"and he will do…\": the main line of instructions, prophecy or what happens habitually"],
+      ["yiqtol", "Yiqtol (imperfect)", "the future, what happens again and again, or what may be"],
+      ["volitive", "Imperative, cohortative, jussive", "wishes and commands: do!, let me…, let him…"],
+      ["participle", "Participle", "someone doing, or an action going on: describing"],
+      ["infinitive", "Infinitive", "the action named: to do, doing"]])}
+    <div class="ref">Greek: the verb's tense (its aspect - how the action is seen)</div>${KEY_ROWS ([
+      ["aorist", "Aorist", "the action as a whole, as one event: the main line of a story"],
+      ["present", "Present", "the action going on, or as a habit"],
+      ["imperfect", "Imperfect", "the action going on in the past: the background, scene-setting"],
+      ["future", "Future", "what will happen"],
+      ["perfect", "Perfect", "an action done, its result still standing"],
+      ["pluperfect", "Pluperfect", "an action done, its result standing in the past"]])}
+    <p>The colors pair up: red the main line of a story (wayyiqtol, aorist), blue the plainest form (qatal, present), teal the ongoing (yiqtol, imperfect).</p>`;
+});
 mineBtn.addEventListener ("click", () => { s.mine = ! s.mine; changed (); });
 scopeBtn.addEventListener ("click", () => { s.scope = s.scope === "book" ? "whole" : "book"; changed (); });
 slider.addEventListener ("input", () => { s.slider = wordsFor (Number (slider.value)); changed (); });
