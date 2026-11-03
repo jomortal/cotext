@@ -1,4 +1,4 @@
-// Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it), tapped again to turn it
+// Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it, or alone: My vocab's), tapped again to turn it
 // back. BACK and NEXT step through the deck (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
 // order at the first card, REMOVE FROM LIST (or the name its owner gives it) takes the card out (and tells the deck's owner: vocab.ts takes the word off
 // that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
@@ -14,8 +14,9 @@ import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, h
 
 export interface Card { front: string; back: string; /* HTML */ }
 
-/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name). */
-export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list") {
+/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name).
+ *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English); otherwise under it. */
+export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
   const first = [...cards];
   let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div>
@@ -26,12 +27,12 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   const back = el.querySelector<HTMLElement> (".cardBack")!, hint = el.querySelector<HTMLElement> (".cardHint")!;
   const count = el.querySelector<HTMLElement> (".cardCount")!;
   const show = () => {
-    if (! deck.length) { front.textContent = "✓"; back.hidden = false; back.textContent = "No cards left"; hint.hidden = true; count.textContent = ""; return; }
+    if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; hint.hidden = true; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; hint.hidden = false;
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; hint.hidden = false;
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; hint.hidden = ! back.hidden ? true : false; } };     // (Tapped again: turned back)
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; hint.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
   card.addEventListener ("click", (e) => {
     const say = (e.target as HTMLElement).closest<HTMLElement> ("[data-say]");

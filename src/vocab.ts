@@ -5,7 +5,7 @@
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
 // moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
-// front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that list
+// front the word with a speaker that says it, turned over its concise meaning alone (the word hidden); REMOVE FROM LIST takes it off that list
 // (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
 
 import type { Db } from "./db";
@@ -134,7 +134,7 @@ function draw (body: HTMLElement) {
     };
     const cards = cardsFor (words (lists ()));
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
-    showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined);
+    showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined, true);     // (Turned over: only the English)
   };
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); refresh (); open (); });
