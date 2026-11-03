@@ -9,7 +9,7 @@
 //   of the time by its length, at the reading speed) - the verse still one utterance, read smoothly.
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
-//   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
+//   ὁ and εἰ given as "oh" and "ee" (alone, voices spell their letters out: "omicron").
 // - The device's voice for the language (Hebrew he, Greek el), its own settings' choice (GETTING OTHER VOICES in ⋯ says how to change it). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
@@ -77,20 +77,17 @@ export function monotonic (word: string): string {
 
 const spoken = (el: HTMLElement) => {
   const text = el.querySelector (".orig")!.textContent ?? "";
-  return testament === "OT" ? hebrewSpoken (text) : monotonic (text);
+  if (testament === "OT") return hebrewSpoken (text);
+  const g = monotonic (text);
+  return ALONE[g] ?? g;     // (ὁ as "oh": the voice spells a lone ο out)
 };
-const letters = (t: string) => t.normalize ("NFD").replace (/\p{M}/gu, "").length;
 
-/** A verse's words as spoken groups: each word alone, except a Greek one-letter word, joined to the next. */
+/** A verse's words as spoken groups: each word alone (ὁ said "oh" - spoken - so it needs no partner word). */
 function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[] {
   const out: { words: HTMLElement[]; text: string }[] = [];
-  let pending = false;
   for (const w of words) {
     const t = spoken (w);
-    if (! t) continue;
-    const last = out[out.length - 1];
-    if (pending && last) { last.words.push (w); last.text += " " + t; pending = false; }
-    else { out.push ({ words: [w], text: t }); pending = testament === "NT" && letters (t) === 1; }
+    if (t) out.push ({ words: [w], text: t });
   }
   return out;
 }
@@ -255,9 +252,9 @@ function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
 }
 
 /** The panel's 🔊: says just the word (a Greek one-letter word with the next, as when reading). */
-/** A Greek one-letter word said alone (the panel's speakers, a vocab card): the voice spells ο out - "omicron" - so
- *  it's given in Latin letters, "oh". */
-const ALONE: Record<string, string> = { "ο": "oh" };
+/** A Greek one-letter (or εἰ's two-letter) word as the voice is given it, wherever it's said (reading, the panel's speakers, a vocab card):
+ *  alone the voice spells ο out - "omicron" - so it's given in Latin letters, "oh". */
+const ALONE: Record<string, string> = { "ο": "oh", "ει": "ee" };     // (εἰ, "if", too: its two letters spelled out)
 
 export function sayWord (wordEl: HTMLElement) {
   if (! synth) return;
@@ -266,9 +263,7 @@ export function sayWord (wordEl: HTMLElement) {
   const g = groups (verse.slice (verse.indexOf (wordEl)))[0];
   if (! g) return;
   synth.resume ();
-  // (The word alone: ὁ said "oh" - ALONE - rather than with the next word, as reading groups it.)
-  const u = utterance (testament === "NT" && monotonic (wordEl.querySelector (".orig")?.textContent ?? "") in ALONE
-    ? ALONE[monotonic (wordEl.querySelector (".orig")!.textContent!)] : g.text);
+  const u = utterance (g.text);
   keep.push (u);
   synth.speak (u);
 }
