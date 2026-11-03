@@ -9,7 +9,7 @@
 //   of the time by its length, at the reading speed) - the verse still one utterance, read smoothly.
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
-//   ὁ and εἰ given as "oh" and "e", υἱός as ιός (alone, voices spelled them out: "omicron").
+//   ὁ, εἰ and υἱός given in Latin letters - "oh", "e", "weeoo" (voices spelled them out: "omicron").
 // - The device's voice for the language (Hebrew he, Greek el), its own settings' choice (GETTING OTHER VOICES in ⋯ says how to change it). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
@@ -80,9 +80,9 @@ const spoken = (el: HTMLElement) => {
   if (testament === "OT") return hebrewSpoken (text);
   return greekSpoken (text);
 };
-/** Greek as the voice is given it: monotonic, then ὁ and εἰ in Latin letters (ALONE), and a word starting υι - υἱός,
- *  "son", which the voice spelled out - with ι alone, the same sound (υιός -> ιός, said "iós"). */
-const greekSpoken = (text: string) => { const g = monotonic (text); return ALONE[g] ?? g.replace (/^υι/, "ι"); };
+/** Greek as the voice is given it: monotonic, then the words it spells out given in Latin letters (ALONE): ὁ, εἰ, and
+ *  υἱός, "son", in every form ("weeoo" for υἱοῦ: the one the user's voice said right). */
+const greekSpoken = (text: string) => { const g = monotonic (text); return ALONE[g] ?? g; };
 
 /** A verse's words as spoken groups: each word alone (ὁ said "oh" - spoken - so it needs no partner word). */
 function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[] {
@@ -256,7 +256,9 @@ function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
 /** The panel's 🔊: says just the word (a Greek one-letter word with the next, as when reading). */
 /** A Greek one-letter (or εἰ's two-letter) word as the voice is given it, wherever it's said (reading, the panel's speakers, a vocab card):
  *  alone the voice spells ο out - "omicron" - so it's given in Latin letters, "oh". */
-const ALONE: Record<string, string> = { "ο": "oh", "ει": "e" };     // (εἰ, "if", too: its two letters spelled out)
+const ALONE: Record<string, string> = { "ο": "oh", "ει": "e",     // (εἰ, "if", too: its two letters spelled out)
+  "υιός": "weeos", "υιού": "weeoo", "υιώ": "weeo", "υιόν": "weeon", "υιέ": "weeeh",     // (υἱός, "son": the voice spelled
+  "υιοί": "weeee", "υιών": "weeon", "υιοίς": "weeees", "υιούς": "weeoos" };            // it out - oυ oo, οι ee, ω ο)
 
 export function sayWord (wordEl: HTMLElement) {
   if (! synth) return;
