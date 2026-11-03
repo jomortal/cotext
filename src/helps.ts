@@ -1,5 +1,6 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
-// - the frequency slider, in steps of 20 words (as My vocab's frequency lists): it hides the gloss of the N most
+// - the frequency slider, moved along how much of the text its words cover (0-100% of the scope's words, every
+//   occurrence counted), each position the next multiple of 20 words (as My vocab's frequency lists) reaching it: it hides the gloss of the N most
 //   common lemmas (the extended Strong's key, every form together), and the parsing code of a lemma in a form (lemma +
 //   COTEXT's code, the database's form_freq) occurring as often as the Nth word does - so a rare form of a common word
 //   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
@@ -32,7 +33,8 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } cat
 
 /** One scope's counts: each lemma's, each lemma + form's (key strong|code), the lemmas' counts sorted high to low,
  *  and each lemma's place in that order (0 the most common; ties by key, so it never changes). */
-interface Counts { byStrong: Map<string, number>; byForm: Map<string, number>; sorted: number[]; rank: Map<string, number>; }
+interface Counts { byStrong: Map<string, number>; byForm: Map<string, number>; sorted: number[]; rank: Map<string, number>;
+  cum: number[]; }     // (cum[i]: the occurrences of the i most common lemmas, cum[0] 0 - the coverage's)
 const cache = new Map<string, Counts> ();
 let db: Db;
 let book: Book;
@@ -52,7 +54,8 @@ function counts (): Counts {
       : db.all ("SELECT strong, code, count FROM form_freq WHERE book = 0 AND strong LIKE ?", [book.testament === "OT" ? "H%" : "G%"]);
     c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
           byForm: new Map (forms.map ((r) => [r.strong + "|" + r.code, Number (r.count)])),
-          sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])) };
+          sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])), cum: [0] };
+    for (const n of c.sorted) c.cum.push (c.cum[c.cum.length - 1] + n);
     cache.set (key, c);
   }
   return c;
@@ -60,6 +63,19 @@ function counts (): Counts {
 
 /** How many of the most common words the slider hides in the scope shown: at most every word there. */
 function hiddenWords (): number { return Math.min (s.slider, counts ().sorted.length); }
+
+/** How much of the scope's text the n most common words make up, 0-1. */
+function coverage (n: number): number { const c = counts ().cum; return c[Math.min (n, c.length - 1)] / (c[c.length - 1] || 1); }
+
+/** The slider at position v (0-1000, coverage in tenths of a percent): the fewest words, a multiple of 20, that
+ *  cover that much (a binary search on cum); 0 none. */
+function wordsFor (v: number): number {
+  if (v <= 0) return 0;
+  const c = counts ().cum, want = v / 1000 * c[c.length - 1];
+  let lo = 1, hi = c.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (c[m] >= want) hi = m; else lo = m + 1; }
+  return Math.ceil (lo / 20) * 20;
+}
 
 /** The parsing's limit: a form's parsing hidden at this count and above - the last hidden word's count (Infinity:
  *  none hidden; all the way over, 1: every parsing). */
@@ -169,12 +185,11 @@ function updateMenu () {
   const where = s.scope === "book" ? book.name : `whole ${book.testament}`;
   scopeBtn.textContent = `Frequency: ${where}`;
   scopeBtn.setAttribute ("aria-pressed", String (s.scope === "book"));
-  const all = counts ().sorted.length;
-  slider.max = String (Math.ceil (all / 20) * 20);     // (Steps of 20, as My vocab's lists; the last step every word)
-  slider.value = String (s.slider);
-  const n = hiddenWords ();
+  const all = counts ().sorted.length, n = hiddenWords ();
+  slider.value = String (Math.round (coverage (n) * 1000));     // (The thumb where its words' coverage is: it snaps there)
+  const pct = coverage (n) * 100, inWhat = s.scope === "book" ? book.name : "the " + book.testament;
   freqOut.innerHTML = n === 0 ? "Helps for every word" : n >= all ? "No helps"
-    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words in ${s.scope === "book" ? book.name : "the " + book.testament}`
+    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}`
       + ` (and forms occurring <b>${limit ().toLocaleString ()}+</b> times)`;
 }
 
@@ -194,5 +209,4 @@ translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true;
 colorsBtn.addEventListener ("click", () => { s.verbColors = s.verbColors === false; changed (); });
 mineBtn.addEventListener ("click", () => { s.mine = ! s.mine; changed (); });
 scopeBtn.addEventListener ("click", () => { s.scope = s.scope === "book" ? "whole" : "book"; changed (); });
-slider.addEventListener ("input", () => { s.slider = Number (slider.value); changed (); });
-s.slider = Math.round (s.slider / 20) * 20;     // (A value kept from before the steps of 20)
+slider.addEventListener ("input", () => { s.slider = wordsFor (Number (slider.value)); changed (); });
