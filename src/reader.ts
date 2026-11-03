@@ -9,12 +9,12 @@ import type { Db } from "./db";
 export interface Book { id: number; code: string; name: string; testament: "OT" | "NT"; chapters: number; }
 
 /** One word as the chapter shows it; the panel reads the rest from the database when it's tapped. */
-export interface Word { verse: number; text: string; gloss: string; strong: string; morph: string; code: string;
+export interface Word { verse: number; text: string; translit: string; gloss: string; strong: string; morph: string; code: string;
                         stem: string; }
 
 /** The chapter's words, in order. */
 export function chapterWords (db: Db, book: number, chapter: number): Word[] {
-  return db.all (`SELECT w.verse, w.text, w.gloss, w.strong, w.morph, p.code, p.stem
+  return db.all (`SELECT w.verse, w.text, w.translit, w.gloss, w.strong, w.morph, p.code, p.stem
                   FROM words w LEFT JOIN parsings p ON p.morph = w.morph
                   WHERE w.book = ? AND w.chapter = ? ORDER BY w.verse, w.word`, [book, chapter]) as unknown as Word[];
 }
@@ -40,7 +40,9 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     wordEl.className = "w" + (w.stem ? ` verb stem-${w.stem}` : "");
     wordEl.dataset.strong = w.strong;     // the lemma's key: helps.ts hides its gloss by it
     wordEl.dataset.code = w.code ?? "";     // its parsing code: with the lemma, helps.ts hides its parsing by it
-    wordEl.append (span ("orig", w.text), span ("gloss", w.gloss), span ("parse", w.code ?? ""));
+    // (The transliteration as STEPBible gives it, its syllable dots dropped and in lower case: be.re.Shit -> bereshit.)
+    wordEl.append (span ("orig", w.text), span ("translit", (w.translit ?? "").replace (/\./g, "").toLowerCase ()),
+                   span ("gloss", w.gloss), span ("parse", w.code ?? ""));
     wordEl.addEventListener ("click", () => onTap (w, wordEl));
     verseEl!.append (wordEl);
   }

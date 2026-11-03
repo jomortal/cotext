@@ -1,8 +1,8 @@
-// The notes panel: free commentaries and text-critical apparatuses beside the text, following it. The icon right of
+// The notes panel: free commentaries, text-critical apparatuses and English translations beside the text, following it. The icon right of
 // ▶ in the play bar opens and closes it; it takes its place in the page's column under the play bar (above the word's
 // panel when that's open - nothing floats over the text), at most about a third of the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
-//   COMMENTARIES and APPARATUS - the database's note_sources (pipeline/notes.py) - so swapping one is a tap; the choice
+//   COMMENTARIES, APPARATUS and TRANSLATIONS - the database's note_sources (pipeline/notes.py) - so swapping one is a tap; the choice
 //   is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -10,12 +10,12 @@
 //   otherwise the verse at the top of the view (the first whose line shows under the heading, as ▶ starts from),
 //   following as the reader scrolls. A note on a range (1:1-18) shows on each of its verses, its range above it; a
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
-//   note read through several verses keeps its place.
+//   note read through several verses keeps its place. A translation is a source with a "note" per verse: its text.
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 
-interface Source { id: string; kind: "commentary" | "apparatus"; name: string; testaments: string; credit: string;
+interface Source { id: string; kind: "commentary" | "apparatus" | "translation"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
 interface Note { id: number; start: number; end: number; quote: string; body: string; }
 
@@ -55,7 +55,8 @@ export function setNotesPassage (b: Book, c: number) {
       g.append (...mine ().filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
       return g.children.length ? [g] : [];
     };
-    pick.replaceChildren (...group ("commentary", "Commentaries"), ...group ("apparatus", "Apparatus"));
+    pick.replaceChildren (...group ("commentary", "Commentaries"), ...group ("apparatus", "Apparatus"),
+                       ...group ("translation", "Translations"));
     pick.value = current ()?.id ?? "";
   }
   shownVerse = -1; shownIds = null;
@@ -128,7 +129,9 @@ function update () {
   if (ids === shownIds) return;
   shownIds = ids;
   bodyEl.replaceChildren ();
-  if (! notes.length) { bodyEl.innerHTML = "<p>No notes on this verse.</p>"; }
+  if (! notes.length) {
+    bodyEl.innerHTML = current ()?.kind === "translation" ? "<p>Not in this translation.</p>" : "<p>No notes on this verse.</p>";
+  }
   for (const n of notes) {
     const el = document.createElement ("div");
     el.className = "note";

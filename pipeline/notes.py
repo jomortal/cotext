@@ -1,5 +1,5 @@
-"""The notes panel's sources: free commentaries and text-critical apparatuses, each its own database file, synced to the
-verse being read (src/notes.ts).
+"""The notes panel's sources: free commentaries, text-critical apparatuses and English translations, each its own
+database file, synced to the verse being read (src/notes.ts).
 
 Each source is fetched once into pipeline/downloads/notes/<id>/ (pinned: a release tag or commit in the URL, and the
 file's SHA-256 checked) and built into public/data/notes/<id>.db, read by the app only once the reader picks it - so
@@ -20,10 +20,15 @@ Apparatus:
            restored or added from the LXX.
   sblgnt   The SBLGNT apparatus (Holmes 2010; LogosBible/SBLGNT, CC BY 4.0): each variation unit as printed, the
            SBLGNT's reading and its editions ] the other reading and its editions.
+Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): web World English Bible, bsb Berean
+  Standard Bible, kjv King James Version (1769), asv American Standard Version (1901), ylt Young's Literal
+  Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0).
+  Footnotes, headings and Strong's tags left out (usfm_rows).
 
 Versification: every verse is stored as its source numbers it. The text is NRSV-numbered (build_db.py); KD follows the
 KJV's, the others English Bibles' (Psalm titles verse 0 where a source keeps them apart: en_tn's "front") - the same
-nearly everywhere, a verse or two off in the few places English Bibles divide differently.
+nearly everywhere, a verse or two off in the few places English Bibles divide differently. The translations are
+mapped to the text's numbers where they differ (ELSEWHERE; Psalm titles in usfm_rows).
 
 Tables, in each source's file:
   notes   book (1-66, build_db's ids), start, end (chapter * 1000 + verse: the first and last verse it covers - a range
@@ -31,7 +36,7 @@ Tables, in each source's file:
           quote (the original-language words a note is about, en_tn's; else ''), body (HTML: <p>, <b>, <i>, <br>,
           <small> (a footnote), <table>/<tr>/<td>, <span class=he|grc> round Hebrew / Greek; nothing else)
 In the main database (cotext.db):
-  note_sources  id, kind ('commentary' / 'apparatus'), name (as the picker shows it), testaments ('OT', 'NT' or
+  note_sources  id, kind ('commentary' / 'apparatus' / 'translation'), name (as the picker shows it), testaments ('OT', 'NT' or
           'OT NT'), credit (the line under the notes), file (data/notes/<id>.db), version (the file's hash: its URL
           and cache change with it), bytes
 """
@@ -72,6 +77,19 @@ SBLGNT_COMMIT = "d7f35adca9ec410e1d1499c63b4dd989d76c8d4d"   # LogosBible/SBLGNT
 SBLGNT_BOOKS = ["Matt", "Mark", "Luke", "John", "Acts", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col", "1Thess",
                 "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Jas", "1Pet", "2Pet", "1John", "2John", "3John",
                 "Jude", "Rev"]
+# The translations: eBible.org's USFM downloads (its URLs aren't versioned - the bytes pinned by hash, from 2026-11-02;
+# eBible regenerates its files now and then, and a new copy is checked by hand before its hash is changed here).
+TRANSLATIONS = {"web": "eng-web", "bsb": "engbsb", "kjv": "eng-kjv", "asv": "eng-asv", "ylt": "engylt",
+                "darby": "engDBY", "lsv": "englsv"}
+for _id, _sha in [("web", "05b0440bd8994dd4da7cc53dd8167a759ed7c09617e4a562c64eb9b3343589c8"),
+                  ("bsb", "75ca91d5a5c69ca4cbdeabdb03ea1a458db20cf3966abe15d86df086acf7fbc4"),
+                  ("kjv", "206085ace5494f7eb46975990c0734fd8354e5ecce4d12cc74ce6f1aa8efd129"),
+                  ("asv", "00b7b6c76cb1eb67b22ca51bd5ac13c2df526c13e1c38e78b862a7a2367f7071"),
+                  ("ylt", "c526b4e362fef13916a14765a7e331267f6a1227db58549fc61d3288a930a12b"),
+                  ("darby", "ebdd506c5cb8c2dccb3e94f834e012123e538ef294556a981f323bd855ab332e"),
+                  ("lsv", "b5fd551d49086785430ca4d670e2914b53c63fd65cb84717b7b200466305861f")]:
+    FILES.append((_id, TRANSLATIONS[_id] + "_usfm.zip",
+                  f"https://ebible.org/Scriptures/{TRANSLATIONS[_id]}_usfm.zip", _sha))
 for _b in SBLGNT_BOOKS:
     FILES.append(("sblgnt", _b + ".txt",
                   f"https://raw.githubusercontent.com/LogosBible/SBLGNT/{SBLGNT_COMMIT}/data/sblgntapp/text/{_b}.txt", None))
@@ -92,6 +110,16 @@ SOURCES = [
      "STEPBible Data (TAGNT, TAHOT), Tyndale House, Cambridge, CC BY 4.0."),
     ("sblgnt", "apparatus", "SBLGNT apparatus", "NT",
      "SBLGNT apparatus, Michael W. Holmes, ed. (Society of Biblical Literature and Logos Bible Software, 2010), CC BY 4.0."),
+    ("web", "translation", "World English Bible", "OT NT", "World English Bible: public domain (eBible.org)."),
+    ("bsb", "translation", "Berean Standard Bible", "OT NT", "Berean Standard Bible: public domain (eBible.org)."),
+    ("kjv", "translation", "King James Version (1769)", "OT NT", "King James Version: public domain (eBible.org)."),
+    ("asv", "translation", "American Standard Version (1901)", "OT NT",
+     "American Standard Version: public domain (eBible.org)."),
+    ("ylt", "translation", "Young's Literal Translation", "OT NT", "Young's Literal Translation: public domain (eBible.org)."),
+    ("darby", "translation", "Darby Translation", "OT NT", "J. N. Darby's translation: public domain (eBible.org)."),
+    ("lsv", "translation", "Literal Standard Version", "OT NT",
+     "Literal Standard Version, (c) 2020 Covenant Press, CC BY-SA 4.0 (lsvbible.com; eBible.org's copy). Changed: "
+     "footnotes and headings left out, line breaks kept."),
 ]
 
 USFM = ["GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH", "EZR", "NEH",
@@ -505,6 +533,89 @@ def sblgnt_rows():
                 yield b, ref(ch, v), ref(ch, v), 0, "", "".join(parts)
 
 
+# ---- Translations ----
+
+USFM_SKIP = re.compile(r"^\\(id|ide|h|toc\d|mt\d?|ms\d?|mr|s\d?|sr|r|sp|cl|cp|qa|is\d?|ip|ipr|ili\d?|ib|imt\d?|io\d?|iot|ie|rem|sts)\b")
+LINE = re.compile(r"^\\(q\d?|qc|qr|qm\d?|li\d?|pi\d?|p|m|mi|nb|pc|pmo|b)\b\s*")
+
+
+def usfm_rows(src_id, text_v0):
+    """One translation's USFM books -> a row per verse, its text: footnotes, cross-references, headings and word tags
+    left out; a poetry line or paragraph inside a verse a <br>; words supplied by the translators (\\add: the KJV's
+    italics) and \\it in italics, \\bd bold. A Psalm title (\\d) is verse 0, as the text numbers it; where the
+    translation runs its title into verse 1 (Young's, the LSV), that verse is shown on verse 0 too (text_v0: the
+    text's (book, chapter) with a verse 0). A combined verse (\\v 15-16) is a range."""
+    out = {}
+    with zipfile.ZipFile(DL / src_id / (TRANSLATIONS[src_id] + "_usfm.zip")) as z:
+        for name in z.namelist():
+            if not name.endswith(".usfm"):
+                continue
+            s = z.read(name).decode("utf-8-sig")
+            m = re.match(r"\\id (\w+)", s)
+            if not m or m.group(1) not in USFM:
+                continue     # (Front matter, the Apocrypha)
+            b = USFM.index(m.group(1)) + 1
+            s = re.sub(r"\\(f|fe|x)\s.*?\\\1\*", "", s, flags=re.S)
+            s = re.sub(r"\\\+?w\s+([^|\\]*?)(?:\|[^\\]*)?\\\+?w\*", r"\1", s)
+            c, v, cur, brk = 0, None, None, False
+            for line in s.split("\n"):
+                line = line.strip()
+                if not line or USFM_SKIP.match(line):
+                    continue
+                if (cm := re.match(r"^\\c\s+(\d+)", line)):
+                    c, v, cur = int(cm.group(1)), None, None
+                    continue
+                brk = brk or bool(LINE.match(line))
+                line = LINE.sub("", line)
+                if (dm := re.match(r"^\\d\b\s*", line)):
+                    if v is not None:
+                        continue     # (Not a title: a heading inside a psalm - Psalm 119's ALEPH, BETH...)
+                    v, cur, brk = (0, 0), out.setdefault((b, c, 0, 0), []), False
+                    line = line[dm.end():]
+                for part in re.split(r"(\\v\s+\d+(?:-\d+)?\s*)", line):
+                    if (vm := re.match(r"\\v\s+(\d+)(?:-(\d+))?", part)):
+                        v1 = int(vm.group(1))
+                        v, cur = (v1, int(vm.group(2) or v1)), out.setdefault((b, c, v1, int(vm.group(2) or v1)), [])
+                        brk = False
+                    elif cur is not None and part.strip():
+                        if brk and cur:
+                            cur.append("<br>")
+                        brk = False
+                        cur.append(usfm_text(part))
+    rows = []
+    for (b, c, v1, v2), parts in out.items():
+        body = re.sub(r"\s+", " ", " ".join(parts)).replace(" <br> ", "<br>").strip()
+        body = re.sub(r"^(<br>)+|(<br>)+$", "", body)
+        if body:
+            start = 0 if v1 == 1 and (b, c) in text_v0 and (b, c, 0, 0) not in out else v1
+            rows.append((b, ref(c, start), ref(c, v2), 0, "", f"<p>{body}</p>"))
+    have = {(r[0], r[1]): r for r in rows if r[1] == r[2]}
+    for (b, c, v), (c2, v2) in ELSEWHERE.items():
+        if (b, ref(c, v)) not in have and (r := have.get((b, ref(c2, v2)))):
+            rows.append((b, ref(c, v), ref(c, v), 0, "", f"<p><small>({c2}:{v2} in this translation)</small></p>" + r[5]))
+    return rows
+
+
+# The text's verses an English translation numbers otherwise: (book, chapter, verse) -> its (chapter, verse) there,
+# shown under the text's number with that number above it. 3 John 1:15 is the end of the KJV's 1:14, Revelation 12:18
+# the start of its 13:1 (the verse shown whole); the WEB keeps Romans 16:25-27 at 14:24-26. The rest of the text's
+# verses are numbered alike in all seven (Malachi 4, Joel 2:28-3:21 as English Bibles have them); Psalm titles are
+# verse 0 (above), the WEB's, BSB's, KJV's, ASV's and Darby's \\d, Young's and the LSV's verse 1 (shown on both).
+ELSEWHERE = {(64, 1, 15): (1, 14), (66, 12, 18): (13, 1),
+             (45, 16, 25): (14, 24), (45, 16, 26): (14, 25), (45, 16, 27): (14, 26)}
+
+
+def usfm_text(s):
+    """A verse's USFM text -> HTML: \\add / \\it italic, \\bd bold, other character marks dropped (their text kept);
+    the LSV's || (a poetry line) a <br>; the KJV's ¶ (a paragraph mark) left out."""
+    s = html.escape(s.replace("¶", ""), quote=False)
+    s = re.sub(r"\\\+?(add|it)\s(.*?)\\\+?\1\*", r"<i>\2</i>", s)
+    s = re.sub(r"\\\+?bd\s(.*?)\\\+?bd\*", r"<b>\1</b>", s)
+    s = re.sub(r"\\\+?[a-z]+\d?\*", "", s)          # (A closing mark: the space after it is the text's)
+    s = re.sub(r"\\\+?[a-z]+\d?\s?", "", s)
+    return s.replace(" || ", "<br>").replace("||", "<br>")
+
+
 # ---- Building ----
 
 def write(src_id, rows):
@@ -537,6 +648,9 @@ def build(main_db, book_codes):
         "tn": tn_rows, "tosn": tosn_rows, "kd": kd_rows, "vincent": vincent_rows,
         "stepbible": lambda: [*tagnt_rows(book_id), *tahot_rows(book_id)], "sblgnt": sblgnt_rows,
     }
+    text_v0 = set(main_db.execute("SELECT DISTINCT book, chapter FROM words WHERE verse = 0"))
+    for t in TRANSLATIONS:
+        makers[t] = lambda t=t: usfm_rows(t, text_v0)
     main_db.execute("CREATE TABLE note_sources (id TEXT PRIMARY KEY, kind TEXT, name TEXT, testaments TEXT, credit TEXT,"
                     " file TEXT, version TEXT, bytes INTEGER)")
     counts = {}

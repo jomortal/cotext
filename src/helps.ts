@@ -6,6 +6,7 @@
 // - a word's panel flips one word by hand: "I know this word" hides its gloss everywhere (its parsing still by the
 //   form rule above), "Show helps" shows both, on top of the slider;
 // - MY SELECTIONS off ignores those hand choices (kept, for turning back on); SHOW HELPS shows every hidden help, faded.
+// - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
 
 import type { Db } from "./db";
@@ -19,6 +20,9 @@ interface Settings {
   showAll: boolean;                     // SHOW HELPS: hidden helps shown, faded
   mine: boolean;                        // MY SELECTIONS: the hand choices apply
   modes: Record<string, "show" | "hide">;   // hand choices, by Strong's key
+  gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
+  parse?: boolean;                      // PARSING: each word's code shown (default on)
+  translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it (default off)
 }
 
 const s: Settings = { slider: 0, scope: "whole", showAll: false, mine: true, modes: {} };
@@ -138,6 +142,9 @@ export function applyHelps () {
     el.classList.toggle ("knownForm", isFormHidden (el.dataset.strong!, el.dataset.code ?? ""));
   }
   document.body.classList.toggle ("showAll", s.showAll);
+  document.body.classList.toggle ("noGloss", s.gloss === false);
+  document.body.classList.toggle ("noParse", s.parse === false);
+  document.body.classList.toggle ("showTranslit", s.translit === true);
   updateMenu ();
 }
 
@@ -151,6 +158,8 @@ function changed () {
 const optionsBtn = document.getElementById ("optionsBtn")!;
 const options = document.getElementById ("options")!;
 const showAllBtn = document.getElementById ("showAll")!;
+const glossBtn = document.getElementById ("showGloss")!, parseBtn = document.getElementById ("showParse")!;
+const translitBtn = document.getElementById ("showTranslit")!;
 const mineBtn = document.getElementById ("mine")!;
 const scopeBtn = document.getElementById ("scope")!;
 const slider = document.getElementById ("freq") as HTMLInputElement;
@@ -158,6 +167,9 @@ const freqOut = document.getElementById ("freqOut")!;
 
 function updateMenu () {
   showAllBtn.setAttribute ("aria-pressed", String (s.showAll));
+  glossBtn.setAttribute ("aria-pressed", String (s.gloss !== false));
+  parseBtn.setAttribute ("aria-pressed", String (s.parse !== false));
+  translitBtn.setAttribute ("aria-pressed", String (s.translit === true));
   mineBtn.setAttribute ("aria-pressed", String (s.mine));
   const where = s.scope === "book" ? book.name : `whole ${book.testament}`;
   scopeBtn.textContent = `Frequency: ${where}`;
@@ -176,6 +188,11 @@ optionsBtn.addEventListener ("click", () => {
   optionsBtn.textContent = open ? "✕" : "⋯";     // ⋯ opens the menu; ✕ while open closes it
 });
 showAllBtn.addEventListener ("click", () => { s.showAll = ! s.showAll; changed (); });
+// INTERLINEAR, PARSING and TRANSLITERATION: each shows or hides that line of every word (the body's noGloss, noParse,
+// showTranslit: style.css), over what the slider and the hand choices hide.
+glossBtn.addEventListener ("click", () => { s.gloss = s.gloss === false; changed (); });
+parseBtn.addEventListener ("click", () => { s.parse = s.parse === false; changed (); });
+translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true; changed (); });
 mineBtn.addEventListener ("click", () => { s.mine = ! s.mine; changed (); });
 scopeBtn.addEventListener ("click", () => { s.scope = s.scope === "book" ? "whole" : "book"; changed (); });
 slider.addEventListener ("input", () => { s.slider = Number (slider.value); changed (); });
