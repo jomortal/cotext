@@ -4,7 +4,7 @@
 // consonants as modern Israeli Hebrew says them - again what COTEXT reads aloud in (he-IL) - each with its final form,
 // its dot (dagesh) form where that changes the sound, its name, IPA and an English example; then the vowel signs, each
 // on a letter, with its name and sound. Each row's speaker says the letter's name, the pair in a word or the vowel's
-// syllable, in the device's Greek or Hebrew voice.
+// syllable (sheva in a word, בְּרִית, as on its own a voice gives it a full vowel), in the device's Greek or Hebrew voice.
 
 import { onScreen, currentTestament } from "./study";
 import { sayText } from "./audio";
@@ -80,8 +80,8 @@ const HEB_LETTERS: [string, string, string, string, string][] = [
   ["ת", "תָּו", "tav", "t", "t as in top - today with or without the dot"],
 ];
 
-/** [vowel on a letter, name (English), IPA, how it sounds] */
-const HEB_VOWELS: [string, string, string, string][] = [
+/** [vowel on a letter, name (English), IPA, how it sounds, what its speaker says (the vowel on its letter if none)] */
+const HEB_VOWELS: [string, string, string, string, string?][] = [
   ["בָּ", "qamets", "a", "a as in father (in a few closed syllables o, as in more)"],
   ["בַּ", "patach", "a", "a as in father"],
   ["בֵּ", "tsere", "e", "e as in bet (ey as in they before י)"],
@@ -89,7 +89,7 @@ const HEB_VOWELS: [string, string, string, string][] = [
   ["בִּ", "hireq", "i", "ee as in see"],
   ["בֹּ", "holam", "o", "o as in more (also written וֹ)"],
   ["בֻּ", "qibbuts", "u", "oo as in food (also written וּ, shureq)"],
-  ["בְּ", "sheva", "e / –", "a short e, as in the a of about, or silent"],
+  ["בְּ", "sheva", "ə / –", "barely a vowel: a quick e as in the a of about, often silent - בְּרִית brit", "בְּרִית"],     // (Said in a word: on its own a voice gives it a full e)
   ["חֲ", "hateph patach", "a", "a short a, as in father"],
   ["חֱ", "hateph segol", "e", "a short e, as in bet"],
   ["חֳ", "hateph qamets", "o", "a short o, as in more"],
@@ -112,8 +112,8 @@ function draw (body: HTMLElement) {
       ${HEB_LETTERS.map (([forms, he, en, ipa, how]) => `<div class="sayRow"><span class="heWord sayLetter">${forms}</span>
         <span><b>${en}</b> <span class="heWord">${he}</span><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (he)}</div>`).join ("")}
       <div class="ref">The vowels (shown on ב, or ח)</div>
-      ${HEB_VOWELS.map (([v, en, ipa, how]) => `<div class="sayRow"><span class="heWord sayLetter">${v}</span>
-        <span><b>${en}</b><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (v)}</div>`).join ("")}`;
+      ${HEB_VOWELS.map (([v, en, ipa, how, said]) => `<div class="sayRow"><span class="heWord sayLetter">${v}</span>
+        <span><b>${en}</b><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (said ?? v)}</div>`).join ("")}`;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-say]")) b.addEventListener ("click", () => sayText (b.dataset.say!));
     return;
   }
