@@ -98,8 +98,9 @@ function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[]
 
 function voice (): SpeechSynthesisVoice | undefined {
   const all = synth?.getVoices () ?? [];
-  return all.find ((v) => v.voiceURI === s.voices?.[lang ()])     // (VOICE's pick, else the device's for the language)
-      ?? all.find ((v) => v.lang.startsWith (lang ()));
+  // VOICE's pick; else none set - the utterance's language alone, so the device uses the voice chosen for it in its
+  // own settings (a downloaded Enhanced or male voice the browser doesn't list still speaks).
+  return all.find ((v) => v.voiceURI === s.voices?.[lang ()]);
 }
 
 // VOICE (the ⋯ menu, with READING SPEED): the device's voices for the text shown's language (Hebrew or Greek), the first "The device's" -
@@ -108,7 +109,7 @@ function voice (): SpeechSynthesisVoice | undefined {
 const voicePick = document.getElementById ("voicePick") as HTMLSelectElement;
 function fillVoices () {
   const mine = (synth?.getVoices () ?? []).filter ((v) => v.lang.startsWith (lang ()));
-  voicePick.replaceChildren (new Option ("The device's", ""), ...mine.map ((v) => new Option (v.name, v.voiceURI)));
+  voicePick.replaceChildren (new Option ("The device's (as set in its Settings)", ""), ...mine.map ((v) => new Option (v.name, v.voiceURI)));
   voicePick.value = mine.some ((v) => v.voiceURI === s.voices?.[lang ()]) ? s.voices![lang ()] : "";
   voicePick.closest ("label")!.firstChild!.textContent = testament === "OT" ? "Hebrew voice" : "Greek voice";
 }
@@ -136,7 +137,8 @@ onScreen ("Getting better voices", (body) => {
       <li>Open <b>Settings</b>, then <b>Accessibility</b>, then <b>Spoken Content</b> (on iOS 26 it may be <b>Read &amp; Speak</b>), then <b>Voices</b>.</li>
       <li>Tap <b>Greek</b> (and then <b>Hebrew</b>).</li>
       <li>Tap a voice marked <b>Enhanced</b> or <b>Premium</b> to download it - Melina for Greek, Carmit for Hebrew. They're about 100-400 MB: use Wi-Fi.</li>
-      <li>Come back to COTEXT and pick it in ⋯ > ${testament === "OT" ? "Hebrew" : "Greek"} voice. If it isn't listed, tap <b>Look for voices again</b>; if it still isn't, close the app (or Safari) completely and open it again - some browsers only look for voices when they start.</li>
+      <li>Select it there (it gets the tick), so it's the language's voice.</li>
+      <li>In COTEXT, leave ⋯ > ${testament === "OT" ? "Hebrew" : "Greek"} voice on <b>The device's</b>: the voice you selected is the one that reads. (Safari doesn't list every downloaded voice to web pages, so it may not appear by name - it still speaks.) If it doesn't, close the app (or Safari) completely and open it again.</li>
     </ol>
     <p>Each device keeps its own voices: do the same on the iPad. On a Mac: System Settings > Accessibility > Spoken Content > System voice > Manage Voices.</p>`;
 });
@@ -216,6 +218,7 @@ function next (id: number) {
 }
 
 function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v: SpeechSynthesisVoice | undefined) {
+  const vk = v?.voiceURI ?? "device:" + lang ();     // (The voice as remembered for its word timing: the device's own by language)
   const starts: number[] = [];
   let text = "";
   for (const g of gs) { if (text) text += " "; starts.push (text.length); text += g.text; }     // (Each group's first character)
@@ -231,7 +234,7 @@ function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v
   // A voice without word timing (no boundary events - remembered): the words lit on a clock instead, each group's
   // share of the time by its length, at the reading speed - close enough to follow, the verse still read smoothly.
   const clock = () => {
-    if (! v || ! s.noBoundary.includes (v.voiceURI)) return;
+    if (! s.noBoundary.includes (vk)) return;
     const msPerChar = 75 / s.rate;
     let at = 0;
     gs.forEach ((g, k) => {
@@ -244,8 +247,8 @@ function wholeVerse (id: number, gs: { words: HTMLElement[]; text: string }[], v
     lit = 0; light (gs[0].words);
     clock ();
     setTimeout (() => {
-      if (id !== session || sawBoundary || ! v || s.noBoundary.includes (v.voiceURI)) return;
-      s.noBoundary.push (v.voiceURI); save ();     // (No word timing after a second: from now on, the clock)
+      if (id !== session || sawBoundary || s.noBoundary.includes (vk)) return;
+      s.noBoundary.push (vk); save ();     // (No word timing after a second: from now on, the clock)
       clock ();
     }, 1000);
   };
