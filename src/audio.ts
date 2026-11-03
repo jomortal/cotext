@@ -10,9 +10,11 @@
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
 //   one-letter word (ὁ) spoken with the next - alone, voices spell the letter out ("omicron") - the two lit together.
-// - The device's voice for the language (Hebrew he, Greek el - one each). READING SPEED (0.1x - 1x) and SPACE BETWEEN
+// - The device's voice for the language (Hebrew he, Greek el), or the one picked in ☰ > Settings (VOICE, below). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
+
+import { onScreen } from "./study";
 
 const KEY = "cotext.audio";
 const synth: SpeechSynthesis | undefined = "speechSynthesis" in window ? window.speechSynthesis : undefined;
@@ -21,6 +23,7 @@ interface Settings {
   rate: number;                                  // 0.1 - 1
   gap?: number;                                  // seconds between words (0: none; then read a word at a time)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
+  voices?: Record<string, string>;               // VOICE (☰ settings): the voice picked, by language (he, el) - its voiceURI
 }
 const s: Settings = { rate: 0.8, noBoundary: [] };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
@@ -95,8 +98,38 @@ function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[]
 
 function voice (): SpeechSynthesisVoice | undefined {
   const all = synth?.getVoices () ?? [];
-  return all.find ((v) => v.lang.startsWith (lang ()));     // (The device's voice for the language: Hebrew or Greek)
+  return all.find ((v) => v.voiceURI === s.voices?.[lang ()])     // (VOICE's pick, else the device's for the language)
+      ?? all.find ((v) => v.lang.startsWith (lang ()));
 }
+
+// VOICE (☰ settings): the device's voices for the text shown's language (Hebrew or Greek), the first "The device's" -
+// its default; filled when the voices load (they arrive late on some browsers) and when the testament changes. "Getting
+// better voices" opens the steps for downloading the device's own enhanced voices.
+const voicePick = document.getElementById ("voicePick") as HTMLSelectElement;
+function fillVoices () {
+  const mine = (synth?.getVoices () ?? []).filter ((v) => v.lang.startsWith (lang ()));
+  voicePick.replaceChildren (new Option ("The device's", ""), ...mine.map ((v) => new Option (v.name, v.voiceURI)));
+  voicePick.value = mine.some ((v) => v.voiceURI === s.voices?.[lang ()]) ? s.voices![lang ()] : "";
+  voicePick.closest ("label")!.firstChild!.textContent = testament === "OT" ? "Hebrew voice" : "Greek voice";
+}
+voicePick.addEventListener ("change", () => {
+  s.voices = { ...s.voices, [lang ()]: voicePick.value };
+  if (! voicePick.value) delete s.voices[lang ()];
+  save ();
+});
+synth?.addEventListener?.("voiceschanged", fillVoices);
+fillVoices ();
+
+onScreen ("Getting better voices", (body) => {
+  body.innerHTML = `<p>COTEXT reads aloud with the device's own voices. Better ones - Enhanced or Premium - are free from Apple:</p>
+    <ol class="steps">
+      <li>Open <b>Settings</b>, then <b>Accessibility</b>, then <b>Spoken Content</b> (on iOS 26 it may be <b>Read &amp; Speak</b>), then <b>Voices</b>.</li>
+      <li>Tap <b>Greek</b> (and then <b>Hebrew</b>).</li>
+      <li>Tap a voice marked <b>Enhanced</b> or <b>Premium</b> to download it - Melina for Greek, Carmit for Hebrew. They're about 100-400 MB: use Wi-Fi.</li>
+      <li>Come back to COTEXT and pick it in ☰ > Settings > ${testament === "OT" ? "Hebrew" : "Greek"} voice (reload the page if it isn't listed yet).</li>
+    </ol>
+    <p>Each device keeps its own voices: do the same on the iPad. On a Mac: System Settings > Accessibility > Spoken Content > System voice > Manage Voices.</p>`;
+});
 
 function utterance (text: string): SpeechSynthesisUtterance {
   const u = new SpeechSynthesisUtterance (text);
@@ -260,7 +293,7 @@ export function sayText (text: string) {
 /** The testament shown: voices and their language follow it. Called on each chapter shown (reading stops). */
 export function setAudioTestament (t: "OT" | "NT") {
   stopReading ();
-  if (t !== testament) testament = t;
+  if (t !== testament) { testament = t; fillVoices (); }
 }
 
 // ▶: the chapter from the first verse whose line shows at the top of the view; a verse number: that verse.
