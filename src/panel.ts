@@ -37,26 +37,39 @@ document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText 
 const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps" : "I know this word"; };
 onHelpsChange (() => { if (picked) label (); });
 
-// The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the brief lexicon's full
-// entry for this word and BDB (a Hebrew word with one) its full Brown-Driver-Briggs entry - or entries, where BDB
-// splits the Strong's number -, its credit under it; Less goes back to the meaning. BDB's entries are their own file
-// (data/notes/bdb.db: pipeline/bdb.py), downloaded the first time BDB is tapped and kept (db.ts: openNotesDb).
+// The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the full entry in the
+// lexicon picked - LEXICON, a picker as GRAMMAR's, over the entry, for a Hebrew word BDB has: the STEPBible brief
+// lexicon, or Brown-Driver-Briggs (its entry - or entries, where BDB splits the Strong's number -, its credit under
+// it); kept on the device. Greek, or a word BDB lacks: the brief lexicon, no picker. Less goes back to the meaning.
+// BDB's entries are their own file (data/notes/bdb.db: pipeline/bdb.py), downloaded the first time BDB is shown and
+// kept (db.ts: openNotesDb).
 const moreBtn = document.getElementById ("moreDef")!;
-const bdbBtn = document.getElementById ("bdbBtn")!;
 const bdbCredit = document.getElementById ("bdbCredit")!;
+const lexRow = document.getElementById ("lexRow")!, lexPick = document.getElementById ("lexPick") as HTMLSelectElement;
+lexPick.innerHTML = `<option value="full">STEPBible (abridged BDB)</option><option value="bdb">Brown-Driver-Briggs</option>`;
+const LEX_KEY = "cotext.lexicon";
+let lexChoice = "full";     // (The Hebrew lexicon picked: full - the brief lexicon - or bdb)
+try { lexChoice = localStorage.getItem (LEX_KEY) === "bdb" ? "bdb" : "full"; } catch { /* private mode */ }
+lexPick.addEventListener ("change", () => {
+  lexChoice = lexPick.value;
+  try { localStorage.setItem (LEX_KEY, lexChoice); } catch { /* private mode: not kept */ }
+  showEntry (lexChoice as Shown);
+});
 type Shown = "concise" | "full" | "bdb";
 let entry = { concise: "", full: "", bdb: "", hebrew: true };     // (bdb: the word's BDB ids, space-separated; "" none)
 let shown: Shown = "concise";
 let mainDb: Db | null = null;
 let bdbDb: Promise<Db> | null = null;     // (BDB's file, once opened)
-moreBtn.addEventListener ("click", () => showEntry (shown === "concise" ? "full" : "concise"));
-bdbBtn.addEventListener ("click", () => showEntry ("bdb"));
+moreBtn.addEventListener ("click", () => showEntry (shown !== "concise" ? "concise" : entry.bdb && lexChoice === "bdb" ? "bdb" : "full"));
 
-/** The entry, concise, full or BDB's; under the concise one More (Less under the others), and BDB where there's one. */
+/** The entry, concise, full or BDB's; under the concise one More (Less under the others); over a full one LEXICON,
+ *  where BDB has the word (its name then said by the picker, not the label). */
 function showEntry (to: Shown) {
   shown = to;
-  srcEl.textContent = to === "concise" ? "Meaning" : to === "bdb" ? "Brown-Driver-Briggs"
-    : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
+  lexRow.hidden = to === "concise" || ! entry.bdb;
+  if (! lexRow.hidden) lexPick.value = to;
+  srcEl.hidden = ! lexRow.hidden;
+  srcEl.textContent = to === "concise" ? "Meaning" : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
   // The brief lexicon's entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything
   // else); BDB's the few tags bdb.py writes, its Hebrew and Greek styled as a grammar's (.gBody).
   defEl.classList.toggle ("gBody", to === "bdb");
@@ -64,9 +77,8 @@ function showEntry (to: Shown) {
   else if (to === "concise") defEl.textContent = entry.concise;
   else showBdb ();
   bdbCredit.hidden = to !== "bdb";
-  moreBtn.hidden = to === "concise" && entry.full === entry.concise;
+  moreBtn.hidden = to === "concise" && entry.full === entry.concise && ! entry.bdb;     // (Nothing more to open)
   moreBtn.textContent = to === "concise" ? "More" : "Less";
-  bdbBtn.hidden = ! entry.bdb || to === "bdb";
 }
 
 /** The word's BDB entries into the panel - BDB's file loaded first if it isn't yet (its progress shown). */

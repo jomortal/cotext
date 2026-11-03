@@ -239,8 +239,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
 #sheet .sheetPick[hidden] { display: none; }
 #sheet .sheetPick { display: grid; gap: 4px; font-size: 12px; color: var(--soft); margin: 10px 0; }
-#sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less and BDB, under the entry: panel.ts) */
-#moreDef[hidden], #bdbBtn[hidden] { display: none; }
+#sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
+#moreDef[hidden] { display: none; }
 #sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A BDB entry's senses, nested as BDB numbers them: pipeline/bdb.py) */
 #sheet .def .bdbEntry + .bdbEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several BDB entries) */
 #bdbCredit { margin-top: 8px; }
