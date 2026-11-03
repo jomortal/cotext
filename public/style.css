@@ -183,6 +183,8 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
 #sheet .root, .cardFront .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
+#sheet .root[hidden] { display: none; }     /* (The word as written, when it's the dictionary form: panel.ts) */
+#sheet #close { grid-column: 2; }     /* (Close keeps the top right, the word beside it or not) */
 /* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 

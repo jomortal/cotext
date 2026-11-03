@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one; the word as written (with Close), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). Close (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one; the word as written (with Close; left out when it's the dictionary form itself), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). Close (or tapping the word again) hides it.
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
@@ -51,6 +51,11 @@ function showEntry (full: boolean) {
   moreBtn.textContent = full ? "Less" : "More";
 }
 
+/** A word as compared with its dictionary form: Hebrew's accents, meteg, maqaf and punctuation dropped; Greek's
+ *  punctuation dropped, a grave as an acute, lower case. */
+const bare = (t: string) => t.normalize ("NFD").replace (/[\u0591-\u05af\u05bd\u05be\u05c0\u05c3-\u05c6]/g, "").replace (/\u0300/g, "\u0301")
+  .replace (/[^\p{L}\p{M}]/gu, "").toLowerCase ().normalize ("NFC");
+
 export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   if (picked === wordEl && ! sheet.hidden) { hidePanel (); return; }
   picked?.classList.remove ("on");
@@ -68,6 +73,8 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
   formEl.textContent = w.text;
   formEl.dir = lemmaEl.dir;
+  // The word as written left out when it's the dictionary form itself (λόγος, בֵּן): its row keeps only Close.
+  formEl.parentElement!.hidden = bare (w.text) === bare (lemmaEl.textContent ?? "");
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
   entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""), hebrew };
   showEntry (false);
