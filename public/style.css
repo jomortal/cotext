@@ -286,7 +286,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cardFront .pattern { font-size: 44px; }
 .cardFront .heWord, .cardFront .grWord { font-size: 44px; }
 .cardBack { font-size: 15px; line-height: 1.5; display: grid; gap: 4px; }
-.cardBack[hidden], .cardHint[hidden], .cardBar[hidden] { display: none; }
+.cardBack[hidden], .cardBar[hidden] { display: none; }
 .cardBack .heWord { font-size: 28px; } .cardBack .grWord { font-size: 24px; }
 .cardBack .root .heWord, .cardBack .root .grWord { font-size: 44px; }     /* (My vocab reversed: the word on the back, as big as a front) */
 .card .meaning { font-size: 24px; line-height: 1.3; }     /* (A vocab card's English, either side) */

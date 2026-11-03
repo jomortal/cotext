@@ -19,20 +19,19 @@ export interface Card { front: string; back: string; /* HTML */ }
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
   const first = [...cards];
   let deck = [...cards], at = 0;
-  el.innerHTML = `<div class="card" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div>
-    <div class="src cardHint">Tap to turn over</div></div>
+  el.innerHTML = `<div class="card" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
     <div class="bar cardBar"><button class="pill" data-k="back">Back</button><span class="src cardCount"></span><button class="pill" data-k="next">Next</button></div>
     <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button><button class="pill" data-k="remove">${removeLabel}</button></div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
-  const back = el.querySelector<HTMLElement> (".cardBack")!, hint = el.querySelector<HTMLElement> (".cardHint")!;
+  const back = el.querySelector<HTMLElement> (".cardBack")!;
   const count = el.querySelector<HTMLElement> (".cardCount")!;
   const show = () => {
-    if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; hint.hidden = true; count.textContent = ""; return; }
+    if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; hint.hidden = false;
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false;
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; hint.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; } };     // (Tapped again: turned back)
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
   card.addEventListener ("click", (e) => {
     const say = (e.target as HTMLElement).closest<HTMLElement> ("[data-say]");
