@@ -302,7 +302,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", over BACK, SHOW and NEXT) */
 
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
-.guideLang { font-size: 15px; margin: 14px 0 0; }
 .guideRow { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .guideRow .parse { font-size: 13px; overflow-wrap: anywhere; }
 
