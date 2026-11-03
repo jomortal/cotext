@@ -5,23 +5,25 @@
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
-/* The accent (links, picked buttons and choices, the tapped and read-aloud words' tints): blue, a hue no verb color has.
-   Verb colors (VERB COLORS: reader.ts's verbForm, the .vf- rules): seven hues - qal crimson, niphal teal, piel red,
-   pual orange, hithpael purple, hiphil green, other gold, the names left from the stem groups -
-   all, and the accent, at one lightness and chroma in OKLCH (light 0.56 / 0.13, dark 0.77 / 0.12), so no color stands out more than
+/* The accent (links, picked buttons and choices, the tapped and read-aloud words' tints) and the seven verb colors
+   (VERB COLORS: reader.ts's verbForm, the .vf- rules) as distinct as eight colors can be: their hues 45° apart around
+   OKLCH's circle - qal (qatal, present) red 25, piel (wayyiqtol, aorist) orange 70, pual (the volitives, future)
+   olive 115, hiphil (participle, perfect) green 160, niphal (yiqtol, imperfect) teal 205, the accent blue 250, hithpael
+   (weqatal, pluperfect) purple 295, other (infinitive) pink 340; the names left from the stem groups -
+   all at one lightness and chroma in OKLCH (light 0.56 / 0.13, dark 0.77 / 0.12), so no color stands out more than
    another; only the hue differs. */
 :root {
   --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: transparent;     /* (Borders and dividing lines: none shown, the user's choice - transparent, so nothing moves) */
   --edge: #dedad2;     /* (The borders kept: flashcards, the Verb chart, the menus - ⋯, ☰, the pickers and their lists - and the lines between the page's parts: under the heading, over the play bar, over each panel) */
-  --accent: oklch(0.56 0.13 261); --qal: oklch(0.56 0.13 10); --niphal: oklch(0.56 0.13 195); --piel: oklch(0.56 0.13 34); --pual: oklch(0.56 0.13 53); --hithpael: oklch(0.56 0.13 315); --hiphil: oklch(0.56 0.13 147); --other: oklch(0.56 0.13 88);
+  --accent: oklch(0.56 0.13 250); --qal: oklch(0.56 0.13 25); --niphal: oklch(0.56 0.13 205); --piel: oklch(0.56 0.13 70); --pual: oklch(0.56 0.13 115); --hithpael: oklch(0.56 0.13 295); --hiphil: oklch(0.56 0.13 160); --other: oklch(0.56 0.13 340);
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --accent: oklch(0.77 0.12 261); --qal: oklch(0.77 0.12 10); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark } }
+  --accent: oklch(0.77 0.12 250); --qal: oklch(0.77 0.12 25); --niphal: oklch(0.77 0.12 205); --piel: oklch(0.77 0.12 70); --pual: oklch(0.77 0.12 115); --hithpael: oklch(0.77 0.12 295); --hiphil: oklch(0.77 0.12 160); --other: oklch(0.77 0.12 340); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --accent: oklch(0.77 0.12 261); --qal: oklch(0.77 0.12 10); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark }
+  --accent: oklch(0.77 0.12 250); --qal: oklch(0.77 0.12 25); --niphal: oklch(0.77 0.12 205); --piel: oklch(0.77 0.12 70); --pual: oklch(0.77 0.12 115); --hithpael: oklch(0.77 0.12 295); --hiphil: oklch(0.77 0.12 160); --other: oklch(0.77 0.12 340); color-scheme: dark }
 
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
