@@ -85,7 +85,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 body.showTranslit .w .translit { display: block; }
 body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
 .parse { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
-/* Helps hidden (helps.ts: the slider or "I know this word"). */
+/* Helps hidden (helps.ts: the slider or "+ Known words"). */
 .w.known .gloss, .w.knownForm .parse { visibility: hidden; }     /* (helps.ts: the gloss by the word, the parsing by its form) */
 /* VERB COLORS (reader.ts's verbForm; off: body.noVerbColors): Hebrew by form, Greek by tense. */
 .vf-wayyiqtol .parse, .vf-aorist .parse { color: var(--piel); }
@@ -209,7 +209,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
 /* The word's panel, its head as two rows lined up: the word as written (✕ over its right, .xRow), then its root
-   (dictionary form) with I know this word - each with its speaker; the buttons in a column at the right. */
+   (dictionary form) with + Known words - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
 #sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */

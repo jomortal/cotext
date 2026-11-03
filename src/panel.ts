@@ -1,12 +1,12 @@
 // The word's panel: a sheet from the bottom when a word is tapped - its dictionary form, its parsing spelled out
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
-// STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "I know this word" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (left out when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with I know this word), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" / "Show helps" flips the word's
+// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (left out when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
-import { isHidden, flip, onHelpsChange } from "./helps";
+import { isHidden, flip, onHelpsChange, knownWords } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { showParsing, hideGrammar } from "./grammar";
 import { setVocabWord } from "./vocab";
@@ -33,7 +33,8 @@ document.getElementById ("close")!.addEventListener ("click", hidePanel);
 knowIt.addEventListener ("click", () => flip (pickedStrong));
 document.getElementById ("speakBtn")!.addEventListener ("click", () => { if (picked) sayWord (picked); });
 document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText (lemmaEl.textContent ?? ""));     // (The dictionary form)
-const label = () => { knowIt.textContent = isHidden (pickedStrong) ? "Show helps" : "I know this word"; };
+// + KNOWN WORDS (known by hand: ✓ IN KNOWN WORDS, tapped again taken off); a word the slider alone hides: SHOW HELPS.
+const label = () => { knowIt.textContent = knownWords ().includes (pickedStrong) ? "✓ In known words" : isHidden (pickedStrong) ? "Show helps" : "+ Known words"; };
 onHelpsChange (() => { if (picked) label (); });
 
 // The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the full entry in the

@@ -3,7 +3,7 @@
 //   common lemmas (the extended Strong's key, every form together), and the parsing code of a lemma in a form (lemma +
 //   COTEXT's code, the database's form_freq) occurring as often as the Nth word does - so a rare form of a common word
 //   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
-// - a word's panel flips one word by hand: "I know this word" hides its gloss everywhere (its parsing still by the
+// - a word's panel flips one word by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
 //   form rule above), "Show helps" shows both, on top of the slider;
 // - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on).
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
@@ -93,7 +93,7 @@ export function isFormHidden (strong: string, code: string): boolean {
   return (counts ().byForm.get (strong + "|" + code) ?? 0) >= limit ();
 }
 
-/** Marks a word known by hand (as "I know this word"; a slider deck's REMOVE FROM LIST): its gloss hidden. */
+/** Marks a word known by hand (as "+ Known words"; a slider deck's REMOVE FROM LIST): its gloss hidden. */
 export function setKnown (strong: string) {
   s.modes[strong] = "hide";
   s.mine = true;
@@ -106,7 +106,7 @@ export function unsetKnown (strong: string) {
   changed ();
 }
 
-/** The words known by hand ("I know this word"), by Strong's key. */
+/** The words known by hand ("+ Known words"), by Strong's key. */
 export function knownWords (): string[] {
   return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
 }

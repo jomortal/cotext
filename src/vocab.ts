@@ -1,12 +1,12 @@
 // Vocab (☰ > Vocab): each person's own list (My vocab). A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
-// again); "I know this word" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
+// again); "+ Known words" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
 // so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: four lists - OT / NT FREQUENCY and
 // BOOK FREQUENCY (a book picked from the testament's, the one shown at first) (the testament's or the book's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
 // moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS - the one picked (OT / NT frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for Book frequency). A card's
 // front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
-// (in the frequency lists, I KNOW THIS WORD: made known, into Known words). Kept on the device.
+// (in the frequency lists, + KNOWN WORDS: made known, into Known words). Kept on the device.
 
 import type { Db } from "./db";
 import { onScreen, currentTestament } from "./study";
@@ -83,7 +83,7 @@ let reversed = false;                  // (ENGLISH TO HEBREW / GREEK: the cards'
 let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
 
 
-/** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / I KNOW THIS WORD). */
+/** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / + KNOWN WORDS). */
 function lists () {
   const t = currentTestament (), prefix = t === "OT" ? "H" : "G";
   const known = knownWords ().filter ((k) => k.startsWith (prefix));
@@ -132,7 +132,7 @@ function draw (body: HTMLElement) {
     }).join ("");
   };
   // The list picked as flashcards. A card's button: in My vocab REMOVE FROM LIST (off My vocab); in Known words REMOVE
-  // FROM LIST (no longer known: its helps back); in Words by frequency I KNOW THIS WORD (known: into Known words).
+  // FROM LIST (no longer known: its helps back); in Words by frequency + KNOWN WORDS (known: into Known words).
   const open = () => {
     const remove = (c: WordCard) => {
       if (picked === "learn") { delete learning[c.strong]; save (); }
@@ -142,7 +142,7 @@ function draw (body: HTMLElement) {
     };
     const cards = cardsFor (words (lists ()));
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
-    showDeck (deckEl, cards, remove, byFreq () ? "I know this word" : undefined, true);     // (Turned over: only the English)
+    showDeck (deckEl, cards, remove, byFreq () ? "+ Known words" : undefined, true);     // (Turned over: only the English)
   };
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
   body.querySelector ("#reverse")!.addEventListener ("click", () => { reversed = ! reversed; refresh (); open (); });
