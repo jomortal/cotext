@@ -175,7 +175,7 @@ body.noVerbColors .w .parse { color: inherit; }
 
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */
-#drawer { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 50; }
+#drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed: one background color throughout; tapping it still closes the drawer) */
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); background: var(--bg);
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
                padding: calc(18px + env(safe-area-inset-top, 0px)) 16px 24px max(16px, env(safe-area-inset-left, 0px)); }
