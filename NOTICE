@@ -57,12 +57,7 @@ Commentaries and apparatus (the notes panel; each source its own file, public/da
   otherwise unchanged.
 
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
-(public/fonts/, with their licences). FONT's other choices (public/fonts/, each with its licence):
-  - SIL Open Font License 1.1, from google/fonts (commit 2fe1e8c6b137fb13041a7cfca6fdcd8a910ea4dc), converted to WOFF2
-    unaltered: Noto Serif Hebrew 2.004 and Noto Serif 2.015 (c) the Noto Project Authors; Cardo 1.0451 (c) David J.
-    Perry; GFS Didot 1.0 (c) the Greek Font Society; EB Garamond 1.003 (c) the EB Garamond Project Authors.
-  - Keter YG 0.103 (c) Yoram Gnat, from Culmus 0.140 (culmus.sourceforge.io), GNU GPL 2 with the font embedding
-    exception; its files as released.
+(public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as
 an outline in public/icons/.
 SQLite WebAssembly build 3.54.1: public domain (sqlite.org; public/sqlite/).

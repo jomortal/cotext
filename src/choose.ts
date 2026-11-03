@@ -1,5 +1,5 @@
 // The pickers (every <select class="choose">: the Verb chart's stem and verb, the paradigms' stem and FILL IN, My
-// vocab's frequency lists, the LEXICON, GRAMMAR and FONT settings) shown as COTEXT's own: a button with the choice, tapped to
+// vocab's frequency lists, the word panel's GRAMMAR) shown as COTEXT's own: a button with the choice, tapped to
 // open the choices as a plain list just under it, over the page (no animation - iOS's own picker grows out of the control as a
 // bubble), the current one marked; a choice tapped is picked and the list closes, as does tapping the button again or
 // anywhere else. The <select> stays, hidden, as the value: its change event and value work as before, so the screens'
