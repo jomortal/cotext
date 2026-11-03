@@ -5,22 +5,23 @@
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
-/* Verb colors (VERB COLORS: reader.ts's verbForm, the .vf- rules): seven hues - qal blue (also the page's accent),
-   niphal teal, piel red, pual orange, hithpael purple, hiphil green, other gold, the names left from the stem groups -
-   all at one lightness and chroma in OKLCH (light 0.56 / 0.13, dark 0.77 / 0.12), so no color stands out more than
+/* The accent (links, picked buttons and choices, the tapped and read-aloud words' tints): blue, a hue no verb color has.
+   Verb colors (VERB COLORS: reader.ts's verbForm, the .vf- rules): seven hues - qal rose, niphal teal, piel red,
+   pual orange, hithpael purple, hiphil green, other gold, the names left from the stem groups -
+   all, and the accent, at one lightness and chroma in OKLCH (light 0.56 / 0.13, dark 0.77 / 0.12), so no color stands out more than
    another; only the hue differs. */
 :root {
   --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: transparent;     /* (Borders and dividing lines: none shown, the user's choice - transparent, so nothing moves) */
   --edge: #dedad2;     /* (The borders kept: flashcards, the Verb chart, the menus - ⋯, ☰, the pickers and their lists - and the lines between the page's parts: under the heading, over the play bar, over each panel) */
-  --qal: oklch(0.56 0.13 261); --niphal: oklch(0.56 0.13 195); --piel: oklch(0.56 0.13 34); --pual: oklch(0.56 0.13 53); --hithpael: oklch(0.56 0.13 315); --hiphil: oklch(0.56 0.13 147); --other: oklch(0.56 0.13 88);
+  --accent: oklch(0.56 0.13 261); --qal: oklch(0.56 0.13 355); --niphal: oklch(0.56 0.13 195); --piel: oklch(0.56 0.13 34); --pual: oklch(0.56 0.13 53); --hithpael: oklch(0.56 0.13 315); --hiphil: oklch(0.56 0.13 147); --other: oklch(0.56 0.13 88);
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --qal: oklch(0.77 0.12 261); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark } }
+  --accent: oklch(0.77 0.12 261); --qal: oklch(0.77 0.12 355); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --qal: oklch(0.77 0.12 261); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark }
+  --accent: oklch(0.77 0.12 261); --qal: oklch(0.77 0.12 355); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark }
 
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
@@ -56,13 +57,13 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .bar[hidden] { display: none; }
 .freq { display: grid; gap: 4px; flex: 1; min-width: 200px; font-size: 12px; color: var(--soft); }
 .freq b { color: var(--fg); }
-.freq input { width: 100%; accent-color: var(--qal); }
+.freq input { width: 100%; accent-color: var(--accent); }
 .freq[for="freq"] { flex: 1 1 100%; }     /* (The frequency slider: a line of its own, the full width) */
 
 .pill { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--fg);
         border-radius: 999px; padding: 5px 12px; cursor: pointer; }
 .pill:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
-.pill[aria-pressed="true"] { border-color: var(--line); color: var(--qal); }     /* (Picked: its text in the Qal's blue) */
+.pill[aria-pressed="true"] { border-color: var(--line); color: var(--accent); }     /* (Picked: its text in the accent) */
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 .ref { font-size: 12px; color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 8px; }
@@ -73,7 +74,7 @@ p { margin: 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
 .w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: 8px; padding: 2px 4px; }
-.w.on { background: color-mix(in oklch, var(--qal) 14%, transparent); }
+.w.on { background: color-mix(in oklch, var(--accent) 14%, transparent); }
 .orig { font-size: 28px; line-height: 1.5; }
 .he .orig { font-family: var(--heb); }
 .gr .orig { font-family: var(--grk); font-size: 26px; }
@@ -96,7 +97,7 @@ body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
 body.noVerbColors .w .parse { color: inherit; }
 
 /* Reading aloud (audio.ts): ▶ centred in the play bar, frozen at the screen's bottom, clear of the home indicator;
-   the word being spoken lit, the verse number tapped in the qal color. */
+   the word being spoken lit, the verse number tapped in the accent. */
 /* The play bar and the panels: in the page's column under the text (body: heading, main, the word's panel, the notes
    panel, the play bar), not over it - the text area ends above them, so nothing covers the text; a panel opening goes
    above the play bar, which stays at the bottom. */
@@ -115,9 +116,9 @@ body.noVerbColors .w .parse { color: inherit; }
 #sheet:not([hidden]) + #notes:not([hidden]) { border-top: 1px solid var(--edge); }
 #sheet:not([hidden]) ~ #playBar, #notes:not([hidden]) + #playBar { border-top: 1px solid var(--edge); }
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], #speakBtn[hidden] { display: none; }
-.w.reading { background: color-mix(in oklch, var(--qal) 28%, transparent); }
+.w.reading { background: color-mix(in oklch, var(--accent) 28%, transparent); }
 .vnum { cursor: pointer; }
-.vnum.playing { color: var(--qal); }
+.vnum.playing { color: var(--accent); }
 #voicePick, .choose { font: inherit; font-size: 13px; padding: 4px; border-radius: 8px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); max-width: 100%; }
 #audioSettings { flex: 1 1 100%; }
 
@@ -220,10 +221,10 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .nameNote[hidden] { display: none; }
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
-/* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the Qal's color; one tapped, its
+/* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the accent; one tapped, its
    section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back; the
    panel stays at most half the screen, scrolling. */
-#sheet .term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+#sheet .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 #sheet .term.on { font-weight: 700; }
 #gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
 #gInline[hidden] { display: none; }
@@ -253,7 +254,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #bdbCredit { margin-top: 8px; }
 
 /* A verb form's pattern (paradigm.ts; the Verb chart and the paradigm cards): the root's letters (Hebrew) or the stem
-   (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the Qal's
+   (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the accent's
    color. */
 .pattern { display: inline-flex; align-items: flex-end; gap: 2px; font-size: 30px; line-height: 1.2; white-space: nowrap; }
 .pattern.he { font-family: var(--heb); direction: rtl; padding: .45em 0 .6em; }     /* (Room for the squares' vowels, over and under) */
@@ -266,7 +267,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .slot.small { width: .5em; height: .8em; }
 .slot .v { position: absolute; bottom: -.62em; left: 0; right: 0; text-align: center; }
 .slot .v.above { bottom: auto; top: -.55em; }
-.rootL { color: var(--qal); }
+.rootL { color: var(--accent); }
 .heWord { font-family: var(--heb); font-size: 1.3em; font-weight: 400; }
 .grWord { font-family: var(--grk); font-size: 1.15em; font-weight: 400; }
 
@@ -332,7 +333,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseItem { font: inherit; font-size: 14px; text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
               background: transparent; color: var(--fg); cursor: pointer; }
 .chooseItem:first-child { border-top: 0; }
-.chooseItem[aria-pressed="true"] { color: var(--qal); font-weight: 600; }
+.chooseItem[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
 /* The Pronunciation guide (pronounce.ts): a row a letter - the letter, its name and sound, its speaker. */
 .sayRow { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding: 8px 0; font-size: 14px; }
 .sayRow .sayLetter { font-size: 24px; }
