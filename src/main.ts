@@ -29,11 +29,30 @@ let books: Book[] = [];
 let book: Book;
 let chapter = 1;
 
+// The heading's place: the book's name and chapter on one line, or - when that would wrap (a narrow screen, a long
+// name) - its SBL abbreviation with a full stop: 1 Thessalonians 1 -> 1 Thess. 1. Checked again when the window resizes.
+const ABBR: Record<string, string> = { Genesis: "Gen", Exodus: "Exod", Leviticus: "Lev", Numbers: "Num", Deuteronomy: "Deut",
+  Joshua: "Josh", Judges: "Judg", "1 Samuel": "1 Sam", "2 Samuel": "2 Sam", "1 Kings": "1 Kgs", "2 Kings": "2 Kgs",
+  "1 Chronicles": "1 Chr", "2 Chronicles": "2 Chr", Nehemiah: "Neh", Esther: "Esth", Psalms: "Ps", Proverbs: "Prov",
+  Ecclesiastes: "Eccl", "Song of Songs": "Song", Isaiah: "Isa", Jeremiah: "Jer", Lamentations: "Lam", Ezekiel: "Ezek",
+  Daniel: "Dan", Hosea: "Hos", Obadiah: "Obad", Micah: "Mic", Nahum: "Nah", Habakkuk: "Hab", Zephaniah: "Zeph",
+  Haggai: "Hag", Zechariah: "Zech", Malachi: "Mal", Matthew: "Matt", Romans: "Rom", "1 Corinthians": "1 Cor",
+  "2 Corinthians": "2 Cor", Galatians: "Gal", Ephesians: "Eph", Philippians: "Phil", Colossians: "Col",
+  "1 Thessalonians": "1 Thess", "2 Thessalonians": "2 Thess", "1 Timothy": "1 Tim", "2 Timothy": "2 Tim",
+  Philemon: "Phlm", Hebrews: "Heb", James: "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet", Revelation: "Rev" };
+function showPlace () {
+  if (! book) return;
+  placeBtn.textContent = `${book.name} ${chapter}`;
+  const line = parseFloat (getComputedStyle (placeBtn).lineHeight) || 20;
+  if (placeBtn.scrollHeight > line * 1.6 + 16 && ABBR[book.name]) placeBtn.textContent = `${ABBR[book.name]}. ${chapter}`;
+}
+window.addEventListener ("resize", showPlace);
+
 function go (b: Book, c: number) {
   book = b;
   chapter = c;
   hidePanel ();
-  placeBtn.textContent = `${b.name} ${c}`;
+  showPlace ();
   document.title = `${b.name} ${c} - COTEXT`;
   setBook (db, b);
   setTestament (b.testament);
