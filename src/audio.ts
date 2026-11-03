@@ -9,7 +9,7 @@
 //   of the time by its length, at the reading speed) - the verse still one utterance, read smoothly.
 // - Hebrew: the accents (cantillation U+0591-05AF), meteg, paseq, sof pasuq and the other marks stripped, the vowels
 //   kept (but for a word starting with alef and an "e" vowel: hebrewSpoken), the divine name said Adonai (sayName), maqaf a space, a closing paragraph mark (פ / ס) dropped. Greek: made monotonic (monotonic below), and a
-//   ὁ and εἰ given as "oh" and "e" (alone, voices spell their letters out: "omicron").
+//   ὁ and εἰ given as "oh" and "e", υἱός as ιός (alone, voices spelled them out: "omicron").
 // - The device's voice for the language (Hebrew he, Greek el), its own settings' choice (GETTING OTHER VOICES in ⋯ says how to change it). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
@@ -78,9 +78,11 @@ export function monotonic (word: string): string {
 const spoken = (el: HTMLElement) => {
   const text = el.querySelector (".orig")!.textContent ?? "";
   if (testament === "OT") return hebrewSpoken (text);
-  const g = monotonic (text);
-  return ALONE[g] ?? g;     // (ὁ as "oh": the voice spells a lone ο out)
+  return greekSpoken (text);
 };
+/** Greek as the voice is given it: monotonic, then ὁ and εἰ in Latin letters (ALONE), and a word starting υι - υἱός,
+ *  "son", which the voice spelled out - with ι alone, the same sound (υιός -> ιός, said "iós"). */
+const greekSpoken = (text: string) => { const g = monotonic (text); return ALONE[g] ?? g.replace (/^υι/, "ι"); };
 
 /** A verse's words as spoken groups: each word alone (ὁ said "oh" - spoken - so it needs no partner word). */
 function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[] {
@@ -273,8 +275,7 @@ export function sayText (text: string) {
   if (! synth || ! text) return;
   stopReading ();
   synth.resume ();
-  const greek = monotonic (text);
-  const u = utterance (testament === "OT" ? hebrewSpoken (text) : ALONE[greek] ?? greek);
+  const u = utterance (testament === "OT" ? hebrewSpoken (text) : greekSpoken (text));
   keep.push (u);
   synth.speak (u);
 }
