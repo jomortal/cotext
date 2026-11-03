@@ -82,7 +82,7 @@ const spoken = (el: HTMLElement) => {
 };
 /** Greek as the voice is given it: monotonic, then the words it spells out given in Latin letters (ALONE): ὁ, εἰ, and
  *  υἱός, "son", in every form ("eeoo" for υἱοῦ: the one the user's voice said best). */
-const greekSpoken = (text: string) => { const g = monotonic (text); return ALONE[g] ?? g; };
+const greekSpoken = (text: string) => { const g = monotonic (text); return ALONE[g.toLowerCase ()] ?? g; };     // (Capitals too: Οὐ)
 
 /** A verse's words as spoken groups: each word alone (ὁ said "oh" - spoken - so it needs no partner word). */
 function groups (words: HTMLElement[]): { words: HTMLElement[]; text: string }[] {
