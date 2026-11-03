@@ -184,7 +184,6 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 
 #sheet .root, .cardFront .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
 #sheet .root[hidden] { display: none; }     /* (The word as written, when it's the dictionary form: panel.ts) */
-#sheet #close { grid-column: 2; }     /* (Close keeps the top right, the word beside it or not) */
 /* A pill's line icon (the panel's speaker): in the text's colour, one colour. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
@@ -193,6 +192,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
 #sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+#sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (Close beside I know this word: panel.ts) */
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
