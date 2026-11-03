@@ -160,7 +160,8 @@ def concise(strong, gloss, entry, most=4):
             seen.add(key)
             items.append(t)
 
-    for part in re.split(r"[:/]", gloss or ""):
+    # ("s/he" is "she, he", not "s" and "he": αὐτός's "it/s/he")
+    for part in re.split(r"[:/]", re.sub(r"\bs/he\b", "she/he", gloss or "")):
         add(part)
     first = next((line for line in (entry or "").split("<br>") if re.match(r"\s*1\)", line)), "")
     if strong.startswith("H") and first and gloss[:1].islower():
