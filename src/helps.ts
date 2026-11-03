@@ -214,7 +214,7 @@ onScreen ("About verb colors", (body) => {
       ["future", "Future", "what will happen"],
       ["perfect", "Perfect", "an action done, its result still standing"],
       ["pluperfect", "Pluperfect", "an action done, its result standing in the past"]])}
-    <p>The colors pair up: red the main line of a story (wayyiqtol, aorist), rose the plainest form (qatal, present), teal the ongoing (yiqtol, imperfect).</p>`;
+    <p>The colors pair up: red the main line of a story (wayyiqtol, aorist), crimson the plainest form (qatal, present), teal the ongoing (yiqtol, imperfect).</p>`;
 });
 mineBtn.addEventListener ("click", () => { s.mine = ! s.mine; changed (); });
 scopeBtn.addEventListener ("click", () => { s.scope = s.scope === "book" ? "whole" : "book"; changed (); });
