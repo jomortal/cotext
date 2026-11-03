@@ -1,6 +1,6 @@
 // Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it, or alone: My vocab's), tapped again to turn it
 // back. BACK and NEXT step through the deck (SHOW between them turns the card over, as a tap on it does) (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
-// order at the first card, REMOVE FROM LIST (or the name its owner gives it) takes the card out (and tells the deck's owner: vocab.ts takes the word off
+// order at the first card, REMOVE FROM LIST (or the name its owner gives it; My vocab's decks only) takes the card out (and tells the deck's owner: vocab.ts takes the word off
 // that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
 //
 // Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
@@ -14,7 +14,8 @@ import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, h
 
 export interface Card { front: string; back: string; /* HTML */ }
 
-/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name).
+/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
+ *  without it the deck has no such button.
  *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English); otherwise under it. */
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
   const first = [...cards];
@@ -22,7 +23,7 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
     <div class="src cardCount"></div>
     <div class="bar cardBar"><button class="pill" data-k="back">Back</button><button class="pill" data-k="flip">Show</button><button class="pill" data-k="next">Next</button></div>
-    <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button><button class="pill" data-k="remove">${removeLabel}</button></div>`;
+    <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button>${onRemove ? `<button class="pill" data-k="remove">${removeLabel}</button>` : ""}</div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!;
   const count = el.querySelector<HTMLElement> (".cardCount")!, flip = el.querySelector<HTMLElement> ("[data-k=flip]")!;
@@ -46,7 +47,7 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   on ("next", () => { at++; });
   on ("shuffle", () => { deck = shuffle (deck); at = 0; });
   on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
-  on ("remove", () => { const [c] = deck.splice (at, 1); if (c) onRemove?.(c); });
+  if (onRemove) on ("remove", () => { const [c] = deck.splice (at, 1); if (c) onRemove (c); });     // (No onRemove: no REMOVE FROM LIST - the Verb paradigms)
   show ();
 }
 
