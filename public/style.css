@@ -20,6 +20,7 @@
      prose read (an entry, a grammar section, a note); l headings and the menus' items (☰, the books and chapters).
      The text itself (the interlinear's words, a card's word) is sized on its own. */
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
+  --fs-icon: 22px;     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -56,9 +57,9 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 #options[hidden] { display: none; }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .head .nav { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.head .row .pill, .pill.icon { font-size: 18px; line-height: 1; padding: 6px 14px; }
+.head .row .pill, .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: 6px 14px; }
 .pill.icon { padding: 6px 12px; min-width: 2.4em; }
-.head .place { font-size: var(--fs-m); font-weight: 600; flex: 0 1 auto; }
+.head .row .place { font-size: var(--fs-l); font-weight: 600; flex: 0 1 auto; }
 .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .bar[hidden] { display: none; }
 .freq { display: grid; gap: 4px; flex: 1; min-width: 200px; font-size: var(--fs-xs); color: var(--soft); }
@@ -114,7 +115,7 @@ body.noVerbColors .w .parse { color: inherit; }
 #playBar { gap: 8px; }     /* (▶ centred, the notes' icon at the right edge) */
 #playBtn { grid-column: 2; }
 #notesBtn { grid-column: 3; justify-self: end; }
-#playBar .pill { font-size: 18px; line-height: 1; padding: 6px 14px; min-width: 2.4em; }
+#playBar .pill { font-size: var(--fs-icon); line-height: 1; padding: 6px 14px; min-width: 2.4em; }
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between the word's
