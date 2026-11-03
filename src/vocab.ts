@@ -6,7 +6,7 @@
 // next word moves up, so list 1 is always the 20 most frequent still to learn) -, each list (the word, its concise
 // meaning, how often it occurs in the whole testament), and three decks - the learning words, the known ones, and
 // "Flashcards for these words": the words the ⋯ slider hides in the book or testament (its FREQUENCY), most frequent
-// first. A card's front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that
+// first. The frequency list picked opens as flashcards when the screen does. A card's front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that
 // list (on a frequency list's card, I KNOW THIS WORD: made known, into the known stack). Kept on the device.
 
 import type { Db } from "./db";
@@ -133,6 +133,7 @@ function draw (body: HTMLElement) {
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); open ("freq"); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-d]")) b.addEventListener ("click", () => open (b.dataset.d!));
   refresh ();
+  open ("freq");     // (The frequency list picked shown as flashcards from the start)
 }
 
 onScreen ("My vocab", draw);
