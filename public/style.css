@@ -146,10 +146,9 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The word's panel: a sheet from the bottom. */
 #sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); }
-/* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls: sticky in a row of
-   no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
+/* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls - drawn as every ✕
+   is (a plain icon pill, no fill: as a screen's ✕) - sticky in a row of no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
 #sheet .xRow { position: sticky; top: 0; z-index: 3; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; }
-#sheet .xRow .pill { background: var(--bg); box-shadow: 0 0 0 6px var(--bg); }     /* (Text scrolling under it kept off it) */
 #sheet .heads.one, #gInline .top { padding-right: 52px; }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
