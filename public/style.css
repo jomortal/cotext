@@ -142,6 +142,9 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The word's panel: a sheet from the bottom. */
 #sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+/* The word, its dictionary form and its parsing spelled out, frozen at the panel's top: the definition (and a grammar
+   section) scrolls under them. -16px the panel's own top padding; the shadow covers the sliver Safari's rounding leaves. */
+#sheet .sheetTop { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin-top: -16px; padding: 16px 0 8px; box-shadow: 0 -4px 0 var(--bg); }
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

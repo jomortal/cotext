@@ -49,11 +49,13 @@
 </main>
 <div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button></div>
 <div id="sheet" hidden>
+  <div class="sheetTop">
   <div class="heads">
     <span class="root"><span class="lemma" id="form"></span><button class="pill icon" id="speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><button class="pill" id="close">Close</button>
     <span class="root"><span class="lemma" id="lemma"></span><button class="pill icon" id="speakRoot" aria-label="Say the dictionary form"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><span class="btns"><button class="pill" id="addVocab">+ My vocab</button><button class="pill" id="knowIt">I know this word</button></span>
   </div>
   <div class="full" id="full"></div>
+  </div>
   <div class="src" id="src"></div>
   <div class="def" id="def"></div>
   <p class="credit" id="bdbCredit" hidden>Brown-Driver-Briggs (1906), public domain; text from Open Scriptures' HebrewLexicon (CC BY 4.0), still being transcribed.</p>
