@@ -4,7 +4,7 @@
 // vocab and known, then three lists - MY VOCAB, KNOWN WORDS and WORDS BY FREQUENCY (the testament's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
 // moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
-// as flashcards, then its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
+// as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
 // front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that list
 // (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
 
@@ -73,6 +73,7 @@ function toLearn (prefix: string, known: string[]): string[] {
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList = { OT: 0, NT: 0 };   // (The frequency list picked, by testament: 0 the first)
 let picked = "freq";                   // (The list shown: learn - My vocab -, known, or freq - Words by frequency)
+let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
 
 
 /** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / I KNOW THIS WORD). */
@@ -94,10 +95,12 @@ function draw (body: HTMLElement) {
       <button class="pill" data-list="freq">Words by frequency</button></div>
     <div class="chartPick" id="freqRow"><label>Words<select class="choose" id="freqPick"></select></label></div>
     <div class="deck"></div>
+    <div class="bar"><button class="pill" id="showList">Show list</button></div>
     <div class="vocabLists"></div>`;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
   const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!;
   const freqRow = body.querySelector<HTMLElement> ("#freqRow")!;
+  const listBtn = body.querySelector<HTMLElement> ("#showList")!, listEl = body.querySelector<HTMLElement> (".vocabLists")!;
   // The words of the list picked, from the lists as they are now.
   const words = (l: ReturnType<typeof lists>) => picked === "learn" ? l.learn : picked === "known" ? l.known
     : l.ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST);
@@ -113,7 +116,9 @@ function draw (body: HTMLElement) {
       `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
     freqPick.value = String (pickedList[t]);
     const d = picked === "freq" ? details (words (l)) : l.d;
-    body.querySelector (".vocabLists")!.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
+    listBtn.setAttribute ("aria-pressed", String (listShown));
+    listEl.style.display = listShown ? "" : "none";
+    listEl.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
       const w = d.get (k)!;
       return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
     }).join ("");
@@ -131,6 +136,7 @@ function draw (body: HTMLElement) {
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
     showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined);
   };
+  listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
   freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); refresh (); open (); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.addEventListener ("click", () => { picked = b.dataset.list!; refresh (); open (); });
   refresh ();
