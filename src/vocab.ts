@@ -1,8 +1,8 @@
 // Vocab (☰ > Vocab): each person's own list (My vocab). A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
 // again); "I know this word" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
-// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: three lists - MY VOCAB, KNOWN WORDS and WORDS BY FREQUENCY (the testament's words not yet
+// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: three lists - WORDS BY FREQUENCY (the testament's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
-// moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
+// moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS - the one picked (Words by frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
 // front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
 // (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
@@ -90,8 +90,8 @@ function lists () {
 
 function draw (body: HTMLElement) {
   const t = currentTestament ();
-  body.innerHTML = `<div class="bar"><button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
-      <button class="pill" data-list="freq">Words by frequency</button></div>
+  body.innerHTML = `<div class="bar"><button class="pill" data-list="freq">Words by frequency</button><button class="pill" data-list="learn">My vocab</button>
+      <button class="pill" data-list="known">Known words</button></div>
     <div class="chartPick" id="freqRow"><label><select class="choose" id="freqPick" aria-label="Words by frequency"></select></label></div>
     <div class="deck"></div>
     <div class="bar"><button class="pill" id="reverse">English to ${t === "OT" ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
