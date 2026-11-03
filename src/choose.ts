@@ -1,6 +1,6 @@
 // The pickers (every <select class="choose">: the Verb chart's stem and verb, the paradigms' stem and FILL IN, My
 // vocab's frequency lists, the word panel's GRAMMAR) shown as COTEXT's own: a button with the choice, tapped to
-// open the choices as a plain list just under it, over the page (no animation - iOS's own picker grows out of the control as a
+// open the choices as a plain list just under it (or over it, near the bottom of the screen), over the page (no animation - iOS's own picker grows out of the control as a
 // bubble), the current one marked; a choice tapped is picked and the list closes, as does tapping the button again or
 // anywhere else. The <select> stays, hidden, as the value: its change event and value work as before, so the screens'
 // code is unchanged (setting value or selectedIndex updates the button too).
@@ -28,6 +28,19 @@ function enhance (sel: HTMLSelectElement) {
   new MutationObserver (label).observe (sel, { childList: true, subtree: true });     // (Options filled in later: GRAMMAR)
   sel.addEventListener ("change", label);
   const close = () => { list.hidden = true; btn.setAttribute ("aria-expanded", "false"); };
+  // Fixed to the screen, under the button - or over it when there's more room above (a picker near the bottom, as
+  // the notes panel's) - and no taller than the room there, so its last choice can always be reached; not clipped by
+  // a scrolling panel it's in. Scrolling it never scrolls what's behind (overscroll contained, style.css); anything
+  // else scrolled closes it, as the button has moved from under it.
+  const place = () => {
+    const r = btn.getBoundingClientRect (), h = window.visualViewport?.height ?? innerHeight, gap = 12;
+    const below = h - r.bottom - gap, above = r.top - gap, up = below < 240 && above > below;
+    Object.assign (list.style, { left: `${r.left}px`, width: `${r.width}px`,
+      top: up ? "" : `${r.bottom}px`, bottom: up ? `${h - r.top}px` : "",
+      maxHeight: `${Math.min (h * .5, up ? above : below)}px`, marginTop: up ? "0" : "4px", marginBottom: up ? "4px" : "0" });
+  };
+  addEventListener ("scroll", (e) => { if (! list.hidden && ! list.contains (e.target as Node)) close (); }, true);
+  addEventListener ("resize", () => { if (! list.hidden) place (); });
   btn.addEventListener ("click", (e) => {
     e.stopPropagation ();
     if (! list.hidden) { close (); return; }
@@ -48,6 +61,7 @@ function enhance (sel: HTMLSelectElement) {
       }
     }
     list.hidden = false; btn.setAttribute ("aria-expanded", "true");
+    place ();
     list.querySelector<HTMLElement> ("[aria-pressed=true]")?.scrollIntoView ({ block: "nearest" });
   });
   document.addEventListener ("click", (e) => { if (! list.contains (e.target as Node)) close (); });

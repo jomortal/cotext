@@ -289,13 +289,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
 .vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: 14px; }
 .vocabRow .n { color: var(--soft); font-size: 12px; }
-/* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it, over what
-   follows, at most half the screen tall, scrolling; the current choice in the picked colour. */
+/* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (over it near
+   the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked colour. */
 .chooseWrap { position: relative; display: block; }
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
-.chooseList { display: grid; position: absolute; top: 100%; left: 0; right: 0; min-width: 10em; z-index: 20;
-              box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px;
+.chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
+              box-shadow: 0 6px 20px rgb(0 0 0 / .18); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
               border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
 .chooseList[hidden] { display: none; }
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
