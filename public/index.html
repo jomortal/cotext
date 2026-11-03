@@ -51,7 +51,7 @@
 <div id="sheet" hidden>
   <div class="sheetTop">
   <div class="heads">
-    <span class="root"><span class="lemma" id="form"></span><button class="pill icon" id="speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><button class="pill" id="close">Close</button>
+    <span class="root"><span class="lemma" id="form"></span><button class="pill icon" id="speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><button class="pill icon" id="close" aria-label="Close">✕</button>
     <span class="root"><span class="lemma" id="lemma"></span><button class="pill icon" id="speakRoot" aria-label="Say the dictionary form"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><span class="btns"><button class="pill" id="addVocab">+ My vocab</button><button class="pill" id="knowIt">I know this word</button></span>
   </div>
   <div class="full" id="full"></div>
@@ -63,26 +63,26 @@
   <p class="nameNote" id="nameNote" hidden></p>
   <span class="btns lexBtns"><button class="pill" id="moreDef">More</button></span>
   <div id="gInline" hidden>
-    <div class="top"><div><div class="gTitle" id="giTitle"></div><div class="src" id="giSec"></div></div><button class="pill" id="giClose">Hide</button></div>
+    <div class="top"><div><div class="gTitle" id="giTitle"></div><div class="src" id="giSec"></div></div><button class="pill icon" id="giClose" aria-label="Back to the word">✕</button></div>
     <label class="sheetPick">Grammar<select id="grammarPick" class="choose"></select></label>
     <div class="gBody" id="giBody"></div>
   </div>
 </div>
 <section id="notes" hidden>
-  <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill" id="notesClose">Close</button></div>
+  <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesClose" aria-label="Close">✕</button></div>
   <div class="src" id="notesRef"></div>
   <div class="gBody" id="notesBody"></div>
   <p class="credit" id="notesCredit"></p>
 </section>
 <div id="picker" hidden>
   <div class="pickerCard">
-    <div class="top"><h1 id="pickerTitle">Books</h1><button class="pill" id="pickerClose">Done</button></div>
+    <div class="top"><h1 id="pickerTitle">Books</h1><button class="pill icon" id="pickerClose" aria-label="Close">✕</button></div>
     <div id="pickerBody"></div>
   </div>
 </div>
 <div id="drawer" hidden>
   <nav id="drawerPanel">
-    <div class="top"><b>Study</b><button class="pill" id="drawerClose" aria-label="Close">✕</button></div>
+    <div class="top"><b>Study</b><button class="pill icon" id="drawerClose" aria-label="Close">✕</button></div>
     <button class="pill" id="myVocab" data-screen="Vocab">Vocab</button>
     <button class="pill" id="paradigms" data-screen="Verb paradigms">Verb paradigms</button>
     <button class="pill" id="chartBtn" data-screen="Verb chart">Verb chart</button>

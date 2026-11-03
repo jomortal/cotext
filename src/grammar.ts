@@ -1,6 +1,6 @@
 // Grammar from the word's panel (design/mock-hebrew.html): each term of the spelled-out parsing that a section explains
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section takes the word's panel over (the word's
-// info hidden) - its heading, the grammar and §, its text; HIDE closes it, the word's info back. The terms and their sections come
+// info hidden) - its heading, the grammar and §, its text; its ✕ closes it, the word's info back. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
 // GRAMMAR in the grammar section's box (shown once a term is tapped), one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
 // grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
@@ -118,7 +118,7 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
   bodyEl.classList.toggle ("one", count === 1);
   box.hidden = false;
   for (const t of sheet.querySelectorAll (".term")) t.classList.toggle ("on", t === term);
-  sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until HIDE)
+  sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until its ✕)
   sheet.scrollTop = 0;
 }
 

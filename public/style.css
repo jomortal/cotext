@@ -122,7 +122,7 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
    never over the text;
    at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
-   least a third (main's min-height); its picker and Close (frozen at the top), the verse, the notes (a grammar section's look:
+   least a third (main's min-height); its picker and ✕ (frozen at the top), the verse, the notes (a grammar section's look:
    .gBody), the source's credit. The home indicator's room is its own: it's always the last. */
 #notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); border-top: 1px solid var(--line); max-height: 50vh; max-height: 50dvh; overflow-y: auto;
          padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -158,7 +158,7 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The passage picker: full screen, books then chapters. */
 #picker { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 20;
           padding: 0 max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
-/* Its heading (Books or the book's name, and Done) frozen at the top while the list scrolls under it. */
+/* Its heading (Books or the book's name, and ✕) frozen at the top while the list scrolls under it. */
 #picker .top { position: sticky; top: 0; z-index: 1; background: var(--bg); align-items: center;
                padding: calc(18px + env(safe-area-inset-top, 0px)) 0 8px; }
 .pickerCard { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
@@ -206,18 +206,18 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
-/* The word's panel, its head as two rows lined up: the word as written with Close, then its root (dictionary form)
+/* The word's panel, its head as two rows lined up: the word as written with ✕, then its root (dictionary form)
    with I know this word - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
 #sheet .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 #sheet .nameNote { font-size: 13px; line-height: 1.5; color: var(--soft); margin: 10px 0 0; }     /* (The divine name's note: panel.ts) */
 #sheet .nameNote[hidden] { display: none; }
-#sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (Close beside I know this word: panel.ts) */
+#sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (✕ beside I know this word: panel.ts) */
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the Qal's color; one tapped, its
-   section takes the word's panel over (.grammarOpen: the word's info hidden) until HIDE brings the word back; the
+   section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back; the
    panel stays at most half the screen, scrolling. */
 #sheet .term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 #sheet .term.on { font-weight: 700; }
@@ -225,7 +225,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #gInline[hidden] { display: none; }
 #sheet.grammarOpen > :not(#gInline) { display: none; }
 #sheet.grammarOpen #gInline { border-top: 0; margin-top: 0; padding-top: 0; }
-/* The section's heading, § and HIDE frozen at the panel's top while its text scrolls under them (-16px the panel's own
+/* The section's heading, § and ✕ frozen at the panel's top while its text scrolls under them (-16px the panel's own
    top padding; the shadow covers the sliver Safari's rounding leaves). */
 #sheet.grammarOpen #gInline .top { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin-top: -16px; padding: 16px 0 8px; box-shadow: 0 -4px 0 var(--bg); }
 #gInline .top { align-items: start; }
