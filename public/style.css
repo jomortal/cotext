@@ -173,6 +173,7 @@ body.showAll .w.known .gloss, body.showAll .w.knownForm .parse { visibility: vis
 #pronounceBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.5h3.5L12 5.5v13l-4.5-4H4z'/%3E%3Cpath d='M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11'/%3E%3C/svg%3E"); }
 /* The drawer's settings (DIVINE NAME: audio.ts): under the study items, each a label over its menu. */
 #drawerPanel .settings { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+#drawerPanel .settings[hidden] { display: none; }
 #drawerPanel .settings label { display: grid; gap: 4px; font-size: 12px; color: var(--soft); }
 #drawerPanel .settings > .pill { justify-self: start; }
 .steps { padding-left: 1.4em; line-height: 1.6; font-size: 14px; }     /* (Getting better voices' steps) */

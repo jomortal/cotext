@@ -38,7 +38,9 @@ const NAME = /\u05d9[\u0591-\u05c7]*\u05d4[\u0591-\u05c7]*\u05d5[\u0591-\u05c7]*
 const sayName = (word: string) => word.replace (NAME, (m) => m.includes ("\u05b4") ? "\u05d0\u05b1\u05dc\u05b9\u05d4\u05b4\u05d9\u05dd" : nameSaid ());
 
 // DIVINE NAME (☰ settings): how the name is read aloud - Adonai (the default, as Jewish readers say it), or Yahweh
-// in one of three spellings, to hear which the device's voice says well. Kept on the device.
+// in one of three spellings, to hear which the device's voice says well. Kept on the device. A tester's setting: the
+// beta (beta.cotext.org) has none - always Adonai, the setting hidden.
+const BETA = location.hostname.startsWith ("beta.");
 const NAME_KEY = "cotext.divineName";
 const NAME_CHOICES: [string, string, string][] = [     // [key, label, what's spoken]
   ["adonai", "Adonai (אֲדֹנָי)", "\u05d0\u05b2\u05d3\u05b9\u05e0\u05b8\u05d9"],
@@ -46,7 +48,8 @@ const NAME_CHOICES: [string, string, string][] = [     // [key, label, what's sp
   ["yahweh2", "Yahweh (יַהוֶה)", "\u05d9\u05b7\u05d4\u05d5\u05b6\u05d4"],
   ["latin", "Yahweh (in Latin letters)", "Yahweh"]];
 let nameKey = "adonai";
-try { nameKey = localStorage.getItem (NAME_KEY) ?? "adonai"; } catch { /* private mode */ }
+try { if (! BETA) nameKey = localStorage.getItem (NAME_KEY) ?? "adonai"; } catch { /* private mode */ }
+if (BETA) (document.getElementById ("nameSetting") as HTMLElement).hidden = true;
 const nameSaid = () => (NAME_CHOICES.find ((c) => c[0] === nameKey) ?? NAME_CHOICES[0])[2];
 const namePick = document.getElementById ("namePick") as HTMLSelectElement;
 for (const [k, l] of NAME_CHOICES) namePick.append (new Option (l, k));
