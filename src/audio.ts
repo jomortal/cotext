@@ -120,7 +120,7 @@ voicePick.addEventListener ("change", () => {
 });
 synth?.addEventListener?.("voiceschanged", fillVoices);
 fillVoices ();
-// LOOK FOR VOICES AGAIN: the device asked again (a voice downloaded meanwhile); GETTING BETTER VOICES: the steps (⋯ closes).
+// LOOK FOR VOICES AGAIN: the device asked again (a voice downloaded meanwhile); GETTING OTHER VOICES: the steps (⋯ closes).
 document.getElementById ("voiceAgain")!.addEventListener ("click", () => {
   synth?.cancel ();
   fillVoices ();
@@ -128,11 +128,11 @@ document.getElementById ("voiceAgain")!.addEventListener ("click", () => {
 });
 document.getElementById ("voiceHelp")!.addEventListener ("click", () => {
   document.getElementById ("optionsBtn")!.click ();
-  openScreen ("Getting better voices");
+  openScreen ("Getting other voices");
 });
 
-onScreen ("Getting better voices", (body) => {
-  body.innerHTML = `<p>COTEXT reads aloud with the device's own voices. Better ones - Enhanced or Premium - are free from Apple:</p>
+onScreen ("Getting other voices", (body) => {
+  body.innerHTML = `<p>COTEXT reads aloud with the device's own voices. Others - more voices, and Enhanced or Premium ones - are free from Apple:</p>
     <ol class="steps">
       <li>Open <b>Settings</b>, then <b>Accessibility</b>, then <b>Spoken Content</b> (on iOS 26 it may be <b>Read &amp; Speak</b>), then <b>Voices</b>.</li>
       <li>Tap <b>Greek</b> (and then <b>Hebrew</b>).</li>
