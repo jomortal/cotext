@@ -437,3 +437,21 @@ export function spellCode (code: string, hebrew: boolean): string {
   if (! rest) return head;
   return `${head}, ${rest.length === 2 ? `${PERSON[rest[0]]} person ${NUMBER[rest[1]]}` : `${G_CASE[rest[0]]} ${NUMBER[rest[1]]} ${G_GENDER[rest[2]]}`}`;
 }
+
+/** A verb of the text as a model, so the chart can fill in the forms the text doesn't have - by the regular verb's
+ *  templates, so a weak verb's (בָּרָא's, קוּם's) are the regular pattern, not its own. Hebrew: the dictionary form's
+ *  three consonants (points dropped, a final letter made ordinary: שׁמר); Greek: only a regular -ω verb whose stem
+ *  starts with one consonant and ends in a vowel (πιστεύω -> πιστευ; reduplication the first consonant, unaspirated,
+ *  with ε) - others (contract, -μι, deponent, consonant stems, vowel-initial) have none. null: none. */
+const UNFINAL: Record<string, string> = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+export function rootModel (lemma: string, hebrew: boolean): HebrewModel | GreekModel | null {
+  if (hebrew) {
+    const root = lemma.normalize ("NFD").replace (/[֑-׀׃-ׇ]/g, "").replace (/[ךםןףץ]/g, (c) => UNFINAL[c]).normalize ("NFC");
+    return /^([א-ת][ׁׂ]?){3}$/.test (root) ? { root, english: DO } : null;
+  }
+  const plainL = lemma.normalize ("NFD").replace (/\p{M}/gu, "").normalize ("NFC");
+  const m = plainL.match (/^([βγδζθκλμνξπρστφχψ])(.*[ιυ])ω$/);     // (A stem ending in ι or υ: λυ, πιστευ, παιδευ)
+  if (! m) return null;
+  const stem = m[1] + m[2], first = ({ φ: "π", θ: "τ", χ: "κ" } as Record<string, string>)[m[1]] ?? m[1];
+  return { lemma, stem, short: stem, redup: first + "ε", english: DO };
+}

@@ -247,6 +247,7 @@ table.chart .parse { font-size: 12px; font-weight: 700; letter-spacing: .02em; m
 table.chart .mean { font-size: 12px; color: var(--soft); }
 table.chart .count { display: block; font-size: 11px; color: var(--soft); }
 table.chart .none, table.chart .same { color: var(--soft); font-size: 12px; }
+table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in by the regular pattern) */
 
 /* Flashcards (cards.ts): a card, its front large, its back under it once turned; AGAIN / GOT IT under the card. */
 .card { border: 1px solid var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; cursor: pointer;

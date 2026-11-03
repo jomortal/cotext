@@ -8,14 +8,15 @@
 // the chapter shown, or any verb typed (its consonants or letters, matched to the lexicon's dictionary forms). A verb
 // from the text shows its actual forms as the text has them: per cell the commonest spelling of that lemma (every
 // sense of its Strong's number) with exactly that code (no prefix or suffix), accents and punctuation stripped, and
-// how often that code occurs; "–" where it never does. The stem picker then counts its forms in each stem. A verb's
+// how often that code occurs; where it never does, the form filled in from the verb's root by the regular pattern
+// (faded, "not in the text": rootModel in paradigm.ts), or "–" for a verb that has none. The stem picker then counts its forms in each stem. A verb's
 // panel (panel.ts) opens the chart on that verb, at its own stem (openChartFor).
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
 import { onScreen, currentTestament, openScreen } from "./study";
 import { HEBREW_STEMS, HEBREW_MODELS, HEBREW_PGN, HEBREW_GN, GREEK_TENSES, GREEK_MODELS, GREEK_PN, GREEK_PTC,
-         hebrewCells, hebrewForm, greekCells, greekForm, type Form } from "./paradigm";
+         hebrewCells, hebrewForm, greekCells, greekForm, rootModel, type Form, type HebrewModel, type GreekModel } from "./paradigm";
 
 let db: Db;
 let chapterWords: Word[] = [];
@@ -149,8 +150,9 @@ function cellHtml (f: Form, verb: Verb, hebrew: boolean): string {
   if (verb.kind === "text") {
     const s = attested (verb.base).get (f.code);
     const best = s && [...s.spellings].sort ((a, b) => b[1] - a[1])[0][0];
+    // (Not in the text: filled in from the verb's root by the regular pattern, faded, if it has one - rootModel)
     shown = s ? `<span class="pattern ${hebrew ? "he" : "gr"} filled"><span class="rootL">${esc (best!)}</span></span><span class="count">×${s.count.toLocaleString ()}</span>`
-              : `<span class="none">–</span>`;
+              : f.pattern.includes ("filled") ? `<span class="guess">${f.pattern}</span><span class="count">not in the text</span>` : `<span class="none">–</span>`;
   }
   return `<td><div class="cForm">${shown}</div><div class="parse">${f.code}</div><div class="mean">${esc (f.meaning)}</div></td>`;
 }
@@ -163,7 +165,7 @@ const column = (groups: Group[]) => `<div class="chartScroll"><table class="char
 
 function hebrewTables (verb: Verb, stemIdx: number): string {
   const stem = HEBREW_STEMS[stemIdx];
-  const model = verb.kind === "model" ? HEBREW_MODELS[verb.i] : null;
+  const model = verb.kind === "model" ? HEBREW_MODELS[verb.i] : verb.kind === "text" ? rootModel (verb.lemma, true) as HebrewModel | null : null;
   const c = hebrewCells (stem);
   const form = (cell: Parameters<typeof hebrewForm>[1]) => cellHtml (hebrewForm (stem, cell, model), verb, true);
   const cols: [string, string][] = [["P", "PERFECT"], ["I", "IMPERFECT"], ["W", "WAYYIQTOL"]];
@@ -181,7 +183,7 @@ function hebrewTables (verb: Verb, stemIdx: number): string {
 
 function greekTables (verb: Verb, tvIdx: number): string {
   const tv = GREEK_TENSES[tvIdx];
-  const model = verb.kind === "model" ? GREEK_MODELS[verb.i] : null;
+  const model = verb.kind === "model" ? GREEK_MODELS[verb.i] : verb.kind === "text" ? rootModel (verb.lemma, false) as GreekModel | null : null;
   const c = greekCells (tv);
   const form = (cell: Parameters<typeof greekForm>[1]) => cellHtml (greekForm (tv, cell, model), verb, false);
   const names = { I: "INDICATIVE", S: "SUBJUNCTIVE", M: "IMPERATIVE" };
@@ -210,26 +212,26 @@ function render (body: HTMLElement) {
     inText.length ? `<optgroup label="In this chapter">${inText.map ((b) => `<option value="t${b}">${esc (label (b))}</option>`).join ("")}</optgroup>` : "",
     verb.kind === "text" && ! inText.includes (verb.base) ? `<option value="t${verb.base}">${esc (verb.lemma)} - ${esc (verb.gloss)}</option>` : ""];
   body.innerHTML = `
+    <div class="src">${hebrew ? "Stem" : "Tense and voice"}</div>
+    <div class="choices" id="chartStem">${stems.map ((n, i) =>
+      `<button class="pill" data-stem="${i}" aria-pressed="${i === st.stem}">${n}${counts ? ` (${counts[i].toLocaleString ()})` : ""}</button>`).join ("")}</div>
     <div class="chartPick">
-      <label>${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="chartStem">${stems.map ((s, i) =>
-        `<option value="${i}">${s}${counts ? ` (${counts[i].toLocaleString ()})` : ""}</option>`).join ("")}</select></label>
       <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
       <label>Type a verb<input class="choose" id="chartType" type="text" lang="${hebrew ? "he" : "el"}" dir="${hebrew ? "rtl" : "ltr"}"
         autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${hebrew ? "הלך" : "λέγω"}"></label>
     </div>
     <div class="choices" id="chartFound"></div>
     <p>${verb.kind === "text"
-      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs.`
+      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it.`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
     ${hebrew ? hebrewTables (verb, st.stem) : greekTables (verb, st.stem)}`;
-  const stemPick = body.querySelector<HTMLSelectElement> ("#chartStem")!;
   const verbPick = body.querySelector<HTMLSelectElement> ("#chartVerb")!;
   const typed = body.querySelector<HTMLInputElement> ("#chartType")!;
   const found = body.querySelector<HTMLElement> ("#chartFound")!;
-  stemPick.value = String (st.stem);
   verbPick.value = value;
-  stemPick.addEventListener ("change", () => { st.stem = Number (stemPick.value); render (body); });
+  // The stems (or tenses and voices) a row of buttons, the one shown lit; a tap shows that one.
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-stem]")) b.addEventListener ("click", () => { st.stem = Number (b.dataset.stem); render (body); });
   verbPick.addEventListener ("change", () => {
     const v = verbPick.value;
     st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : textVerb (v.slice (1));
