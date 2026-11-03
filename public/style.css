@@ -216,6 +216,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gBody sup { font-size: .7em; }
 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
+#sheet .sheetPick[hidden] { display: none; }
 #sheet .sheetPick { display: grid; gap: 4px; font-size: 12px; color: var(--soft); margin: 10px 0; }
 #moreDef { margin-top: 8px; }
 #moreDef[hidden] { display: none; }

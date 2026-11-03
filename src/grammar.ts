@@ -44,6 +44,7 @@ export function initGrammar (theDb: Db) {
 export function setGrammarTestament (t: "OT" | "NT") {
   lang = t === "OT" ? "H" : "G";
   pick.replaceChildren (...grammars.filter ((g) => g.lang === lang).map ((g) => new Option (g.name, g.id)));
+  pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language - Hebrew's Gesenius: nothing to pick)
   pick.value = current ();
 }
 
