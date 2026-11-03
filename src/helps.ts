@@ -111,14 +111,6 @@ export function knownWords (): string[] {
   return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
 }
 
-/** The words whose gloss the slider alone hides in the scope shown (book or testament), most frequent first, with
- *  their counts - "Flashcards for these words" (vocab.ts). */
-export function sliderWords (): [string, number][] {
-  const n = hiddenWords (), out: [string, number][] = [];
-  for (const [k, i] of counts ().rank) if (i < n) out.push ([k, counts ().byStrong.get (k)!]);
-  return out.sort ((a, b) => counts ().rank.get (a[0])! - counts ().rank.get (b[0])!);
-}
-
 /** A lemma's count in the scope shown. */
 export function wordCount (strong: string): number { return counts ().byStrong.get (strong) ?? 0; }
 

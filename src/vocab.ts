@@ -1,18 +1,17 @@
-// My vocab (☰ > My vocab): each person's own list. A word's panel adds it ("+ My vocab": learning; "✓ In my vocab"
-// takes it off again); "I know this word" makes it known - known is the helps' own hand choice
-// (helps.ts: its gloss then hidden), so the two never disagree, and a known word leaves the learning list. The screen,
-// for the testament shown: how many are learning and known, the FREQUENCY LISTS - the testament's words not yet known,
-// most frequent first, in ready-made lists of 20 (list 1 the 20 most frequent; a word made known leaves its list and the
-// next word moves up, so list 1 is always the 20 most frequent still to learn) -, each list (the word, its concise
-// meaning, how often it occurs in the whole testament), and three decks - the learning words, the known ones, and
-// "Flashcards for these words": the words the ⋯ slider hides in the book or testament (its FREQUENCY), most frequent
-// first. The frequency list picked opens as flashcards when the screen does. A card's front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that
-// list (on a frequency list's card, I KNOW THIS WORD: made known, into the known stack). Kept on the device.
+// My vocab (☰ > My vocab): each person's own list. A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
+// again); "I know this word" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
+// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: how many are in my
+// vocab and known, then three lists - MY VOCAB, KNOWN WORDS and WORDS BY FREQUENCY (the testament's words not yet
+// known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
+// moves up, so 1-20 is always the 20 most frequent still to learn) - the one picked (Words by frequency at first) shown
+// as flashcards, then its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
+// front the word with a speaker that says it, turned over its concise meaning; REMOVE FROM LIST takes it off that list
+// (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
 
 import type { Db } from "./db";
 import { onScreen, currentTestament } from "./study";
 import { showDeck, type Card } from "./cards";
-import { knownWords, setKnown, unsetKnown, sliderWords, onHelpsChange } from "./helps";
+import { knownWords, setKnown, unsetKnown, onHelpsChange } from "./helps";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -73,6 +72,7 @@ function toLearn (prefix: string, known: string[]): string[] {
 }
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList = { OT: 0, NT: 0 };   // (The frequency list picked, by testament: 0 the first)
+let picked = "freq";                   // (The list shown: learn - My vocab -, known, or freq - Words by frequency)
 
 
 /** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / I KNOW THIS WORD). */
@@ -84,56 +84,57 @@ function lists () {
   const d = details ([...learn, ...known]);
   const byCount = (a: string, b: string) => (d.get (b)?.count ?? 0) - (d.get (a)?.count ?? 0);
   return { t, known: known.filter ((k) => d.has (k)).sort (byCount), learn: learn.filter ((k) => d.has (k)).sort (byCount), ranked, d,
-           slider: sliderWords (), count: Math.ceil (ranked.length / LIST) };
+           count: Math.ceil (ranked.length / LIST) };
 }
 
 function draw (body: HTMLElement) {
   const t = currentTestament ();
   body.innerHTML = `<p class="vocabCount"></p>
-    <div class="chartPick"><label>Frequency lists<select class="choose" id="freqPick"></select></label>
-      <button class="pill" data-d="freq">Flashcards for this list</button></div>
-    <div class="bar"><button class="pill" data-d="learn">Learning words as flashcards</button><button class="pill" data-d="known">Known words as flashcards</button>
-      <button class="pill" data-d="slider" id="sliderDeck"></button></div>
+    <div class="bar"><button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
+      <button class="pill" data-list="freq">Words by frequency</button></div>
+    <div class="chartPick" id="freqRow"><label>Words<select class="choose" id="freqPick"></select></label></div>
     <div class="deck"></div>
     <div class="vocabLists"></div>`;
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
   const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!;
-  // Everything but the deck shown, from the lists as they are now: a card made known moves into Known at once, and the
-  // frequency lists move up (the deck open keeps its cards until it's opened again).
+  const freqRow = body.querySelector<HTMLElement> ("#freqRow")!;
+  // The words of the list picked, from the lists as they are now.
+  const words = (l: ReturnType<typeof lists>) => picked === "learn" ? l.learn : picked === "known" ? l.known
+    : l.ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST);
+  // Everything but the deck shown, from the lists as they are now: a card made known moves into Known words at once,
+  // and the frequency lists move up (the deck open keeps its cards until it's opened again).
   const refresh = () => {
     const l = lists ();
     pickedList[t] = Math.min (pickedList[t], Math.max (0, l.count - 1));
-    body.querySelector (".vocabCount")!.innerHTML = `<b>${l.learn.length.toLocaleString ()}</b> learning · <b>${l.known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden. On a card, Remove from list takes it off that list; on a frequency list's card, I know this word makes it known.`;
+    body.querySelector (".vocabCount")!.innerHTML = `<b>${l.learn.length.toLocaleString ()}</b> in my vocab · <b>${l.known.length.toLocaleString ()}</b> known (${t === "OT" ? "Hebrew OT" : "Greek NT"}). Add words from a word's panel (+ My vocab); I know this word makes a word known - its gloss then hidden.`;
+    for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.setAttribute ("aria-pressed", String (b.dataset.list === picked));
+    freqRow.style.display = picked === "freq" ? "" : "none";     // (Its 20s only for Words by frequency)
     freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
       `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
     freqPick.value = String (pickedList[t]);
-    body.querySelector ("#sliderDeck")!.textContent = `Flashcards for the slider's ${l.slider.length.toLocaleString ()} words`;
-    const rows = (keys: string[]) => keys.map ((k) => {
-      const w = l.d.get (k)!;
+    const d = picked === "freq" ? details (words (l)) : l.d;
+    body.querySelector (".vocabLists")!.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
+      const w = d.get (k)!;
       return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
-    }).join ("") || "<p>None yet.</p>";
-    body.querySelector (".vocabLists")!.innerHTML = `<div class="ref">Learning</div>${rows (l.learn)}<div class="ref">Known</div>${rows (l.known)}`;
+    }).join ("");
   };
-  const open = (which: string) => {
-    // REMOVE FROM LIST: off the list the deck is - learning (off My vocab), known (no longer known: its helps back), the
-    // slider's (known: its gloss stays hidden, as the slider has it, and it leaves this deck); a frequency list's card
-    // I KNOW THIS WORD: known, into the known stack.
+  // The list picked as flashcards. A card's button: in My vocab REMOVE FROM LIST (off My vocab); in Known words REMOVE
+  // FROM LIST (no longer known: its helps back); in Words by frequency I KNOW THIS WORD (known: into Known words).
+  const open = () => {
     const remove = (c: WordCard) => {
-      if (which === "learn") { delete learning[c.strong]; save (); }
-      else if (which === "known") unsetKnown (c.strong);
+      if (picked === "learn") { delete learning[c.strong]; save (); }
+      else if (picked === "known") unsetKnown (c.strong);
       else { delete learning[c.strong]; save (); setKnown (c.strong); }
       refresh ();
     };
-    const l = lists ();
-    const cards = cardsFor (which === "learn" ? l.learn : which === "known" ? l.known
-      : which === "freq" ? l.ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST) : l.slider.map ((x) => x[0]));
-    if (! cards.length) { deckEl.innerHTML = `<p>${which === "slider" ? "The slider hides no words: move it in ⋯ first." : "No words here yet."}</p>`; return; }
-    showDeck (deckEl, cards, remove, which === "freq" ? "I know this word" : undefined);
+    const cards = cardsFor (words (lists ()));
+    if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
+    showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined);
   };
-  freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); open ("freq"); });
-  for (const b of body.querySelectorAll<HTMLElement> ("[data-d]")) b.addEventListener ("click", () => open (b.dataset.d!));
+  freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); refresh (); open (); });
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.addEventListener ("click", () => { picked = b.dataset.list!; refresh (); open (); });
   refresh ();
-  open ("freq");     // (The frequency list picked shown as flashcards from the start)
+  open ();
 }
 
 onScreen ("My vocab", draw);
