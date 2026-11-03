@@ -5,6 +5,7 @@
 // from the parsings table's stem group (style.css: .stem-qal, .stem-piel...).
 
 import type { Db } from "./db";
+import { modernGreek } from "./translit";
 
 export interface Book { id: number; code: string; name: string; testament: "OT" | "NT"; chapters: number; }
 
@@ -40,8 +41,9 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     wordEl.className = "w" + (w.stem ? ` verb stem-${w.stem}` : "");
     wordEl.dataset.strong = w.strong;     // the lemma's key: helps.ts hides its gloss by it
     wordEl.dataset.code = w.code ?? "";     // its parsing code: with the lemma, helps.ts hides its parsing by it
-    // (The transliteration as STEPBible gives it, its syllable dots dropped and in lower case: be.re.Shit -> bereshit.)
-    wordEl.append (span ("orig", w.text), span ("translit", (w.translit ?? "").replace (/\./g, "").toLowerCase ()),
+    // (The transliteration: Hebrew as STEPBible gives it, its syllable dots dropped and in lower case - be.re.Shit ->
+    // bereshit; Greek as modern Greek says it - translit.ts.)
+    wordEl.append (span ("orig", w.text), span ("translit", hebrew ? (w.translit ?? "").replace (/\./g, "").toLowerCase () : modernGreek (w.text)),
                    span ("gloss", w.gloss), span ("parse", w.code ?? ""));
     wordEl.addEventListener ("click", () => onTap (w, wordEl));
     verseEl!.append (wordEl);
