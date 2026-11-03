@@ -2,7 +2,7 @@
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section opens under the word's info, in the same
 // panel - its heading, the grammar and §, its text - the term bold; HIDE closes it. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
-// GRAMMAR in the ☰ drawer's settings, one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
+// GRAMMAR in the word's panel, by the parsing, one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
 // grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
 
 import type { Db } from "./db";
@@ -27,7 +27,9 @@ document.getElementById ("giClose")!.addEventListener ("click", hideGrammar);
 pick.addEventListener ("change", () => {
   picked[lang] = pick.value;
   try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
+  if (shown) showParsing (...shown);     // (The word's parsing linked again, to the grammar now picked)
 });
+let shown: Parameters<typeof showParsing> | null = null;     // (The parsing the panel shows: its links follow GRAMMAR)
 
 export function initGrammar (theDb: Db) {
   db = theDb;
@@ -58,6 +60,7 @@ function keysOf (grammar: string): Set<string> {
 /** Writes the spelled-out parsing into `el`, each term the chosen grammar explains a tappable span. `terms`: the
  *  parsing's JSON [[start, end, key], ...]. Any section open from the word before is closed. */
 export function showParsing (el: HTMLElement, spelled: string, terms: string | null, hebrew: boolean) {
+  shown = [el, spelled, terms, hebrew];
   hideGrammar ();
   el.textContent = "";
   lang = hebrew ? "H" : "G";

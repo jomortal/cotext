@@ -2,7 +2,7 @@
 // My vocab, Verb paradigms, Verb chart, Parsing guide. Each opens full screen, with ☰ at its top left (to move between
 // them) and ✕ at its top right (back to the text); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts), each for the
 // testament shown; one not built says it's coming. Picking an item, ✕ or tapping outside closes the drawer.
-// Under them, the settings: LEXICON (panel.ts) and GRAMMAR (grammar.ts), each a menu that applies at once.
+// Under them, the settings (GRAMMAR is in the word's panel: grammar.ts).
 
 const drawer = document.getElementById ("drawer")!;
 const screen = document.getElementById ("screen")!;
