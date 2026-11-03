@@ -5,24 +5,22 @@
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
-/* Verb colors: one per stem group (pipeline/morph.py's STEM_GROUP) - the simple stem (Qal) blue, as in the mock-ups;
-   its passive, the Niphal, the Piel and Pual, the Hithpael, the Hiphil and Hophal each their own; rarer stems "other".
-   Greek verbs all take the Qal's blue (group "verb"). */
+/* Verb colors (VERB COLORS: reader.ts's verbForm, the .vf- rules): seven hues - qal blue (also the page's accent),
+   niphal teal, piel red, pual orange, hithpael purple, hiphil green, other gold, the names left from the stem groups -
+   all at one lightness and chroma in OKLCH (light 0.56 / 0.13, dark 0.77 / 0.12), so no color stands out more than
+   another; only the hue differs. */
 :root {
   --bg: #f7f6f2; --fg: #1d1c1a; --soft: #6b6862; --line: transparent;     /* (Borders and dividing lines: none shown, the user's choice - transparent, so nothing moves) */
   --edge: #dedad2;     /* (The borders kept: flashcards, the Verb chart, the menus - ⋯, ☰, the pickers and their lists - and the lines between the page's parts: under the heading, over the play bar, over each panel) */
-  --qal: #2d6cdf; --qal-pass: #5b7fbf; --niphal: #1f8a8a; --piel: #b5462e; --pual: #c0703a; --hithpael: #8a3fa8;
-  --hiphil: #2e8a3e; --hophal: #6f8f2a; --other: #8a6d1f;
+  --qal: oklch(0.56 0.13 261); --niphal: oklch(0.56 0.13 195); --piel: oklch(0.56 0.13 34); --pual: oklch(0.56 0.13 53); --hithpael: oklch(0.56 0.13 315); --hiphil: oklch(0.56 0.13 147); --other: oklch(0.56 0.13 88);
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
-  --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark } }
+  --qal: oklch(0.77 0.12 261); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
-  --qal: #7ea6ff; --qal-pass: #9db4e0; --niphal: #5cc8c8; --piel: #f08a70; --pual: #f0a878; --hithpael: #c99be0;
-  --hiphil: #72cf80; --hophal: #b0d070; --other: #d8b860; color-scheme: dark }
+  --qal: oklch(0.77 0.12 261); --niphal: oklch(0.77 0.12 195); --piel: oklch(0.77 0.12 34); --pual: oklch(0.77 0.12 53); --hithpael: oklch(0.77 0.12 315); --hiphil: oklch(0.77 0.12 147); --other: oklch(0.77 0.12 88); color-scheme: dark }
 
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
