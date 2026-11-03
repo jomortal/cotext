@@ -22,7 +22,8 @@ let db: Db;
 let chapterWords: Word[] = [];
 /** The verb chosen: the pattern, a model (its index), or a verb of the text (its Strong's number without the sense letter). */
 type Verb = { kind: "pattern" } | { kind: "model"; i: number } | { kind: "text"; base: string; lemma: string; gloss: string };
-const state = { OT: { stem: 0, verb: { kind: "pattern" } as Verb }, NT: { stem: 0, verb: { kind: "pattern" } as Verb } };
+const state = { OT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" }, NT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" } };
+// (mood: the Greek mood shown - "" all, else I S M N P - indicative, subjunctive, imperative, infinitive, participle)
 
 export function initChart (theDb: Db) { db = theDb; }
 /** The chapter shown: its verbs are offered in the verb picker. */
@@ -153,7 +154,7 @@ function hebrewTables (verb: Verb, stemIdx: number): string {
   return column (groups);
 }
 
-function greekTables (verb: Verb, tvIdx: number): string {
+function greekTables (verb: Verb, tvIdx: number, mood = ""): string {
   const tv = GREEK_TENSES[tvIdx];
   const model = verb.kind === "model" ? GREEK_MODELS[verb.i] : verb.kind === "text" ? rootModel (verb.lemma, false) as GreekModel | null : null;
   const c = greekCells (tv);
@@ -164,7 +165,33 @@ function greekTables (verb: Verb, tvIdx: number): string {
   const ptcHeads = ["NOM. M.", "NOM. F.", "NOM. N.", "GEN. M."];
   groups.push (["PARTICIPLE", c.ptc.map ((x, i) => [ptcHeads[i], form (x)])]);
   if (c.inf) groups.push (["INFINITIVE", [["", form (c.inf)]]]);
-  return column (groups);
+  const moodName: Record<string, string> = { I: "INDICATIVE", S: "SUBJUNCTIVE", M: "IMPERATIVE", N: "INFINITIVE", P: "PARTICIPLE" };
+  return column (mood ? groups.filter ((g) => g[0] === moodName[mood]) : groups);
+}
+
+/** Greek's pickers: a row for tense, one for voice, one for mood (All or one), the ones shown lit. With a verb of the
+ *  text, each tense and voice its count of forms (a tense's for all its voices; a voice's in the tense shown). */
+const G_TENSE_NAMES: [string, string][] = [["P", "Present"], ["I", "Imperfect"], ["F", "Future"], ["A", "Aorist"], ["R", "Perfect"]];
+const G_VOICE_NAMES: [string, string][] = [["A", "Active"], ["M", "Middle"], ["P", "Passive"]];
+const G_MOOD_NAMES: [string, string][] = [["", "All"], ["I", "Indicative"], ["S", "Subjunctive"], ["M", "Imperative"], ["N", "Infinitive"], ["P", "Participle"]];
+/** The moods a tense and voice has (its index): "" (all) always. */
+function moodsOf (tvIdx: number): Record<string, boolean> {
+  const c = greekCells (GREEK_TENSES[tvIdx]);
+  return { "": true, I: !! c.grid.I, S: !! c.grid.S, M: !! c.grid.M, N: !! c.inf, P: c.ptc.length > 0 };
+}
+function greekRows (st: { stem: number; mood: string }, counts: number[] | null): string {
+  const tv = GREEK_TENSES[st.stem];
+  const n = (k: number) => counts ? ` (${k.toLocaleString ()})` : "";
+  const sum = (f: (x: typeof tv) => boolean) => GREEK_TENSES.reduce ((a, x, i) => a + (f (x) ? counts?.[i] ?? 0 : 0), 0);
+  const has = moodsOf (st.stem);
+  const btn = (attr: string, v: string, label: string, on: boolean, off = false) =>
+    `<button class="pill" data-${attr}="${v}" aria-pressed="${on}"${off ? " disabled" : ""}>${label}</button>`;
+  return `<div class="src">Tense</div><div class="choices">${G_TENSE_NAMES.map (([k, name]) => btn ("tense", k, name + n (sum ((x) => x.tense === k)), tv.tense === k)).join ("")}</div>
+    <div class="src">Voice</div><div class="choices">${G_VOICE_NAMES.map (([k, name]) => {
+      const i = GREEK_TENSES.findIndex ((x) => x.tense === tv.tense && x.voice === k);
+      return btn ("voice", k, name + n (i >= 0 ? counts?.[i] ?? 0 : 0), tv.voice === k, i < 0);
+    }).join ("")}</div>
+    <div class="src">Mood</div><div class="choices">${G_MOOD_NAMES.map (([k, name]) => btn ("mood", k, name, st.mood === k, ! has[k])).join ("")}</div>`;
 }
 
 /** The screen: the pickers, what the verb is, and its tables. */
@@ -183,10 +210,11 @@ function render (body: HTMLElement) {
     `<optgroup label="Model verbs">${models.map ((m, i) => `<option value="m${i}">${esc (m)}</option>`).join ("")}</optgroup>`,
     inText.length ? `<optgroup label="In this chapter">${inText.map ((b) => `<option value="t${b}">${esc (label (b))}</option>`).join ("")}</optgroup>` : "",
     verb.kind === "text" && ! inText.includes (verb.base) ? `<option value="t${verb.base}">${esc (verb.lemma)} - ${esc (verb.gloss)}</option>` : ""];
+  if (! hebrew && ! moodsOf (st.stem)[st.mood]) st.mood = "";     // (A mood the tense shown hasn't: all)
   body.innerHTML = `
-    <div class="src">${hebrew ? "Stem" : "Tense and voice"}</div>
+    ${hebrew ? `<div class="src">Stem</div>
     <div class="choices" id="chartStem">${stems.map ((n, i) =>
-      `<button class="pill" data-stem="${i}" aria-pressed="${i === st.stem}">${n}${counts ? ` (${counts[i].toLocaleString ()})` : ""}</button>`).join ("")}</div>
+      `<button class="pill" data-stem="${i}" aria-pressed="${i === st.stem}">${n}${counts ? ` (${counts[i].toLocaleString ()})` : ""}</button>`).join ("")}</div>` : greekRows (st, counts)}
     <div class="chartPick">
       <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
     </div>
@@ -194,11 +222,20 @@ function render (body: HTMLElement) {
       ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it.`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
-    ${hebrew ? hebrewTables (verb, st.stem) : greekTables (verb, st.stem)}`;
+    ${hebrew ? hebrewTables (verb, st.stem) : greekTables (verb, st.stem, st.mood)}`;
   const verbPick = body.querySelector<HTMLSelectElement> ("#chartVerb")!;
   verbPick.value = value;
   // The stems (or tenses and voices) a row of buttons, the one shown lit; a tap shows that one.
   for (const b of body.querySelectorAll<HTMLElement> ("[data-stem]")) b.addEventListener ("click", () => { st.stem = Number (b.dataset.stem); render (body); });
+  // Greek: a tense or voice tapped keeps the other (or takes the tense's first voice the chart has); a mood shows only that part.
+  const pickTV = (tense: string, voice: string) => {
+    const i = GREEK_TENSES.findIndex ((x) => x.tense === tense && x.voice === voice);
+    st.stem = i >= 0 ? i : GREEK_TENSES.findIndex ((x) => x.tense === tense);
+    render (body);
+  };
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-tense]")) b.addEventListener ("click", () => pickTV (b.dataset.tense!, GREEK_TENSES[st.stem].voice));
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-voice]")) b.addEventListener ("click", () => pickTV (GREEK_TENSES[st.stem].tense, b.dataset.voice!));
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-mood]")) b.addEventListener ("click", () => { st.mood = b.dataset.mood!; render (body); });
   verbPick.addEventListener ("change", () => {
     const v = verbPick.value;
     st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : textVerb (v.slice (1));
