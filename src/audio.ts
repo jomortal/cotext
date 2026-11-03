@@ -228,6 +228,10 @@ function wordByWord (id: number, gs: { words: HTMLElement[]; text: string }[]) {
 }
 
 /** The panel's 🔊: says just the word (a Greek one-letter word with the next, as when reading). */
+/** A Greek one-letter word said alone (the panel's speakers, a vocab card): the voice spells ο out - "omicron" - so
+ *  it's given in Latin letters, "oh". */
+const ALONE: Record<string, string> = { "ο": "oh" };
+
 export function sayWord (wordEl: HTMLElement) {
   if (! synth) return;
   stopReading ();
@@ -235,7 +239,9 @@ export function sayWord (wordEl: HTMLElement) {
   const g = groups (verse.slice (verse.indexOf (wordEl)))[0];
   if (! g) return;
   synth.resume ();
-  const u = utterance (g.text);
+  // (The word alone: ὁ said "oh" - ALONE - rather than with the next word, as reading groups it.)
+  const u = utterance (testament === "NT" && monotonic (wordEl.querySelector (".orig")?.textContent ?? "") in ALONE
+    ? ALONE[monotonic (wordEl.querySelector (".orig")!.textContent!)] : g.text);
   keep.push (u);
   synth.speak (u);
 }
@@ -245,10 +251,8 @@ export function sayText (text: string) {
   if (! synth || ! text) return;
   stopReading ();
   synth.resume ();
-  // (The article's dictionary form ὁ alone is spelled out by the voice - "omicron" - so it's said as dictionaries give
-  // the article: ὁ, ἡ, τό.)
   const greek = monotonic (text);
-  const u = utterance (testament === "OT" ? hebrewSpoken (text) : greek === "ο" ? "ο, η, το" : greek);
+  const u = utterance (testament === "OT" ? hebrewSpoken (text) : ALONE[greek] ?? greek);
   keep.push (u);
   synth.speak (u);
 }
