@@ -105,7 +105,7 @@ function voice (): SpeechSynthesisVoice | undefined {
 
 // VOICE (the ⋯ menu, with READING SPEED): the device's voices for the text shown's language (Hebrew or Greek), the first "The device's" -
 // its default; filled when the voices load (they arrive late on some browsers) and when the testament changes. "Getting
-// better voices" opens the steps for downloading the device's own enhanced voices.
+// other voices" opens the steps for downloading the device's own other voices.
 const voicePick = document.getElementById ("voicePick") as HTMLSelectElement;
 function fillVoices () {
   const mine = (synth?.getVoices () ?? []).filter ((v) => v.lang.startsWith (lang ()));
