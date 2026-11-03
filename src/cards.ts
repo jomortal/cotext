@@ -1,5 +1,5 @@
 // Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it, or alone: My vocab's), tapped again to turn it
-// back. BACK and NEXT step through the deck (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
+// back. BACK and NEXT step through the deck (SHOW between them turns the card over, as a tap on it does) (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
 // order at the first card, REMOVE FROM LIST (or the name its owner gives it) takes the card out (and tells the deck's owner: vocab.ts takes the word off
 // that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
 //
@@ -20,18 +20,20 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   const first = [...cards];
   let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
-    <div class="bar cardBar"><button class="pill" data-k="back">Back</button><span class="src cardCount"></span><button class="pill" data-k="next">Next</button></div>
+    <div class="src cardCount"></div>
+    <div class="bar cardBar"><button class="pill" data-k="back">Back</button><button class="pill" data-k="flip">Show</button><button class="pill" data-k="next">Next</button></div>
     <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button><button class="pill" data-k="remove">${removeLabel}</button></div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!;
-  const count = el.querySelector<HTMLElement> (".cardCount")!;
+  const count = el.querySelector<HTMLElement> (".cardCount")!, flip = el.querySelector<HTMLElement> ("[data-k=flip]")!;
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false;
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; flip.textContent = "Show";
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; } };     // (Tapped again: turned back)
+  // Turned over (a tap on the card, or SHOW - HIDE while turned - between BACK and NEXT); again, turned back.
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; flip.textContent = back.hidden ? "Show" : "Hide"; } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
   card.addEventListener ("click", (e) => {
     const say = (e.target as HTMLElement).closest<HTMLElement> ("[data-say]");
@@ -39,6 +41,7 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   });
   card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault (); turn (); } });
   const on = (k: string, f: () => void) => el.querySelector (`[data-k=${k}]`)!.addEventListener ("click", () => { f (); show (); });
+  flip.addEventListener ("click", turn);
   on ("back", () => { at--; });
   on ("next", () => { at++; });
   on ("shuffle", () => { deck = shuffle (deck); at = 0; });

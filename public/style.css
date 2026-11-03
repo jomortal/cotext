@@ -296,7 +296,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: 18px; }
 .cardBar { justify-content: center; }
 .cardBar .pill { font-size: 14px; padding: 7px 16px; }
-.cardCount { margin-top: 0; }
+.cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", over BACK, SHOW and NEXT) */
 
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
 .guideLang { font-size: 15px; margin: 14px 0 0; }
