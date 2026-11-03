@@ -1,16 +1,17 @@
 // Vocab (☰ > Vocab): each person's own list (My vocab). A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
 // again); "I know this word" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
-// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: three lists - WORDS BY FREQUENCY (the testament's words not yet
+// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: four lists - OT / NT FREQUENCY and
+// BOOK FREQUENCY (a book picked from the testament's, the one shown at first) (the testament's or the book's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
-// moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS - the one picked (Words by frequency at first) shown
-// as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament). A card's
+// moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS - the one picked (OT / NT frequency at first) shown
+// as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for Book frequency). A card's
 // front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
-// (in Words by frequency, I KNOW THIS WORD: made known, into Known words). Kept on the device.
+// (in the frequency lists, I KNOW THIS WORD: made known, into Known words). Kept on the device.
 
 import type { Db } from "./db";
 import { onScreen, currentTestament } from "./study";
 import { showDeck, type Card } from "./cards";
-import { knownWords, setKnown, unsetKnown, onHelpsChange } from "./helps";
+import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook } from "./helps";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -39,13 +40,13 @@ onHelpsChange (() => {
 
 interface WordCard extends Card { strong: string; }
 
-/** The words' details: lemma, concise meaning and whole-testament count, by Strong's key. */
-function details (strongs: string[]): Map<string, { lemma: string; meaning: string; count: number }> {
+/** The words' details: lemma, concise meaning and count - in the whole testament, or in the book (its id), by Strong's key. */
+function details (strongs: string[], bookId = 0): Map<string, { lemma: string; meaning: string; count: number }> {
   const out = new Map<string, { lemma: string; meaning: string; count: number }> ();
   for (let i = 0; i < strongs.length; i += 500) {     // (SQLite's bound parameters, a chunk at a time)
     const part = strongs.slice (i, i + 500), q = part.map (() => "?").join (",");
     for (const r of db.all (`SELECT l.strong, l.lemma, l.concise, l.gloss, f.count FROM lexicon l
-                             LEFT JOIN freq f ON f.strong = l.strong AND f.book = 0 WHERE l.strong IN (${q})`, part))
+                             LEFT JOIN freq f ON f.strong = l.strong AND f.book = ? WHERE l.strong IN (${q})`, [bookId, ...part]))
       out.set (String (r.strong), { lemma: String (r.lemma), meaning: String (r.concise || r.gloss || ""), count: Number (r.count ?? 0) });
   }
   return out;
@@ -63,15 +64,21 @@ function cardsFor (strongs: string[]): WordCard[] {
   });
 }
 
-/** The testament's words (Strong's keys, by its H / G prefix) not yet known, most frequent first: the frequency lists. */
-function toLearn (prefix: string, known: string[]): string[] {
+/** The testament's words (Strong's keys, by its H / G prefix) not yet known, most frequent first - in the whole
+ *  testament, or in the book (its id): the frequency lists. */
+function toLearn (prefix: string, known: string[], bookId = 0): string[] {
   const k = new Set (known);
-  return db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = 0 AND f.strong LIKE ?
-                  ORDER BY f.count DESC, f.strong`, [prefix + "%"]).map ((r) => String (r.strong)).filter ((s) => ! k.has (s));
+  return db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = ? AND f.strong LIKE ?
+                  ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"]).map ((r) => String (r.strong)).filter ((s) => ! k.has (s));
 }
 const LIST = 20;                       // (Words in each frequency list)
-const pickedList = { OT: 0, NT: 0 };   // (The frequency list picked, by testament: 0 the first)
-let picked = "freq";                   // (The list shown: learn - My vocab -, known, or freq - Words by frequency)
+const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
+let picked = "freq";                   // (The list shown: freq - OT / NT FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, or known)
+const byFreq = () => picked === "freq" || picked === "book";
+const pickedBook: Record<string, number> = {};     // (BOOK FREQUENCY's book, by testament: the book shown until one is picked)
+const theBook = () => pickedBook[currentTestament ()] ?? currentBook ().id;
+const bookId = () => picked === "book" ? theBook () : 0;
+const listKey = () => picked === "book" ? "b" + theBook () : currentTestament ();
 let reversed = false;                  // (ENGLISH TO HEBREW / GREEK: the cards' front the meaning, turned over the word)
 let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
 
@@ -81,7 +88,7 @@ function lists () {
   const t = currentTestament (), prefix = t === "OT" ? "H" : "G";
   const known = knownWords ().filter ((k) => k.startsWith (prefix));
   const learn = Object.keys (learning).filter ((k) => k.startsWith (prefix) && ! known.includes (k));
-  const ranked = toLearn (prefix, known);
+  const ranked = toLearn (prefix, known, bookId ());
   const d = details ([...learn, ...known]);
   const byCount = (a: string, b: string) => (d.get (b)?.count ?? 0) - (d.get (a)?.count ?? 0);
   return { t, known: known.filter ((k) => d.has (k)).sort (byCount), learn: learn.filter ((k) => d.has (k)).sort (byCount), ranked, d,
@@ -90,9 +97,9 @@ function lists () {
 
 function draw (body: HTMLElement) {
   const t = currentTestament ();
-  body.innerHTML = `<div class="bar"><button class="pill" data-list="freq">Words by frequency</button><button class="pill" data-list="learn">My vocab</button>
-      <button class="pill" data-list="known">Known words</button></div>
-    <div class="chartPick" id="freqRow"><label><select class="choose" id="freqPick" aria-label="Words by frequency"></select></label></div>
+  body.innerHTML = `<div class="bar"><button class="pill" data-list="freq">${t} frequency</button><button class="pill" data-list="book">Book frequency</button>
+      <button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button></div>
+    <div class="chartPick" id="freqRow"><label id="bookRow"><select class="choose" id="bookPick" aria-label="Book"></select></label><label><select class="choose" id="freqPick" aria-label="Words by frequency"></select></label></div>
     <div class="deck"></div>
     <div class="bar"><button class="pill" id="reverse">English to ${t === "OT" ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
     <div class="vocabLists"></div>`;
@@ -102,18 +109,20 @@ function draw (body: HTMLElement) {
   const listBtn = body.querySelector<HTMLElement> ("#showList")!, listEl = body.querySelector<HTMLElement> (".vocabLists")!;
   // The words of the list picked, from the lists as they are now.
   const words = (l: ReturnType<typeof lists>) => picked === "learn" ? l.learn : picked === "known" ? l.known
-    : l.ranked.slice (pickedList[t] * LIST, (pickedList[t] + 1) * LIST);
+    : l.ranked.slice ((pickedList[listKey ()] ?? 0) * LIST, ((pickedList[listKey ()] ?? 0) + 1) * LIST);
   // Everything but the deck shown, from the lists as they are now: a card made known moves into Known words at once,
   // and the frequency lists move up (the deck open keeps its cards until it's opened again).
   const refresh = () => {
     const l = lists ();
-    pickedList[t] = Math.min (pickedList[t], Math.max (0, l.count - 1));
+    pickedList[listKey ()] = Math.min (pickedList[listKey ()] ?? 0, Math.max (0, l.count - 1));
     for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.setAttribute ("aria-pressed", String (b.dataset.list === picked));
-    freqRow.style.display = picked === "freq" ? "" : "none";     // (Its 20s only for Words by frequency)
+    freqRow.style.display = byFreq () ? "" : "none";     // (Its 20s only for the frequency lists)
+    bookRow.style.display = picked === "book" ? "" : "none";     // (And the book only for Book frequency)
+    bookPick.value = String (theBook ());
     freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
       `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
-    freqPick.value = String (pickedList[t]);
-    const d = picked === "freq" ? details (words (l)) : l.d;
+    freqPick.value = String (pickedList[listKey ()]);
+    const d = byFreq () ? details (words (l), bookId ()) : l.d;
     listBtn.setAttribute ("aria-pressed", String (listShown));
     body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
     listEl.style.display = listShown ? "" : "none";
@@ -133,11 +142,15 @@ function draw (body: HTMLElement) {
     };
     const cards = cardsFor (words (lists ()));
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
-    showDeck (deckEl, cards, remove, picked === "freq" ? "I know this word" : undefined, true);     // (Turned over: only the English)
+    showDeck (deckEl, cards, remove, byFreq () ? "I know this word" : undefined, true);     // (Turned over: only the English)
   };
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
   body.querySelector ("#reverse")!.addEventListener ("click", () => { reversed = ! reversed; refresh (); open (); });
-  freqPick.addEventListener ("change", () => { pickedList[t] = Number (freqPick.value); refresh (); open (); });
+  const bookPick = body.querySelector<HTMLSelectElement> ("#bookPick")!, bookRow = body.querySelector<HTMLElement> ("#bookRow")!;
+  bookPick.innerHTML = db.all ("SELECT id, name FROM books WHERE testament = ? ORDER BY id", [t])
+    .map ((r) => `<option value="${r.id}">${esc (String (r.name))}</option>`).join ("");
+  bookPick.addEventListener ("change", () => { pickedBook[t] = Number (bookPick.value); refresh (); open (); });
+  freqPick.addEventListener ("change", () => { pickedList[listKey ()] = Number (freqPick.value); refresh (); open (); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.addEventListener ("click", () => { picked = b.dataset.list!; refresh (); open (); });
   refresh ();
   open ();

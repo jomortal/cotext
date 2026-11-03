@@ -129,6 +129,8 @@ export function onHelpsChange (f: () => void) { listeners.push (f); }
 
 /** The passage shown changed: book-scoped counts follow it. */
 export function setBook (theDb: Db, b: Book) { db = theDb; book = b; }
+/** The book shown (Vocab's BOOK FREQUENCY, until another is picked). */
+export function currentBook (): Book { return book; }
 
 /** Marks the chapter's words: .known on those whose gloss is hidden, .knownForm on those whose parsing is (style.css
  *  hides or fades them). */
