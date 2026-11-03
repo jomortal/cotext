@@ -1,6 +1,6 @@
 // Grammar from the word's panel (design/mock-hebrew.html): each term of the spelled-out parsing that a section explains
-// (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section opens under the word's info, in the same
-// panel - its heading, the grammar and §, its text - the term bold; HIDE closes it. The terms and their sections come
+// (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section takes the word's panel over (the word's
+// info hidden) - its heading, the grammar and §, its text; HIDE closes it, the word's info back. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
 // GRAMMAR in the grammar section's box (shown once a term is tapped), one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
 // grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
@@ -86,7 +86,7 @@ export function showParsing (el: HTMLElement, spelled: string, terms: string | n
   el.append (spelled.slice (at));
 }
 
-/** The key's sections in the grammar, under the word's info: the first section's heading as the title, the § numbers
+/** The key's sections in the grammar, over the word's info: the first section's heading as the title, the § numbers
  *  ("Gesenius §§44, 106"), then the text - each section's number (and its heading, where it changes) before it when
  *  there's more than one. */
 function openSection (grammar: string, key: string, term: HTMLElement) {
@@ -118,12 +118,13 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
   bodyEl.classList.toggle ("one", count === 1);
   box.hidden = false;
   for (const t of sheet.querySelectorAll (".term")) t.classList.toggle ("on", t === term);
-  requestAnimationFrame (() => sheet.scrollTo ({ top: box.offsetTop - 8,     /* (#sheet is positioned: offsetTop is within it) */
- behavior: "smooth" }));
+  sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until HIDE)
+  sheet.scrollTop = 0;
 }
 
 export function hideGrammar () {
   box.hidden = true;
+  sheet.classList.remove ("grammarOpen");     // (The word's info back)
   openKey = "";
   for (const t of sheet.querySelectorAll (".term.on")) t.classList.remove ("on");
 }

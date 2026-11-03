@@ -216,12 +216,15 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .btns.rev { flex-direction: row-reverse; justify-content: flex-start; }     /* (Close beside I know this word: panel.ts) */
 #sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
-/* A grammar's section under the word's info (grammar.ts): the parsing's terms it explains underlined in the Qal's
-   color, the one open bold; the panel stays at most half the screen, scrolling. */
+/* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the Qal's color; one tapped, its
+   section takes the word's panel over (.grammarOpen: the word's info hidden) until HIDE brings the word back; the
+   panel stays at most half the screen, scrolling. */
 #sheet .term { color: var(--qal); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 #sheet .term.on { font-weight: 700; }
 #gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
 #gInline[hidden] { display: none; }
+#sheet.grammarOpen > :not(#gInline) { display: none; }
+#sheet.grammarOpen #gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 #gInline .top { align-items: start; }
 .gTitle { font-weight: 600; font-size: 15px; }
 #gInline .src { margin-top: 2px; }
