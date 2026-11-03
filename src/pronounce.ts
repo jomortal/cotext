@@ -1,9 +1,13 @@
-// The Pronunciation guide (☰ > Pronunciation): the Greek alphabet as modern Greek says it - the sound COTEXT reads
-// aloud in (audio.ts: el-GR) - each letter upper and lower case, its name, its sound (IPA) and an English example;
-// then the letter pairs that make one sound (αι, ει, ου, αυ, μπ, ντ...). Each row's speaker says the letter's name, or
-// the pair in a word, in the device's Greek voice.
+// The Pronunciation guide (☰ > Pronunciation), for the testament shown. Greek (NT): the alphabet as modern Greek says
+// it - the sound COTEXT reads aloud in (audio.ts: el-GR) - each letter upper and lower case, its name, its sound (IPA)
+// and an English example; then the letter pairs that make one sound (αι, ει, ου, αυ, μπ, ντ...). Hebrew (OT): the
+// consonants as modern Israeli Hebrew says them - again what COTEXT reads aloud in (he-IL) - each with its final form,
+// its dot (dagesh) form where that changes the sound, its name, IPA and an English example; then the vowel signs, each
+// on a letter, with its name and sound. Each row's speaker says the letter's name, the pair in a word or the vowel's
+// syllable, in the device's Greek or Hebrew voice.
 
-import { onScreen } from "./study";
+import { onScreen, currentTestament } from "./study";
+import { sayText } from "./audio";
 
 /** [upper, lower, name (Greek), name (English), IPA, how it sounds] */
 const LETTERS: [string, string, string, string, string, string][] = [
@@ -50,7 +54,50 @@ const PAIRS: [string, string, string, string][] = [
   ["τζ", "τζάμι", "dz", "ds as in kids"],
 ];
 
-const SPEAKER = document.getElementById ("speakRoot")!.innerHTML;     // (The word panel's speaker icon)
+/** [letter forms, name (Hebrew), name (English), IPA, how it sounds] */
+const HEB_LETTERS: [string, string, string, string, string][] = [
+  ["א", "אָלֶף", "alef", "ʔ / –", "silent, or a catch in the throat as in uh-oh: it carries a vowel"],
+  ["בּ ב", "בֵּית", "bet / vet", "b / v", "b as in boy with the dot (בּ), v as in very without"],
+  ["ג", "גִּימֶל", "gimel", "g", "g as in go"],
+  ["ד", "דָּלֶת", "dalet", "d", "d as in dog"],
+  ["ה", "הֵא", "he", "h", "h as in hat; silent at the end of a word"],
+  ["ו", "וָו", "vav", "v", "v as in very; also a vowel: וֹ o, וּ u"],
+  ["ז", "זַיִן", "zayin", "z", "z as in zoo"],
+  ["ח", "חֵית", "chet", "χ", "ch as in Scottish loch"],
+  ["ט", "טֵית", "tet", "t", "t as in top"],
+  ["י", "יוֹד", "yod", "j", "y as in yes; also part of a vowel (ִי ee, ֵי ei)"],
+  ["כּ כ ך", "כַּף", "kaf / khaf", "k / χ", "k as in kite with the dot (כּ), ch as in loch without; ך at the end of a word"],
+  ["ל", "לָמֶד", "lamed", "l", "l as in lamp"],
+  ["מ ם", "מֵם", "mem", "m", "m as in man; ם at the end of a word"],
+  ["נ ן", "נוּן", "nun", "n", "n as in net; ן at the end of a word"],
+  ["ס", "סָמֶךְ", "samekh", "s", "s as in sit"],
+  ["ע", "עַיִן", "ayin", "ʔ / –", "silent, like alef, today; in older Hebrew a sound deep in the throat"],
+  ["פּ פ ף", "פֵּא", "pe / fe", "p / f", "p as in pen with the dot (פּ), f as in fun without; ף at the end of a word"],
+  ["צ ץ", "צָדִי", "tsadi", "ts", "ts as in cats; ץ at the end of a word"],
+  ["ק", "קוֹף", "qof", "k", "k as in kite - today the same as כּ"],
+  ["ר", "רֵישׁ", "resh", "ʁ", "r from the throat, as in French"],
+  ["שׁ שׂ", "שִׁין", "shin / sin", "ʃ / s", "sh as in shop with the dot on the right (שׁ), s as in sit with it on the left (שׂ)"],
+  ["ת", "תָּו", "tav", "t", "t as in top - today with or without the dot"],
+];
+
+/** [vowel on a letter, name (English), IPA, how it sounds] */
+const HEB_VOWELS: [string, string, string, string][] = [
+  ["בָּ", "qamets", "a", "a as in father (in a few closed syllables o, as in more)"],
+  ["בַּ", "patach", "a", "a as in father"],
+  ["בֵּ", "tsere", "e", "e as in bet (ey as in they before י)"],
+  ["בֶּ", "segol", "e", "e as in bet"],
+  ["בִּ", "hireq", "i", "ee as in see"],
+  ["בֹּ", "holam", "o", "o as in more (also written וֹ)"],
+  ["בֻּ", "qibbuts", "u", "oo as in food (also written וּ, shureq)"],
+  ["בְּ", "sheva", "e / –", "a short e, as in the a of about, or silent"],
+  ["חֲ", "hateph patach", "a", "a short a, as in father"],
+  ["חֱ", "hateph segol", "e", "a short e, as in bet"],
+  ["חֳ", "hateph qamets", "o", "a short o, as in more"],
+];
+
+const SPEAKER = document.getElementById ("speakRoot")!.innerHTML;
+/** Hebrew inside English text: each run in the Hebrew font, isolated so it doesn't reorder the sentence around it. */
+const heIn = (t: string) => t.replace (/[\u0590-\u05FF]+/g, (m) => `<bdi class="heWord">${m}</bdi>`);     // (The word panel's speaker icon)
 const say = (t: string) => {
   if (! ("speechSynthesis" in window)) return;
   speechSynthesis.cancel ();
@@ -59,6 +106,17 @@ const say = (t: string) => {
 
 function draw (body: HTMLElement) {
   const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${SPEAKER}</button>`;
+  if (currentTestament () === "OT") {
+    body.innerHTML = heIn (`<p>Hebrew as it's spoken in Israel today - the pronunciation COTEXT reads aloud in. Hebrew is read right to left; the vowels are dots and dashes under, over or beside the letters. Most words are stressed on the last syllable. Older and academic pronunciations keep a few sounds modern Hebrew has merged (ח apart from כ, ע and ק their own sounds, ת without the dot like th in think).</p>`) + `
+      <div class="ref">The letters</div>
+      ${HEB_LETTERS.map (([forms, he, en, ipa, how]) => `<div class="sayRow"><span class="heWord sayLetter">${forms}</span>
+        <span><b>${en}</b> <span class="heWord">${he}</span><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (he)}</div>`).join ("")}
+      <div class="ref">The vowels (shown on ב, or ח)</div>
+      ${HEB_VOWELS.map (([v, en, ipa, how]) => `<div class="sayRow"><span class="heWord sayLetter">${v}</span>
+        <span><b>${en}</b><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (v)}</div>`).join ("")}`;
+    for (const b of body.querySelectorAll<HTMLElement> ("[data-say]")) b.addEventListener ("click", () => sayText (b.dataset.say!));
+    return;
+  }
   body.innerHTML = `<p>Greek as it's spoken today - the pronunciation COTEXT reads aloud in. Stress falls on the syllable with the accent mark. Breathings (ἁ, ἀ) and the iota under a vowel (ᾳ) are not pronounced.</p>
     <div class="ref">The alphabet</div>
     ${LETTERS.map (([up, lo, gr, en, ipa, how]) => `<div class="sayRow"><span class="grWord sayLetter">${up} ${lo}</span>
