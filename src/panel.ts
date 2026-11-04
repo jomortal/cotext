@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts). ✕ (or tapping the word again) hides it.
 // Two of them, each its own: #sheet for a word of the text read, above the notes panel, and a second (cloned from
 // #sheet's markup, under the notes, just above the play bar) for a word of the notes' Hebrew OT beside the Septuagint
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
@@ -10,7 +10,8 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord } from "./layout";
+import { isSideWord, addDock } from "./layout";
+import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { grammarIn } from "./grammar";
@@ -61,6 +62,7 @@ const textSheet = document.getElementById ("sheet")!;
 const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
 document.getElementById ("notesCol")!.append (besideSheet);     // (Under the notes: in their column when wide, layout.ts)
+addDock (besideSheet);     // (Narrow, it shares the room with the other panels: layout.ts)
 
 /** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
 function makePanel (sheet: HTMLElement) {
@@ -71,7 +73,13 @@ function makePanel (sheet: HTMLElement) {
   // A verb's "Verb chart", right of its dictionary form's speaker: the chart opened on this verb at its stem.
   const chartBtn = document.createElement ("button");
   chartBtn.className = "pill"; chartBtn.textContent = "Verb chart"; chartBtn.hidden = true;
-  q ("speakRoot").after (chartBtn);
+  // "Search", after it: the search pane opened on the root word - its dictionary form in the bar, every verse of the
+  // word's testament with a word of that root listed (search.ts).
+  const searchBtn = document.createElement ("button");
+  searchBtn.className = "pill"; searchBtn.textContent = "Search";
+  q ("speakRoot").after (chartBtn, searchBtn);
+  let searchFor: [string, string, string] | null = null;     // (Strong's, dictionary form, testament)
+  searchBtn.addEventListener ("click", () => { if (searchFor) searchRoot (...searchFor); });
   let chartFor: [string, string] | null = null;
   chartBtn.addEventListener ("click", () => { const f = chartFor; if (f) grammar.showOther ("Verb chart", (body) => chartInto (body, ...f)); });     // (Over the word's info, as a grammar section: its ✕ back to the word)
 
@@ -278,6 +286,8 @@ function makePanel (sheet: HTMLElement) {
     }
     mainDb = db;
     lemmaEl.textContent = String (lex?.lemma ?? w.text);
+    // (The word's testament by its book: 1-39 the Hebrew OT, 40-66 the NT, 67 on the Septuagint - build_db.py)
+    searchFor = [w.strong, lemmaEl.textContent, hebrew ? "OT" : w.book >= 67 ? "LXX" : "NT"];
     lemmaEl.dir = hebrew ? "rtl" : "ltr";
     formEl.textContent = w.text;
     formEl.dir = lemmaEl.dir;

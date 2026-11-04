@@ -1,7 +1,7 @@
 // COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1, #LXXGen.1), else
 // the last one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across the
 // books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
-// the icon beside it opens the notes panel (notes.ts).
+// the icon at the play bar's left opens the notes panel (notes.ts), the one at its right the search pane (search.ts).
 
 import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
@@ -18,6 +18,7 @@ import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
 import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
+import { initSearch } from "./search";
 import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
@@ -83,6 +84,16 @@ async function go (b: Book, c: number) {
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }
+}
+
+/** A verse gone to (a search result: search.ts) - its chapter shown unless it's the one shown, then the text scrolled
+ *  to put its row at the top (a little below the edge). */
+async function goVerse (b: Book, c: number, v: number) {
+  if (b !== book || c !== chapter) await go (b, c);
+  if (b !== book || c !== chapter) return;     // (Another chapter picked meanwhile)
+  const main = document.querySelector ("main")!;
+  const row = chapterEl.querySelector<HTMLElement> (`.vrow[data-chapter="${c}"][data-verse="${v}"]`);
+  if (row) main.scrollTo ({ top: row.getBoundingClientRect ().top - main.getBoundingClientRect ().top + main.scrollTop - 6 });
 }
 
 /** "Gen.1" -> that book and chapter, if the book has it (a chapter within its count: one of Enoch's it lacks goes to
@@ -166,6 +177,7 @@ async function start () {
   }
   status.hidden = true;
   books = rows as unknown as Book[];
+  initSearch (db, books, goVerse);
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

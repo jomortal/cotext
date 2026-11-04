@@ -1,8 +1,8 @@
 // The notes panel: free commentaries, text-critical apparatuses, English translations and the ancient versions beside the
-// text, following it. The icon right of
-// ▶ in the play bar opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
+// text, following it. The icon at the play bar's left
+// opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
 // (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
-// text), at most half the screen, scrolling; on a wide one it's a column at the right of the text (layout.ts).
+// text), at most half the screen, scrolling; on a wide one it's a column at the left of the text (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
 //   VERSIONS - the database's note_sources (pipeline/notes.py) - so
@@ -23,7 +23,7 @@
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
-import { isWide, onWideChange } from "./layout";
+import { isWide, onWideChange, paneFrame } from "./layout";
 
 interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
@@ -48,18 +48,9 @@ const picked: Record<string, string> = {};     // testament -> source id
 try { Object.assign (picked, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 
 const panel = document.getElementById ("notes")!;
-// Its ✕ fixed at the panel's upper right while the picker and notes scroll (even in the bounce at a scroll's end):
-// in a row of its own outside the scroller, .panelScroll (style.css).
-const notesScroll = document.createElement ("div");     // (The contents scroll in it; the ✕ stays, outside it)
-notesScroll.className = "panelScroll";
-{ const x = document.createElement ("div"); x.className = "xRow"; x.append (document.getElementById ("notesClose")!);
-  notesScroll.append (...panel.children); panel.append (x, notesScroll); }
-// Its picker row: narrow, the scroller's first line, scrolling away with the notes; wide, a row of its own over the
-// scroller, fixed at the column's top (not sticky: outside the scroller, so not even the bounce moves it).
-const topRow = notesScroll.querySelector<HTMLElement> (":scope > .top")!;
-const placeTop = () => { if (isWide ()) notesScroll.before (topRow); else notesScroll.prepend (topRow); };
-placeTop ();
-onWideChange (placeTop);
+// Its frame (layout.ts' paneFrame, as the search pane's): the ✕ fixed at the upper right, the picker's row narrow
+// scrolling away with the notes, wide fixed at the column's top; the rest in the scroller.
+const notesScroll = paneFrame (panel, document.getElementById ("notesClose")!);
 const btn = document.getElementById ("notesBtn")!;
 const pick = document.getElementById ("notesPick") as HTMLSelectElement;
 const refEl = document.getElementById ("notesRef")!;

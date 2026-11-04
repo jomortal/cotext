@@ -1,5 +1,5 @@
 // Choosing a passage: the heading's button opens a list over the text - the whole screen, or on a wide one only the
-// text's column, the notes beside it left uncovered - the books under their headings (main.ts: the Old Testament in
+// text's column, the notes and the search beside it left uncovered - the books under their headings (main.ts: the Old Testament in
 // the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart -, then the New Testament), one under another; a book tapped opens its chapters (numbers, six
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
 // closed - and picking a chapter goes there (a one-chapter book goes straight there).
@@ -13,11 +13,15 @@ const body = document.getElementById ("pickerBody")!;
 
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 
-// (On a wide screen it ends where the text's column does, so the notes at the right stay in view: kept so as the column
-// changes - the notes opened or closed, their split dragged, the window resized)
+// (On a wide screen it starts and ends where the text's column does, so the notes at the left and the search at the
+// right stay in view: kept so as the column changes - a pane opened or closed, a split dragged, the window resized)
 // (Measured on the text itself, main: with the word beside the text #textCol has no box of its own - style.css)
 const text = document.querySelector ("main")!;
-const fit = () => { picker.style.right = isWide () ? `${Math.max (0, innerWidth - text.getBoundingClientRect ().right)}px` : ""; };
+const fit = () => {
+  const r = text.getBoundingClientRect (), wide = isWide ();
+  picker.style.left = wide ? `${Math.max (0, r.left)}px` : "";
+  picker.style.right = wide ? `${Math.max (0, innerWidth - r.right)}px` : "";
+};
 new ResizeObserver (fit).observe (text);
 addEventListener ("resize", fit);
 

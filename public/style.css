@@ -45,7 +45,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui
 ::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
 ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--soft) 35%, transparent); border-radius: 3px; }
 :is(#sheet, #besideSheet) :is(.panelScroll, .infoBox)::-webkit-scrollbar-track { margin-top: 48px; }     /* (The ✕: 8-44px down) */
-#notes > .panelScroll::-webkit-scrollbar-track { margin-top: 56px; }     /* (Its ✕: 17-53px down, over the scroller on a phone) */
+.pane > .panelScroll::-webkit-scrollbar-track { margin-top: 56px; }     /* (Its ✕: 17-53px down, over the scroller on a phone) */
 @supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 35%, transparent) transparent; } }
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
@@ -128,27 +128,27 @@ body.noVerbColors .w .parse { color: inherit; }
    bottom - into the home indicator's room, keeping just clear of the indicator itself. */
 #playBar { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: var(--bg);
            padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px)) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#playBar { gap: 8px; }     /* (▶ centred, the notes' icon at the right edge) */
+#playBar { gap: 8px; }     /* (▶ centered, the notes' icon at the left edge, the search's at the right) */
+#notesBtn { grid-column: 1; justify-self: start; }
 #playBtn { grid-column: 2; }
-#notesBtn { grid-column: 3; justify-self: end; }
+#searchBtn { grid-column: 3; justify-self: end; }
 #playBar .pill { font-size: var(--fs-icon); line-height: 1; padding: 6px 0; }
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between two of the
-   panels open (.dock: the word's panel, the notes, the second word's panel - in that order), and over the play bar when
-   a panel is open above it. */
-/* (Written by id, not as siblings: the panels sit in two columns' boxes, #textCol and #notesCol - index.html) */
-body:has(#sheet:not([hidden])) #notes:not([hidden]), body:has(#sheet:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: 1px solid var(--edge); }
+   panels open (.dock: the word's panel, the notes, the second word's panel, the search - in that order), and over the
+   play bar when a panel is open above it. */
+/* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol, #notesCol and #searchCol - index.html) */
+body:has(#sheet:not([hidden])) #notes:not([hidden]), body:has(#sheet:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]),
+body:has(#sheet:not([hidden]), #notes:not([hidden]), #besideSheet:not([hidden])) #search:not([hidden]) { border-top: 1px solid var(--edge); }
 body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
-/* Narrow (layout.ts), several panels open: they share the room between the heading and the play bar (--mid: notes.ts
-   measures it) evenly with the text - two a third each, three a quarter each -, the text keeping its share at least;
-   each panel no taller than its content. */
+/* Narrow (layout.ts), several panels open (body.docks; --docks their number - layout.ts counts them): they share the
+   room between the heading and the play bar (--mid: notes.ts measures it) evenly with the text - two a third each,
+   three a quarter each, four a fifth -, the text keeping its share at least; each panel no taller than its content. */
 @media (max-width: 699.98px) {
 .col { display: contents; }     /* (The columns' boxes not there: their contents stack in the body's column) */
-body:is(:has(#sheet:not([hidden])):has(#notes:not([hidden])), :has(#sheet:not([hidden])):has(#besideSheet:not([hidden])), :has(#notes:not([hidden])):has(#besideSheet:not([hidden]))) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 3); }
-body:is(:has(#sheet:not([hidden])):has(#notes:not([hidden])), :has(#sheet:not([hidden])):has(#besideSheet:not([hidden])), :has(#notes:not([hidden])):has(#besideSheet:not([hidden]))) main { min-height: calc(var(--mid, 100dvh) / 3); }
-body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([hidden])) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 4); }
-body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([hidden])) main { min-height: calc(var(--mid, 100dvh) / 4); }
+body.docks :is(#sheet, #notes, #besideSheet, #search) { max-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }     /* (By id: to outweigh each panel's own limit) */
+body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 }
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], .speakBtn[hidden] { display: none; }
 .w.reading { background: color-mix(in oklch, var(--accent) 28%, transparent); }
@@ -157,14 +157,15 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 #voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; border-radius: 8px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); max-width: 100%; }
 #audioSettings { flex: 1 1 100%; }
 
-/* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
-   never over the text;
-   at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
-   least a third (main's min-height); its picker and ✕ (scrolling with the rest), the verse, the notes (a grammar section's look:
-   .gBody), the source's credit. Under it the play bar, last, with the home indicator's room. */
-#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; }
-#notes[hidden] { display: none; }
-#notes .top { align-items: center; margin-bottom: 10px; }     /* (Not frozen: the picker and ✕ scroll away with the notes) */
+/* The panes (.pane: the notes panel, notes.ts, and the search pane, search.ts - built alike, layout.ts' paneFrame):
+   narrow, in the page's column above the play bar - the notes under the word's panel when it's open, the search under
+   them - never over the text; each at most half the screen, scrolling - with other panels open too, they shrink
+   together so the text keeps its share (main's min-height); its top row (the notes' picker, the search bar) and ✕
+   (the row scrolling with the rest), then its contents - the notes: the verse, the notes (a grammar section's look:
+   .gBody), the source's credit. Under them the play bar, last, with the home indicator's room. */
+.pane { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; }
+.pane[hidden] { display: none; }
+.pane .top { align-items: center; margin-bottom: 10px; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }
@@ -180,15 +181,15 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 .sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: calc(var(--mid, 100dvh) / 2); }     /* (At most half the room between the bars - --mid, notes.ts -, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
 /* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
    what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
-:is(.sheet, #notes) > .xRow { position: absolute; z-index: 3; top: var(--pad); right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+:is(.sheet, .pane) > .xRow { position: absolute; z-index: 3; top: var(--pad); right: max(var(--pad), env(safe-area-inset-right, 0px)); }
 /* Each panel a frame that doesn't scroll, its ✕ placed in it (above), and inside it the scroller (panel.ts / notes.ts
    wrap the panel's contents in .panelScroll): so the ✕ never moves, not even with the bounce at a scroll's end. */
-:is(.sheet, #notes):not([hidden]) { display: flex; flex-direction: column; position: relative; }
-:is(.sheet, #notes) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+:is(.sheet, .pane):not([hidden]) { display: flex; flex-direction: column; position: relative; }
+:is(.sheet, .pane) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
   padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
-:where(.sheet, #notes) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
-#notes .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
+:where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
+.pane .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
 .gInline .top, .gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
@@ -415,22 +416,28 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
 
 /* The wide layout (layout.ts; the same 700 px as its matchMedia): the body a grid - the heading across the top, then
-   two columns with the notes' divider between them, the full height down to the play bar: the text with its word's
-   panel at its foot (#textCol), and the notes with the second word's panel - a word of their Hebrew OT - at theirs
-   (#notesCol), each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
+   columns the full height down to the play bar: at the left the notes with the second word's panel - a word of their
+   Hebrew OT - at their foot (#notesCol) and the notes' divider on their right edge, then the text with its word's
+   panel at its foot (#textCol), then the search's divider and the search pane (#searchCol) at the right - notes | text
+   | search. Each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
    --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The notes' column --notesW % of
-   the width (a third at first), the text the full width while the notes are closed. The text and the notes fill what
-   their panels leave, each scrolling on its own; their contents (and the heading's) the full width. */
+   the width (a third at first), the search's --searchW % (a quarter at first), each column empty (0) while its pane is
+   closed, the text taking the rest. The text and the panes fill what their panels leave, each scrolling on its own;
+   their contents (and the heading's) the full width. One grid for both layouts: its columns 4 and 5 (the word beside
+   the text: body.sideWord, below) empty unless the word is there. */
 .split { display: none; }
 @media (min-width: 700px) {
-  body { display: grid; grid-template-columns: minmax(0, 1fr) 0 0; grid-template-rows: auto minmax(0, 1fr) auto; }
-  body:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto calc(var(--notesW, 33.333) * 1%); }
-  .head, #playBar { grid-column: 1; }     /* (The heading and the play bar the text's only: the resources run the full height beside them) */
+  body { display: grid; grid-template-columns: var(--notesCol, 0px) auto minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--searchCol, 0px);
+         grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The notes, their divider, the text, the word's divider and panel beside it, the search's divider, the search; a divider's column empty while hidden) */
+  body:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
+  body:has(#search:not([hidden])) { --searchCol: calc(var(--searchW, 25) * 1%); }     /* (layout.ts' NOTES_W and SEARCH_W the same) */
+  .head, #playBar { grid-column: 3 / 6; }     /* (The heading and the play bar the text's only - and the word's beside it: the panes run the full height beside them) */
   #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
   .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 2; } #notesCol { grid-row: 1 / -1; grid-column: 3; }
+  #notesCol { grid-row: 1 / -1; grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 2; } #textCol { grid-column: 3; }
+  #searchSplit { grid-row: 1 / -1; grid-column: 6; } #searchCol { grid-row: 1 / -1; grid-column: 7; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
-  #notes:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
+  .pane:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
   .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */
   #sheet { height: min(var(--sheetH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
   #besideSheet { height: min(var(--besideH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
@@ -440,38 +447,49 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .split::before { content: ""; position: absolute; background: var(--edge); }
   .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
   .split.on::after { background: var(--accent); opacity: 1; }
-  /* Drawn by its orientation (aria-orientation): vertical - the notes' and, beside the text, the word's panel's (layout.ts
-     sets it) - sets a width; horizontal - a word's panel's height - sets a height. */
+  /* Drawn by its orientation (aria-orientation): vertical - the notes', the search's and, beside the text, the word's
+     panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height - sets a height. */
   .split[aria-orientation="vertical"] { width: 14px; cursor: col-resize; }
   .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
   .split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
-  body:has(#notes[hidden]) #notesSplit { display: none; }
+  body:has(#notes[hidden]) #notesSplit, body:has(#search[hidden]) #searchSplit { display: none; }
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
   #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
-  /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
-  #notes > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
-  #notes > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
-  #notes > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
-  #notes > .panelScroll { padding-top: 0; }
-  #notes > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
+  /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
+     right end; clear of the notch at whichever side the pane is. */
+  .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px max(var(--pad), env(safe-area-inset-left, 0px)); }
+  .pane > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
+  .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
+  .pane > .panelScroll { padding-top: 0; }
+  .pane > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
   .split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
   .split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
   .split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
   body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
 }
 /* The word beside the text (layout.ts' body.sideWord: wide, with at least 1200 px left for the text and its word once
-   the notes column is taken off): the text's word's panel a column of its own between the text and the notes - text |
-   word | notes -, between the same heading and play bar as the text, --sheetW % of the width (a quarter at first), set
-   by #sheetSplit on its left edge, now vertical. With no word picked it and its divider are gone and the text takes the
-   room, as when the notes close. Always one column (panel.ts); its ✕ frozen and its margins as the notes'. Less room -
-   the notes opened or widened, the window narrowed - and it goes back under the text. */
+   the notes' and the search's columns are taken off): the text's word's panel a column of its own between the text
+   and the search - notes | text | word | search -, between the same heading and play bar as the text, --sheetW % of
+   the width (a quarter at first), set by #sheetSplit on its left edge, now vertical. With no word picked it and its
+   divider are gone and the text takes the room, as when a pane closes. Always one column (panel.ts); its ✕ frozen and
+   its margins as the panes'. Less room - a pane opened or widened, the window narrowed - and it goes back under the
+   text. */
 body.sideWord #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
-body.sideWord, body.sideWord:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px); }     /* (The text, the word's divider and panel, the notes' divider and column; a divider's column empty while hidden. Both selectors: to outweigh the 700 px block's) */
 body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
-body.sideWord:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
-body.sideWord main { grid-column: 1; grid-row: 2; }
-body.sideWord :is(.head, #playBar) { grid-column: 1 / 4; }     /* (The heading and the play bar over the text and the word's panel both: the panel between the same bars as the text) */
-body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
-body.sideWord #notesSplit { grid-column: 4; } body.sideWord #notesCol { grid-column: 5; }
+body.sideWord main { grid-column: 3; grid-row: 2; }
+body.sideWord #sheetSplit { grid-column: 4; grid-row: 2; } body.sideWord #sheet { grid-column: 5; grid-row: 2; height: auto; }
+
+/* The search pane (search.ts): its bar the top row's width, beside the ✕; the count, then the results - each its
+   reference (.src) over the verse's original text, the root's words in the accent - a row to tap (the verse gone to). */
+#searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
+#searchCount { margin-top: 0; }
+#searchCount:empty { display: none; }
+.hit { display: grid; gap: 2px; width: 100%; font: inherit; text-align: start; padding: 8px 0; border: 0; border-top: 1px solid var(--line);
+       background: transparent; color: var(--fg); cursor: pointer; }
+.hit .src { margin-top: 0; }
+.hitText { font-size: var(--fs-m); line-height: 1.6; }
+.hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
+.hitText.gr { font-family: var(--grk); }
+.hitWord { color: var(--accent); }

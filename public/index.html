@@ -15,9 +15,10 @@
 <link rel="stylesheet" href="diagram.css">
 </head>
 <body>
-<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, ▶ (read aloud) and the
-     notes' icon, the word's panel, the notes panel (commentaries and apparatus), a second word's panel under it (panel.ts: a word of the notes'
-     Hebrew OT, cloned from #sheet), the passage picker, the study drawer and its screens. -->
+<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, the word's panel, the
+     notes panel (commentaries and apparatus), a second word's panel under it (panel.ts: a word of the notes' Hebrew OT,
+     cloned from #sheet), the search pane, the play bar (the notes' icon, ▶ read aloud, the search icon), the passage
+     picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
     <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
@@ -46,14 +47,14 @@
     </span>
   </div>
 </header>
-<!-- The two columns (layout.ts): side by side on a wide screen - the text and its word's panel; the notes and the second word's panel (panel.ts puts it last here) -; on a narrow one not boxes at all (display: contents), so all stack in one column; with the word beside the text (layout.ts) #textCol not a box (display: contents), so the text's word's panel is a column of its own between the text and the notes. -->
+<!-- The columns (layout.ts): side by side on a wide screen - the notes and the second word's panel (panel.ts puts it last there) at the left, the text and its word's panel, the search pane at the right -; on a narrow one not boxes at all (display: contents), so all stack in one column; with the word beside the text (layout.ts) #textCol not a box (display: contents), so the text's word's panel is a column of its own between the text and the search. -->
 <div id="textCol" class="col">
 <main>
   <p id="status">Loading the text…</p>
   <div id="chapter"></div>
   <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0). Grammars: Gesenius' Hebrew Grammar (Kautzsch-Cowley, 1910; public domain; text from Wikisource); Smyth's Greek Grammar (1920; Perseus Digital Library, Tufts University, CC BY-SA 3.0). Commentaries and apparatus: each credited under its notes.</p>
 </main>
-<!-- The dividers (layout.ts), shown only on a wide screen: each word's panel's height (on its top edge) - beside the text, the text's word's panel's width (on its left edge) -, the notes' width (between the columns). -->
+<!-- The dividers (layout.ts), shown only on a wide screen: each word's panel's height (on its top edge) - beside the text, the text's word's panel's width (on its left edge) -, the notes' width (on their right edge), the search's width (on its left edge). -->
 <div id="sheetSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the word's panel"></div>
 <div id="sheet" class="sheet dock" hidden>
   <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
@@ -77,7 +78,7 @@
 </div>
 <div id="notesSplit" class="split" role="separator" aria-orientation="vertical" aria-label="Resize the notes"></div>
 <div id="notesCol" class="col">
-<section id="notes" class="dock" hidden>
+<section id="notes" class="dock pane" hidden>
   <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesClose" aria-label="Close">✕</button></div>
   <div class="notesScroll" id="notesScroll">
   <div class="src" id="notesRef"></div>
@@ -87,7 +88,16 @@
 </section>
 <div id="besideSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the Hebrew word's panel"></div>
 </div>
-<div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button></div>
+<div id="searchSplit" class="split" role="separator" aria-orientation="vertical" aria-label="Resize the search"></div>
+<div id="searchCol" class="col">
+<section id="search" class="dock pane" hidden>
+  <div class="top"><input id="searchBar" class="choose" type="search" placeholder="Search" aria-label="Search" autocomplete="off"><button class="pill icon" id="searchClose" aria-label="Close">✕</button></div>
+  <div class="src" id="searchCount"></div>
+  <div id="searchHits"></div>
+</section>
+</div>
+<!-- The play bar: the notes' icon at the left, ▶ centered, the search's icon at the right. -->
+<div id="playBar"><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg></button></div>
 <div id="picker" hidden>
   <div class="pickerCard">
     <div class="top"><div class="bar" id="langPick" role="group" aria-label="Old Testament language"><button class="pill" data-lang="H"><span class="langSym he" aria-hidden="true">את</span>Hebrew</button><button class="pill" data-lang="G"><span class="langSym gr" aria-hidden="true">ΑΩ</span>Greek</button></div><button class="pill icon" id="pickerClose" aria-label="Close">✕</button></div>
