@@ -82,5 +82,6 @@ document.getElementById ("screenMenu")!.addEventListener ("click", open);
 document.getElementById ("drawerClose")!.addEventListener ("click", close);
 drawer.addEventListener ("click", (e) => { if (e.target === drawer) close (); });
 document.getElementById ("screenClose")!.addEventListener ("click", () => { screen.hidden = true; });     // (✕: back to the text)
+document.getElementById ("bibleBtn")!.addEventListener ("click", () => { screen.hidden = true; close (); });     // (BIBLE: back to the text, as a screen's ✕)
 for (const b of document.querySelectorAll<HTMLElement> ("#drawerPanel [data-screen]"))
   b.addEventListener ("click", () => { openScreen (b.dataset.screen!); close (); });
