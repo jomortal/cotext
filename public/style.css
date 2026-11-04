@@ -286,12 +286,13 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    behind the picker. */
 .sheet.grammarOpen .panelScroll { display: flex; flex-direction: column; overflow: hidden; }
 /* Two columns (panel.ts' .twoCol: the panel at least twice as wide as the word's info needs): the info - the words,
-   parsing, vocab gloss and buttons, the divine name's note - on the left, the lexicon - its picker, entry and credit -
-   on the right, each scrolling on its own. A grammar section still takes the panel over, one column. */
+   parsing, vocab gloss and buttons, the divine name's note - on the right, the lexicon - its picker, entry and credit -
+   on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
 .sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
 .sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   max-width: none; margin: 0; padding-block: var(--pad); }     /* (Each column scrolls on its own) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
+.sheet.twoCol:not(.grammarOpen) .panelScroll > .lexBox { order: -1; }     /* (The lexicon on the left, the word on the right: the user's choice, to try) */
 .sheet.twoCol:not(.grammarOpen) .lexBox > .lexRow { margin-top: 0; }
 .sheet.grammarOpen .gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
