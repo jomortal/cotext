@@ -68,13 +68,17 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     wordEl.className = "w" + (vf ? ` verb vf-${vf}` : "");
     wordEl.dataset.strong = w.strong;     // the lemma's key: helps.ts hides its gloss by it
     wordEl.dataset.code = w.code ?? "";     // its parsing code: helps.ts always shows a hard form's parsing (paradigm.ts' hardForm)
-    // (The transliteration: Hebrew as STEPBible gives it, its syllable dots dropped and in lower case - be.re.Shit ->
-    // bereshit; Greek as modern Greek says it - translit.ts.)
-    wordEl.append (span ("orig", w.text), span ("translit", hebrew ? (w.translit ?? "").replace (/\./g, "").toLowerCase () : modernGreek (w.text)),
+    wordEl.append (span ("orig", w.text), span ("translit", translitOf (w)),
                    span ("gloss", w.gloss), span ("parse", w.code ?? ""));
     wordEl.addEventListener ("click", () => onTap (w, wordEl));
     verseEl!.append (wordEl);
   }
+}
+
+/** The word in Latin letters: Hebrew as STEPBible gives it, its syllable dots dropped and in lower case - be.re.Shit ->
+ *  bereshit; Greek as modern Greek says it - translit.ts. (The interlinear's line, and the word's panel's.) */
+export function translitOf (w: Word) {
+  return w.strong.startsWith ("H") ? (w.translit ?? "").replace (/\./g, "").toLowerCase () : modernGreek (w.text);
 }
 
 function span (cls: string, text: string) {

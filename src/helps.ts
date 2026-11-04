@@ -25,7 +25,7 @@ interface Settings {
   modes: Record<string, "hide">;          // the words known by hand, by Strong's key
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
   parse?: boolean;                      // PARSING: each word's code shown (default on)
-  translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it (default off)
+  translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it, and in the word's panel (default off)
   verbColors?: boolean;
   showVocab?: boolean;                  // SHOW MY VOCAB: the words in My vocab always helped, over the slider (default on)                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
 }

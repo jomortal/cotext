@@ -9,7 +9,7 @@
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
 import { openNotesDb, type Db, type Row } from "./db";
-import type { Word } from "./reader";
+import { translitOf, type Word } from "./reader";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { grammarIn } from "./grammar";
@@ -79,9 +79,11 @@ function makePanel (sheet: HTMLElement) {
   const fullEl = q ("full");
   // The head, top to bottom: the word as written, its English as the interlinear gives it here, its parsing spelled out,
   // then its dictionary form (the root word) with its buttons - the word repeated when it's the dictionary form itself.
+  const formTranslit = document.createElement ("span");     // (In Latin letters, when TRANSLITERATION is on: style.css)
+  formTranslit.className = "translit formTranslit";
   const formGloss = document.createElement ("span");
   formGloss.className = "formGloss";
-  formEl.parentElement!.after (formGloss, fullEl);     // (The word as it stands in the text, before its dictionary form)
+  formEl.parentElement!.after (formTranslit, formGloss, fullEl);     // (The word as it stands in the text, before its dictionary form)
   const defEl = q ("def");
   const knowIt = q ("knowIt");
   let picked: HTMLElement | null = null;
@@ -115,7 +117,7 @@ function makePanel (sheet: HTMLElement) {
     // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
     // - each measured on its own, taken out of the grid: Safari sizes a grid at max-content from a spanning item's whole
     // line, whatever its own width says)
-    const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formGloss, .vocabGloss")];
+    const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formTranslit, .formGloss, .vocabGloss")];
     for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
     const rest = heads.getBoundingClientRect ().width;     // (The lines that don't wrap: the words, buttons)
     const need = Math.max (rest, ...wraps.map (e => e.getBoundingClientRect ().width));
@@ -267,6 +269,7 @@ function makePanel (sheet: HTMLElement) {
     lemmaEl.dir = hebrew ? "rtl" : "ltr";
     formEl.textContent = w.text;
     formEl.dir = lemmaEl.dir;
+    formTranslit.textContent = translitOf (w);
     formGloss.textContent = w.gloss ?? "";
     grammar.showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
     vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
