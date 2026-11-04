@@ -1,8 +1,8 @@
 // The notes panel: free commentaries, text-critical apparatuses, English translations and the ancient versions beside the
-// text, following it. The icon at the play bar's left
+// text, following it. The icon at the play bar's right (left of the search's)
 // opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
 // (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
-// text), at most half the screen, scrolling; on a wide one it's a column at the left of the text (layout.ts).
+// text), at most half the screen, scrolling; on a wide one it's a column at the right of the text, left of the search (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
 //   VERSIONS - the database's note_sources (pipeline/notes.py) - so
@@ -25,7 +25,7 @@ import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
 
-interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
+export interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
 
 //==== BESIDE THE SEPTUAGINT ====
@@ -86,19 +86,44 @@ export function setNotesPassage (b: Book, c: number) {
   heb = b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
   clearInterlinear ();
   if (scope () !== was) {
-    const group = (kind: string, label: string) => {
-      const g = document.createElement ("optgroup");
-      g.label = label;
-      g.append (...mine ().filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
-      return g.children.length ? [g] : [];
-    };
-    pick.replaceChildren (...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),     // (The user's order)
-                       ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"),
-                       ...group ("version", "Ancient versions"));
+    pick.replaceChildren (...sourceGroups (mine ()));
     pick.value = current ()?.id ?? "";
   }
   shownVerse = ""; shownIds = null;
   if (! panel.hidden) show ();
+}
+
+/** Sources as a picker's choices (the notes' picker, the search's resources - search.ts): grouped by kind (optgroups),
+ *  in the user's order, each by its name; a kind with none left out. */
+export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
+  const group = (kind: string, label: string) => {
+    const g = document.createElement ("optgroup");
+    g.label = label;
+    g.append (...list.filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
+    return g.children.length ? [g] : [];
+  };
+  return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),
+          ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"), ...group ("version", "Ancient versions")];
+}
+
+/** The sources the search pane searches (search.ts): the picker's for the chapter shown that are text in a file of
+ *  their own - not the Hebrew OT (the main database's interlinear) nor the sentence diagrams (trees, not text). */
+export const textSources = () => mine ().filter ((s) => s.file && s.kind !== "syntax");
+
+/** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
+ *  search's own handle on it, so searching never closes the notes' open source. */
+export const openSource = (s: Source, onProgress: (fraction: number) => void) => openNotesDb (s.id, s.file, s.version, onProgress);
+
+/** A search result in a source tapped (search.ts, once the text is at its verse): the panel opened on that source -
+ *  picked and kept as the testament's choice, as if picked by hand - following the text to the verse. */
+export function showSource (id: string) {
+  if (! book || ! mine ().some ((s) => s.id === id)) return;
+  picked[scope ()] = id;
+  try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
+  pick.value = id;
+  if (panel.hidden) { btn.click (); return; }
+  shownVerse = ""; shownIds = null;
+  show ();
 }
 
 /** The picker's list and its kept choice: per testament, an LXX book with a Hebrew counterpart apart (LXXH). */

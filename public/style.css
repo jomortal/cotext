@@ -128,10 +128,9 @@ body.noVerbColors .w .parse { color: inherit; }
    bottom - into the home indicator's room, keeping just clear of the indicator itself. */
 #playBar { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: var(--bg);
            padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px)) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#playBar { gap: 8px; }     /* (▶ centered, the notes' icon at the left edge, the search's at the right) */
-#notesBtn { grid-column: 1; justify-self: start; }
+#playBar { gap: 8px; }     /* (▶ centered, the notes' icon and the search's side by side at the right edge) */
 #playBtn { grid-column: 2; }
-#searchBtn { grid-column: 3; justify-self: end; }
+#playBar .playRight { grid-column: 3; justify-self: end; display: flex; gap: 8px; }
 #playBar .pill { font-size: var(--fs-icon); line-height: 1; padding: 6px 0; }
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
@@ -167,7 +166,8 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 .pane[hidden] { display: none; }
 .pane .top { align-items: center; margin-bottom: 10px; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
-#notes .chooseBtn { width: 100%; box-sizing: border-box; }
+#search .chooseWrap { flex: 0 1 40%; min-width: 0; }     /* (What's searched, beside the search bar) */
+.pane .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }
 #notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
@@ -421,10 +421,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
 
 /* The wide layout (layout.ts; the same 700 px as its matchMedia): the body a grid - the heading across the top, then
-   columns the full height down to the play bar: at the left the notes with the second word's panel - a word of their
-   Hebrew OT - at their foot (#notesCol) and the notes' divider on their right edge, then the text with its word's
-   panel at its foot (#textCol), then the search's divider and the search pane (#searchCol) at the right - notes | text
-   | search. Each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
+   columns: at the left the text with its word's panel at its foot (#textCol), then the notes' divider and the notes
+   with the second word's panel - a word of their Hebrew OT - at their foot (#notesCol), then the search's divider and
+   the search pane (#searchCol) at the right, the panes the full height down to the play bar - text | notes | search. Each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
    --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The notes' column --notesW % of
    the width (a third at first), the search's --searchW % (a quarter at first), each column empty (0) while its pane is
    closed, the text taking the rest. The text and the panes fill what their panels leave, each scrolling on its own;
@@ -432,14 +431,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    the text: body.sideWord, below) empty unless the word is there. */
 .split { display: none; }
 @media (min-width: 700px) {
-  body { display: grid; grid-template-columns: var(--notesCol, 0px) auto minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--searchCol, 0px);
-         grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The notes, their divider, the text, the word's divider and panel beside it, the search's divider, the search; a divider's column empty while hidden) */
+  body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px) auto var(--searchCol, 0px);
+         grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the notes' divider, the notes, the search's divider, the search; a divider's column empty while hidden) */
   body:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
   body:has(#search:not([hidden])) { --searchCol: calc(var(--searchW, 25) * 1%); }     /* (layout.ts' NOTES_W and SEARCH_W the same) */
-  .head, #playBar { grid-column: 3 / 6; }     /* (The heading and the play bar the text's only - and the word's beside it: the panes run the full height beside them) */
+  .head, #playBar { grid-column: 1 / 4; }     /* (The heading and the play bar the text's only - and the word's beside it: the panes run the full height beside them) */
   #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
   .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  #notesCol { grid-row: 1 / -1; grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 2; } #textCol { grid-column: 3; }
+  #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 4; } #notesCol { grid-row: 1 / -1; grid-column: 5; }
   #searchSplit { grid-row: 1 / -1; grid-column: 6; } #searchCol { grid-row: 1 / -1; grid-column: 7; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
   .pane:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
@@ -476,18 +475,19 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 }
 /* The word beside the text (layout.ts' body.sideWord: wide, with at least 1200 px left for the text and its word once
    the notes' and the search's columns are taken off): the text's word's panel a column of its own between the text
-   and the search - notes | text | word | search -, between the same heading and play bar as the text, --sheetW % of
+   and the notes - text | word | notes | search -, between the same heading and play bar as the text, --sheetW % of
    the width (a quarter at first), set by #sheetSplit on its left edge, now vertical. With no word picked it and its
    divider are gone and the text takes the room, as when a pane closes. Always one column (panel.ts); its ✕ frozen and
    its margins as the panes'. Less room - a pane opened or widened, the window narrowed - and it goes back under the
    text. */
 body.sideWord #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
 body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
-body.sideWord main { grid-column: 3; grid-row: 2; }
-body.sideWord #sheetSplit { grid-column: 4; grid-row: 2; } body.sideWord #sheet { grid-column: 5; grid-row: 2; height: auto; }
+body.sideWord main { grid-column: 1; grid-row: 2; }
+body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
 
-/* The search pane (search.ts): its bar the top row's width, beside the ✕; the count, then the results - each its
-   reference (.src) over the verse's original text, the root's words in the accent - a row to tap (the verse gone to). */
+/* The search pane (search.ts): its picker (what's searched) and bar the top row's width, beside the ✕; the count, then
+   the results - each its reference (.src) over its text (the verse's original, or a source's), what matched in the
+   accent, an English search's glosses of it under it - a row to tap (the verse gone to). */
 #searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
 #searchCount { margin-top: 0; }
 #searchCount:empty { display: none; }
@@ -498,3 +498,4 @@ body.sideWord #sheetSplit { grid-column: 4; grid-row: 2; } body.sideWord #sheet 
 .hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
 .hitText.gr { font-family: var(--grk); }
 .hitWord { color: var(--accent); }
+.hitGloss { font-size: var(--fs-s); color: var(--soft); }

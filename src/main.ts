@@ -1,7 +1,7 @@
 // COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1, #LXXGen.1), else
 // the last one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across the
 // books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
-// the icon at the play bar's left opens the notes panel (notes.ts), the one at its right the search pane (search.ts).
+// the two icons at the play bar's right open the notes panel (notes.ts) and the search pane (search.ts).
 
 import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
@@ -18,7 +18,7 @@ import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
 import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
-import { initSearch } from "./search";
+import { initSearch, setSearchPassage } from "./search";
 import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
@@ -81,6 +81,7 @@ async function go (b: Book, c: number) {
   // Hebrew's notes, verse by verse on the Hebrew verses it translates, and the Hebrew OT beside it; any other only
   // Brenton's, by its own numbers - notes.ts)
   setNotesPassage (b, c);
+  setSearchPassage (b);     // (After the notes: the search offers their sources for the testament)
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }

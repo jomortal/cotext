@@ -3,17 +3,17 @@
 //   notes panel, the second word's panel, the search pane, the play bar - the panels sharing the room evenly with the
 //   text (style.css; --docks, below).
 // - Wide (an iPad, a desktop): columns between the heading and the play bar (index.html's #notesCol, #textCol,
-//   #searchCol) - at the LEFT the notes panel, a third of the width at first, then the text, and at the RIGHT the search
-//   pane, a quarter at first: notes | text | search. Each word's panel (unless beside the text, below) at the foot of the
+//   #searchCol) - the text, then at the RIGHT the notes panel, a third of the width at first, and the search pane, a
+//   quarter at first: text | notes | search. Each word's panel (unless beside the text, below) at the foot of the
 //   column whose text it's about (the text's word under the text; a word of the notes' Hebrew OT under the notes), as
 //   wide as its column. Dividers set the sizes by dragging (pointer events, so a finger, a pen or a mouse): #notesSplit,
-//   on the notes' right edge (their width, 22-60 % of the window), #searchSplit, on the search's left edge (its width,
+//   on the notes' left edge (their width, 22-60 % of the window), #searchSplit, on the search's left edge (its width,
 //   22-60 %) - each leaving the text 25 % at least -, and #sheetSplit / #besideSplit, on each word's panel's top edge
 //   (its height, from 120 px to the room between the bars less 160 px for what's above it). All kept on the device
 //   (localStorage) and set on the root as --notesW, --searchW (percentages, unitless), --sheetH and --besideH (px).
 // - The word beside the text (wide, with 1200 px or more for the text and its word once the notes' and the search's
 //   columns are taken off: placeWord, body.sideWord in style.css): the text's word's panel a column of its own between
-//   the text and the search - notes | text | word | search -, its width (--sheetW, a percentage, unitless: 15-40 % of
+//   the text and the notes - text | word | notes | search -, its width (--sheetW, a percentage, unitless: 15-40 % of
 //   the window, the text keeping 30 % at least) set by #sheetSplit, now a vertical divider on its left edge.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
@@ -60,10 +60,16 @@ const notesEl = document.getElementById ("notes")!, searchEl = document.getEleme
 /** A pane's share of the window (%) while open, else 0. */
 const notesShare = () => notesEl.hidden ? 0 : sizes.notesW ?? NOTES_W;
 const searchShare = () => searchEl.hidden ? 0 : sizes.searchW ?? SEARCH_W;
-// The notes' width: from the window's left edge to the divider; the search's: from the divider to the right edge - as
-// a share of the width, each 22-60 %, and never so wide the text keeps less than 25 % beside the other.
+// The notes' width: from the divider to the search's divider (the window's right edge while the search is closed); the
+// search's: from its divider to the right edge - as a share of the width, each 22-60 %, and never so wide the text
+// keeps less than 25 % beside the other.
+/** The left edge of the first open divider of ids (else the window's right edge): where a column beside the text ends. */
+const edgeOf = (...ids: string[]) => {
+  for (const id of ids) { const r = document.getElementById (id)!.getBoundingClientRect (); if (r.width) return r.left; }
+  return innerWidth;
+};
 drag (document.getElementById ("notesSplit")!, (x) => {
-  sizes.notesW = Math.round (clamp (x / innerWidth * 100, 22, Math.max (22, Math.min (60, 75 - searchShare ()))) * 10) / 10;
+  sizes.notesW = Math.round (clamp ((edgeOf ("searchSplit") - x) / innerWidth * 100, 22, Math.max (22, Math.min (60, 75 - searchShare ()))) * 10) / 10;
   root.setProperty ("--notesW", String (sizes.notesW));
   placeWord ();
 });
@@ -128,13 +134,12 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
   return scroll;
 }
 // A word's panel's height: from its divider down to the play bar; beside the text the text's word's panel's width
-// instead: from its divider to the search's divider (the window's right edge while the search is closed), the text
-// (from the notes' edge) keeping 30 % of the window.
+// instead: from its divider to the notes' divider (else the search's, else the window's right edge), the text keeping
+// 30 % of the window.
 for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] as const)
   drag (document.getElementById (id)!, (x, y) => {
     if (id === "sheetSplit" && side) {
-      const search = document.getElementById ("searchSplit")!.getBoundingClientRect ();
-      const right = search.width ? search.left : innerWidth, left = document.querySelector ("main")!.getBoundingClientRect ().left;
+      const right = edgeOf ("notesSplit", "searchSplit"), left = document.querySelector ("main")!.getBoundingClientRect ().left;
       sizes.sheetW = Math.round (clamp ((right - x) / innerWidth * 100, 15, Math.max (15, Math.min (40, (right - left) / innerWidth * 100 - 30))) * 10) / 10;
       root.setProperty ("--sheetW", String (sizes.sheetW));
       return;
