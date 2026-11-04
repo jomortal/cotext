@@ -144,7 +144,7 @@ body.noVerbColors .w .parse { color: inherit; }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
 #notes .top { align-items: center; flex: none; margin-bottom: 10px; width: 100%; }
-#notes .notesScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; width: 100%; }     /* (The notes scroll here, under the picker: it never moves) */
+#notes .notesScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; width: 100%; }     /* (The notes scroll here, under the picker: it never moves) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }
@@ -156,7 +156,7 @@ body.noVerbColors .w .parse { color: inherit; }
 #notes .credit { margin-top: 12px; }
 
 /* The word's panel: a sheet from the bottom. */
-#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
+#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; overflow-x: hidden; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
          padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 /* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls - drawn as every ✕
    is (a plain icon pill, no fill: as a screen's ✕) - sticky in a row of no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
@@ -226,6 +226,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .heads > .btns { grid-column: 1 / -1; justify-self: start; justify-content: flex-start; }     /* (+ My vocab and + Known words: a line under the root word) */
 #sheet .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
 #sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
+#sheet .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
 #sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */
 #sheet .btns { display: flex; gap: 10px 24px; flex-wrap: wrap; justify-content: flex-end; }
 #sheet .nameNote { font-size: var(--fs-s); line-height: 1.5; color: var(--soft); margin: 10px 0 0; }     /* (The divine name's note: panel.ts) */
@@ -251,7 +252,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gBody.one .gNum { display: none; }     /* (One section: its § is in the line above) */
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
-.gBody table { border-collapse: collapse; margin: 6px 0 10px; font-size: var(--fs-s); }
+.gBody table { border-collapse: collapse; margin: 6px 0 10px; font-size: var(--fs-s); display: block; max-width: 100%; overflow-x: auto; }     /* (A table wider than the panel - unfoldingWord's word-by-word examples - scrolls sideways in its own box, never the page) */
+.gBody { overflow-wrap: anywhere; }
+.gBody img, .gBody pre { max-width: 100%; } .gBody pre { white-space: pre-wrap; }
 .gBody td { padding: 2px 8px 2px 0; vertical-align: top; }
 .gBody sup { font-size: .7em; }
 
@@ -266,7 +269,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 #sheet.grammarOpen #gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
 #sheet.grammarOpen #gInline .sheetPick { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
-#sheet.grammarOpen #giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#sheet.grammarOpen #giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 #sheet.grammarOpen #gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
 #sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A fuller lexicon's senses, nested as it numbers them: pipeline/bdb.py, greek_lex.py) */
 #sheet .def .lexEntry + .lexEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several entries) */
