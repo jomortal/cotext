@@ -11,7 +11,7 @@
 import type { Db } from "./db";
 import { onScreen, currentTestament } from "./study";
 import { showDeck, type Card } from "./cards";
-import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook } from "./helps";
+import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook, setLearning, applyHelps } from "./helps";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -31,8 +31,9 @@ const label = () => { addBtn.textContent = learning[panelStrong] ? "✓ In my vo
 export function setVocabWord (strong: string) { panelStrong = strong; label (); }
 addBtn.addEventListener ("click", () => {
   if (learning[panelStrong]) delete learning[panelStrong]; else learning[panelStrong] = true;
-  save (); label ();
+  save (); label (); applyHelps ();     // (SHOW MY VOCAB: its helps follow)
 });
+setLearning ((k) => !! learning[k]);
 onHelpsChange (() => {
   for (const k of knownWords ()) if (learning[k]) { delete learning[k]; save (); }     // (Known: no longer learning)
   if (panelStrong) label ();

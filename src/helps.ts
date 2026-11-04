@@ -6,7 +6,8 @@
 //   (FREQUENCY);
 // - a word's panel marks one word known by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
 //   slider), on top of the slider; tapped again (✓ In known words) taken off;
-// - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on).
+// - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on); SHOW MY VOCAB (on at first) keeps every
+//   word in My vocab helped - its gloss and parsing - whatever the slider says.
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
 
@@ -25,7 +26,8 @@ interface Settings {
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
   parse?: boolean;                      // PARSING: each word's code shown (default on)
   translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it (default off)
-  verbColors?: boolean;                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
+  verbColors?: boolean;
+  showVocab?: boolean;                  // SHOW MY VOCAB: the words in My vocab always helped, over the slider (default on)                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
 }
 
 const s: Settings = { slider: 0, scope: "whole", mine: true, modes: {} };
@@ -71,8 +73,13 @@ const wordsAt = (pos: number) => Math.max (0, pos) * 20;
 function sliderMax (): number { return Math.min (50, Math.ceil (counts ().sorted.length / 20)); }
 function wordsFor (pos: number): number { return wordsAt (Math.min (pos, sliderMax ())); }
 
+// SHOW MY VOCAB: whether a word is in My vocab - vocab.ts tells (setLearning), so this module needn't know its list.
+let learning: (strong: string) => boolean = () => false;
+export function setLearning (f: (strong: string) => boolean) { learning = f; }
+
 /** Whether a word's gloss is hidden: its hand choice (if HIDE KNOWN WORDS), else the slider by its lemma's place. */
 export function isHidden (strong: string): boolean {
+  if (s.showVocab !== false && learning (strong)) return false;
   const mode = s.mine ? s.modes[strong] : undefined;
   if (mode) return mode === "hide";
   return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
@@ -90,6 +97,7 @@ function lemmaOf (strong: string): string {
  *  slider by its root word's place, as its gloss (whether or not the word is known by hand: + Known words hides only
  *  the gloss). */
 export function isFormHidden (strong: string, code: string): boolean {
+  if (s.showVocab !== false && learning (strong)) return false;
   if (hardForm (lemmaOf (strong), code, strong.startsWith ("H"))) return false;
   return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
 }
@@ -148,6 +156,7 @@ const optionsBtn = document.getElementById ("optionsBtn")!;
 const options = document.getElementById ("options")!;
 const glossBtn = document.getElementById ("showGloss")!, parseBtn = document.getElementById ("showParse")!;
 const translitBtn = document.getElementById ("showTranslit")!, colorsBtn = document.getElementById ("verbColors")!;
+const vocabBtn = document.getElementById ("showVocab")!;
 const mineBtn = document.getElementById ("mine")!;
 const scopeBtn = document.getElementById ("scope")!;
 const slider = document.getElementById ("freq") as HTMLInputElement;
@@ -158,6 +167,7 @@ function updateMenu () {
   parseBtn.setAttribute ("aria-pressed", String (s.parse !== false));
   translitBtn.setAttribute ("aria-pressed", String (s.translit === true));
   colorsBtn.setAttribute ("aria-pressed", String (s.verbColors !== false));
+  vocabBtn.setAttribute ("aria-pressed", String (s.showVocab !== false));
   mineBtn.setAttribute ("aria-pressed", String (s.mine));
   const where = s.scope === "book" ? book.name : `whole ${book.testament}`;
   scopeBtn.textContent = `Frequency: ${where}`;
@@ -183,6 +193,7 @@ parseBtn.addEventListener ("click", () => { s.parse = s.parse === false; changed
 translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true; changed (); });
 // VERB COLORS: the verbs' parsing colored by form (Hebrew) or tense (Greek), or all plain (body.noVerbColors).
 colorsBtn.addEventListener ("click", () => { s.verbColors = s.verbColors === false; changed (); });
+vocabBtn.addEventListener ("click", () => { s.showVocab = s.showVocab === false; changed (); });
 // ABOUT VERB COLORS: what each color means (reader.ts's verbForm groups, style.css's .vf- colors), Hebrew then Greek.
 document.getElementById ("aboutColors")!.addEventListener ("click", () => { optionsBtn.click (); openScreen ("About verb colors"); });
 const KEY_ROWS = (rows: [string, string, string][]) => `<div class="colorKey">${rows.map (([vf, name, what]) =>
