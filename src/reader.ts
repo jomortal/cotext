@@ -57,7 +57,7 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     const vf = verbForm (w);
     wordEl.className = "w" + (vf ? ` verb vf-${vf}` : "");
     wordEl.dataset.strong = w.strong;     // the lemma's key: helps.ts hides its gloss by it
-    wordEl.dataset.code = w.code ?? "";     // its parsing code: with the lemma, helps.ts hides its parsing by it
+    wordEl.dataset.code = w.code ?? "";     // its parsing code: helps.ts always shows a hard form's parsing (paradigm.ts' hardForm)
     // (The transliteration: Hebrew as STEPBible gives it, its syllable dots dropped and in lower case - be.re.Shit ->
     // bereshit; Greek as modern Greek says it - translit.ts.)
     wordEl.append (span ("orig", w.text), span ("translit", hebrew ? (w.translit ?? "").replace (/\./g, "").toLowerCase () : modernGreek (w.text)),

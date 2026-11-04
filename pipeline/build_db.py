@@ -16,8 +16,6 @@ Tables:
   freq      strong, book (0: the whole OT or NT), count - how often each lemma occurs
   guide     lang ('H' / 'G'), grp, ord, code, meaning - the Parsing guide: every part of the codes, from morph.py's
             tables (morph.guide)
-  form_freq strong, code (COTEXT's parsing code), book (0: the whole OT or NT), count - how often each lemma occurs
-            in that exact form (the helps' slider hides a word's parsing by it: src/helps.ts)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
             (Gesenius, Smyth, Machen): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
@@ -201,12 +199,9 @@ def build():
                               WITHOUT ROWID;
         CREATE TABLE freq (strong TEXT, book INTEGER, count INTEGER, PRIMARY KEY (strong, book)) WITHOUT ROWID;
         CREATE TABLE guide (lang TEXT, grp TEXT, ord INTEGER PRIMARY KEY, code TEXT, meaning TEXT);
-        CREATE TABLE form_freq (strong TEXT, code TEXT, book INTEGER, count INTEGER,
-                                PRIMARY KEY (book, strong, code)) WITHOUT ROWID;
     """)
     lex = {**lexicon_rows("TBESH.txt"), **lexicon_rows("TBESG.txt")}
     counts = collections.Counter()
-    form_counts = collections.Counter()     # (strong, code, book) - book 0 the whole testament
     chapters = collections.defaultdict(int)
     parsings = {}
     greek = set()     # (Which source codes are Greek: TAGNT's)
@@ -223,9 +218,6 @@ def build():
                     greek.add(mcode)
             counts[(strong, 0)] += 1
             counts[(strong, book)] += 1
-            code = parsings[mcode][0]
-            form_counts[(strong, code, 0)] += 1
-            form_counts[(strong, code, book)] += 1
             chapters[book] = max(chapters[book], ch)
             if strong not in lex and strong not in extra_lex:
                 extra_lex[strong] = (lemma, "", short, "", short)
@@ -238,7 +230,6 @@ def build():
     lex_rows = [(k, *v) for k, v in {**lex, **extra_lex}.items() if k in used]
     db.executemany("INSERT INTO lexicon VALUES (?,?,?,?,?,?)", lex_rows)
     db.executemany("INSERT INTO freq VALUES (?,?,?)", [(s, b, c) for (s, b), c in counts.items()])
-    db.executemany("INSERT INTO form_freq VALUES (?,?,?,?)", [(s, k, b, c) for (s, k, b), c in form_counts.items()])
     db.executemany("INSERT INTO guide VALUES (?,?,?,?,?)", [(l, g, i, c, m) for i, (l, g, c, m) in enumerate(morph.guide())])
     grammar_counts = grammar.build(db, parsings, greek)
     note_counts = notes.build(db, [code for code, _ in BOOKS])

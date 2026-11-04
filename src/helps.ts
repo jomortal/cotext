@@ -1,10 +1,11 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
-// - the frequency slider, in steps of 20 words up to 1,000 (as My vocab's frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss of the N most
-//   common lemmas (the extended Strong's key, every form together), and the parsing code of a lemma in a form (lemma +
-//   COTEXT's code, the database's form_freq) occurring as often as the Nth word does - so a rare form of a common word
-//   keeps its parsing. Counted over the whole OT / NT or the book shown (FREQUENCY);
+// - the frequency slider, in steps of 20 words up to 1,000 (as My vocab's frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss and the parsing
+//   of the N most common words, by the root word (the lemma, its extended Strong's key: every form together), as the
+//   printed reader's editions do - except a hard form's parsing, always shown: a verb whose form is hard to recognize
+//   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT or the book shown
+//   (FREQUENCY);
 // - a word's panel flips one word by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
-//   form rule above), "Show helps" shows both, on top of the slider;
+//   slider), "Show helps" shows both, on top of the slider;
 // - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on).
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
@@ -12,6 +13,7 @@
 import type { Db } from "./db";
 import type { Book } from "./reader";
 import { onScreen, openScreen } from "./study";
+import { hardForm } from "./paradigm";
 
 const KEY = "cotext.helps";
 
@@ -32,7 +34,7 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } cat
 
 /** One scope's counts: each lemma's, each lemma + form's (key strong|code), the lemmas' counts sorted high to low,
  *  and each lemma's place in that order (0 the most common; ties by key, so it never changes). */
-interface Counts { byStrong: Map<string, number>; byForm: Map<string, number>; sorted: number[]; rank: Map<string, number>;
+interface Counts { byStrong: Map<string, number>; sorted: number[]; rank: Map<string, number>;
   cum: number[]; }     // (cum[i]: the occurrences of the i most common lemmas, cum[0] 0 - the coverage's)
 const cache = new Map<string, Counts> ();
 let db: Db;
@@ -48,11 +50,7 @@ function counts (): Counts {
       ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [book.id])
       : db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong LIKE ? ORDER BY count DESC, strong",
                 [book.testament === "OT" ? "H%" : "G%"]);
-    const forms = s.scope === "book"
-      ? db.all ("SELECT strong, code, count FROM form_freq WHERE book = ?", [book.id])
-      : db.all ("SELECT strong, code, count FROM form_freq WHERE book = 0 AND strong LIKE ?", [book.testament === "OT" ? "H%" : "G%"]);
     c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
-          byForm: new Map (forms.map ((r) => [r.strong + "|" + r.code, Number (r.count)])),
           sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])), cum: [0] };
     for (const n of c.sorted) c.cum.push (c.cum[c.cum.length - 1] + n);
     cache.set (key, c);
@@ -72,13 +70,6 @@ const wordsAt = (pos: number) => Math.max (0, pos) * 20;
 function sliderMax (): number { return Math.min (50, Math.ceil (counts ().sorted.length / 20)); }
 function wordsFor (pos: number): number { return wordsAt (Math.min (pos, sliderMax ())); }
 
-/** The parsing's limit: a form's parsing hidden at this count and above - the last hidden word's count (Infinity:
- *  none hidden; all the way over, 1: every parsing). */
-function limit (): number {
-  const n = hiddenWords (), c = counts ();
-  return n <= 0 ? Infinity : n >= c.sorted.length ? 1 : c.sorted[n - 1];
-}
-
 /** Whether a word's gloss is hidden: its hand choice (if HIDE KNOWN WORDS), else the slider by its lemma's place. */
 export function isHidden (strong: string): boolean {
   const mode = s.mine ? s.modes[strong] : undefined;
@@ -86,11 +77,21 @@ export function isHidden (strong: string): boolean {
   return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
 }
 
-/** Whether a word's parsing is hidden: "Show helps" by hand shows it; otherwise the slider by the lemma's count in this
- *  form (whether or not the word is known by hand: a known word's rare forms keep their parsing). */
+const lemmas = new Map<string, string> ();     // (Strong's key -> its dictionary form, the testament's, read once)
+function lemmaOf (strong: string): string {
+  if (! lemmas.has (strong) && ! lemmas.has (book.testament))
+    for (const r of db.all ("SELECT strong, lemma FROM lexicon WHERE strong LIKE ?", [book.testament === "OT" ? "H%" : "G%"]).concat ([{ strong: book.testament, lemma: "" }]))
+      lemmas.set (String (r.strong), String (r.lemma));
+  return lemmas.get (strong) ?? "";
+}
+
+/** Whether a word's parsing is hidden: "Show helps" by hand shows it, and a hard form's always shows; otherwise the
+ *  slider by its root word's place, as its gloss (whether or not the word is known by hand: + Known words hides only
+ *  the gloss). */
 export function isFormHidden (strong: string, code: string): boolean {
   if (s.mine && s.modes[strong] === "show") return false;
-  return (counts ().byForm.get (strong + "|" + code) ?? 0) >= limit ();
+  if (hardForm (lemmaOf (strong), code, strong.startsWith ("H"))) return false;
+  return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
 }
 
 /** Marks a word known by hand (as "+ Known words"; a slider deck's REMOVE FROM LIST): its gloss hidden. */
@@ -176,8 +177,7 @@ function updateMenu () {
   slider.value = String (Math.ceil (n / 20));
   const pct = coverage (n) * 100, inWhat = s.scope === "book" ? book.name : "the " + book.testament;
   freqOut.innerHTML = n === 0 ? "Helps for every word" : n >= all ? "No helps"
-    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}`
-      + ` (and forms occurring <b>${limit ().toLocaleString ()}+</b> times)`;
+    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}`;
 }
 
 optionsBtn.addEventListener ("click", () => {

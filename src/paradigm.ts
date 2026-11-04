@@ -455,3 +455,34 @@ export function rootModel (lemma: string, hebrew: boolean): HebrewModel | GreekM
   const stem = m[1] + m[2], first = ({ φ: "π", θ: "τ", χ: "κ" } as Record<string, string>)[m[1]] ?? m[1];
   return { lemma, stem, short: stem, redup: first + "ε", english: DO };
 }
+
+/** Whether a word's form is hard to recognize - its parsing then always shown, however common the word (helps.ts), as
+ *  the printed reader's editions parse the difficult forms. Only verbs. lemma: the dictionary form; code: COTEXT's.
+ *  Hebrew - a weak root, whose letters drop out or change in its forms: I-nun (נפל, נתן), I-yod / I-waw (ישב, ירד),
+ *  hollow (a middle ו or י, or two letters: קום, שים), III-he (בנה), III-alef (מצא), geminate (the last two the same:
+ *  סבב), and הלך and לקח (which go as I-yod and I-nun). Alef and the other gutturals aren't counted: their forms keep
+ *  their letters.
+ *  Greek - a second aorist, future or perfect (2AAI...), any perfect or pluperfect, a -μι verb (δίδωμι, δύναμαι), a
+ *  liquid verb's future or aorist (stem in λ μ ν ρ: μένω, κρίνω, ἀποστέλλω), or a future or aorist of a verb that
+ *  takes another stem there (ἔρχομαι, ὁράω, λέγω, φέρω, ἐσθίω, τρέχω). */
+const HE_IRREGULAR = new Set (["הלך", "לקח"]);
+const GR_SUPPLETIVE = new Set (["ερχομαι", "οραω", "λεγω", "φερω", "εσθιω", "τρεχω", "εχω", "αιρεω", "πινω"]);
+export function hardForm (lemma: string, code: string, hebrew: boolean): boolean {
+  const plain = lemma.normalize ("NFD").replace (/\p{M}/gu, "").normalize ("NFC");
+  if (hebrew) {
+    const verb = code.split ("+").find ((seg) => /^[A-Z]+-(P|WP|I|W|WI|COH|J|IMP|PTC|PTP|INA|INC)(-|$)/.test (seg));
+    if (! verb) return false;
+    const r = plain.replace (/[^א-ת]/g, "").replace (/[ךםןףץ]/g, (c) => UNFINAL[c]);
+    if (HE_IRREGULAR.has (r)) return true;
+    if (r.length !== 3) return true;     // (Two letters, a hollow root's - or four)
+    return r[0] === "נ" || r[0] === "י" || r[0] === "ו" || r[1] === "ו" || r[1] === "י" || r[2] === "ה" || r[2] === "א" || r[1] === r[2];
+  }
+  const t = code.match (/^(2)?([PIFARL])[AMPDONE][IMSNPO]/);
+  if (! t) return false;     // (Not a verb)
+  const tense = t[2], g = plain.toLowerCase ();
+  if (t[1] || tense === "R" || tense === "L") return true;
+  if (/μι$|[^ω]μαι$/.test (g) && ! /ομαι$/.test (g)) return true;
+  if ((tense === "F" || tense === "A") && (/[λμνρ]ω$|[λμνρ]ομαι$/.test (g) || GR_SUPPLETIVE.has (g))) return true;
+  return false;
+}
+
