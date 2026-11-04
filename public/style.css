@@ -37,10 +37,12 @@
 html, body { position: fixed; inset: 0; overflow: hidden; }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
-/* No scroll bars anywhere (the user's choice): everything still scrolls - by touch, wheel or trackpad -, nothing drawn
-   for it. (scrollbar-width for Chrome, Firefox and Safari 18.2+; ::-webkit-scrollbar for older Safari and iOS.) */
-* { scrollbar-width: none; }
-::-webkit-scrollbar { display: none; }
+/* Scroll bars everywhere small and faint (the user's choice, as Claude's desktop app's): a thin thumb in the muted text
+   color at a third, on no track. (scrollbar-width / -color for Chrome, Firefox and Safari 18.2+; ::-webkit-scrollbar
+   for older Safari: 6px, rounded.) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 35%, transparent) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--soft) 35%, transparent); border-radius: 3px; }
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
