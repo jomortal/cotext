@@ -198,7 +198,8 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 .sheet .def { font-size: var(--fs-m); line-height: 1.55; margin-top: 4px; font-family: var(--ui); }
 .sheet .def b { font-family: var(--grk); }
 
-/* The passage picker: full screen, books then chapters. */
+/* The passage picker: over the text - the whole screen, or a wide one's text column (picker.ts sets its right) -, books
+   then chapters, at most the text's 8 inches wide. */
 #picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20;
           padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) 0 max(var(--pad), env(safe-area-inset-left, 0px)); }
 /* Its heading (Books, and ✕) a row that doesn't scroll, the list scrolling under it in its own box (#pickerBody) - so
@@ -209,6 +210,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 #picker .top #langPick { grid-column: 2; } #picker .top #pickerClose { grid-column: 3; justify-self: end; }
 #pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
 .pickerCard { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+#picker .pickerCard { max-width: 8in; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
 .choices.numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 10px 10px; border-top: 1px solid var(--line); }     /* (A book's chapters, open under it in the list: six to a row, every row even) */

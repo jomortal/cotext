@@ -1,10 +1,11 @@
-// Choosing a passage: the heading's button opens a full-screen list - the books under their headings (main.ts: the
-// Old Testament in the language picked - Hebrew, or the Septuagint with the books the Hebrew Bible lacks under a
-// heading of their own -, then the New Testament), one under another; a book tapped opens its chapters (numbers, six
+// Choosing a passage: the heading's button opens a list over the text - the whole screen, or on a wide one only the
+// text's column, the notes beside it left uncovered - the books under their headings (main.ts: the Old Testament in
+// the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart -, then the New Testament), one under another; a book tapped opens its chapters (numbers, six
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
 // closed - and picking a chapter goes there (a one-chapter book goes straight there).
 
 import { nativeName } from "./booknames";
+import { isWide } from "./layout";
 import type { Book } from "./reader";
 
 const picker = document.getElementById ("picker")!;
@@ -12,12 +13,20 @@ const body = document.getElementById ("pickerBody")!;
 
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 
+// (On a wide screen it ends where the text's column does, so the notes at the right stay in view: kept so as the column
+// changes - the notes opened or closed, their split dragged, the window resized)
+const textCol = document.getElementById ("textCol")!;
+const fit = () => { picker.style.right = isWide () ? `${Math.max (0, innerWidth - textCol.getBoundingClientRect ().right)}px` : ""; };
+new ResizeObserver (fit).observe (textCol);
+addEventListener ("resize", fit);
+
 type Go = (book: Book, chapter: number) => void;
 type Chapters = (book: Book) => Promise<number[]>;
 
 /** groups: [heading, its books]...; chaptersOf: a book's chapter numbers (from the database: a promise). */
 export function openPicker (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
+  fit ();
   picker.hidden = false;
 }
 
