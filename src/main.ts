@@ -102,12 +102,12 @@ function chaptersOf (b: Book): number[] {
 // (Hebrew: the Hebrew OT alone; Greek: the Septuagint and the NT - the user's choice)
 const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : books.filter ((b) => b.testament === "LXX").concat (books.filter ((b) => b.testament === "NT"));
 
-/** The picker's groups: the OT as picked (the Septuagint's books the Hebrew Bible lacks apart), then the NT. */
+/** The picker's groups: the OT as picked (the Septuagint's Apocrypha - the books the Hebrew Bible lacks - apart), then the NT. */
 function groups (): [string, Book[]][] {
   const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
   if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
   const lxx = books.filter ((b) => b.testament === "LXX");
-  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Septuagint - books the Hebrew Bible lacks", lxx.filter ((b) => ! b.heb)], nt];
+  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Septuagint - Apocrypha (Deuterocanonical books)", lxx.filter ((b) => ! b.heb)], nt];
 }
 
 /** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
