@@ -1,17 +1,18 @@
 // The notes panel: free commentaries, text-critical apparatuses, English translations and the ancient versions beside the
 // text, following it. The icon right of
-// ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
-// panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the text), at most half
-// the screen, scrolling.
+// ▶ in the play bar opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
+// (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
+// text), at most half the screen, scrolling; on a wide one it's a column at the right of the text (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
 //   VERSIONS - the database's note_sources (pipeline/notes.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
-// - It shows the notes on every verse in view - each verse with a line showing in the text's area above the panels
-//   (so a taller panel shows fewer), each under its reference when there are several - following as the text
-//   scrolls and as ▶ reads (audio.ts signals each word lit). A note on a range (1:1-18) shows once, its range above it; a
+// - Narrow: the notes on one verse - the one being read aloud while ▶ reads (audio.ts signals each word lit), otherwise
+//   the first whose last line is still in view at the text's top (until half of it is gone) - following as the text scrolls. Wide: the
+//   notes on every verse of the chapter, each under its reference, scrolled in step with the text both ways (TWO-WAY
+//   SCROLLING, below). A note on a range (1:1-18) shows once, at its first verse shown, its range above it; a
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
 //   note read through several verses keeps its place. A translation or an ancient version (a Targum: its Aramaic,
 //   right to left, with the English under it) is a source with a "note" per verse: its text.
@@ -22,6 +23,7 @@
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
+import { isWide, onWideChange } from "./layout";
 
 interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
@@ -52,6 +54,12 @@ const notesScroll = document.createElement ("div");     // (The contents scroll 
 notesScroll.className = "panelScroll";
 { const x = document.createElement ("div"); x.className = "xRow"; x.append (document.getElementById ("notesClose")!);
   notesScroll.append (...panel.children); panel.append (x, notesScroll); }
+// Its picker row: narrow, the scroller's first line, scrolling away with the notes; wide, a row of its own over the
+// scroller, fixed at the column's top (not sticky: outside the scroller, so not even the bounce moves it).
+const topRow = notesScroll.querySelector<HTMLElement> (":scope > .top")!;
+const placeTop = () => { if (isWide ()) notesScroll.before (topRow); else notesScroll.prepend (topRow); };
+placeTop ();
+onWideChange (placeTop);
 const btn = document.getElementById ("notesBtn")!;
 const pick = document.getElementById ("notesPick") as HTMLSelectElement;
 const refEl = document.getElementById ("notesRef")!;
@@ -69,6 +77,7 @@ let open: { id: string; db: Db } | null = null;     // The source's file open no
 let loading = 0;                                   // (A load's number: a later pick wins over one still arriving)
 let shownVerse = "";      // The verses shown ("1,2,3"): redrawn only when they change
 let shownIds: string | null = null;               // The notes drawn (their ids; null: none yet): redrawn only when they change
+let blocks: [number, HTMLElement][] = [];          // Wide: each verse shown and where its notes start in the panel (TWO-WAY SCROLLING)
 
 export function initNotes (db: Db) {
   textDb = db;
@@ -123,21 +132,20 @@ btn.addEventListener ("click", () => {
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
-/** The verses to show: every verse with a line in view in the text's area as it is with the panels open at their
- *  full size (their max-height, not their height now) - so the verses don't change as the panel grows or shrinks
- *  with what it shows (which would change the verses again, and so on): only when the text scrolls or a panel opens or
- *  closes. In order; none in view (a verse taller than the view): the one at its top. */
+/** The verses to show. Wide: every verse of the chapter. Narrow: one - the verse being read aloud, else the first
+ *  whose last line is still in view: the middle of its last word's original (the Hebrew or Greek, not the word's
+ *  column, which has room above it) at or below the text's top edge - so the notes move on once a verse's last line is
+ *  half gone under the heading. */
 function versesNow (): number[] {
-  const m = main.getBoundingClientRect ();
-  const play = document.getElementById ("playBar")!.getBoundingClientRect ().top;
-  const docks = [...document.querySelectorAll<HTMLElement> (".dock:not([hidden])")]
-    .reduce ((sum, d) => sum + (parseFloat (getComputedStyle (d).maxHeight) || d.offsetHeight), 0);
-  const r = { top: m.top, bottom: Math.min (m.bottom, play - docks) };     // (The text's area with the panels at full size)
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
-  const seen = rows.filter ((row) => { const b = row.getBoundingClientRect (); return b.bottom > r.top + 8 && b.top < r.bottom - 8; });
-  const vs = (seen.length ? seen : rows.filter ((row) => row.getBoundingClientRect ().bottom > r.top).slice (0, 1))
-    .map ((row) => Number (row.querySelector (".vnum")?.textContent ?? 1));
-  return vs.length ? vs : [1];
+  const num = (row: HTMLElement) => Number (row.dataset.verse ?? 1);
+  if (isWide ()) return rows.length ? rows.map (num) : [1];
+  const reading = document.querySelector ("#chapter .w.reading")?.closest<HTMLElement> (".vrow");
+  const top = main.getBoundingClientRect ().top;
+  const row = reading ?? rows.find ((r) => { const o = r.querySelector (".verse")?.lastElementChild?.querySelector (".orig")?.getBoundingClientRect ();
+                                       return !! o && (o.top + o.bottom) / 2 >= top; })
+              ?? rows[rows.length - 1];
+  return [row ? num (row) : 1];
 }
 
 /** Draws the notes for the verses now - loading the source's file first if it isn't open. */
@@ -174,8 +182,10 @@ function update () {
   const key = vs.join (",");
   if (key === shownVerse) return;
   shownVerse = key;
-  const many = vs.length > 1;
-  refEl.textContent = `${book.name} ${chapter}:${vs[0]}` + (many ? `–${vs[vs.length - 1]}` : "");
+  const wide = isWide ();
+  const many = wide || vs.length > 1;
+  blocks = []; anchors = null;
+  refEl.textContent = wide ? `${book.name} ${chapter}` : `${book.name} ${chapter}:${vs[0]}`;
   // Each verse's places whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses it
   // translates ([book, chapter, verse]; none: the Hebrew lacks it); otherwise its own.
   const hebrewKeyed = !! heb && (src.kind === "original" || offers (src, "OT"));
@@ -201,8 +211,14 @@ function update () {
     const el = document.createElement ("div");
     el.className = "besideText";
     bodyEl.replaceChildren (el);
-    drawInterlinear (el, textDb, heb!, all.map (([, c, vv]) => [c, vv] as [number, number]));
-    notesScroll.scrollTop = 0;
+    // (Each Hebrew verse once, though two LXX verses may translate it; wide, each LXX verse placed at the first of its own)
+    const once = [...new Map (all.map (([, c, vv]) => [c * 1000 + vv, [c, vv] as [number, number]])).values ()];
+    drawInterlinear (el, textDb, heb!, once);
+    if (wide) for (const p of per) {
+      const row = p.where.length && el.querySelector<HTMLElement> (`.vrow[data-chapter="${p.where[0][1]}"][data-verse="${p.where[0][2]}"]`);
+      if (row) blocks.push ([p.v, row]);
+    }
+    placed ();
     return;
   }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
@@ -224,22 +240,28 @@ function update () {
   const none = kind === "translation" ? "Not in this translation." : kind === "version" ? "Not in this version."
              : kind === "syntax" ? "No diagram for this verse." : "No notes on this verse.";
   for (const g of groups) {
+    // (Wide: each verse's notes in a block of their own, marked with its verse, for TWO-WAY SCROLLING)
+    const box = wide ? document.createElement ("div") : bodyEl;
+    if (wide) { box.className = "vBlock"; box.dataset.verse = String (g.v); bodyEl.append (box); blocks.push ([g.v, box]); }
     if (many) {
       const h = document.createElement ("div");
       h.className = "src verseHead";
       h.textContent = `${chapter}:${g.v}`;
-      bodyEl.append (h);
+      box.append (h);
     }
-    if (! g.where.length) { bodyEl.insertAdjacentHTML ("beforeend", LXX_ONLY); continue; }
+    if (! g.where.length) { box.insertAdjacentHTML ("beforeend", LXX_ONLY); continue; }
     if (! g.notes.length) {
       // (A verse whose note began at an earlier verse shown above: nothing more to say for it)
-      if (many && seen.size) { bodyEl.lastElementChild?.remove (); continue; }
-      bodyEl.insertAdjacentHTML ("beforeend", `<p>${none}</p>`);
+      if (many && seen.size) {
+        if (wide) { box.remove (); blocks.pop (); } else bodyEl.lastElementChild?.remove ();
+        continue;
+      }
+      box.insertAdjacentHTML ("beforeend", `<p>${none}</p>`);
       continue;
     }
     if (kind === "syntax") {
       const at = g.where[0][1] * 1000 + g.where[0][2];
-      for (const n of g.notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
+      for (const n of g.notes) box.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
       continue;
     }
     for (const n of g.notes) {
@@ -248,11 +270,17 @@ function update () {
       // (The body is the pipeline's own HTML: a few tags only - notes.py's docstring lists them)
       el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
                    + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
-      bodyEl.append (el);
+      box.append (el);
     }
   }
   if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
-  notesScroll.scrollTop = 0;
+  placed ();
+}
+
+/** The notes just drawn placed: narrow, from their top; wide, at the text's place (TWO-WAY SCROLLING). */
+function placed () {
+  if (! isWide ()) { notesScroll.scrollTop = 0; return; }
+  leader = "text"; anchors = null; sync ();
 }
 
 /** The Hebrew verses an LXX verse translates, as the panel labels them: 23:0–1, 10:18; 11:0. */
@@ -275,11 +303,69 @@ function range (start: number, end: number): string {
 
 // Following: the text scrolled (a frame at a time), and each word lit while reading aloud (audio.ts).
 let frame = 0;
-// (Not while the word's panel shows a word of the Hebrew OT here: the panel scrolls the text to keep a word in view,
-// which would move the notes on to another verse, the word tapped with them.)
-const follow = () => { if (! frame && ! panel.hidden && ! panel.querySelector (".w.on")) frame = requestAnimationFrame (() => { frame = 0; update (); }); };
+// (The verses not changed while the word's panel shows a word of the Hebrew OT here: the panel scrolls the text to keep
+// a word in view, which would move the notes on to another verse, the word tapped with them.)
+const follow = () => {
+  if (! frame && ! panel.hidden) frame = requestAnimationFrame (() => { frame = 0; if (! panel.querySelector (".w.on")) update (); sync (); });
+};
 main.addEventListener ("scroll", follow, { passive: true });
-document.addEventListener ("cotext:reading", follow);
+document.addEventListener ("cotext:reading", () => { leader = "text"; follow (); });     // (The text leads while ▶ reads)
+// Narrow and wide show different verses: redrawn on crossing over.
+onWideChange (() => { shownVerse = ""; shownIds = null; if (! panel.hidden) show (); });
+
+//==== TWO-WAY SCROLLING ====
+// Wide, the text and the notes scroll together: whichever the finger, pen or wheel was last put on leads (pointerdown,
+// touchstart, wheel), the other follows - set a frame at a time from the leader's place. The follower's own scroll
+// events (from being set) are ignored, so neither drives the other back: no loop, no jitter. Places map through anchors -
+// each verse's row top in the text paired with its notes' top in the panel, plus both tops and both ends - piecewise
+// linearly, so at a verse's start in either the other is at the same verse's start, and in between both move smoothly
+// (a long note on one verse scrolls through while the text moves through that verse). A verse whose notes are another
+// verse's (inside a range note) has no anchor: it's within the range's span. Anchors are measured once and again only
+// when either side's content changes size (a redraw, a width dragged, helps shown or hidden).
+let leader: "text" | "notes" = "text";
+let anchors: { t: number; r: number }[] | null = null;
+for (const [el, who] of [[main, "text"], [notesScroll, "notes"]] as const)
+  for (const ev of ["pointerdown", "touchstart", "wheel"]) el.addEventListener (ev, () => { leader = who; }, { passive: true });
+notesScroll.addEventListener ("scroll", () => { if (leader === "notes") follow (); }, { passive: true });
+const remeasure = () => { anchors = null; follow (); };
+new ResizeObserver (remeasure).observe (document.getElementById ("chapter")!);
+new ResizeObserver (remeasure).observe (bodyEl);
+
+/** The anchors (above): [text scrollTop, panel scrollTop] pairs, rising in both. */
+function anchorsNow () {
+  if (anchors) return anchors;
+  const t0 = main.getBoundingClientRect ().top - main.scrollTop;
+  const r0 = notesScroll.getBoundingClientRect ().top - notesScroll.scrollTop + parseFloat (getComputedStyle (notesScroll).paddingTop);
+  const rows = new Map ([...document.querySelectorAll<HTMLElement> ("#chapter .vrow")].map ((r) => [Number (r.dataset.verse), r]));
+  const a = [{ t: 0, r: 0 }];
+  for (const [v, el] of blocks) {
+    const row = rows.get (v);
+    if (! row) continue;
+    const t = row.getBoundingClientRect ().top - t0 - 6, r = el.getBoundingClientRect ().top - r0;     // (6: the row a little below the edge)
+    if (t > a[a.length - 1].t && r > a[a.length - 1].r) a.push ({ t, r });
+  }
+  const end = { t: main.scrollHeight, r: notesScroll.scrollHeight };
+  if (end.t > a[a.length - 1].t && end.r > a[a.length - 1].r) a.push (end);
+  return anchors = a;
+}
+
+/** x on one side (from) to the place on the other (to), between the anchors around it. */
+function across (x: number, from: "t" | "r", to: "t" | "r") {
+  const a = anchorsNow ();
+  let i = 0;
+  while (i < a.length - 2 && a[i + 1][from] <= x) i++;
+  if (a.length < 2) return x;
+  const f = (x - a[i][from]) / (a[i + 1][from] - a[i][from]);
+  return a[i][to] + Math.max (0, Math.min (1, f)) * (a[i + 1][to] - a[i][to]);
+}
+
+/** The follower set from the leader (wide, the panel open with its notes drawn). */
+function sync () {
+  if (! isWide () || panel.hidden || ! blocks.length) return;
+  const [lead, follower, from, to] = leader === "text" ? [main, notesScroll, "t", "r"] as const : [notesScroll, main, "r", "t"] as const;
+  const want = Math.round (across (lead.scrollTop, from, to));
+  if (Math.abs (follower.scrollTop - want) >= 1) follower.scrollTop = want;
+}
 
 //==== SENTENCE DIAGRAM ====
 // A sentence (diagram.py's tree): its clauses, each a box - its joining words (καί, ὅτι, וְ, כִּי, אֲשֶׁר...) first,

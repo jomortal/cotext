@@ -65,7 +65,7 @@ const NAME_NOTE: Record<string, string> = {
 const textSheet = document.getElementById ("sheet")!;
 const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
-document.getElementById ("playBar")!.before (besideSheet);
+document.getElementById ("notesCol")!.append (besideSheet);     // (Under the notes: in their column when wide, layout.ts)
 
 /** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
 function makePanel (sheet: HTMLElement) {

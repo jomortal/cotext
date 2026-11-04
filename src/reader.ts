@@ -57,6 +57,7 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
       verse = w.verse;
       const row = document.createElement ("div");     // (Its direction puts the number first: right for Hebrew, left for Greek)
       row.className = "vrow " + (hebrew ? "he" : "gr");
+      row.dataset.chapter = String (w.chapter); row.dataset.verse = String (verse);     // (Where it stands: the notes panel finds verses by it)
       verseEl = document.createElement ("div");
       verseEl.className = "verse " + (hebrew ? "he" : "gr");
       row.append (span ("vnum", String (verse)), verseEl);

@@ -18,6 +18,7 @@ import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
 import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
+import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;

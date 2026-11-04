@@ -126,15 +126,19 @@ body.noVerbColors .w .parse { color: inherit; }
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between two of the
    panels open (.dock: the word's panel, the notes, the second word's panel - in that order), and over the play bar when
    a panel is open above it. */
-.dock:not([hidden]) ~ .dock:not([hidden]) { border-top: 1px solid var(--edge); }
-.dock:not([hidden]) ~ #playBar { border-top: 1px solid var(--edge); }
-/* Several panels open: they share the room between the heading and the play bar (--mid: notes.ts measures it) evenly
-   with the text - two a third each, three a quarter each -, the text keeping its share at least; each panel no taller
-   than its content. */
-body:has(.dock:not([hidden]) ~ .dock:not([hidden])) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 3); }
-body:has(.dock:not([hidden]) ~ .dock:not([hidden])) main { min-height: calc(var(--mid, 100dvh) / 3); }
-body:has(.dock:not([hidden]) ~ .dock:not([hidden]) ~ .dock:not([hidden])) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 4); }
-body:has(.dock:not([hidden]) ~ .dock:not([hidden]) ~ .dock:not([hidden])) main { min-height: calc(var(--mid, 100dvh) / 4); }
+/* (Written by id, not as siblings: the panels sit in two columns' boxes, #textCol and #notesCol - index.html) */
+body:has(#sheet:not([hidden])) #notes:not([hidden]), body:has(#sheet:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: 1px solid var(--edge); }
+body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
+/* Narrow (layout.ts), several panels open: they share the room between the heading and the play bar (--mid: notes.ts
+   measures it) evenly with the text - two a third each, three a quarter each -, the text keeping its share at least;
+   each panel no taller than its content. */
+@media (max-width: 699.98px) {
+.col { display: contents; }     /* (The columns' boxes not there: their contents stack in the body's column) */
+body:is(:has(#sheet:not([hidden])):has(#notes:not([hidden])), :has(#sheet:not([hidden])):has(#besideSheet:not([hidden])), :has(#notes:not([hidden])):has(#besideSheet:not([hidden]))) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 3); }
+body:is(:has(#sheet:not([hidden])):has(#notes:not([hidden])), :has(#sheet:not([hidden])):has(#besideSheet:not([hidden])), :has(#notes:not([hidden])):has(#besideSheet:not([hidden]))) main { min-height: calc(var(--mid, 100dvh) / 3); }
+body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([hidden])) :is(.dock, #notes) { max-height: calc(var(--mid, 100dvh) / 4); }
+body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([hidden])) main { min-height: calc(var(--mid, 100dvh) / 4); }
+}
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], .speakBtn[hidden] { display: none; }
 .w.reading { background: color-mix(in oklch, var(--accent) 28%, transparent); }
 .vnum { cursor: pointer; }
@@ -377,3 +381,42 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .sayRow { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding: 8px 0; font-size: var(--fs-s); }
 .sayRow .sayLetter { font-size: 24px; }
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
+
+/* The wide layout (layout.ts; the same 700 px as its matchMedia): the body a grid - the heading across the top, then
+   two columns with the notes' divider between them, the full height down to the play bar: the text with its word's
+   panel at its foot (#textCol), and the notes with the second word's panel - a word of their Hebrew OT - at theirs
+   (#notesCol), each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
+   --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The notes' column --notesW % of
+   the width (a third at first), the text the full width while the notes are closed. The text and the notes fill what
+   their panels leave, each scrolling on its own. */
+.split { display: none; }
+@media (min-width: 700px) {
+  body { display: grid; grid-template-columns: minmax(0, 1fr) 0 0; grid-template-rows: auto minmax(0, 1fr) auto; }
+  body:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto calc(var(--notesW, 33.333) * 1%); }
+  .head, #playBar { grid-column: 1 / -1; }
+  #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
+  .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  #textCol { grid-column: 1; } #notesSplit { grid-row: 2; grid-column: 2; } #notesCol { grid-column: 3; }
+  main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
+  #notes:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
+  .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */
+  #sheet { height: min(var(--sheetH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
+  #besideSheet { height: min(var(--besideH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
+  /* A divider: a line in the edge color with a grip at its middle, as wide as a finger to take hold of; never scrolls
+     the page when dragged (touch-action). Each word panel's shown with it. */
+  .split { display: block; flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
+  .split::before { content: ""; position: absolute; background: var(--edge); }
+  .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
+  .split.on::after { background: var(--accent); opacity: 1; }
+  #notesSplit { width: 14px; cursor: col-resize; }
+  #notesSplit::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
+  #notesSplit::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
+  body:has(#notes[hidden]) #notesSplit { display: none; }
+  /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
+  #notes > .top { flex: none; margin: 0; padding: var(--pad) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
+  #notes > .panelScroll { padding-top: 0; }
+  #sheetSplit, #besideSplit { height: 14px; cursor: row-resize; }
+  :is(#sheetSplit, #besideSplit)::before { left: 0; right: 0; top: 6.5px; height: 1px; }
+  :is(#sheetSplit, #besideSplit)::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
+  body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
+}
