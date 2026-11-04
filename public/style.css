@@ -303,7 +303,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    parsing, vocab gloss and buttons - on the right, the lexicon - its picker, entry and credit -
    on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
 .sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
-:is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-inline: max(var(--pad), calc((100% - var(--page)) / 2)); }     /* (Both columns together at most --page, centered - by id, to outweigh the panels' padding) */
+:is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-right: 0; }     /* (The two columns the panel's full width - the word's side at its right edge, its scroll bar at the panel's edge: its margin inside it, below - by id, to outweigh the panels' padding) */
+.sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
 .sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   max-width: none; margin: 0; padding-block: calc(var(--pad) / 2) var(--pad); }     /* (Each column scrolls on its own; half the top margin, as in one column) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
