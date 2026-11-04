@@ -52,6 +52,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import bdb  # noqa: E402
 import fetch  # noqa: E402
 import grammar  # noqa: E402
+import lsj  # noqa: E402
 import greek_lex  # noqa: E402
 import lxx  # noqa: E402
 import morph  # noqa: E402
@@ -272,6 +273,7 @@ def build():
     note_counts["brenton_lxx"] = (n, len(data))
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
+    lsj_counts = lsj.build(db)     # (LSJ: greek_lex rows for 'lsj' and its file - after greek_lex.build, whose tables it adds to)
     ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
     db.executescript("""
         CREATE VIEW words_full AS

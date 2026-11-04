@@ -25,7 +25,7 @@ Round 2 (after round 1):
 - [ ] Next (after the NT commentaries job, which owns notes.ts): a HEBREW OT notes source for LXX books - the matching
       Hebrew verse as COTEXT's own interlinear (words, glosses, parsing, verb colors; tap a word for its info), no
       panel or top bar of its own; LXX verses mapped to the Hebrew's. (The reverse - the LXX beside the Hebrew - only if asked.)
-- [ ] Septuagint gaps: 2,098 untagged words, 6,861 LXX-only lemmas without a gloss; diagrams / UBS "used here" for it.
+- [ ] Septuagint gaps: 2,098 untagged words, 5,398 LXX-only lemmas without a gloss (LSJ filled 1,463); deponents (πορεύομαι, φοβέομαι) get their own keys instead of the NT's active heads; diagrams / UBS "used here" for it.
 - [ ] Decide: LXX-Swete-1930's digitization is GPL-3.0 - redistributing its text may put COTEXT's data under the GPL.
 
 ## Possible additions (from the survey, 2026-11-03 - to pick from; nothing added until chosen)

@@ -45,6 +45,9 @@ Lexicons added 2026-11-03 (the word panel's LEXICON; each its own file in public
     domain; text from Sefaria.
   Klein, A Comprehensive Etymological Dictionary of the Hebrew Language for Readers of English (Carta Jerusalem, 1987);
     text from Sefaria, CC BY-NC - for non-commercial use only (NC).
+  Liddell, Scott, Jones and McKenzie, A Greek-English Lexicon (9th ed., Oxford 1940). Text provided by the Perseus
+    Digital Library (http://www.perseus.tufts.edu/; github.com/PerseusDL/lexica), CC BY-SA 4.0; also the short glosses
+    of 1,463 Septuagint-only words, from its first sense.
 
 The Septuagint: H. B. Swete, The Old Testament in Greek according to the Septuagint (1909-1930), public domain - text
 from Eliran Wong's LXX-Swete-1930 (GPL-3.0); morphology and lemmas adapted from Seth Kushniryk's lxx-morph (Rahlfs
