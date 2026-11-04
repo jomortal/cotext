@@ -384,7 +384,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
 /* One line: the English, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
    reads right to left within the line), muted beside the English. */
-.bookNative { font-size: 1.15em; line-height: 1.6; unicode-bidi: isolate; color: var(--soft); margin-left: .6em; }     /* (One line height for both, so the rows are the same height in either list; the gap on the left, not inline-start, as the Hebrew is right to left) */
+.bookNative { font-size: 1.15em; line-height: 1.6; unicode-bidi: isolate; color: var(--soft); }     /* (One line height for both, so the rows are the same height in either list) */
+.bookEn { margin-right: .7em; }     /* (The gap after the English, on its left-to-right span: on the Hebrew's right-to-left one Safari put it on the far side) */
 .bookNative.he { font-family: var(--heb); } .bookNative.gr { font-family: var(--grk); }
 .chooseList .ref { padding: 6px 10px 2px; margin: 0; }
 .chooseItem { font: inherit; font-size: var(--fs-s); text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
