@@ -37,8 +37,6 @@ Apparatus:
            Codex Bezae (CC BY-NC-SA 3.0): notes_mss.py.
   mam, minchatshai  Miqra according to the Masorah (CC BY-SA; its differences from the text marked) and Minchat
            Shai (public domain), from Sefaria: notes_sefaria.py.
-  tcent    The Text-Critical English New Testament (Robert Adam Boyd 2022, eBible.org's USFM; CC BY 4.0): its
-           footnotes, verbatim (the licence lets it keep its name only unchanged), on the verse each names.
 Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): web World English Bible, bsb Berean
   Standard Bible, kjv King James Version (1769), asv American Standard Version (1901), ylt Young's Literal
   Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0), net
@@ -127,7 +125,7 @@ SBLGNT_BOOKS = ["Matt", "Mark", "Luke", "John", "Acts", "Rom", "1Cor", "2Cor", "
 # eBible regenerates its files now and then, and a new copy is checked by hand before its hash is changed here).
 TRANSLATIONS = {"web": "eng-web", "bsb": "engbsb", "kjv": "eng-kjv", "asv": "eng-asv", "ylt": "engylt",
                 "darby": "engDBY", "lsv": "englsv", "net": "engnet", "brenton": "eng-Brenton", "emtv": "engemtv",
-                "wyc": "engwyc2017", "tcent": "engtcent"}
+                "wyc": "engwyc2017"}
 for _id, _sha in [("web", "05b0440bd8994dd4da7cc53dd8167a759ed7c09617e4a562c64eb9b3343589c8"),
                   ("bsb", "75ca91d5a5c69ca4cbdeabdb03ea1a458db20cf3966abe15d86df086acf7fbc4"),
                   ("kjv", "206085ace5494f7eb46975990c0734fd8354e5ecce4d12cc74ce6f1aa8efd129"),
@@ -139,8 +137,7 @@ for _id, _sha in [("web", "05b0440bd8994dd4da7cc53dd8167a759ed7c09617e4a562c64eb
                   ("net", "f6541e3790f9fc47ec77cb6cb574e85a0555db1c19ed1e7f588724a0eae606c1"),
                   ("brenton", "9b1a4e09381885c658c1cc70ea56a64c125c85d8697a4f03cb6ad66a1bcd985c"),
                   ("emtv", "6780f45154968eb3b51ead874dc6bad5f2e6a57b31c32041ff7c2ca32919b343"),
-                  ("wyc", "107912062138c2f17acc3866667602576ebe450ade78f9ec7a7605439b7ef55b"),
-                  ("tcent", "37d08ca5078734dcfeef943e81d31c29a5ccf02e27e98e0d2877dfa33ef192b9")]:
+                  ("wyc", "107912062138c2f17acc3866667602576ebe450ade78f9ec7a7605439b7ef55b")]:
     FILES.append((_id, TRANSLATIONS[_id] + "_usfm.zip",
                   f"https://ebible.org/Scriptures/{TRANSLATIONS[_id]}_usfm.zip", _sha))
 for _b in SBLGNT_BOOKS:
@@ -198,11 +195,6 @@ SOURCES = [
      "The biblical Dead Sea Scrolls: Martin Abegg's transcriptions in ETCBC's dss (CACCHT: Jacobs, Naaijer, "
      "Roorda), CC BY-NC 4.0 - non-commercial use. [ ] restored by modern editors; Hebrew-numbered, mapped to this "
      "text's verses."),
-    ("tcent", "apparatus", "Text-Critical English NT footnotes", "NT",
-     "Text-Critical English New Testament, (c) 2022 Robert Adam Boyd, CC BY 4.0 (eBible.org): its footnotes, "
-     "verbatim. ¦ the other readings, with the editions that have them (NA Nestle-Aland, SBL, TH Tyndale House, WH "
-     "Westcott-Hort, CT all four; TR Textus Receptus, RP Robinson-Pierpont, HF Hodges-Farstad, PCK Pickering, ANT "
-     "Antoniades; MSS manuscripts) and the share of manuscripts with each."),
     ("sinaiticus", "apparatus", "Codex Sinaiticus", "NT",
      "Codex Sinaiticus: the Codex Sinaiticus Project's transcription (codexsinaiticus.org, v1.04, 2014), "
      "CC BY-NC-SA 3.0 - non-commercial use. Adapted: the first hand's text, the correctors' readings in brackets; "
@@ -991,33 +983,6 @@ def lxx_rows(text_v0):
     return out
 
 
-def tcent_rows():
-    """The Text-Critical English NT's footnotes (USFM \\f ... \\f*), each on the verse its \\fr gives, verbatim: the
-    English words it's about (\\fq) bold, then its note - the other readings and the editions with them."""
-    rows = []
-    with zipfile.ZipFile(DL / "tcent" / "engtcent_usfm.zip") as z:
-        for name in z.namelist():
-            s = z.read(name).decode("utf-8-sig")
-            m = re.match(r"\\id (\w+)", s)
-            if not m or m.group(1) not in USFM:
-                continue
-            b = USFM.index(m.group(1)) + 1
-            for k, f in enumerate(re.finditer(r"\\f\s+\S+\s+(.*?)\\f\*", s, re.S)):
-                inner = f.group(1)
-                fr = re.match(r"\\fr\s+(\d+)[:.](\d+)\s*", inner)
-                if not fr:
-                    continue
-                parts = []
-                for mark, text in re.findall(r"\\(f[a-z]+)\*?\s*([^\\]*)", inner[fr.end():]):
-                    text = usfm_text(text).strip()
-                    if text:
-                        parts.append(f"<b>{text}</b>" if mark in ("fq", "fqa") else text)
-                body = " ".join(parts)
-                if body:
-                    rows.append((b, ref(fr.group(1), fr.group(2)), ref(fr.group(1), fr.group(2)), k, "", f"<p>{body}</p>"))
-    return rows
-
-
 # ---- Building ----
 
 def write(src_id, rows):
@@ -1061,7 +1026,6 @@ def build(main_db, book_codes, only=None):
         makers[t] = lambda t=t: usfm_rows(t, text_v0)
     makers["net"] = lambda: usfm_rows("net", text_v0, ' <a href="http://netbible.org">(NET)</a>')
     makers["brenton"] = lambda: lxx_rows(text_v0)
-    makers["tcent"] = tcent_rows
     for sid in notes_sefaria.SOURCES:
         makers[sid] = lambda sid=sid: notes_sefaria.rows(sid, main_db)
     import diagram
