@@ -112,10 +112,12 @@ function makePanel (sheet: HTMLElement) {
     heads.style.width = "max-content";
     // (The parsing may wrap at its commas, its +s and before a bracket: its widest part counts, not its whole line; the
     // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
+    // - each measured on its own, taken out of the grid: Safari sizes a grid at max-content from a spanning item's whole
+    // line, whatever its own width says)
     const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formGloss, .vocabGloss")];
-    for (const e of wraps) e.style.width = "min-content";
-    const need = heads.getBoundingClientRect ().width;
-    heads.style.width = ""; for (const e of wraps) e.style.width = "";
+    for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
+    const need = Math.max (heads.getBoundingClientRect ().width, ...wraps.map (e => e.getBoundingClientRect ().width));
+    heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
     const two = sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
     // (Two columns: the word's side at that wrapped width - its parsing wrapping at its breaks - the lexicon the rest)

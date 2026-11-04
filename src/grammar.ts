@@ -93,20 +93,23 @@ export function grammarIn (sheet: HTMLElement) {
     let seg = document.createElement ("span");
     seg.className = "seg";
     el.append (seg);
-    const text = (t: string) => t.split (/(?<=,) | (?=\()|(?<= \+) /).forEach ((piece, i) => {     // (After a comma or a +, or before a bracket: "Hiphil wayyiqtol / (sequential imperfect),")
+    // (After a comma or a +, or before a bracket: "Hiphil wayyiqtol / (sequential imperfect),") - inside a term too: a term
+    // across a break is a span on each side, each opening its section)
+    const text = (t: string, term?: (piece: string) => Node) => t.split (/(?<=,) | (?=\()|(?<= \+) /).forEach ((piece, i) => {
       if (i) { el.append (" "); seg = document.createElement ("span"); seg.className = "seg"; el.append (seg); }
-      seg.append (piece);
+      seg.append (term ? term (piece) : piece);
     });
     let at = 0;
     for (const [a, b, key] of JSON.parse (terms || "[]") as [number, number, string][]) {
       if (! keys.has (key) || a < at) continue;
       text (spelled.slice (at, a));
-      const s = document.createElement ("span");
-      s.className = "term";
-      s.dataset.key = key;
-      s.textContent = spelled.slice (a, b);
-      s.addEventListener ("click", () => openSection (g, key, s));
-      seg.append (s);
+      text (spelled.slice (a, b), piece => {
+        const s = document.createElement ("span");
+        s.className = "term";
+        s.dataset.key = key;
+        s.textContent = piece;
+        s.addEventListener ("click", () => openSection (g, key, s));
+        return s; });
       at = b;
     }
     text (spelled.slice (at));
@@ -144,7 +147,7 @@ export function grammarIn (sheet: HTMLElement) {
     bodyEl.innerHTML = blocks.join ("");
     bodyEl.classList.toggle ("one", count === 1);
     box.hidden = false;
-    for (const t of sheet.querySelectorAll (".term")) t.classList.toggle ("on", t === term);
+    for (const t of sheet.querySelectorAll<HTMLElement> (".term")) t.classList.toggle ("on", t.parentElement?.parentElement === term.parentElement?.parentElement && t.dataset.key === term.dataset.key);     // (Every piece of the tapped term)
     sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until its ✕)
     sheet.scrollTop = 0;
     scroll.scrollTop = 0;     // (The section scrolls on its own, under GRAMMAR: style.css)
