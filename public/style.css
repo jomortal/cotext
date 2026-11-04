@@ -35,9 +35,6 @@
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
 html, body { position: fixed; inset: 0; overflow: hidden; }
-/* No stretch past the ends: anything scrolled stops dead at its top and bottom (no bounce, no pull), and never
-   scrolls what's behind it. */
-html, body, * { overscroll-behavior: none; }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
@@ -57,7 +54,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box; background: var(--bg);
-           border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: none;
+           border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: contain;
            padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
 #options[hidden] { display: none; }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -270,7 +267,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 #sheet.grammarOpen #gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
 #sheet.grammarOpen #gInline .sheetPick { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
-#sheet.grammarOpen #giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: none; }
+#sheet.grammarOpen #giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 #sheet.grammarOpen #gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
 #sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
 #moreDef[hidden] { display: none; }
@@ -350,7 +347,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
-              box-shadow: 0 6px 20px rgb(0 0 0 / .18); overflow-y: auto; overscroll-behavior: none; -webkit-overflow-scrolling: touch;
+              box-shadow: 0 6px 20px rgb(0 0 0 / .18); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
               border: 1px solid var(--edge); border-radius: 8px; background: var(--bg); }
 .chooseList[hidden] { display: none; }
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
