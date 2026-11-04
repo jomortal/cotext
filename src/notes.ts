@@ -3,7 +3,7 @@
 // ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
 // panel when that's open - nothing floats over the text), at most half the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
-//   COMMENTARIES, APPARATUS, TRANSLATIONS, ANCIENT VERSIONS and SYNTAX - the database's note_sources (pipeline/notes.py) - so
+//   SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -62,9 +62,9 @@ export function setNotesPassage (b: Book, c: number) {
       g.append (...mine ().filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
       return g.children.length ? [g] : [];
     };
-    pick.replaceChildren (...group ("commentary", "Commentaries"), ...group ("apparatus", "Apparatus"),
-                       ...group ("translation", "Translations"), ...group ("version", "Ancient versions"),
-                       ...group ("syntax", "Syntax"));
+    pick.replaceChildren (...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),     // (The user's order)
+                       ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"),
+                       ...group ("version", "Ancient versions"));
     pick.value = current ()?.id ?? "";
   }
   shownVerse = -1; shownIds = null;
