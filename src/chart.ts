@@ -10,11 +10,11 @@
 // sense of its Strong's number) with exactly that code (no prefix or suffix), accents and punctuation stripped, and
 // how often that code occurs; where it never does, the form filled in from the verb's root by the regular pattern
 // (faded, "not in the text": rootModel in paradigm.ts), or "–" for a verb that has none. The stem picker then counts its forms in each stem. A verb's
-// panel (panel.ts) opens the chart on that verb, at its own stem (openChartFor).
+// panel (panel.ts) opens the chart on that verb, at its own stem, in the panel itself as a grammar section opens (chartInto).
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
-import { onScreen, currentTestament, openScreen, type Testament } from "./study";
+import { onScreen, currentTestament, type Testament } from "./study";
 import { HEBREW_STEMS, HEBREW_MODELS, HEBREW_PGN, HEBREW_GN, GREEK_TENSES, GREEK_MODELS, GREEK_PN, GREEK_PTC,
          hebrewCells, hebrewForm, greekCells, greekForm, rootModel, type Form, type HebrewModel, type GreekModel, englishOf } from "./paradigm";
 
@@ -114,17 +114,17 @@ export function chartStemOf (strong: string, code: string): number {
   return k ? GREEK_TENSES.findIndex ((t) => t.code === k.slice (0, 2)) : -1;
 }
 
-/** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked - a Hebrew verb's
- *  as the Hebrew Bible's whatever text is read (one tapped in the notes panel's Hebrew OT beside the Septuagint). */
-let forWord: Testament | null = null;     // (The testament the next opening shows: the word's; null - the text's)
-export async function openChartFor (strong: string, code: string) {
+/** The word panel's "Verb chart": the chart written into `body` (the panel's own box, over the word's info: grammar.ts'
+ *  showOther) on that verb, its stem (or tense and voice) picked - a Hebrew verb's as the Hebrew Bible's whatever text
+ *  is read (one tapped in the notes panel's Hebrew OT beside the Septuagint). The choice kept: ☰ > Verb chart opens on it. */
+export async function chartInto (body: HTMLElement, strong: string, code: string) {
   const verb = await textVerb (baseOf (strong));
-  forWord = strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT";
-  const st = state[forWord];
+  const t: Testament = strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT";
+  const st = state[t];
   st.stem = Math.max (0, chartStemOf (strong, code));
   st.verb = verb;
   st.mood = "";     // (Every form shown: the word's own among them)
-  openScreen ("Verb chart");
+  render (body, t);
 }
 
 /** The chapter's verbs of the chart's language (H or G), each once (by Strong's number), in order. */
@@ -268,14 +268,14 @@ async function render (body: HTMLElement, t: Testament) {
   body.innerHTML = `
     ${hebrew ? hebrewRows (st, counts) : greekRows (st, counts)}
     <div class="chartPick">
-      <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
+      <label>Verb<select class="choose chartVerb">${options.join ("")}</select></label>
     </div>
     <p>${verb.kind === "text"
       ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : t === "LXX" ? "Septuagint" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it. Under each: its parsing and its meaning on "${esc ((englishOf (verb.gloss) ?? ["do"])[0])}".`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
     ${hebrew ? hebrewTables (verb, st.stem, st.mood) : greekTables (verb, st.stem, st.mood)}`;
-  const verbPick = body.querySelector<HTMLSelectElement> ("#chartVerb")!;
+  const verbPick = body.querySelector<HTMLSelectElement> (".chartVerb")!;
   verbPick.value = value;
   // Greek: a tense or voice tapped keeps the other (or takes the tense's first voice the chart has); a mood shows only that part.
   const pickTV = (tense: string, voice: string) => {
@@ -300,4 +300,4 @@ async function render (body: HTMLElement, t: Testament) {
   });
 }
 
-onScreen ("Verb chart", (body) => { const t = forWord ?? currentTestament (); forWord = null; render (body, t); });
+onScreen ("Verb chart", (body) => render (body, currentTestament ()));

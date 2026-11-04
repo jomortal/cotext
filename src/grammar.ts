@@ -50,6 +50,9 @@ export function grammarIn (sheet: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement> (c: string) => sheet.querySelector<T> ("." + c)!;
   const pick = q<HTMLSelectElement> ("grammarPick");
   const box = q ("gInline"), titleEl = q ("gTitle"), secEl = q ("giSec"), bodyEl = q ("giBody"), scroll = q ("giScroll");
+  const otherEl = document.createElement ("div");     // (showOther's body: beside the section's, without its text styles - .gBody)
+  otherEl.className = "giOther"; otherEl.hidden = true;
+  bodyEl.after (otherEl);
   let lang: Lang = "H";
   let shown: Parameters<typeof showParsing> | null = null;     // (The parsing the panel shows: its links follow GRAMMAR)
   let openKey = "";     // (The term whose section is open: "" none)
@@ -75,9 +78,10 @@ export function grammarIn (sheet: HTMLElement) {
   function setLang (l: Lang) {
     lang = l;
     pick.replaceChildren (...grammars.filter ((g) => g.lang === lang).map ((g) => new Option (g.name, g.id)));
-    pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language: nothing to pick)
+    showPick ();
     pick.value = current (lang);
   }
+  const showPick = () => { pick.closest ("label")!.hidden = pick.options.length < 2; };     // (One grammar for the language: nothing to pick)
 
   /** Writes the spelled-out parsing into `el`, each term the chosen grammar explains a tappable span. `terms`: the
    *  parsing's JSON [[start, end, key], ...]. Any section open from the word before is closed. */
@@ -146,11 +150,29 @@ export function grammarIn (sheet: HTMLElement) {
     // (The bodies are the pipeline's own light HTML: <p>, <b>, <i>, tables and script spans, text escaped.)
     bodyEl.innerHTML = blocks.join ("");
     bodyEl.classList.toggle ("one", count === 1);
+    showPick ();
+    bodyEl.hidden = false; otherEl.hidden = true; otherEl.replaceChildren ();
     box.hidden = false;
     for (const t of sheet.querySelectorAll<HTMLElement> (".term")) t.classList.toggle ("on", t.parentElement?.parentElement === term.parentElement?.parentElement && t.dataset.key === term.dataset.key);     // (Every piece of the tapped term)
     sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until its ✕)
     sheet.scrollTop = 0;
     scroll.scrollTop = 0;     // (The section scrolls on its own, under GRAMMAR: style.css)
+  }
+
+  /** Something else in the same box, over the word's info as a section is (the word's Verb chart: chart.ts' chartInto) -
+   *  its title, no GRAMMAR, `fill` writing its body (its own box, not the section's); the same ✕ back to the word. */
+  function showOther (title: string, fill: (body: HTMLElement) => void) {
+    openKey = "";
+    for (const t of sheet.querySelectorAll (".term.on")) t.classList.remove ("on");
+    titleEl.textContent = title;
+    secEl.textContent = "";
+    bodyEl.hidden = true; otherEl.hidden = false; otherEl.replaceChildren ();
+    pick.closest ("label")!.hidden = true;
+    fill (otherEl);
+    box.hidden = false;
+    sheet.classList.add ("grammarOpen");
+    sheet.scrollTop = 0;
+    scroll.scrollTop = 0;
   }
 
   function hideGrammar () {
@@ -161,7 +183,7 @@ export function grammarIn (sheet: HTMLElement) {
   }
 
   all.push ({ setLang, repick });
-  return { showParsing, hideGrammar };
+  return { showParsing, hideGrammar, showOther };
 }
 
 const esc = (s: string) => s.replace (/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);

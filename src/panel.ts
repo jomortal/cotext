@@ -14,7 +14,7 @@ import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { grammarIn } from "./grammar";
 import { vocabButton } from "./vocab";
-import { chartStemOf, openChartFor } from "./chart";
+import { chartStemOf, chartInto } from "./chart";
 
 // The entry, as LEXICON picks it (a picker as GRAMMAR's, over the entry): the STEPBible brief lexicon, or a fuller
 // lexicon that has the word - (Hebrew)
@@ -72,7 +72,7 @@ function makePanel (sheet: HTMLElement) {
   chartBtn.className = "pill"; chartBtn.textContent = "Verb chart"; chartBtn.hidden = true;
   q ("speakRoot").after (chartBtn);
   let chartFor: [string, string] | null = null;
-  chartBtn.addEventListener ("click", () => { if (chartFor) openChartFor (...chartFor); });     // (The panel stays open under the chart: its ✕ back to the word)
+  chartBtn.addEventListener ("click", () => { const f = chartFor; if (f) grammar.showOther ("Verb chart", (body) => chartInto (body, ...f)); });     // (Over the word's info, as a grammar section: its ✕ back to the word)
 
   const lemmaEl = q ("lemmaEl");
   const formEl = q ("form");
