@@ -134,7 +134,7 @@ To prepare first (trust as much as polish):
 
 - [ ] Targum Onkelos' English (later): Etheridge's 1862 translation covers the whole Torah, but only as scans
       (archive.org) - recognized, checked and matched by verse (our copy has it for part of Genesis only). Then
-      Onkelos goes into the beta (beta-exclude.txt keeps it out till then).
+      Onkelos comes back (removed 2026-11-04: notes_sefaria.py built it, Aramaic with that partial English).
 
 - [ ] Read-aloud with an online voice (Google Cloud TTS): the API key saved at `~/.config/cotext/google-tts-key.txt`,
       then sample chapters (John 1, Genesis 1) to choose a voice before making the whole Bible.

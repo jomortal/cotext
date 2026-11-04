@@ -43,7 +43,7 @@ Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): 
   spelling (CC BY-NC-ND 4.0: verbatim), brenton Brenton's Septuagint (public domain; lxx_rows maps its verses).
   Footnotes, headings and Strong's tags left out (usfm_rows). From Sefaria (notes_sefaria.py): njps the NJPS Tanakh,
   ct The Contemporary Torah, koren The Koren Jerusalem Bible (CC BY-NC).
-Ancient versions (kind 'version'): onkelos Targum Onkelos, tpj Targum Pseudo-Jonathan, tj Targum Jonathan on the
+Ancient versions (kind 'version'): tpj Targum Pseudo-Jonathan, tj Targum Jonathan on the
   Prophets - Aramaic with an English translation under it where there is one (notes_sefaria.py; public domain).
 
 Syntax (kind 'syntax'): diagram_ot, diagram_nt Sentence diagram - MACULA Hebrew's and Greek's syntax trees (CC BY
@@ -51,7 +51,8 @@ Syntax (kind 'syntax'): diagram_ot, diagram_nt Sentence diagram - MACULA Hebrew'
   the tree). A file per testament, each named alike in the picker.
 
 Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Miqra
-  according to the Masorah and Minchat Shai (2026-11-04: Hebrew only, textual detail for few readers).
+  according to the Masorah and Minchat Shai (2026-11-04: Hebrew only, textual detail for few readers); Targum Onkelos
+  (2026-11-04: Sefaria's English covers part of Genesis only - back once Etheridge's whole translation is in, TODO.md).
 Not found clean and open (2026-11-03): Alford's Greek Testament, the Expositor's Greek Testament, Meyer, Bengel's
   Gnomon, Westcott (John, Hebrews, the Epistles of John), J. B. Lightfoot's Galatians and Philippians - scans with raw
   OCR, or copies whose terms forbid republishing (CCEL's Westcott Hebrews) or give none.
@@ -232,9 +233,6 @@ SOURCES = [
     ("wyc", "translation", "Wycliffe (modern spelling)", "OT NT",
      "Wycliffe's Bible with Modern Spelling, (c) 2001-2015 Terry Noble, CC BY-NC-ND 4.0 - non-commercial use, "
      "verbatim (eBible.org); footnotes and headings not shown."),
-    ("onkelos", "version", "Targum Onkelos", "OT",
-     "Targum Onkelos (Sefaria): public domain. English (part of Genesis): J. W. Etheridge, The Targums of Onkelos "
-     "and Jonathan ben Uzziel on the Pentateuch (1862), public domain."),
     ("tpj", "version", "Targum Pseudo-Jonathan", "OT",
      "Targum Pseudo-Jonathan on the Torah (Sefaria's Targum Jonathan): public domain. English: J. W. Etheridge, "
      "The Targums of Onkelos and Jonathan ben Uzziel on the Pentateuch (1862), public domain."),

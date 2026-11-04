@@ -16,8 +16,6 @@ allowed (a book whose version isn't there, or is under another licence, is left 
   rashi     Rashi in English: the Torah in Rosenbaum and Silbermann's (1929-34; public domain), the rest in the
             Judaica Press Complete Tanach's (tr. A. J. Rosenberg; CC-BY), or Metsudah's (CC-BY) where it has no book.
   ramban    Ramban on the Torah, tr. Charles B. Chavel (Shilo, 1971-76; CC-BY).
-  onkelos   Targum Onkelos (public domain), Aramaic, with Etheridge's English (1862; public domain) under it where
-            Sefaria has it (part of Genesis).
   tpj       Targum Pseudo-Jonathan on the Torah (Sefaria's "Targum Jonathan on Genesis"...; public domain), with
             Etheridge's English (1862; public domain).
   tj        Targum Jonathan on the Prophets (Mikraot Gedolot; public domain), with the London "Chaldee Paraphrase"
@@ -42,8 +40,6 @@ TANAKH = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", 
 TORAH = range(1, 6)
 PROPHETS_TJ = [6, 7, 9, 10, 11, 12, 23, 24, 26, *range(28, 40)]     # (Targum Jonathan's books: the Former and Latter Prophets)
 
-ETHERIDGE_O = ("J.W. Etheridge. The Targums of Onkelos and Jonathan Ben Uzziel on the Pentateuch. London: Longmans, "
-               "Green, 1862")
 ETHERIDGE_J = "The Targum of Jonathan ben Uzziel, trans. J. W. Etheridge, London, 1862"
 JUDAICA = "The Judaica Press complete Tanach with Rashi, translated by A. J. Rosenberg"
 
@@ -64,8 +60,6 @@ SOURCES = {
     "ramban": (TORAH, lambda t: "Ramban on " + t, "commentary",
                [("en", ["Commentary on the Torah by Ramban (Nachmanides). Translated and annotated by Charles B. Chavel."
                         " New York, Shilo Pub. House, 1971-1976"], {"CC-BY"})]),
-    "onkelos": (TORAH, lambda t: "Onkelos " + t, "text",
-                [("he", [None], {"Public Domain"}), ("en", [ETHERIDGE_O], {"Public Domain"})]),
     "tpj": (TORAH, lambda t: "Targum Jonathan on " + t, "text",
             [("he", [None], {"Public Domain"}), ("en", [ETHERIDGE_J], {"Public Domain"})]),
     "tj": (PROPHETS_TJ, lambda t: "Targum Jonathan on " + t, "text",

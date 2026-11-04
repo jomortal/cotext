@@ -83,7 +83,7 @@ non-commercial ones marked NC - usable because COTEXT is free and never sold):
     4.0. ETCBC Dead Sea Scrolls (Abegg's transcriptions; Jacobs, Naaijer, Roorda), CC BY-NC 4.0 (NC). Codex Sinaiticus
     Project transcription, CC BY-NC-SA 3.0 (NC). IGNTP manuscript transcriptions, CC BY 4.0 (only the files so
     licensed); Codex Bezae, IGNTP for Cambridge University Library, CC BY-NC-SA 3.0 (NC).
-  Ancient versions: Targum Onkelos, Targum Pseudo-Jonathan and Targum Jonathan on the Prophets - Sefaria, public domain;
+  Ancient versions: Targum Pseudo-Jonathan and Targum Jonathan on the Prophets - Sefaria, public domain;
     English: J. W. Etheridge (1862) and C. W. H. Pauli (1871), public domain.
 
 Commentaries and apparatus (the notes panel; each source its own file, public/data/notes/<id>.db - pipeline/notes.py):
