@@ -19,6 +19,8 @@ export const isWide = () => WIDE.matches;
 /** Calls f whenever the layout changes between narrow and wide. */
 export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", f);
 const WIDEST = matchMedia ("(min-width: 1200px)");     // (style.css's third block: keep the two the same)
+/** Whether the text's word's panel is a column beside the text (1200 px and up). */
+export const isWidest = () => WIDEST.matches;
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
