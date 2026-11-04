@@ -94,6 +94,9 @@ Needs permission (later): Willker's Textual Commentary on the Greek Gospels (fre
 
 ## Other open items
 
+- [ ] Search: an index on words.strong, so a common root (אָמַר, 4,339 verses: ~0.9 s) is as fast as a rare one (~50 ms) - adds
+      19 MB to the database (82 -> 102 MB) and needs a full rebuild (pipeline/build_db.py, ~8 minutes). Not now.
+
 - [ ] Read-aloud with an online voice (Google Cloud TTS): the API key saved at `~/.config/cotext/google-tts-key.txt`,
       then sample chapters (John 1, Genesis 1) to choose a voice before making the whole Bible.
 - [ ] Start the COTEXT servers (ports 8090 dev, 8091 beta) by themselves at login.
