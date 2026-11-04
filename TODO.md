@@ -21,6 +21,15 @@ a non-commercial license are marked so in NOTICE.
   - [x] **ISBE, archaeology and sites** (1915, public domain; CrossWire's clean TEI): 904 articles - 813 places, 91 on
         archaeology and inscriptions - by passage (notes' ISBE), by word (a word panel's ISBE) and searchable.
   - [ ] ~~Barton, Archaeology and the Bible (1916)~~ - skipped: only scans and raw OCR (archive.org); no clean text.
+- [ ] **Atlas: eras and routes** (queued): POLITICAL BOUNDARIES, a switch shading the borders of the era of the book and
+      chapter read (each chapter tagged with its era; borders drawn by hand from public-domain historical atlases);
+      ROUTES, a dropdown of the book's own routes (Paul's journeys and the voyage to Rome, the Exodus and Numbers 33's
+      stops, Joshua's campaigns, Abraham, the deportations, the return), numbered with arrows, each stop linked to its
+      verse; base maps offered only for their era (the Roman Empire's roads only for Roman-period books), falling
+      back and coming back as resources do.
+- [ ] **☰ Timeline** (queued, after the Atlas's eras): lanes (patriarchs and judges, Israel's and Judah's kings,
+      prophets, empires, Jesus and the apostles), zoomable, the chapter read marked, each item tapped going to its
+      verses; a person's dates in the word panel. Data: Theographic Bible Metadata (license to check first: CC BY-SA?).
 - [ ] Before the public beta: slim the resources down (the user's pick).
 
 ## In progress
