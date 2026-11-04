@@ -1,7 +1,8 @@
 // The notes panel: free commentaries, text-critical apparatuses, English translations and the ancient versions beside the
 // text, following it. The icon right of
 // ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
-// panel when that's open - nothing floats over the text), at most half the screen, scrolling.
+// panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the text), at most half
+// the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
 //   VERSIONS - the database's note_sources (pipeline/notes.py) - so
@@ -320,8 +321,8 @@ function drawDiagram (s: Sentence, start: number, end: number, at: number): HTML
   return root;
 }
 
-// The room between the heading and the play bar (--mid, style.css): with the word's panel and the notes both open,
-// each gets at most a third of it. Measured at start and whenever the window or either bar changes size.
+// The room between the heading and the play bar (--mid, style.css): with several of the panels open (the word's,
+// the notes, the notes' Hebrew word's), they share it evenly with the text - a third each for two, a quarter for three. Measured at start and whenever the window or either bar changes size.
 const midRoom = () => document.documentElement.style.setProperty ("--mid",
   `${innerHeight - document.querySelector<HTMLElement> (".head")!.offsetHeight - document.getElementById ("playBar")!.offsetHeight}px`);
 midRoom ();

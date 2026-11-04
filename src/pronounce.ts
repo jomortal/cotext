@@ -95,7 +95,7 @@ const HEB_VOWELS: [string, string, string, string, string?][] = [
   ["חֳ", "hateph qamets", "o", "a short o, as in more"],
 ];
 
-const SPEAKER = document.getElementById ("speakRoot")!.innerHTML;
+const SPEAKER = document.querySelector ("#sheet .speakRoot")!.innerHTML;
 /** Hebrew inside English text: each run in the Hebrew font, isolated so it doesn't reorder the sentence around it. */
 const heIn = (t: string) => t.replace (/[\u0590-\u05FF]+/g, (m) => `<bdi class="heWord">${m}</bdi>`);     // (The word panel's speaker icon)
 const say = (t: string) => {

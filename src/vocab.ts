@@ -23,20 +23,23 @@ export function initVocab (theDb: Db) { db = theDb; }
 
 const esc = (s: string) => s.replace (/[&<>"]/g, (c) => `&#${c.charCodeAt (0)};`);
 
-// The panel's button.
-const addBtn = document.getElementById ("addVocab")!;
-let panelStrong = "";
-const label = () => { addBtn.textContent = learning[panelStrong] ? "✓ In my vocab" : "+ My vocab"; };
-/** The word the panel shows (panel.ts): its button follows it. */
-export function setVocabWord (strong: string) { panelStrong = strong; label (); }
-addBtn.addEventListener ("click", () => {
-  if (learning[panelStrong]) delete learning[panelStrong]; else learning[panelStrong] = true;
-  save (); label (); applyHelps ();     // (SHOW MY VOCAB: its helps follow)
-});
+// Each word's panel's button (panel.ts: the text's word's and the notes' Hebrew OT word's), each following its word.
+const panelBtns: { btn: HTMLElement; strong: string }[] = [];
+const label = () => { for (const b of panelBtns) b.btn.textContent = learning[b.strong] ? "✓ In my vocab" : "+ My vocab"; };
+/** A panel's + My vocab (btn): returns the setter for the word that panel shows, the button following it. */
+export function vocabButton (btn: HTMLElement): (strong: string) => void {
+  const b = { btn, strong: "" };
+  panelBtns.push (b);
+  btn.addEventListener ("click", () => {
+    if (learning[b.strong]) delete learning[b.strong]; else learning[b.strong] = true;
+    save (); label (); applyHelps ();     // (SHOW MY VOCAB: its helps follow)
+  });
+  return (strong) => { b.strong = strong; label (); };
+}
 setLearning ((k) => !! learning[k]);
 onHelpsChange (() => {
   for (const k of knownWords ()) if (learning[k]) { delete learning[k]; save (); }     // (Known: no longer learning)
-  if (panelStrong) label ();
+  label ();
 });
 
 interface WordCard extends Card { strong: string; }
@@ -57,7 +60,7 @@ function details (strongs: string[], bookId = whole ()): Map<string, { lemma: st
 }
 
 /** The speaker icon, as the word panel's (index.html). */
-const SPEAKER = document.getElementById ("speakRoot")!.innerHTML;
+const SPEAKER = document.querySelector ("#sheet .speakRoot")!.innerHTML;
 
 function cardsFor (strongs: string[]): WordCard[] {
   const d = details (strongs), hebrew = currentTestament () === "OT";

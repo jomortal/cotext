@@ -468,4 +468,4 @@ gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save
 showRate ();
 
 // (No voices: ▶ hidden, the play bar kept for the notes' icon beside it.)
-if (! synth) for (const el of [playBtn, document.getElementById ("speakBtn")!, document.getElementById ("audioSettings")!]) el.hidden = true;
+if (! synth) for (const el of [playBtn, ...document.querySelectorAll<HTMLElement> (".speakBtn"), document.getElementById ("audioSettings")!]) el.hidden = true;

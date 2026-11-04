@@ -16,7 +16,8 @@
 </head>
 <body>
 <!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, ▶ (read aloud) and the
-     notes' icon, the notes panel (commentaries and apparatus), the word's panel, the passage picker, the study drawer and its screens. -->
+     notes' icon, the word's panel, the notes panel (commentaries and apparatus), a second word's panel under it (panel.ts: a word of the notes'
+     Hebrew OT, cloned from #sheet), the passage picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
     <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
@@ -50,27 +51,27 @@
   <div id="chapter"></div>
   <p class="credit">Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0). Grammars: Gesenius' Hebrew Grammar (Kautzsch-Cowley, 1910; public domain; text from Wikisource); Smyth's Greek Grammar (1920; Perseus Digital Library, Tufts University, CC BY-SA 3.0). Commentaries and apparatus: each credited under its notes.</p>
 </main>
-<div id="sheet" hidden>
-  <div class="xRow"><button class="pill icon" id="close" aria-label="Close">✕</button></div>
+<div id="sheet" class="sheet dock" hidden>
+  <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
   <div class="heads">
-    <span class="root"><span class="lemma" id="form"></span><button class="pill icon" id="speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span>
-    <span class="root"><span class="lemma" id="lemma"></span><button class="pill icon" id="speakRoot" aria-label="Say the dictionary form"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><span class="btns"><button class="pill" id="addVocab">+ My vocab</button><button class="pill" id="knowIt">+ Known words</button></span>
+    <span class="root"><span class="lemma form"></span><button class="pill icon speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span>
+    <span class="root"><span class="lemma lemmaEl"></span><button class="pill icon speakRoot" aria-label="Say the dictionary form"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><span class="btns"><button class="pill addVocab">+ My vocab</button><button class="pill knowIt">+ Known words</button></span>
   </div>
-  <div class="full" id="full"></div>
-  <label class="sheetPick" id="lexRow">Lexicon<select id="lexPick" class="choose"></select></label>
-  <div class="def" id="def"></div>
-  <p class="credit" id="lexCredit" hidden></p>
-  <p class="nameNote" id="nameNote" hidden></p>
-  <div id="gInline" hidden>
-    <div class="xRow"><button class="pill icon" id="giClose" aria-label="Back to the word">✕</button></div>
-    <label class="sheetPick">Grammar<select id="grammarPick" class="choose"></select></label>
-    <div class="giScroll" id="giScroll">
-    <div class="top"><div><div class="gTitle" id="giTitle"></div><div class="src" id="giSec"></div></div></div>
-    <div class="gBody" id="giBody"></div>
+  <div class="full"></div>
+  <label class="sheetPick lexRow">Lexicon<select class="choose lexPick"></select></label>
+  <div class="def"></div>
+  <p class="credit lexCredit" hidden></p>
+  <p class="nameNote" hidden></p>
+  <div class="gInline" hidden>
+    <div class="xRow"><button class="pill icon giClose" aria-label="Back to the word">✕</button></div>
+    <label class="sheetPick">Grammar<select class="choose grammarPick"></select></label>
+    <div class="giScroll">
+    <div class="top"><div><div class="gTitle"></div><div class="src giSec"></div></div></div>
+    <div class="gBody giBody"></div>
     </div>
   </div>
 </div>
-<section id="notes" hidden>
+<section id="notes" class="dock" hidden>
   <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesClose" aria-label="Close">✕</button></div>
   <div class="notesScroll" id="notesScroll">
   <div class="src" id="notesRef"></div>
