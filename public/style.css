@@ -143,10 +143,8 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc
    at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
    least a third (main's min-height); its picker and ✕ (scrolling with the rest), the verse, the notes (a grammar section's look:
    .gBody), the source's credit. Under it the play bar, last, with the home indicator's room. */
-#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto; overflow-x: hidden;
-         padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
+#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; }
 #notes[hidden] { display: none; }
-#notes > * { max-width: 760px; margin-inline: auto; }
 #notes .top { align-items: center; margin-bottom: 10px; }     /* (Not frozen: the picker and ✕ scroll away with the notes) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
@@ -159,14 +157,19 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc
 #notes .credit { margin-top: 12px; }
 
 /* The word's panel: a sheet from the bottom. */
-#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; overflow-x: hidden; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto;     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
-         padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-/* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls - drawn as every ✕
-   is (a plain icon pill, no fill: as a screen's ✕) - sticky in a row of no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
-#sheet .xRow { position: sticky; top: 0; z-index: 3; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; }
+#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; }     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
+/* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
+   what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
+:is(#sheet, #notes) > .xRow { position: absolute; z-index: 3; top: var(--pad); right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+/* Each panel a frame that doesn't scroll, its ✕ placed in it (above), and inside it the scroller (panel.ts / notes.ts
+   wrap the panel's contents in .panelScroll): so the ✕ never moves, not even with the bounce at a scroll's end. */
+:is(#sheet, #notes):not([hidden]) { display: flex; flex-direction: column; position: relative; }
+:is(#sheet, #notes) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
+:is(#sheet, #notes) > .panelScroll > * { max-width: 760px; margin-inline: auto; }
+#notes .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
 #gInline .top, #gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
-#sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 #sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
 #sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
@@ -244,7 +247,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet .term.on { font-weight: 700; }
 #gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
 #gInline[hidden] { display: none; }
-#sheet.grammarOpen > :not(#gInline) { display: none; }
+#sheet.grammarOpen .panelScroll > :not(#gInline), #sheet.grammarOpen > .xRow { display: none; }
 #sheet.grammarOpen #gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 #gInline .top { align-items: start; }
 .gTitle { font-weight: 600; font-size: var(--fs-m); }
@@ -268,7 +271,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
    column, the picker over the section's own scroller (#giScroll: its heading and text), so the text never runs up
    behind the picker. */
-#sheet.grammarOpen { display: flex; flex-direction: column; overflow: hidden; }
+#sheet.grammarOpen .panelScroll { display: flex; flex-direction: column; overflow: hidden; }
 #sheet.grammarOpen #gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 #sheet.grammarOpen #gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }

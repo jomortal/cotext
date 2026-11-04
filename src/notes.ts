@@ -29,6 +29,12 @@ const picked: Record<string, string> = {};     // testament -> source id
 try { Object.assign (picked, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 
 const panel = document.getElementById ("notes")!;
+// Its ✕ fixed at the panel's upper right while the picker and notes scroll (even in the bounce at a scroll's end):
+// in a row of its own outside the scroller, .panelScroll (style.css).
+const notesScroll = document.createElement ("div");     // (The contents scroll in it; the ✕ stays, outside it)
+notesScroll.className = "panelScroll";
+{ const x = document.createElement ("div"); x.className = "xRow"; x.append (document.getElementById ("notesClose")!);
+  notesScroll.append (...panel.children); panel.append (x, notesScroll); }
 const btn = document.getElementById ("notesBtn")!;
 const pick = document.getElementById ("notesPick") as HTMLSelectElement;
 const refEl = document.getElementById ("notesRef")!;
@@ -145,7 +151,7 @@ function update () {
   }
   if (current ()?.kind === "syntax") {
     for (const n of notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
-    panel.scrollTop = 0;
+    notesScroll.scrollTop = 0;
     return;
   }
   for (const n of notes) {
@@ -156,7 +162,7 @@ function update () {
                  + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
     bodyEl.append (el);
   }
-  panel.scrollTop = 0;
+  notesScroll.scrollTop = 0;
 }
 
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */

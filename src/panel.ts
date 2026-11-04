@@ -34,6 +34,10 @@ let picked: HTMLElement | null = null;
 let pickedStrong = "";
 
 document.getElementById ("close")!.addEventListener ("click", hidePanel);
+// The panel's contents scroll inside it (.panelScroll), its ✕ row left outside, fixed in the corner (style.css).
+const sheetScroll = document.createElement ("div");
+sheetScroll.className = "panelScroll";
+{ const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
 knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
 document.getElementById ("speakBtn")!.addEventListener ("click", () => { if (picked) sayWord (picked); });
 document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText (lemmaEl.textContent ?? ""));     // (The dictionary form)
@@ -207,7 +211,7 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   const pick = lexChoice[hebrew ? "H" : "G"];
   showEntry (extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word - or "concise", from before: the brief one)
   sheet.hidden = false;
-  sheet.scrollTop = 0;
+  sheetScroll.scrollTop = 0;
   // Keep the word in view above the sheet.
   requestAnimationFrame (() => {
     const over = wordEl.getBoundingClientRect ().bottom - (window.innerHeight - sheet.offsetHeight) + 12;
