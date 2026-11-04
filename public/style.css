@@ -314,7 +314,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .card.single .cardFront, .card.single .cardBack { font-size: 44px; line-height: 1.3; display: block; }
 .card.single .heWord, .card.single .grWord { font-size: 44px; }
 .card.single > [hidden] { display: none; }
-.card .meaning { font-size: 24px; line-height: 1.3; }     /* (A vocab card's English) */
+.card .meaning { font-size: 32px; line-height: 1.25; }     /* (A vocab card's English) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: 18px; }
 .cardBar { justify-content: center; }
 .cardBar .pill { font-size: var(--fs-s); padding: 7px 16px; }
