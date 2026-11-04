@@ -40,6 +40,10 @@ Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): 
 Ancient versions (kind 'version'): onkelos Targum Onkelos, tpj Targum Pseudo-Jonathan, tj Targum Jonathan on the
   Prophets - Aramaic with an English translation under it where there is one (notes_sefaria.py; public domain).
 
+Syntax (kind 'syntax'): diagram_ot, diagram_nt Sentence diagram - MACULA Hebrew's and Greek's syntax trees (CC BY
+  4.0), a note per sentence, its body the sentence's tree as JSON, drawn by the app: diagram.py (its docstring gives
+  the tree). A file per testament, each named alike in the picker.
+
 Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Minchat
   Shai's Ruth, Esther, Ecclesiastes, Song of Songs and Lamentations (not on Sefaria).
 
@@ -55,9 +59,10 @@ Tables, in each source's file:
           note covers several, a cross-chapter one too), ord (its order among notes starting at the same verse),
           quote (the original-language words a note is about, en_tn's; else ''), body (HTML: <p> - <p dir="rtl"> for
           a Hebrew or Aramaic paragraph -, <b>, <i>, <br>, <small> (a footnote), <table>/<tr>/<td>, <span class=he|grc>
-          round Hebrew / Greek, <a href> (only the NET's link); nothing else)
+          round Hebrew / Greek, <a href> (only the NET's link); nothing else - a 'syntax' source's body is
+          JSON instead: diagram.py's tree)
 In the main database (cotext.db):
-  note_sources  id, kind ('commentary' / 'apparatus' / 'translation' / 'version'), name (as the picker shows it), testaments ('OT', 'NT' or
+  note_sources  id, kind ('commentary' / 'apparatus' / 'translation' / 'version' / 'syntax'), name (as the picker shows it), testaments ('OT', 'NT' or
           'OT NT'), credit (the line under the notes), file (data/notes/<id>.db), version (the file's hash: its URL
           and cache change with it), bytes
 """
@@ -156,8 +161,9 @@ SOURCES = [
      "reformatted. Ratings: A the reading quite certain, B some doubt, C considerable doubt, D a high degree of "
      "doubt. Factors: what weighed in the decision (its introduction numbers them)."),
     ("mam", "apparatus", "Miqra according to the Masorah", "OT",
-     "Miqra according to the Masorah (ed. Avi Kadish; Sefaria), CC BY-SA. Bold: its words that differ from this "
-     "text (letters and vowels; accents aside)."),
+     "Words in bold are where this edition, following the Aleppo Codex, differs from the text shown (the "
+     "Leningrad Codex) - in letters or vowels, accents aside. Miqra according to the Masorah (ed. Avi Kadish; "
+     "Sefaria), CC BY-SA."),
     ("minchatshai", "apparatus", "Minchat Shai (Masoretic notes)", "OT",
      "Yedidiah Norzi, Minchat Shai (1742): public domain (Sefaria). In Hebrew."),
     ("dss", "apparatus", "Dead Sea Scrolls", "OT",
@@ -222,6 +228,15 @@ SOURCES = [
     ("tj", "version", "Targum Jonathan (Prophets)", "OT",
      "Targum Jonathan on the Prophets (Mikraot Gedolot; Sefaria): public domain. English (Isaiah): The Chaldee "
      "Paraphrase on the Prophet Isaiah (C. W. H. Pauli, London, 1871), public domain."),
+    ("diagram_ot", "syntax", "Sentence diagram", "OT",
+     "MACULA Hebrew Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0 (github.com/Clear-Bible/macula-hebrew): "
+     "its syntax trees (from the Westminster Hebrew Syntax, (c) 1991-2018 the J. Alan Groves Center, CC BY 4.0; Open "
+     "Scriptures Hebrew Bible morphology and Cherith glosses, CC BY 4.0). Adapted: drawn as clauses and phrases; the "
+     "words and glosses this text's where they match."),
+    ("diagram_nt", "syntax", "Sentence diagram", "NT",
+     "MACULA Greek Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0 (github.com/Clear-Bible/macula-greek): "
+     "its syntax trees of the Nestle 1904 text. Adapted: drawn as clauses and phrases; the words and glosses this "
+     "text's where they match, Nestle's own where they differ."),
 ]
 
 USFM = ["GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH", "EZR", "NEH",
@@ -921,6 +936,9 @@ def build(main_db, book_codes, only=None):
     makers["tcent"] = tcent_rows
     for sid in notes_sefaria.SOURCES:
         makers[sid] = lambda sid=sid: notes_sefaria.rows(sid, main_db)
+    import diagram
+    makers["diagram_ot"] = lambda: diagram.rows(main_db, set(range(1, 40)))
+    makers["diagram_nt"] = lambda: diagram.rows(main_db, set(range(40, 67)))
     makers.update({"hottp": notes_mss.hottp_rows, "dss": notes_mss.dss_rows, "sinaiticus": notes_mss.sinaiticus_rows,
                    "igntp": notes_mss.igntp_rows, "bezae": notes_mss.bezae_rows})
     counts, listed = {}, []

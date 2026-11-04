@@ -3,7 +3,7 @@
 // ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
 // panel when that's open - nothing floats over the text), at most half the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
-//   COMMENTARIES, APPARATUS, TRANSLATIONS and ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py) - so
+//   COMMENTARIES, APPARATUS, TRANSLATIONS, ANCIENT VERSIONS and SYNTAX - the database's note_sources (pipeline/notes.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -13,11 +13,14 @@
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
 //   note read through several verses keeps its place. A translation or an ancient version (a Targum: its Aramaic,
 //   right to left, with the English under it) is a source with a "note" per verse: its text.
+// - A sentence diagram (SYNTAX: MACULA's trees, pipeline/diagram.py) is a "note" per sentence, its body the sentence's
+//   tree as JSON, drawn here (drawDiagram) - so the drawing changes without the data rebuilt. A sentence running over
+//   several verses shows on each, the words of the others dimmed.
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 
-interface Source { id: string; kind: "commentary" | "apparatus" | "translation" | "version"; name: string; testaments: string; credit: string;
+interface Source { id: string; kind: "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
 interface Note { id: number; start: number; end: number; quote: string; body: string; }
 
@@ -34,6 +37,7 @@ const creditEl = document.getElementById ("notesCredit")!;
 const main = document.querySelector ("main")!;
 
 let sources: Source[] = [];
+let textDb: Db | null = null;                     // The main database: a diagram's matched words are read from it
 let book: Book | null = null;
 let chapter = 1;
 let open: { id: string; db: Db } | null = null;     // The source's file open now
@@ -42,6 +46,7 @@ let shownVerse = -1;
 let shownIds: string | null = null;               // The notes drawn (their ids; null: none yet): redrawn only when they change
 
 export function initNotes (db: Db) {
+  textDb = db;
   sources = db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources") as unknown as Source[];
   btn.hidden = ! sources.length;
 }
@@ -58,7 +63,8 @@ export function setNotesPassage (b: Book, c: number) {
       return g.children.length ? [g] : [];
     };
     pick.replaceChildren (...group ("commentary", "Commentaries"), ...group ("apparatus", "Apparatus"),
-                       ...group ("translation", "Translations"), ...group ("version", "Ancient versions"));
+                       ...group ("translation", "Translations"), ...group ("version", "Ancient versions"),
+                       ...group ("syntax", "Syntax"));
     pick.value = current ()?.id ?? "";
   }
   shownVerse = -1; shownIds = null;
@@ -134,7 +140,13 @@ function update () {
   if (! notes.length) {
     const kind = current ()?.kind;
     bodyEl.innerHTML = kind === "translation" ? "<p>Not in this translation.</p>"
-                     : kind === "version" ? "<p>Not in this version.</p>" : "<p>No notes on this verse.</p>";
+                     : kind === "version" ? "<p>Not in this version.</p>"
+                     : kind === "syntax" ? "<p>No diagram for this verse.</p>" : "<p>No notes on this verse.</p>";
+  }
+  if (current ()?.kind === "syntax") {
+    for (const n of notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
+    document.getElementById ("notesScroll")!.scrollTop = 0;
+    return;
   }
   for (const n of notes) {
     const el = document.createElement ("div");
@@ -158,3 +170,74 @@ let frame = 0;
 const follow = () => { if (! frame && ! panel.hidden) frame = requestAnimationFrame (() => { frame = 0; update (); }); };
 main.addEventListener ("scroll", follow, { passive: true });
 document.addEventListener ("cotext:reading", follow);
+
+//==== SENTENCE DIAGRAM ====
+// A sentence (diagram.py's tree): its clauses, each a box - its joining words (καί, ὅτι, וְ, כִּי, אֲשֶׁר...) first,
+// then its phrases side by side, wrapping onto more lines as the width needs, each labeled by its role (subject,
+// verb, object...) above its words - the original, the English under it. A clause inside a phrase (a "that..." clause,
+// a relative, a participle's or an infinitive's, speech) is a box of its own inside that phrase, taking the phrase's
+// whole width, so the nesting reads as indents. Hebrew right to left (the phrases in the text's order from the
+// right), the labels and glosses left to right. Words of another verse (a sentence over several) dimmed.
+
+type DWord = [number, number] | [string, string, number];     // [ref, word number]: the text's word; [text, gloss, ref]: MACULA's own
+interface DClause { j?: DWord[]; t?: string; p: DPhrase[]; }
+interface DPhrase { r: string; w: (DWord | DClause)[]; }
+interface Sentence { l: "he" | "grc"; c: DClause[]; }
+
+const ROLES: Record<string, string> = { s: "subject", v: "verb", vc: "verb (linking)", o: "object", o2: "second object",
+  io: "indirect object", p: "predicate", adv: "adverbial", aux: "particle", "": "" };
+const KINDS: Record<string, string> = { relative: "relative clause", participle: "participle clause",
+  infinitive: "infinitive clause" };
+
+function drawDiagram (s: Sentence, start: number, end: number, at: number): HTMLElement {
+  // The text's words of the sentence's verses, read once: "ref:n" -> [text, gloss]
+  const text = new Map<string, [string, string]> ();
+  if (textDb && book) {
+    for (const r of textDb.all (`SELECT chapter * 1000 + verse AS ref, word, text, gloss FROM words
+                                 WHERE book = ? AND chapter * 1000 + verse BETWEEN ? AND ?`, [book.id, start, end]))
+      text.set (`${r.ref}:${r.word}`, [String (r.text), String (r.gloss ?? "")]);
+  }
+  const he = s.l === "he";
+  const el = (tag: string, cls: string, txt?: string) => {
+    const e = document.createElement (tag);
+    e.className = cls;
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  };
+  // (Punctuation left off the words and glosses: the boxes do its work)
+  const bare = (t: string) => t.replace (/[,.;:·\u0387\u05C3\u05C0\u05BE\u05C6]+$/u, "").replace (/^[\u05C0\s]+/u, "");
+  const word = (w: DWord) => {
+    const [t, g, ref] = typeof w[0] === "number" ? [...(text.get (`${w[0]}:${w[1]}`) ?? ["", ""]), w[0]] : w;
+    const e = el ("span", "dgW" + (ref !== at ? " dgOff" : ""));
+    e.append (el ("span", "dgT", bare (String (t))), el ("span", "dgG", bare (String (g)) || "\u00a0"));
+    return e;
+  };
+  const clause = (c: DClause, nested: boolean) => {
+    const box = el ("div", nested ? "dgC dgIn" : "dgC");
+    // Its joining words first in the row of phrases, labeled with the clause's kind (or nothing) as a phrase is
+    // with its role, so their words line up; a kind with no joining words a line over the phrases.
+    const ps = el ("div", "dgPs");
+    const kind = c.t ? KINDS[c.t] ?? "" : "";
+    if (c.j?.length) {
+      const j = el ("div", "dgP dgJ");
+      const ws = el ("div", "dgWs");
+      ws.append (...c.j.map (word));
+      j.append (el ("div", "dgR", kind || "\u00a0"), ws);
+      ps.append (j);
+    } else if (kind) box.append (el ("div", "dgK", kind));
+    for (const p of c.p) {
+      const ph = el ("div", "dgP" + (p.w.some ((x) => ! Array.isArray (x)) ? " dgWide" : "") + (p.r ? " dg-" + p.r : ""));
+      if (ROLES[p.r] ?? p.r) ph.append (el ("div", "dgR", ROLES[p.r] ?? p.r));
+      const ws = el ("div", "dgWs");
+      ws.append (...p.w.map ((x) => Array.isArray (x) ? word (x) : clause (x, true)));
+      ph.append (ws);
+      ps.append (ph);
+    }
+    box.append (ps);
+    return box;
+  };
+  const root = el ("div", "dg " + (he ? "dgHe" : "dgGrc"));     // (Not .he / .grc: .gBody styles those as inline text)
+  root.dir = he ? "rtl" : "ltr";
+  root.append (...s.c.map ((c) => clause (c, false)));
+  return root;
+}

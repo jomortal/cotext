@@ -35,7 +35,7 @@ walk ("dist");
 // (Cloudflare's) can never hand back an old copy of one with a new page - each build's are new addresses.
 {
   let html = fs.readFileSync ("dist/index.html", "utf8");
-  for (const f of ["app.js", "style.css"])
+  for (const f of ["app.js", "style.css", "diagram.css"])
     html = html.replace (`"${f}"`, `"${f}?v=${hash (fs.readFileSync (path.join ("dist", f))).slice (0, 12)}"`);
   fs.writeFileSync ("dist/index.html", html);
 }
