@@ -22,6 +22,11 @@ Grammars (the word's panel links each term of a parsing to its section):
   - J. Gresham Machen, New Testament Greek for Beginners (Macmillan, 1923): public domain in the United States. Text
     from the transcription at machengreek.com (made from the Internet Archive's scan), its lessons' text as pinned in
     pipeline/machen_pins.json; the site's own summaries, drills and answers are not used.
+  - unfoldingWord® Hebrew Grammar, © 2019 unfoldingWord, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+    - https://www.unfoldingword.org/uhg (source: git.door43.org/unfoldingWord/en_uhg).
+  - unfoldingWord® Greek Grammar, © 2023 unfoldingWord, CC BY-SA 4.0 - https://www.unfoldingword.org/ugg (source:
+    git.door43.org/unfoldingWord/en_ugg). Both kept word for word, their pages' text only (images, links and styling
+    dropped); their sections as kept in COTEXT's database are shared under the same licence.
   Changes made by COTEXT: the sections are reduced to paragraphs, bold, italics, tables and footnotes; Smyth's Greek
   is converted from Beta Code to Unicode; Gesenius' Bible references are written out from the transcription's
   templates; bibliographic tags are dropped; Machen's sections are his lessons' numbered paragraphs, each

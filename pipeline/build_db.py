@@ -17,7 +17,7 @@ Tables:
   guide     lang ('H' / 'G'), grp, ord, code, meaning - the Parsing guide: every part of the codes, from morph.py's
             tables (morph.guide)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
-            (Gesenius, Smyth, Machen): made by grammar.py, whose docstring describes them
+            (Gesenius, Smyth, Machen, unfoldingWord's Hebrew and Greek): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
