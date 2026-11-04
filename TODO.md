@@ -22,6 +22,9 @@ Round 2 (after round 1):
 - [x] Sentence diagrams (MACULA, both testaments) in the notes panel's SYNTAX - to tune by trying them.
 - [ ] BHSA as a second OT diagram; ETCBC add-ons (phono, parallels, valence), PROIEL, OpenText.org, OpenGNT - not yet.
 - [x] Septuagint (Swete text, lxx-morph tags) with HEBREW / GREEK in the ☰ menu.
+- [ ] Next (after the NT commentaries job, which owns notes.ts): a HEBREW OT notes source for LXX books - the matching
+      Hebrew verse as COTEXT's own interlinear (words, glosses, parsing, verb colors; tap a word for its info), no
+      panel or top bar of its own; LXX verses mapped to the Hebrew's. (The reverse - the LXX beside the Hebrew - only if asked.)
 - [ ] Septuagint gaps: 2,098 untagged words, 6,861 LXX-only lemmas without a gloss; diagrams / UBS "used here" for it.
 - [ ] Decide: LXX-Swete-1930's digitization is GPL-3.0 - redistributing its text may put COTEXT's data under the GPL.
 
