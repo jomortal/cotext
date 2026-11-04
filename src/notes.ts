@@ -123,10 +123,16 @@ btn.addEventListener ("click", () => {
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
-/** The verses to show: every verse with a line in view in the text's area (what's left of it above the panels - so a
- *  taller panel shows fewer), in order; none in view (a verse taller than the view): the one at its top. */
+/** The verses to show: every verse with a line in view in the text's area as it is with the panels open at their
+ *  full size (their max-height, not their height now) - so the verses don't change as the panel grows or shrinks
+ *  with what it shows (which would change the verses again, and so on): only when the text scrolls or a panel opens or
+ *  closes. In order; none in view (a verse taller than the view): the one at its top. */
 function versesNow (): number[] {
-  const r = main.getBoundingClientRect ();
+  const m = main.getBoundingClientRect ();
+  const play = document.getElementById ("playBar")!.getBoundingClientRect ().top;
+  const docks = [...document.querySelectorAll<HTMLElement> (".dock:not([hidden])")]
+    .reduce ((sum, d) => sum + (parseFloat (getComputedStyle (d).maxHeight) || d.offsetHeight), 0);
+  const r = { top: m.top, bottom: Math.min (m.bottom, play - docks) };     // (The text's area with the panels at full size)
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
   const seen = rows.filter ((row) => { const b = row.getBoundingClientRect (); return b.bottom > r.top + 8 && b.top < r.bottom - 8; });
   const vs = (seen.length ? seen : rows.filter ((row) => row.getBoundingClientRect ().bottom > r.top).slice (0, 1))
