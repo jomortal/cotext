@@ -6,7 +6,6 @@
 // closed - and picking a chapter goes there (a one-chapter book goes straight there).
 
 import { nativeName } from "./booknames";
-import { isWide } from "./layout";
 import type { Book } from "./reader";
 
 const picker = document.getElementById ("picker")!;
@@ -14,14 +13,15 @@ const body = document.getElementById ("pickerBody")!;
 
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 
-// (On a wide screen it starts and ends where the text's column does, so the panes' column at the right stays in
-// view: kept so as the column changes - a pane opened or closed, a split dragged, the window resized)
+// (On a wide screen it - and a study screen, ☰'s - starts and ends where the text's column does, so the panes' column
+// at the right stays in view: --textL and --textR, the text's insets from the window's edges, set on the root for
+// style.css; kept so as the column changes - a pane opened or closed, a split dragged, the window resized)
 // (Measured on the text itself, main: with the word beside the text #textCol has no box of its own - style.css)
 const text = document.querySelector ("main")!;
 const fit = () => {
-  const r = text.getBoundingClientRect (), wide = isWide ();
-  picker.style.left = wide ? `${Math.max (0, r.left)}px` : "";
-  picker.style.right = wide ? `${Math.max (0, innerWidth - r.right)}px` : "";
+  const r = text.getBoundingClientRect (), root = document.documentElement.style;
+  root.setProperty ("--textL", `${Math.max (0, r.left)}px`);
+  root.setProperty ("--textR", `${Math.max (0, innerWidth - r.right)}px`);
 };
 new ResizeObserver (fit).observe (text);
 addEventListener ("resize", fit);
@@ -33,7 +33,6 @@ type Chapters = (book: Book) => Promise<number[]>;
  *  chaptersOf: a book's chapter numbers (from the database: a promise). */
 export function openPicker (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
-  fit ();
   picker.hidden = false;
 }
 

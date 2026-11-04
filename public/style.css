@@ -466,7 +466,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
-  #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
+  /* The book picker and a study screen over the text's column only, the panes beside it left in view (picker.ts sets
+     --textL / --textR, the text's insets); a screen's ☰ and ✕ at its own edges, as the heading's at the column's. */
+  :is(#picker, #screen) { left: var(--textL, 0px); right: var(--textR, 0px); }
+  #screenMenu { left: calc(var(--textL, 0px) + max(var(--pad), env(safe-area-inset-left, 0px))); } #screenClose { right: calc(var(--textR, 0px) + max(var(--pad), env(safe-area-inset-right, 0px))); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch at whichever side the pane is. */
   .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px max(var(--pad), env(safe-area-inset-left, 0px)); }
