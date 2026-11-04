@@ -9,9 +9,9 @@
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
-// - It shows the notes on one verse: the verse being read aloud while ▶ reads (audio.ts signals each word lit),
-//   otherwise the verse at the top of the view (the first whose line shows under the heading, as ▶ starts from),
-//   following as the reader scrolls. A note on a range (1:1-18) shows on each of its verses, its range above it; a
+// - It shows the notes on every verse in view - each verse with a line showing in the text's area above the panels
+//   (so a taller panel shows fewer), each under its reference when there are several - following as the text
+//   scrolls and as ▶ reads (audio.ts signals each word lit). A note on a range (1:1-18) shows once, its range above it; a
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
 //   note read through several verses keeps its place. A translation or an ancient version (a Targum: its Aramaic,
 //   right to left, with the English under it) is a source with a "note" per verse: its text.
@@ -67,7 +67,7 @@ let books: Book[] = [];
 let chapter = 1;
 let open: { id: string; db: Db } | null = null;     // The source's file open now
 let loading = 0;                                   // (A load's number: a later pick wins over one still arriving)
-let shownVerse = -1;
+let shownVerse = "";      // The verses shown ("1,2,3"): redrawn only when they change
 let shownIds: string | null = null;               // The notes drawn (their ids; null: none yet): redrawn only when they change
 
 export function initNotes (db: Db) {
@@ -95,7 +95,7 @@ export function setNotesPassage (b: Book, c: number) {
                        ...group ("version", "Ancient versions"));
     pick.value = current ()?.id ?? "";
   }
-  shownVerse = -1; shownIds = null;
+  shownVerse = ""; shownIds = null;
   if (! panel.hidden) show ();
 }
 
@@ -111,28 +111,30 @@ pick.addEventListener ("change", () => {
   if (! book) return;
   picked[scope ()] = pick.value;
   try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
-  shownVerse = -1; shownIds = null;
+  shownVerse = ""; shownIds = null;
   show ();
 });
 
 btn.addEventListener ("click", () => {
   panel.hidden = ! panel.hidden;
   btn.setAttribute ("aria-pressed", String (! panel.hidden));
-  shownVerse = -1; shownIds = null;
+  shownVerse = ""; shownIds = null;
   if (! panel.hidden) show (); else clearInterlinear ();
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
-/** The verse to show: the one being read aloud, else the first whose line shows at the top of the view. */
-function verseNow (): number {
-  const reading = document.querySelector ("#chapter .w.reading")?.closest<HTMLElement> (".vrow");
-  const top = main.getBoundingClientRect ().top;
-  const row = reading ?? [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")]
-    .find ((r) => r.getBoundingClientRect ().bottom > top + 8);
-  return Number (row?.querySelector (".vnum")?.textContent ?? 1);
+/** The verses to show: every verse with a line in view in the text's area (what's left of it above the panels - so a
+ *  taller panel shows fewer), in order; none in view (a verse taller than the view): the one at its top. */
+function versesNow (): number[] {
+  const r = main.getBoundingClientRect ();
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const seen = rows.filter ((row) => { const b = row.getBoundingClientRect (); return b.bottom > r.top + 8 && b.top < r.bottom - 8; });
+  const vs = (seen.length ? seen : rows.filter ((row) => row.getBoundingClientRect ().bottom > r.top).slice (0, 1))
+    .map ((row) => Number (row.querySelector (".vnum")?.textContent ?? 1));
+  return vs.length ? vs : [1];
 }
 
-/** Draws the notes for the verse now - loading the source's file first if it isn't open. */
+/** Draws the notes for the verses now - loading the source's file first if it isn't open. */
 async function show () {
   const src = current ();
   if (! book || ! src) return;
@@ -156,24 +158,30 @@ async function show () {
   update ();
 }
 
-/** The notes for the verse now, drawn if they differ from those shown. */
+/** The notes for the verses now, drawn if they differ from those shown: each verse's in turn, under its reference
+ *  when there are several (a note on a range of verses shown once, at the first); the Hebrew OT, all their Hebrew
+ *  verses as one interlinear; the diagram, each sentence once. */
 function update () {
   const src = current ();
   if (panel.hidden || ! book || ! src || ! textDb || (src.file && open?.id !== src.id)) return;
-  const v = verseNow ();
-  if (v === shownVerse) return;
-  shownVerse = v;
-  refEl.textContent = `${book.name} ${chapter}:${v}`;
-  // The verses whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses this one translates
-  // ([book, chapter, verse]); otherwise its own.
-  const where = heb && (src.kind === "original" || offers (src, "OT"))
-    ? textDb.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
-                  [book.id, chapter, v]).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
-    : [[book.id, chapter, v]];
+  const vs = versesNow ();
+  const key = vs.join (",");
+  if (key === shownVerse) return;
+  shownVerse = key;
+  const many = vs.length > 1;
+  refEl.textContent = `${book.name} ${chapter}:${vs[0]}` + (many ? `–${vs[vs.length - 1]}` : "");
+  // Each verse's places whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses it
+  // translates ([book, chapter, verse]; none: the Hebrew lacks it); otherwise its own.
+  const hebrewKeyed = !! heb && (src.kind === "original" || offers (src, "OT"));
+  const per = vs.map ((v) => ({ v, where: hebrewKeyed
+    ? textDb!.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
+                   [book!.id, chapter, v]).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
+    : [[book!.id, chapter, v]] }));
+  const all = per.flatMap ((p) => p.where);
   // (The interlinear out of .gBody: its .he would restyle the reader's rows as inline Hebrew text)
   bodyEl.classList.toggle ("gBody", src.kind !== "original");
-  if (heb && where[0]?.[0] === heb.id) refEl.textContent += ` - Hebrew ${heb.name} ${refs (where)}`;
-  if (! where.length) {
+  if (hebrewKeyed && all.length) refEl.textContent += ` - Hebrew ${heb!.name} ${refs (all)}`;
+  if (! all.length) {
     if (shownIds === "lxx") return;
     shownIds = "lxx";
     clearInterlinear ();
@@ -181,46 +189,63 @@ function update () {
     return;
   }
   if (src.kind === "original") {
-    const key = "he " + where.join (" ");
-    if (key === shownIds) return;
-    shownIds = key;
+    const ids = "he " + all.join (" ");
+    if (ids === shownIds) return;
+    shownIds = ids;
     const el = document.createElement ("div");
     el.className = "besideText";
     bodyEl.replaceChildren (el);
-    drawInterlinear (el, textDb, heb!, where.map (([, c, vv]) => [c, vv] as [number, number]));
+    drawInterlinear (el, textDb, heb!, all.map (([, c, vv]) => [c, vv] as [number, number]));
     notesScroll.scrollTop = 0;
     return;
   }
-  const at = where[0][1] * 1000 + where[0][2];
-  const notes: Note[] = [], seen = new Set<number> ();
-  for (const [b, c, vv] of where)
-    for (const n of open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
-                                   ORDER BY start, "end" DESC, ord`, [b, c * 1000 + vv, c * 1000 + vv]) as unknown as Note[])
-      if (! seen.has (n.id)) { seen.add (n.id); notes.push (n); }
-  const ids = notes.map ((n) => n.id).join (",");
+  // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
+  const seen = new Set<number> ();
+  const groups = per.map (({ v, where }) => {
+    const notes: Note[] = [];
+    for (const [b, c, vv] of where)
+      for (const n of open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
+                                     ORDER BY start, "end" DESC, ord`, [b, c * 1000 + vv, c * 1000 + vv]) as unknown as Note[])
+        if (! seen.has (n.id)) { seen.add (n.id); notes.push (n); }
+    return { v, where, notes };
+  });
+  const ids = groups.map ((g) => g.v + ":" + (g.where.length ? g.notes.map ((n) => n.id).join (".") : "-")).join (",");
   if (ids === shownIds) return;
   shownIds = ids;
   clearInterlinear ();
   bodyEl.replaceChildren ();
-  if (! notes.length) {
-    const kind = current ()?.kind;
-    bodyEl.innerHTML = kind === "translation" ? "<p>Not in this translation.</p>"
-                     : kind === "version" ? "<p>Not in this version.</p>"
-                     : kind === "syntax" ? "<p>No diagram for this verse.</p>" : "<p>No notes on this verse.</p>";
+  const kind = src.kind;
+  const none = kind === "translation" ? "Not in this translation." : kind === "version" ? "Not in this version."
+             : kind === "syntax" ? "No diagram for this verse." : "No notes on this verse.";
+  for (const g of groups) {
+    if (many) {
+      const h = document.createElement ("div");
+      h.className = "src verseHead";
+      h.textContent = `${chapter}:${g.v}`;
+      bodyEl.append (h);
+    }
+    if (! g.where.length) { bodyEl.insertAdjacentHTML ("beforeend", LXX_ONLY); continue; }
+    if (! g.notes.length) {
+      // (A verse whose note began at an earlier verse shown above: nothing more to say for it)
+      if (many && seen.size) { bodyEl.lastElementChild?.remove (); continue; }
+      bodyEl.insertAdjacentHTML ("beforeend", `<p>${none}</p>`);
+      continue;
+    }
+    if (kind === "syntax") {
+      const at = g.where[0][1] * 1000 + g.where[0][2];
+      for (const n of g.notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
+      continue;
+    }
+    for (const n of g.notes) {
+      const el = document.createElement ("div");
+      el.className = "note";
+      // (The body is the pipeline's own HTML: a few tags only - notes.py's docstring lists them)
+      el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
+                   + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
+      bodyEl.append (el);
+    }
   }
-  if (current ()?.kind === "syntax") {
-    for (const n of notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
-    notesScroll.scrollTop = 0;
-    return;
-  }
-  for (const n of notes) {
-    const el = document.createElement ("div");
-    el.className = "note";
-    // (The body is the pipeline's own HTML: a few tags only - notes.py's docstring lists them)
-    el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
-                 + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
-    bodyEl.append (el);
-  }
+  if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
   notesScroll.scrollTop = 0;
 }
 
