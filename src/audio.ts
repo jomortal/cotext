@@ -21,6 +21,7 @@
 //   main pause) then the rest. The word's panel's speakers keep the device's voice (the recordings have no word
 //   timings).
 
+import type { Testament } from "./study";
 import { onScreen, openScreen } from "./study";
 
 const KEY = "cotext.audio";
@@ -36,8 +37,8 @@ const s: Settings = { rate: 0.8, noBoundary: [] };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } catch { /* private mode: not kept */ } };
 
-let testament: "OT" | "NT" = "OT";
-const lang = () => (testament === "OT" ? "he" : "el");
+let testament: Testament = "OT";
+const lang = () => (testament === "OT" ? "he" : "el");     // (The Septuagint, as the NT, Greek)
 
 /** The divine name read as a Jewish reader says it: יהוה (with any prefix: לַיהוָה) as אֲדֹנָי, Adonai - or, pointed
  *  with Elohim's hiriq (יֱהוִה, where Adonai stands beside it), as אֱלֹהִים. As written
@@ -278,8 +279,9 @@ export function sayText (text: string) {
   synth.speak (u);
 }
 
-/** The testament shown: voices and their language follow it. Called on each chapter shown (reading stops). */
-export function setAudioTestament (t: "OT" | "NT") {
+/** The testament shown: voices and their language follow it (Hebrew for the OT, Greek for the NT and the
+ *  Septuagint). Called on each chapter shown (reading stops). */
+export function setAudioTestament (t: Testament) {
   stopReading ();
   if (t !== testament) testament = t;
   showVoice ();

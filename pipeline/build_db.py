@@ -5,7 +5,10 @@ Run: python3 pipeline/build_db.py   (Python's standard library only; about a min
 a few minutes more - grammar.py)
 
 Tables:
-  books     id (1-39 OT, 40-66 NT), code (Gen, Jhn - the source's), name, testament ('OT' / 'NT'), chapters
+  books     id (1-39 OT, 40-66 NT, 67 on the Septuagint's), code (Gen, Jhn - the source's; the LXX's LXXGen...),
+            name, testament ('OT' / 'NT' / 'LXX'), chapters, heb (an LXX book's Hebrew Bible book, its id; 0 none - and
+            for every other book), notes (the book whose notes the panel shows: its own, or an LXX book's Hebrew one
+            where both number alike - lxx.py)
   words     one row per word of the reading text, kept in order by its key (book, chapter, verse, word): book, chapter, verse, word (its number in the verse),
             text (pointed Hebrew / accented Greek, with its punctuation), translit, gloss (English), strong (the
             extended Strong's of the word's root - the lexicon's key), morph (the source's code)
@@ -13,7 +16,8 @@ Tables:
             singular"), stem (the verb's color group in the reader: qal, piel, hiphil... ; Greek verbs 'verb'; else '')
   lexicon   strong -> lemma (dictionary form), translit, gloss, entry (the brief lexicon's text: plain, with <b>, <i>
             and <br> only), concise (the meaning to memorise, a few words: concise())
-  freq      strong, book (0: the whole OT or NT), count - how often each lemma occurs
+  freq      strong, book (0: the whole OT or NT - by the key's H or G; -1 the whole LXX), count - how often each
+            lemma occurs
   guide     lang ('H' / 'G'), grp, ord, code, meaning - the Parsing guide: every part of the codes, from morph.py's
             tables (morph.guide)
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
@@ -32,9 +36,12 @@ the source numbers words by the Hebrew verse, which restarts inside an English o
 (Num 26:1 starts at Hebrew 25:19).
 
 The reading text: Hebrew - the Leningrad codex as translators read it (Qere over Ketiv; the source's L, Q, R and X
-rows); Greek - the Nestle-Aland text (rows whose type has N), leaving out words only in the KJV's text or others.
+rows); Greek - the Nestle-Aland text (rows whose type has N), leaving out words only in the KJV's text or others;
+the Septuagint - Swete's, tagged from Rahlfs' (lxx.py: its sources, numbering and tags), its books numbered and
+ordered as Swete has them.
 """
 import collections
+import hashlib
 import html
 import pathlib
 import re
@@ -46,6 +53,7 @@ import bdb  # noqa: E402
 import fetch  # noqa: E402
 import grammar  # noqa: E402
 import greek_lex  # noqa: E402
+import lxx  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
 import sefaria_lex  # noqa: E402
@@ -196,7 +204,8 @@ def build():
     db = sqlite3.connect(tmp)
     db.executescript("""
         PRAGMA page_size = 4096;
-        CREATE TABLE books (id INTEGER PRIMARY KEY, code TEXT, name TEXT, testament TEXT, chapters INTEGER);
+        CREATE TABLE books (id INTEGER PRIMARY KEY, code TEXT, name TEXT, testament TEXT, chapters INTEGER,
+                            heb INTEGER, notes INTEGER);
         CREATE TABLE words (book INTEGER, chapter INTEGER, verse INTEGER, word INTEGER, text TEXT, translit TEXT,
                             gloss TEXT, strong TEXT, morph TEXT, PRIMARY KEY (book, chapter, verse, word)) WITHOUT ROWID;
         CREATE TABLE parsings (morph TEXT PRIMARY KEY, code TEXT, spelled TEXT, stem TEXT) WITHOUT ROWID;
@@ -211,11 +220,14 @@ def build():
     parsings = {}
     greek = set()     # (Which source codes are Greek: TAGNT's)
     extra_lex = {}
+    nt_rows = []     # (TAGNT's (strong, code, gloss, word) - lxx.py tags the LXX by them)
     for source, convert in ((hebrew_words(), morph.hebrew), (greek_words(), morph.greek)):
         rows = []
         place = collections.Counter()   # word numbers counted afresh per verse (see the module's comment)
         for (book, ch, v, _, text, translit, gloss, strong, mcode, lemma, short) in source:
             place[(book, ch, v)] += 1
+            if convert is morph.greek:
+                nt_rows.append((strong, mcode, gloss, text))
             rows.append((book, ch, v, place[(book, ch, v)], text, translit, gloss, strong, mcode))
             if mcode not in parsings:
                 parsings[mcode] = convert(mcode)
@@ -228,8 +240,23 @@ def build():
                 extra_lex[strong] = (lemma, "", short, "", short)
         db.executemany("INSERT INTO words (book, chapter, verse, word, text, translit, gloss, strong, morph) "
                        "VALUES (?,?,?,?,?,?,?,?,?)", rows)
-    db.executemany("INSERT INTO books VALUES (?,?,?,?,?)",
-                   [(i + 1, code, name, "OT" if i < 39 else "NT", chapters[i + 1]) for i, (code, name) in enumerate(BOOKS)])
+    db.executemany("INSERT INTO books VALUES (?,?,?,?,?,0,?)",
+                   [(i + 1, code, name, "OT" if i < 39 else "NT", chapters[i + 1], i + 1) for i, (code, name) in enumerate(BOOKS)])
+    # The Septuagint (lxx.py): its words, counted over the whole LXX (freq's book -1) and per book
+    lxx_books, lxx_rows, lxx_lex, lxx_stats = lxx.words(nt_rows, {**lex, **extra_lex})
+    db.executemany("INSERT INTO words (book, chapter, verse, word, text, translit, gloss, strong, morph) "
+                   "VALUES (?,?,?,?,?,?,?,?,?)", lxx_rows)
+    for (book, _c, _v, _n, _t, _tr, _g, strong, mcode) in lxx_rows:
+        if mcode not in parsings:
+            parsings[mcode] = morph.greek(mcode)
+            greek.add(mcode)
+        counts[(strong, -1)] += 1
+        counts[(strong, book)] += 1
+    extra_lex.update({k: v for k, v in lxx_lex.items() if k not in lex})
+    db.executemany("INSERT INTO books VALUES (?,?,?,?,?,?,0)",
+                   [(lxx.FIRST_ID + i, "LXX" + code, name, "LXX", n, BOOK_ID.get(heb, 0))
+                    for i, (code, name, heb, n) in enumerate(lxx_books)])
+    db.executemany("UPDATE books SET notes = ? WHERE id = ?", [(n, b) for b, n in lxx.notes_books(db, lxx_books).items()])
     db.executemany("INSERT INTO parsings VALUES (?,?,?,?)", [(k, *v) for k, v in parsings.items()])
     used = {s for (s, _) in counts}
     lex_rows = [(k, *v) for k, v in {**lex, **extra_lex}.items() if k in used]
@@ -238,6 +265,11 @@ def build():
     db.executemany("INSERT INTO guide VALUES (?,?,?,?,?)", [(l, g, i, c, m) for i, (l, g, c, m) in enumerate(morph.guide())])
     grammar_counts = grammar.build(db, parsings, greek)
     note_counts = notes.build(db, [code for code, _ in BOOKS])
+    path, n = notes.write("brenton_lxx", lxx.brenton_rows(notes))     # (Brenton on the LXX's own numbers: lxx.py)
+    data = path.read_bytes()
+    db.execute("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)", (*lxx.BRENTON_SOURCE, "data/notes/brenton_lxx.db",
+               hashlib.sha256(data).hexdigest()[:12], len(data)))
+    note_counts["brenton_lxx"] = (n, len(data))
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
     ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
@@ -250,6 +282,7 @@ def build():
     db.execute("VACUUM")
     db.close()
     tmp.replace(OUT)
+    print(f"LXX: {len(lxx_books)} books, {len(lxx_rows)} words - " + ", ".join(f"{k} {n}" for k, n in lxx_stats.items()))
     print(f"{OUT} - {OUT.stat().st_size / 1e6:.1f} MB; {len(lex_rows)} lexicon entries "
           f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
           + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()) + "; notes "

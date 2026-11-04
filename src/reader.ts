@@ -6,6 +6,7 @@
 // (its aspect): verbForm, style.css's .vf-...
 
 import type { Db } from "./db";
+import type { Testament } from "./study";
 import { modernGreek } from "./translit";
 
 // A verb's color group, from its code (pipeline/morph.py's scheme), or "" for anything not a verb.
@@ -23,7 +24,9 @@ function verbForm (w: Word): string {
   return "";
 }
 
-export interface Book { id: number; code: string; name: string; testament: "OT" | "NT"; chapters: number; }
+/** A book: testament OT (Hebrew), NT or LXX (Greek); heb - an LXX book's Hebrew Bible book (its id; 0 none); notes -
+ *  the book whose notes the panel shows (its own, or an LXX book's Hebrew one where both number alike). */
+export interface Book { id: number; code: string; name: string; testament: Testament; chapters: number; heb: number; notes: number; }
 
 /** One word as the chapter shows it; the panel reads the rest from the database when it's tapped. */
 export interface Word { verse: number; text: string; translit: string; gloss: string; strong: string; morph: string; code: string;

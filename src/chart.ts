@@ -22,7 +22,8 @@ let db: Db;
 let chapterWords: Word[] = [];
 /** The verb chosen: the pattern, a model (its index), or a verb of the text (its Strong's number without the sense letter). */
 type Verb = { kind: "pattern" } | { kind: "model"; i: number } | { kind: "text"; base: string; lemma: string; gloss: string };
-const state = { OT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" }, NT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" } };
+const state = { OT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" }, NT: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" },
+                LXX: { stem: 0, verb: { kind: "pattern" } as Verb, mood: "" } };
 // (mood: the part shown, "" all - Greek's mood: I S M N P, indicative, subjunctive, imperative, infinitive, participle;
 // Hebrew's form: P I W IMP PTC INF, perfect, imperfect, wayyiqtol, imperative, participle, infinitive)
 
@@ -53,15 +54,16 @@ function greekKeys (code: string): string[] {
   return voices.map ((v) => m[1] + v + m[3] + m[4]);
 }
 
-/** Every form of a verb in the text, by the chart's code. (One pass over the words: the words table isn't indexed by
- *  Strong's number; kept per verb.) */
+/** Every form of a verb in the testament shown (a Greek verb's in the NT or the Septuagint), by the chart's code.
+ *  (One pass over the words: the words table isn't indexed by Strong's number; kept per testament and verb.) */
 function attested (base: string): Map<string, Seen> {
-  let m = attestedCache.get (base);
+  const t = currentTestament (), key = t + " " + base;
+  let m = attestedCache.get (key);
   if (m) return m;
   m = new Map ();
   const greek = base.startsWith ("G");
   const rows = db.all (`SELECT w.text, p.code FROM words w JOIN parsings p ON p.morph = w.morph
-                        WHERE w.strong = ? OR w.strong GLOB ?`, [base, base + "[A-Z]"]);
+                        WHERE (w.strong = ? OR w.strong GLOB ?) AND w.book IN (SELECT id FROM books WHERE testament = ?)`, [base, base + "[A-Z]", t]);
   for (const r of rows) {
     const text = greek ? cleanGreek (String (r.text)) : cleanHebrew (String (r.text));
     for (const key of greek ? greekKeys (String (r.code)) : [String (r.code)]) {
@@ -71,7 +73,7 @@ function attested (base: string): Map<string, Seen> {
       m.set (key, s);
     }
   }
-  attestedCache.set (base, m);
+  attestedCache.set (key, m);
   return m;
 }
 
@@ -103,7 +105,7 @@ export function chartStemOf (strong: string, code: string): number {
 
 /** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked. */
 export function openChartFor (strong: string, code: string) {
-  const st = state[strong.startsWith ("H") ? "OT" : "NT"];
+  const st = state[strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT"];
   st.stem = Math.max (0, chartStemOf (strong, code));
   st.verb = textVerb (baseOf (strong));
   st.mood = "";     // (Every form shown: the word's own among them)
@@ -250,7 +252,7 @@ function render (body: HTMLElement) {
       <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
     </div>
     <p>${verb.kind === "text"
-      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it. Under each: its parsing and its meaning on "${esc ((englishOf (verb.gloss) ?? ["do"])[0])}".`
+      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : t === "LXX" ? "Septuagint" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it. Under each: its parsing and its meaning on "${esc ((englishOf (verb.gloss) ?? ["do"])[0])}".`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
     ${hebrew ? hebrewTables (verb, st.stem, st.mood) : greekTables (verb, st.stem, st.mood)}`;

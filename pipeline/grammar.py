@@ -1199,7 +1199,7 @@ def rebuild(path=HERE.parent / "public" / "data" / "cotext.db"):
                      "DROP TABLE IF EXISTS grammar_terms; ALTER TABLE parsings DROP COLUMN terms;")
     parsings = {m: (c, sp, st) for m, c, sp, st in db.execute("SELECT morph, code, spelled, stem FROM parsings")}
     greek = {m for (m,) in db.execute("SELECT DISTINCT morph FROM words JOIN books ON books.id = words.book "
-                                      "WHERE testament = 'NT'")}
+                                      "WHERE testament IN ('NT', 'LXX')")}
     counts = build(db, parsings, greek)
     db.commit()
     db.execute("VACUUM")

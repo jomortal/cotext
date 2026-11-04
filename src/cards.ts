@@ -60,8 +60,8 @@ const paradigmCard = (f: Form & { text: string }, hebrew: boolean, filled: boole
   back: `<div class="paradigm">${spellCode (f.code, hebrew)}</div><div>${f.meaning}</div>${filled ? "" : `<div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`}`,
 });
 
-const picked = { OT: 0, NT: 0 };
-const fillIn = { OT: -1, NT: -1 };     // (FILL IN, by testament: -1 the pattern, else a model verb's index)
+const picked = { OT: 0, NT: 0, LXX: 0 };
+const fillIn = { OT: -1, NT: -1, LXX: -1 };     // (FILL IN, by testament: -1 the pattern, else a model verb's index)
 
 function paradigms (body: HTMLElement) {
   const t = currentTestament (), hebrew = t === "OT";

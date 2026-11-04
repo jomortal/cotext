@@ -1,6 +1,6 @@
-// COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1), else the last
-// one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across books), its
-// middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
+// COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1, #LXXGen.1), else
+// the last one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across the
+// books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
 // the icon beside it opens the notes panel (notes.ts).
 
 import { openDb, type Db } from "./db";
@@ -8,7 +8,7 @@ import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker } from "./picker";
 import { setBook, applyHelps } from "./helps";
-import { setTestament } from "./study";
+import { setTestament, currentLanguage, onLanguage } from "./study";
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
 import { initChart, setChartPassage } from "./chart";
@@ -39,7 +39,14 @@ const ABBR: Record<string, string> = { Genesis: "Gen", Exodus: "Exod", Leviticus
   Haggai: "Hag", Zechariah: "Zech", Malachi: "Mal", Matthew: "Matt", Romans: "Rom", "1 Corinthians": "1 Cor",
   "2 Corinthians": "2 Cor", Galatians: "Gal", Ephesians: "Eph", Philippians: "Phil", Colossians: "Col",
   "1 Thessalonians": "1 Thess", "2 Thessalonians": "2 Thess", "1 Timothy": "1 Tim", "2 Timothy": "2 Tim",
-  Philemon: "Phlm", Hebrews: "Heb", James: "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet", Revelation: "Rev" };
+  Philemon: "Phlm", Hebrews: "Heb", James: "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet", Revelation: "Rev",
+  // (The Septuagint's: SBL's, its two texts of a book marked OG / Th)
+  "1 Kingdoms": "1 Kgdms", "2 Kingdoms": "2 Kgdms", "3 Kingdoms": "3 Kgdms", "4 Kingdoms": "4 Kgdms", "1 Esdras": "1 Esd",
+  "2 Esdras (Ezra)": "2 Esd", "2 Esdras (Nehemiah)": "Neh", "Wisdom of Solomon": "Wis", "Sirach (Prologue)": "Sir Prol",
+  "Tobit (Sinaiticus)": "Tob S", "Letter of Jeremiah": "Ep Jer", "Daniel (Old Greek)": "Dan OG", "Daniel (Theodotion)": "Dan Th",
+  "Susanna (Old Greek)": "Sus OG", "Susanna (Theodotion)": "Sus Th", "Bel and the Dragon (Old Greek)": "Bel OG",
+  "Bel and the Dragon (Theodotion)": "Bel Th", "1 Maccabees": "1 Macc", "2 Maccabees": "2 Macc", "3 Maccabees": "3 Macc",
+  "4 Maccabees": "4 Macc", "Psalms of Solomon": "Pss Sol" };
 function showPlace () {
   if (! book) return;
   placeBtn.textContent = `${book.name} ${chapter}`;
@@ -63,7 +70,10 @@ function go (b: Book, c: number) {
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
   applyHelps ();
   document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
-  setNotesPassage (b, c);     // (After the scroll to the top: the notes panel shows the first verse)
+  // (After the scroll to the top: the notes panel shows the first verse. An LXX book numbered as its Hebrew one has
+  // the Hebrew's notes - its translations, Brenton's among them, and commentaries; any other only Brenton's, by its
+  // own numbers - lxx.py)
+  setNotesPassage (books.find ((x) => x.id === b.notes) ?? b, c);
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }
@@ -73,14 +83,49 @@ function go (b: Book, c: number) {
 function parseRef (ref: string | null): [Book, number] | null {
   const m = ref?.match (/^(\w+)\.(\d+)$/);
   const b = m && books.find ((x) => x.code === m[1]);
-  return b && +m![2] >= 1 && +m![2] <= b.chapters ? [b, +m![2]] : null;
+  return b && chaptersOf (b).includes (+m![2]) ? [b, +m![2]] : null;
 }
 
-/** The chapter before (-1) or after (+1), across books; nothing past Genesis 1 or Revelation 22. */
+/** A book's chapters: 1 to its last, but for Enoch's fragments only those it has (read once). */
+const chapterCache = new Map<number, number[]> ();
+function chaptersOf (b: Book): number[] {
+  let cs = chapterCache.get (b.id);
+  if (! cs) {
+    cs = db.all ("SELECT DISTINCT chapter FROM words WHERE book = ? ORDER BY chapter", [b.id]).map ((r) => Number (r.chapter));
+    chapterCache.set (b.id, cs);
+  }
+  return cs;
+}
+
+/** The books of the language picked, in order: the Hebrew OT or the Septuagint, then the NT. */
+const shown = () => books.filter ((b) => b.testament === (currentLanguage () === "H" ? "OT" : "LXX")).concat (books.filter ((b) => b.testament === "NT"));
+
+/** The picker's groups: the OT as picked (the Septuagint's books the Hebrew Bible lacks apart), then the NT. */
+function groups (): [string, Book[]][] {
+  const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
+  if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")], nt];
+  const lxx = books.filter ((b) => b.testament === "LXX");
+  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Septuagint - books the Hebrew Bible lacks", lxx.filter ((b) => ! b.heb)], nt];
+}
+
+/** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
 function step (dir: number) {
-  if (chapter + dir >= 1 && chapter + dir <= book.chapters) return go (book, chapter + dir);
-  const next = books[books.indexOf (book) + dir];
-  if (next) go (next, dir > 0 ? 1 : next.chapters);
+  const cs = chaptersOf (book), i = cs.indexOf (chapter) + dir;
+  if (i >= 0 && i < cs.length) return go (book, cs[i]);
+  const list = shown (), next = list[list.indexOf (book) + dir];
+  if (next) { const ncs = chaptersOf (next); go (next, dir > 0 ? ncs[0] : ncs[ncs.length - 1]); }
+}
+
+/** HEBREW / GREEK changed (the drawer): the same place in the other - the Septuagint's book for a Hebrew one (Daniel:
+ *  Theodotion's, the one usually read) or the Hebrew's for an LXX one, at the same chapter where it has it (else its
+ *  first); Genesis 1 where the other has no such book. The NT stays. */
+function switchLanguage (l: "H" | "G") {
+  if (book.testament === "NT") return;
+  const to = l === "G" ? books.filter ((b) => b.testament === "LXX" && b.heb === book.id).pop ()
+                       : books.find ((b) => b.id === book.heb);
+  const target = to ?? books.find ((b) => b.testament === (l === "G" ? "LXX" : "OT"))!;
+  const cs = chaptersOf (target);
+  go (target, to && cs.includes (chapter) ? chapter : cs[0]);
 }
 
 async function start () {
@@ -98,14 +143,15 @@ async function start () {
   initVocab (db);
   initNotes (db);
   initChoose ();
-  books = db.all ("SELECT id, code, name, testament, chapters FROM books ORDER BY id") as unknown as Book[];
+  books = db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books ORDER BY id") as unknown as Book[];
+  onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }
-  const [b, c] = parseRef (location.hash.slice (1)) ?? parseRef (last) ?? [books[0], 1];
+  const [b, c] = parseRef (location.hash.slice (1)) ?? parseRef (last) ?? [shown ()[0], 1];
   go (b, c);
   document.getElementById ("prev")!.addEventListener ("click", () => step (-1));
   document.getElementById ("next")!.addEventListener ("click", () => step (1));
-  placeBtn.addEventListener ("click", () => openPicker (books, go));
+  placeBtn.addEventListener ("click", () => openPicker (groups (), go, chaptersOf));
   window.addEventListener ("hashchange", () => { const r = parseRef (location.hash.slice (1)); if (r) go (...r); });
 }
 

@@ -7,7 +7,7 @@ COTEXT's code: all caps, no spaces; a verb STEM-FORM-PGN (Q-P-3MS), anything els
 with + before it (ART+N-MP, CONJ+OBJ), a suffix after it (N-MS+3MS). A construct noun adds C after its number (N-MSC),
 an Aramaic determined one D (N-MSD). The waw consecutive is part of its form (W, WP), so it isn't written as CONJ.
 
-Greek (TAGNT): Robinson's codes (V-IAI-3S, N-DSF, T-NSM). COTEXT drops the verb's V- (IAI-3S) and a noun's name tags
+Greek (TAGNT; the LXX's made alike by lxx.py): Robinson's codes (V-IAI-3S, N-DSF, T-NSM; N-PRI an indeclinable name). COTEXT drops the verb's V- (IAI-3S) and a noun's name tags
 (-P person, -L location, -T title, -G gentilic...): N-ASM-T reads N-ASM.
 """
 
@@ -262,6 +262,8 @@ def greek(morph):
                 detail = f"{GPERSON[r[0]]} {_cng(r[1:])}".strip()
             elif r == "NUI":
                 detail = "indeclinable number"
+            elif r == "PRI":                         # (Robinson's indeclinable proper noun: the LXX's Hebrew names)
+                detail = "indeclinable proper name"
             elif r == "LI":
                 detail = "indeclinable letter"
             else:

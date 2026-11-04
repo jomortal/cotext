@@ -2,8 +2,8 @@
 // - the frequency slider, in steps of 20 words up to 1,000 (as My vocab's frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss and the parsing
 //   of the N most common words, by the root word (the lemma, its extended Strong's key: every form together), as the
 //   printed reader's editions do - except a hard form's parsing and gloss, always shown: a verb whose form is hard to recognize
-//   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT or the book shown
-//   (FREQUENCY);
+//   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT / LXX (the Septuagint's
+//   words counted apart from the NT's) or the book shown (FREQUENCY);
 // - a word's panel marks one word known by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
 //   slider), on top of the slider; tapped again (✓ In known words) taken off;
 // - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on); SHOW MY VOCAB (on at first) keeps every
@@ -44,13 +44,14 @@ let db: Db;
 let book: Book;
 const listeners: (() => void)[] = [];
 
-/** Counts for the scope chosen: the whole testament (freq's book 0, its Strong's keys starting H or G) or the book. */
+/** Counts for the scope chosen: the whole testament (freq's book 0, its Strong's keys starting H or G; the
+ *  Septuagint's book -1) or the book. */
 function counts (): Counts {
   const key = s.scope === "book" ? String (book.id) : book.testament;
   let c = cache.get (key);
   if (! c) {
-    const rows = s.scope === "book"
-      ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [book.id])
+    const rows = s.scope === "book" || book.testament === "LXX"
+      ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [s.scope === "book" ? book.id : -1])
       : db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong LIKE ? ORDER BY count DESC, strong",
                 [book.testament === "OT" ? "H%" : "G%"]);
     c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),

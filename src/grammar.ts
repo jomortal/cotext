@@ -6,6 +6,7 @@
 // unfoldingWord - the list is the grammars table's, in its order, the first the default, so another grammar there is simply
 // another choice), kept on the device. A grammar without section numbers (unfoldingWord's: a page per topic) shows no §.
 
+import type { Testament } from "./study";
 import type { Db } from "./db";
 
 type Lang = "H" | "G";
@@ -41,8 +42,8 @@ export function initGrammar (theDb: Db) {
   grammars = db.all ("SELECT id, name, lang FROM grammars ORDER BY rowid")     /* (the pipeline's order: a language's first is the default) */ as unknown as typeof grammars;
 }
 
-/** The grammar choice follows the text: Hebrew grammars for the OT, Greek for the NT. */
-export function setGrammarTestament (t: "OT" | "NT") {
+/** The grammar choice follows the text: Hebrew grammars for the OT, Greek for the NT and the Septuagint. */
+export function setGrammarTestament (t: Testament) {
   lang = t === "OT" ? "H" : "G";
   pick.replaceChildren (...grammars.filter ((g) => g.lang === lang).map ((g) => new Option (g.name, g.id)));
   pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language: nothing to pick)

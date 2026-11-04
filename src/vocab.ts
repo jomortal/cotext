@@ -1,9 +1,9 @@
 // Vocab (☰ > Vocab): each person's own list (My vocab). A word's panel adds it ("+ My vocab"; "✓ In my vocab" takes it off
 // again); "+ Known words" makes it known - known is the helps' own hand choice (helps.ts: its gloss then hidden),
-// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: four lists - OT / NT FREQUENCY and
+// so the two never disagree, and a known word leaves My vocab. The screen, for the testament shown: four lists - OT / NT / LXX FREQUENCY (the Septuagint's counts its own) and
 // BOOK FREQUENCY (a book picked from the testament's, the one shown at first) (the testament's or the book's words not yet
 // known, most frequent first, picked 20 at a time: 1-20 the 20 most frequent; a word made known leaves it and the next
-// moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS - the one picked (OT / NT frequency at first) shown
+// moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS (a Greek word's the same in the NT and LXX) - the one picked (OT / NT / LXX frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for Book frequency). A card's
 // front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
 // (in the frequency lists, + KNOWN WORDS: made known, into Known words). Kept on the device.
@@ -41,8 +41,11 @@ onHelpsChange (() => {
 
 interface WordCard extends Card { strong: string; }
 
+/** The whole testament's counts in freq: the Septuagint's book -1, the OT's and NT's 0 (by their keys' H / G). */
+const whole = () => currentTestament () === "LXX" ? -1 : 0;
+
 /** The words' details: lemma, concise meaning and count - in the whole testament, or in the book (its id), by Strong's key. */
-function details (strongs: string[], bookId = 0): Map<string, { lemma: string; meaning: string; count: number }> {
+function details (strongs: string[], bookId = whole ()): Map<string, { lemma: string; meaning: string; count: number }> {
   const out = new Map<string, { lemma: string; meaning: string; count: number }> ();
   for (let i = 0; i < strongs.length; i += 500) {     // (SQLite's bound parameters, a chunk at a time)
     const part = strongs.slice (i, i + 500), q = part.map (() => "?").join (",");
@@ -74,11 +77,11 @@ function toLearn (prefix: string, known: string[], bookId = 0): string[] {
 }
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
-let picked = "freq";                   // (The list shown: freq - OT / NT FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, or known)
+let picked = "freq";                   // (The list shown: freq - OT / NT / LXX FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, or known)
 const byFreq = () => picked === "freq" || picked === "book";
 const pickedBook: Record<string, number> = {};     // (BOOK FREQUENCY's book, by testament: the book shown until one is picked)
 const theBook = () => pickedBook[currentTestament ()] ?? currentBook ().id;
-const bookId = () => picked === "book" ? theBook () : 0;
+const bookId = () => picked === "book" ? theBook () : whole ();
 const listKey = () => picked === "book" ? "b" + theBook () : currentTestament ();
 let reversed = false;                  // (ENGLISH TO HEBREW / GREEK: the cards' front the meaning, turned over the word)
 let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
