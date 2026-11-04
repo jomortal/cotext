@@ -58,7 +58,7 @@ const LEXICONS: Record<string, { name: string; short: string; credit: string }> 
             credit: "Abbott-Smith, A Manual Greek Lexicon of the New Testament (1922), public domain; text from the Abbott-Smith TEI project (translatable-exegetical-tools)." },
   thayer: { name: "Thayer", short: "Thayer",
             credit: "Thayer, A Greek-English Lexicon of the New Testament (1889), public domain; text from Every Promise's edition (CC0)." },
-  ml: { name: "Middle Liddell", short: "Middle Liddell",
+  ml: { name: "Liddell & Scott (Intermediate)", short: "Liddell & Scott",
         credit: "Liddell and Scott, An Intermediate Greek-English Lexicon (1889). Text provided by Perseus Digital Library, with funding from The Annenberg CPB/Project (CC BY-SA 3.0 US)." },
   dodson: { name: "Dodson", short: "Dodson",
             credit: "Dodson, A Greek-English Lexicon of the New Testament (2010), public domain; text from Biblical Humanities (CC0)." },
