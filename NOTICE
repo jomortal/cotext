@@ -32,6 +32,9 @@ Grammars (the word's panel links each term of a parsing to its section):
   templates; bibliographic tags are dropped; Machen's sections are his lessons' numbered paragraphs, each
   under its lesson's title.
 
+Hebrew Bible audio: the Tanakh read by Abraham Shmuelof, ebible.org/multimedia/hbo, Creative Commons BY-NC-ND 4.0
+(https://creativecommons.org/licenses/by-nc-nd/4.0/: non-commercial use; the recordings unaltered).
+
 Commentaries and apparatus (the notes panel; each source its own file, public/data/notes/<id>.db - pipeline/notes.py):
   - unfoldingWord Translation Notes (git.door43.org/unfoldingWord/en_tn, commit bf603342, 2026-11-02), (c) 2022
     unfoldingWord, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). The original work by

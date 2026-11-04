@@ -23,7 +23,7 @@ self.addEventListener ("activate", (e) => {
 // ("./" or index.html) is the same cached file however it's asked for.
 self.addEventListener ("fetch", (e) => {
   const url = new URL (e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname.includes ("/data/notes/")) return;
+  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname.includes ("/data/notes/") || url.pathname.includes ("/data/audio/")) return;     // (Recorded audio: the page fetches and keeps its own few chapters)
   const cacheName = url.pathname.endsWith ("/data/cotext.db") ? DATA : SHELL;
   const key = e.request.mode === "navigate" ? new URL ("index.html", location.href).href : e.request;
   e.respondWith (caches.open (cacheName).then ((c) => c.match (key, { ignoreSearch: e.request.mode === "navigate" })
