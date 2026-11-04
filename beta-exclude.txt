@@ -1,2 +1,4 @@
 # Resources kept out of the beta (serve.py --publish): a note_sources id a line. The user's picks, 2026-11-04.
 onkelos     # Targum Onkelos: Aramaic with no English - not useful to most readers
+mam         # Miqra according to the Masorah: Hebrew only, a textual tool for advanced readers
+minchatshai # Minchat Shai: technical rabbinic Hebrew, no English
