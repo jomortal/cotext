@@ -159,6 +159,23 @@ Bible dictionary (the word panel's Dictionary, the notes' and search's Tyndale B
   they're included; maps, pictures and the introduction left out; each article matched to the Strong's numbers of
   the words it's about.
 
+Atlas (the word panel's Map, the notes' Atlas - public/data/notes/atlas.db and atlas_<map>.db, pipeline/atlas.py):
+  - Places: OpenBible.info's Bible Geocoding Data (Stephen Smith, 2021), licensed CC BY 4.0
+    (https://creativecommons.org/licenses/by/4.0/; github.com/openbibleinfo/Bible-Geocoding-Data). Changes: each
+    place reduced to its name, a short comment, its most likely site's point and score and the other sites proposed.
+  - The text's words tied to them through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
+  - Base map "Natural Earth": Natural Earth (naturalearthdata.com) 1:10m land, lakes and rivers and 1:50m shaded
+    relief - public domain. Cut to the Bible's lands, simplified; the relief's contrast changed.
+  - Base map "Ancient World": Ancient World Mapping Center, University of North Carolina (awmc.unc.edu;
+    github.com/AWMC/geodata) - open water, inland water, roads and the Roman provinces of 200 CE, derived from the
+    Barrington Atlas of the Greek and Roman World and OpenStreetMap; made available under the Open Database License
+    1.0 (http://opendatacommons.org/licenses/odbl/1.0/). COTEXT's derived file (cut, simplified) is offered under the
+    same license.
+  - Base map "Roman Empire": Digital Atlas of the Roman Empire (DARE), Johan Åhlfeldt (imperium.ahlfeldt.se), licensed
+    CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), from its vector map (github.com/klokantech/
+    roman-empire) - provinces and roads, cut and simplified; shared under the same license. Its land and lakes from
+    Natural Earth (public domain).
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as

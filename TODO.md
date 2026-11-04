@@ -11,7 +11,7 @@ a non-commercial license are marked so in NOTICE.
       dropdown, each hit linked back by word or verse.
 - [ ] **☰ Grammars**: pick a grammar (Gesenius, Machen, Smyth, unfoldingWord), its contents, read any section, search.
 - [ ] **☰ Bible Dictionary**: browse the Tyndale articles A-Z with a filter, each with its linked verses.
-- [ ] **Atlas, by word and by passage** (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;
+- [x] **Atlas, by word and by passage** (built 2026-11-04 - pick a base map to keep) (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;
       base maps from Natural Earth (public domain), the Ancient World Mapping Center (CC BY), the Digital Atlas of the
       Roman Empire (CC BY); a place name tapped shows its map, a resources choice maps the chapter's places.
 - [ ] Before the public beta: slim the resources down (the user's pick).

@@ -20,6 +20,7 @@ import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
 import { initSearch, setSearchPassage } from "./search";
 import { initDictionary } from "./dictionary";
+import { initAtlas } from "./atlas";
 import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
@@ -184,6 +185,7 @@ async function start () {
   books = rows as unknown as Book[];
   initSearch (db, books, goVerse);
   initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
+  initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

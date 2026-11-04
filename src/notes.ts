@@ -23,14 +23,17 @@
 //   then those its words lead to (dictionary.ts' passageArticles), each its title over a line of it, tapped opening
 //   the article in place - drawn as the notes are (narrow one verse, wide the chapter in step with the text; an article
 //   listed once, at the first verse shown it's for).
+// - The atlas (MAPS: atlas.ts) is one map of the places the verses shown name (narrow the verse, wide the chapter),
+//   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
 import { passageArticles, entry } from "./dictionary";
+import { passageMap } from "./atlas";
 
-export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
+export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
 
 //==== BESIDE THE SEPTUAGINT ====
@@ -108,14 +111,15 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
     return g.children.length ? [g] : [];
   };
   return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),
-          ...group ("commentary", "Commentaries"), ...group ("dictionary", "Dictionary"), ...group ("translation", "Translations"),
+          ...group ("commentary", "Commentaries"), ...group ("dictionary", "Dictionary"), ...group ("atlas", "Maps"), ...group ("translation", "Translations"),
           ...group ("version", "Ancient versions")];
 }
 
 /** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
  *  (ot: the Hebrew Bible's, or beside the Septuagint as the picker offers them there) and the New - that are text in a
- *  file of their own: not the Hebrew OT (the main database's interlinear) nor the sentence diagrams (trees, not text). */
-export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax"
+ *  file of their own: not the Hebrew OT (the main database's interlinear), the sentence diagrams (trees, not text) nor
+ *  the atlas (places on a map). */
+export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax" && s.kind !== "atlas"
   && (offers (s, "NT") || (ot === "OT" ? offers (s, "OT") : offers (s, "LXX") || (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)))));
 
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
@@ -168,7 +172,7 @@ async function show () {
   if (! book || ! src) return;
   creditEl.textContent = src.credit;
   const n = ++loading;     // (A file still arriving for a source picked before: not shown)
-  if (src.file && src.kind !== "dictionary" && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's; the dictionary's is dictionary.ts')
+  if (src.file && ! ownFile (src) && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
     ++updating;     // (Any update still reading the old source: dropped)
     open?.db.close (); open = null;
     refEl.textContent = "";
@@ -192,11 +196,13 @@ async function show () {
  *  verses as one interlinear; the diagram, each sentence once. Drawn once they're read from the database - a later
  *  update (the text scrolled on, another source) winning over one still arriving (updating). */
 let updating = 0;
+/** A source whose file another module opens itself: the dictionary's (dictionary.ts), the atlas' (atlas.ts). */
+const ownFile = (s: Source) => s.kind === "dictionary" || s.kind === "atlas";
 // (A query of a source closed meanwhile - another picked - fails: that update was already superseded)
 const update = () => { drawNotes ().catch ((e) => console.warn ("Notes:", e)); };
 async function drawNotes () {
   const src = current ();
-  if (panel.hidden || ! book || ! src || ! textDb || (src.file && src.kind !== "dictionary" && open?.id !== src.id)) return;
+  if (panel.hidden || ! book || ! src || ! textDb || (src.file && ! ownFile (src) && open?.id !== src.id)) return;
   const vs = versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;
@@ -244,6 +250,7 @@ async function drawNotes () {
     return;
   }
   if (src.kind === "dictionary") { drawArticles (per, n, wide, many); return; }
+  if (src.kind === "atlas") { drawAtlas (per, n, many); return; }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
   const seen = new Set<number> ();
   const read = await Promise.all (per.map (({ where }) => Promise.all (where.map (([nb, c, vv]) =>
@@ -336,6 +343,18 @@ async function drawArticles (per: { v: number; where: number[][] }[], n: number,
   });
   if (! bodyEl.children.length) bodyEl.innerHTML = "<p>No articles on this verse.</p>";
   placed ();
+}
+
+/** The atlas for the verses (atlas.ts' passageMap): its one map, kept while the atlas is picked, set to their places. */
+let atlasView: ReturnType<typeof passageMap> | null = null;
+async function drawAtlas (per: { v: number; where: number[][] }[], n: number, many: boolean) {
+  const ids = "atlas " + per.map ((p) => p.v + ":" + p.where.join ("/")).join (",");
+  if (ids === shownIds) return;
+  shownIds = ids;
+  atlasView ??= passageMap (textDb!);
+  if (atlasView.el.parentElement !== bodyEl) { clearInterlinear (); bodyEl.replaceChildren (atlasView.el); }
+  await atlasView.update (book!.id, chapter, per, many ? "No places named in this chapter." : "No places named in this verse.");
+  if (n === updating) placed ();
 }
 
 /** The notes just drawn placed: narrow, from their top; wide, at the text's place (TWO-WAY SCROLLING). */

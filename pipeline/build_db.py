@@ -24,7 +24,8 @@ Tables:
             (Gesenius, Smyth, Machen, unfoldingWord's Hebrew and Greek): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table; also the dictionary (kind 'dictionary',
-            public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py)
+            public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py) and the atlas (kind
+            'atlas', public/data/notes/atlas.db and its base maps' files, made by atlas.py)
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
             public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
   greek_lex, greek_lex_file  the Greek words' full lexicons (Abbott-Smith, Thayer, Middle Liddell, Dodson: src/panel.ts'
@@ -60,6 +61,7 @@ import lxx  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
 import sefaria_lex  # noqa: E402
+import atlas  # noqa: E402
 import tyndale_dict  # noqa: E402
 import ubs_lex  # noqa: E402
 
@@ -280,6 +282,7 @@ def build():
     lsj_counts = lsj.build(db)     # (LSJ: greek_lex rows for 'lsj' and its file - after greek_lex.build, whose tables it adds to)
     ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
     tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The Dictionary: its own file, a note_sources row - after the lexicon and ubs_lex, which it matches)
+    atlas.build(db)     # (The Atlas: its files, a note_sources row - after tyndale_dict, whose TIPNR it reads)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
