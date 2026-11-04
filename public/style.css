@@ -22,6 +22,7 @@
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
   --fs-icon: 22px;
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
+  --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
   --heb: "Ezra SIL", "SBL Hebrew", serif; --grk: "Gentium", "Gentium Plus", serif; --ui: system-ui, -apple-system, sans-serif;
 }
@@ -49,7 +50,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
-       display: grid; grid-template-columns: minmax(0, 8in); justify-content: center; align-content: start; gap: 14px; }     /* (The text at most 8 inches wide - 768px -, centered: margins either side beyond that) */
+       display: grid; grid-template-columns: minmax(0, var(--page)); justify-content: center; align-content: start; gap: 14px; }     /* (The text at most --page wide, centered: margins either side beyond that) */
 h1 { font-size: var(--fs-l); margin: 0; }
 p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 .credit { margin-top: 24px; font-size: var(--fs-xs); }
@@ -58,13 +59,13 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 /* Above the scrolling text, not inside it: the body a column - the heading, then main filling the rest and scrolling
    on its own - so the text can't go above or behind it, whatever its height; under the clock it's the heading's own color. */
 .head { flex: none; z-index: 5; display: grid; gap: 10px; background: var(--bg); border-bottom: 1px solid var(--edge);
-        padding: calc(6px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) 6px max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
+        padding: calc(6px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)) 6px max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }
 .head { position: relative; }
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box; background: var(--bg);
            border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: contain;
-           padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }
+           padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }
 #options[hidden] { display: none; }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; }
@@ -186,7 +187,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 :is(.sheet, #notes) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
   padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
-:where(.sheet, #notes) > .panelScroll > * { max-width: 760px; margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
+:where(.sheet, #notes) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 #notes .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
 .gInline .top, .gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
@@ -209,8 +210,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 #picker .top { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }     /* (HEBREW / GREEK centered, ✕ at the right) */
 #picker .top #langPick { grid-column: 2; } #picker .top #pickerClose { grid-column: 3; justify-self: end; }
 #pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
-.pickerCard { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
-#picker .pickerCard { max-width: 8in; }
+.pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: 10px; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
 .choices.numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 10px 10px; border-top: 1px solid var(--line); }     /* (A book's chapters, open under it in the list: six to a row, every row even) */
@@ -242,8 +242,8 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#screenMenu { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
-#screenClose { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
+#screenMenu { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
+#screenClose { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
@@ -303,6 +303,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    parsing, vocab gloss and buttons - on the right, the lexicon - its picker, entry and credit -
    on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
 .sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
+:is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-inline: max(var(--pad), calc((100% - var(--page)) / 2)); }     /* (Both columns together at most --page, centered - by id, to outweigh the panels' padding) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   max-width: none; margin: 0; padding-block: calc(var(--pad) / 2) var(--pad); }     /* (Each column scrolls on its own; half the top margin, as in one column) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
@@ -440,11 +441,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #notesSplit::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
   #notesSplit::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
   body:has(#notes[hidden]) #notesSplit { display: none; }
-  /* Each column's content its column's full width, inside the --pad margins - none of the narrow layout's 760 px caps:
-     the heading and the ⋯ menu, the panels' contents; the text still at most 8 inches (main, above). */
+  /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
+     the panels' contents and the screens still at most --page. */
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
   #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
-  :where(.sheet, #notes) > .panelScroll > * { max-width: none; }
   /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
   #notes > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
   #notes > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
