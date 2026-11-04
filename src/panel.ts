@@ -6,7 +6,7 @@
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
-import { onHelpsChange, knownWords, setKnown, unsetKnown, currentBook } from "./helps";
+import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { showParsing, hideGrammar } from "./grammar";
 import { setVocabWord } from "./vocab";
@@ -208,14 +208,13 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
   vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
   entry = { full: String (lex?.entry || lex?.gloss || ""),
-            extra, hebrew, place: [currentBook ().id, Number (location.hash.match (/\.(\d+)/)?.[1] ?? 0), w.verse,
-                                    [...wordEl.parentElement!.children].indexOf (wordEl) + 1] };     // (main.ts keeps #Book.chapter in the address)
+            extra, hebrew, place: [w.book, w.chapter, w.verse, w.word] };     // (Where the word stands: the reader's text, or one beside it in the notes)
   const pick = lexChoice[hebrew ? "H" : "G"];
   showEntry (extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word - or "concise", from before: the brief one)
   sheet.hidden = false;
   sheetScroll.scrollTop = 0;
-  // Keep the word in view above the sheet.
-  requestAnimationFrame (() => {
+  // Keep the word in view above the sheet - a word of the text read only (one in the notes panel stays where it is).
+  if (wordEl.closest ("main")) requestAnimationFrame (() => {
     const over = wordEl.getBoundingClientRect ().bottom - (window.innerHeight - sheet.offsetHeight) + 12;
     if (over > 0) document.querySelector ("main")!.scrollBy ({ top: over, behavior: "smooth" });     // (main scrolls: style.css)
   });

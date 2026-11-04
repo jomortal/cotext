@@ -30,9 +30,9 @@ export interface Book { id: number; code: string; name: string; testament: Testa
 
 /** One word as the chapter shows it; the panel reads the rest from the database when it's tapped. */
 export interface Word { verse: number; text: string; translit: string; gloss: string; strong: string; morph: string; code: string;
-                        stem: string; }
+                        stem: string; book: number; chapter: number; word: number; }     // (book, chapter, word: where it stands - the panel's UBS "used here")
 
-const WORDS = `SELECT w.verse, w.text, w.translit, w.gloss, w.strong, w.morph, p.code, p.stem
+const WORDS = `SELECT w.book, w.chapter, w.word, w.verse, w.text, w.translit, w.gloss, w.strong, w.morph, p.code, p.stem
                FROM words w LEFT JOIN parsings p ON p.morph = w.morph`;
 
 /** The chapter's words, in order. */
