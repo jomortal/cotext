@@ -98,12 +98,13 @@ function chaptersOf (b: Book): number[] {
 }
 
 /** The books of the language picked, in order: the Hebrew OT or the Septuagint, then the NT. */
-const shown = () => books.filter ((b) => b.testament === (currentLanguage () === "H" ? "OT" : "LXX")).concat (books.filter ((b) => b.testament === "NT"));
+// (Hebrew: the Hebrew OT alone; Greek: the Septuagint and the NT - the user's choice)
+const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : books.filter ((b) => b.testament === "LXX").concat (books.filter ((b) => b.testament === "NT"));
 
 /** The picker's groups: the OT as picked (the Septuagint's books the Hebrew Bible lacks apart), then the NT. */
 function groups (): [string, Book[]][] {
   const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
-  if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")], nt];
+  if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
   const lxx = books.filter ((b) => b.testament === "LXX");
   return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Septuagint - books the Hebrew Bible lacks", lxx.filter ((b) => ! b.heb)], nt];
 }
@@ -120,7 +121,7 @@ function step (dir: number) {
  *  Theodotion's, the one usually read) or the Hebrew's for an LXX one, at the same chapter where it has it (else its
  *  first); Genesis 1 where the other has no such book. The NT stays. */
 function switchLanguage (l: "H" | "G") {
-  if (book.testament === "NT") return;
+  if (book.testament === "NT" && l === "G") return;     // (Already Greek; to Hebrew from the NT: Genesis 1, below)
   const to = l === "G" ? books.filter ((b) => b.testament === "LXX" && b.heb === book.id).pop ()
                        : books.find ((b) => b.id === book.heb);
   const target = to ?? books.find ((b) => b.testament === (l === "G" ? "LXX" : "OT"))!;

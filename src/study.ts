@@ -22,7 +22,7 @@ const screens = new Map<string, (body: HTMLElement) => void> ();
 /** The testament shown (the study screens follow it); an OT or LXX book sets the language too. */
 export function setTestament (t: Testament) {
   testament = t;
-  if (t !== "NT") showLanguage (t === "OT" ? "H" : "G");
+  showLanguage (t === "OT" ? "H" : "G");     // (The NT is Greek's, as the Septuagint is)
 }
 /** The testament shown: the study screens follow it. */
 export const currentTestament = () => testament;
