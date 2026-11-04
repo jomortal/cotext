@@ -53,6 +53,7 @@ import bdb  # noqa: E402
 import fetch  # noqa: E402
 import grammar  # noqa: E402
 import lsj  # noqa: E402
+import lxx_heb  # noqa: E402
 import greek_lex  # noqa: E402
 import lxx  # noqa: E402
 import morph  # noqa: E402
@@ -271,6 +272,7 @@ def build():
     db.execute("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)", (*lxx.BRENTON_SOURCE, "data/notes/brenton_lxx.db",
                hashlib.sha256(data).hexdigest()[:12], len(data)))
     note_counts["brenton_lxx"] = (n, len(data))
+    lxx_heb.build(db)     # (Each LXX verse's Hebrew verse(s): the notes beside the LXX)
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
     lsj_counts = lsj.build(db)     # (LSJ: greek_lex rows for 'lsj' and its file - after greek_lex.build, whose tables it adds to)

@@ -1080,7 +1080,13 @@ def build(main_db, book_codes, only=None):
         listed.append((sid, kind, name, testaments, credit, f"data/notes/{sid}.db",
                        hashlib.sha256(data).hexdigest()[:12], len(data)))
         counts[sid] = (n, len(data))
-    # (The list written last, in one go: the main database is written to only once every file is built)
+    # (The list written last, in one go: the main database is written to only once every file is built. Rows another
+    # module added that aren't in SOURCES - lxx.py's brenton_lxx - are kept, so a notes-only rebuild doesn't drop them.)
+    ours = {row[0] for row in listed}
+    try:
+        listed += [tuple (r) for r in main_db.execute ("SELECT * FROM note_sources") if r[0] not in ours]
+    except sqlite3.OperationalError:
+        pass     # (No table yet: a fresh build)
     main_db.execute("DROP TABLE IF EXISTS note_sources")
     main_db.execute("CREATE TABLE note_sources (id TEXT PRIMARY KEY, kind TEXT, name TEXT, testaments TEXT, credit TEXT,"
                     " file TEXT, version TEXT, bytes INTEGER)")
