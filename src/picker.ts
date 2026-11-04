@@ -44,10 +44,10 @@ function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
         open.scrollIntoView ({ block: "nearest" });
       });
       row.className = "chooseItem";
-      // (Its English name in a box of its own - the middle column -, its name in its own language beside it: style.css)
+      // (Its English name, a dash, then its name in its own language: style.css)
       const en = document.createElement ("span"); en.className = "bookEn"; en.textContent = b.name; row.replaceChildren (en);
       const native = nativeName (b.code);
-      if (native) { const n = document.createElement ("span"); n.className = "bookNative " + native[1]; n.textContent = native[0]; row.append (n); }
+      if (native) { const n = document.createElement ("span"); n.className = "bookNative " + native[1]; n.textContent = native[0]; if (native[1] === "he") n.dir = "rtl"; row.append (" - ", n); }
       list.append (row);
     }
     body.append (h, list);

@@ -382,21 +382,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseList[hidden] { display: none; }
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
 .chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
-.chooseList.inline .chooseItem { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em minmax(0, 1fr); align-items: baseline; gap: 12px; text-align: center; }
-/* (On a phone the English column isn't held in the middle: a long Greek title - Πρὸς Θεσσαλονικεῖς Β΄ - gets the room
-   instead, the English beside it) */
-@media (max-width: 699px) {
-  .chooseList.inline .chooseItem:has(.bookNative) { grid-template-columns: minmax(0, 1fr) auto 0; }
-  .chooseList.inline .chooseItem:has(.bookNative) { column-gap: 0; }
-  .chooseList.inline .chooseItem .bookEn { padding-inline: 12px; }
-}
-/* The English in the middle column; a book's Hebrew or Greek name in the left column - the Greek aligned left, the
-   Hebrew right (as it reads). */
-.chooseList.inline .chooseItem { grid-template-areas: "gr en he"; }
-.chooseList.inline .chooseItem .bookEn { grid-area: en; }
-.bookNative { color: var(--fg); font-size: 1.15em; line-height: 1.6; }     /* (The Hebrew or Greek name prominent, the English muted; one line height for both, so the rows are the same height in either list) */
-.chooseList.inline .chooseItem:has(.bookNative) .bookEn { color: var(--soft); }
-.bookNative.gr { grid-area: gr; text-align: left; } .bookNative.he { grid-area: gr; text-align: right; }     /* (Both in the left column; the Hebrew aligned right, as it reads) */ .bookNative.he { font-family: var(--heb); } .bookNative.gr { font-family: var(--grk); }     /* (A book's own-language name, the first column: booknames.ts) */     /* (The books: a menu's items, larger) */
+/* One line: the English, a dash, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
+   reads right to left within the line); both in the text's color. */
+.bookNative { font-size: 1.15em; line-height: 1.6; unicode-bidi: isolate; }     /* (One line height for both, so the rows are the same height in either list) */
+.bookNative.he { font-family: var(--heb); } .bookNative.gr { font-family: var(--grk); }
 .chooseList .ref { padding: 6px 10px 2px; margin: 0; }
 .chooseItem { font: inherit; font-size: var(--fs-s); text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
               background: transparent; color: var(--fg); cursor: pointer; }
