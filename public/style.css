@@ -127,6 +127,10 @@ body.noVerbColors .w .parse { color: inherit; }
    panel and the notes when both are open, and over the play bar when a panel is open above it. */
 #sheet:not([hidden]) + #notes:not([hidden]) { border-top: 1px solid var(--edge); }
 #sheet:not([hidden]) ~ #playBar, #notes:not([hidden]) + #playBar { border-top: 1px solid var(--edge); }
+/* Both the word's panel and the notes open: each at most a third of the room between the heading and the play bar
+   (--mid: notes.ts measures it), the text keeping its third at least. */
+body:has(#sheet:not([hidden])):has(#notes:not([hidden])) :is(#sheet, #notes) { max-height: calc(var(--mid, 100dvh) / 3); }
+body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc(var(--mid, 100dvh) / 3); }
 #playBar[hidden], #playBtn[hidden], #audioSettings[hidden], #speakBtn[hidden] { display: none; }
 .w.reading { background: color-mix(in oklch, var(--accent) 28%, transparent); }
 .vnum { cursor: pointer; }
@@ -190,7 +194,8 @@ body.noVerbColors .w .parse { color: inherit; }
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); background: var(--bg);
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
                padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) var(--pad) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
+#drawerPanel .top { align-items: center; justify-content: space-between; }     /* (HEBREW / GREEK at the left, ✕ at the right) */
+#langPick .pill { font-size: var(--fs-l); }     /* (As the drawer's items) */
 #drawerPanel > .pill { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 0; font-size: var(--fs-l); }
 #drawerPanel > .pill::before { content: ""; flex: none; width: 20px; height: 20px; background: currentColor;
                              -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }

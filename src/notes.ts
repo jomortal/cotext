@@ -241,3 +241,12 @@ function drawDiagram (s: Sentence, start: number, end: number, at: number): HTML
   root.append (...s.c.map ((c) => clause (c, false)));
   return root;
 }
+
+// The room between the heading and the play bar (--mid, style.css): with the word's panel and the notes both open,
+// each gets at most a third of it. Measured at start and whenever the window or either bar changes size.
+const midRoom = () => document.documentElement.style.setProperty ("--mid",
+  `${innerHeight - document.querySelector<HTMLElement> (".head")!.offsetHeight - document.getElementById ("playBar")!.offsetHeight}px`);
+midRoom ();
+addEventListener ("resize", midRoom);
+new ResizeObserver (midRoom).observe (document.querySelector (".head")!);
+new ResizeObserver (midRoom).observe (document.getElementById ("playBar")!);
