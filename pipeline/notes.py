@@ -35,8 +35,6 @@ Apparatus:
   hottp, dss, sinaiticus, igntp, bezae  The UBS's HOTTP report (CC BY-SA 4.0), the biblical Dead Sea Scrolls (CC
            BY-NC 4.0), Codex Sinaiticus (CC BY-NC-SA 3.0), the IGNTP's manuscripts of John and Paul (CC BY 4.0) and
            Codex Bezae (CC BY-NC-SA 3.0): notes_mss.py.
-  mam, minchatshai  Miqra according to the Masorah (CC BY-SA; its differences from the text marked) and Minchat
-           Shai (public domain), from Sefaria: notes_sefaria.py.
 Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): web World English Bible, bsb Berean
   Standard Bible, kjv King James Version (1769), asv American Standard Version (1901), ylt Young's Literal
   Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0), net
@@ -52,8 +50,8 @@ Syntax (kind 'syntax'): diagram_ot, diagram_nt Sentence diagram - MACULA Hebrew'
   4.0), a note per sentence, its body the sentence's tree as JSON, drawn by the app: diagram.py (its docstring gives
   the tree). A file per testament, each named alike in the picker.
 
-Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Minchat
-  Shai's Ruth, Esther, Ecclesiastes, Song of Songs and Lamentations (not on Sefaria).
+Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Miqra
+  according to the Masorah and Minchat Shai (2026-11-04: Hebrew only, textual detail for few readers).
 Not found clean and open (2026-11-03): Alford's Greek Testament, the Expositor's Greek Testament, Meyer, Bengel's
   Gnomon, Westcott (John, Hebrews, the Epistles of John), J. B. Lightfoot's Galatians and Philippians - scans with raw
   OCR, or copies whose terms forbid republishing (CCEL's Westcott Hebrews) or give none.
@@ -186,12 +184,6 @@ SOURCES = [
      "1973-1980, 2003-2023, CC BY-SA 4.0 (github.com/ubsicap/ubs-open-license). Adapted: its English only, "
      "reformatted. Ratings: A the reading quite certain, B some doubt, C considerable doubt, D a high degree of "
      "doubt. Factors: what weighed in the decision (its introduction numbers them)."),
-    ("mam", "apparatus", "Miqra according to the Masorah", "OT",
-     "Words in bold are where this edition, following the Aleppo Codex, differs from the text shown (the "
-     "Leningrad Codex) - in letters or vowels, accents aside. Miqra according to the Masorah (ed. Avi Kadish; "
-     "Sefaria), CC BY-SA."),
-    ("minchatshai", "apparatus", "Minchat Shai (Masoretic notes)", "OT",
-     "Yedidiah Norzi, Minchat Shai (1742): public domain (Sefaria). In Hebrew."),
     ("dss", "apparatus", "Dead Sea Scrolls", "OT",
      "The biblical Dead Sea Scrolls: Martin Abegg's transcriptions in ETCBC's dss (CACCHT: Jacobs, Naaijer, "
      "Roorda), CC BY-NC 4.0 - non-commercial use. [ ] restored by modern editors; Hebrew-numbered, mapped to this "

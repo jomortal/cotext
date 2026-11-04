@@ -47,7 +47,7 @@ const HEBREW_OT: Source = { id: "hebrew_ot", kind: "original", name: "Hebrew OT"
   credit: "Hebrew text, parsing and glosses: STEPBible Data's TAHOT, Tyndale House, Cambridge (CC BY 4.0)." };
 /** The sources about the Hebrew text itself, not offered beside the Septuagint (the user's choice): the Hebrew's
  *  sentence diagram, its Masoretic notes, text-critical apparatus and Dead Sea Scrolls readings. */
-const HEBREW_TEXT = new Set (["diagram_ot", "mam", "minchatshai", "hottp", "stepbible", "dss", "tn"]);     // (tn: the Translation Notes, each on the Hebrew words it quotes)
+const HEBREW_TEXT = new Set (["diagram_ot", "hottp", "stepbible", "dss", "tn"]);     // (tn: the Translation Notes, each on the Hebrew words it quotes)
 const NOT_BESIDE_LXX = new Set ([...HEBREW_TEXT, "brenton"]);     // (Brenton: brenton_lxx instead, in the LXX's own numbers)
 const LXX_ONLY = "<p>This verse is in the Septuagint only - not in the Hebrew Bible.</p>";
 interface Note { id: number; start: number; end: number; quote: string; body: string; }

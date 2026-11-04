@@ -16,9 +16,6 @@ allowed (a book whose version isn't there, or is under another licence, is left 
   rashi     Rashi in English: the Torah in Rosenbaum and Silbermann's (1929-34; public domain), the rest in the
             Judaica Press Complete Tanach's (tr. A. J. Rosenberg; CC-BY), or Metsudah's (CC-BY) where it has no book.
   ramban    Ramban on the Torah, tr. Charles B. Chavel (Shilo, 1971-76; CC-BY).
-  mam       Miqra according to the Masorah (CC-BY-SA): the verse as it reads there, its words that differ from the
-            text's (letters and vowels; accents, meteg and the divine name's holam aside) in bold.
-  minchatshai  Minchat Shai (Norzi, 1742; public domain): its Masoretic notes, in Hebrew.
   onkelos   Targum Onkelos (public domain), Aramaic, with Etheridge's English (1862; public domain) under it where
             Sefaria has it (part of Genesis).
   tpj       Targum Pseudo-Jonathan on the Torah (Sefaria's "Targum Jonathan on Genesis"...; public domain), with
@@ -29,11 +26,9 @@ A commentary's comments on a verse are each a note; a text's verse is one note (
 under it). Sefaria's markup is reduced to notes.py's tags: footnotes small, in brackets; Hebrew / Aramaic
 paragraphs right to left (<p dir="rtl">).
 """
-import difflib
 import hashlib
 import json
 import re
-import unicodedata
 import urllib.parse
 
 import notes
@@ -69,9 +64,6 @@ SOURCES = {
     "ramban": (TORAH, lambda t: "Ramban on " + t, "commentary",
                [("en", ["Commentary on the Torah by Ramban (Nachmanides). Translated and annotated by Charles B. Chavel."
                         " New York, Shilo Pub. House, 1971-1976"], {"CC-BY"})]),
-    "mam": (range(1, 40), lambda t: t, "mam", [("he", ["Miqra according to the Masorah"], {"CC-BY-SA"})]),
-    "minchatshai": (range(1, 40), lambda t: ("Minchat Shai on Torah, " if t in TANAKH[:5] else "Minchat Shai on ") + t,
-                    "commentary", [("he", ["Minchat Shai on Torah", "Minchat Shai"], {"Public Domain"})]),
     "onkelos": (TORAH, lambda t: "Onkelos " + t, "text",
                 [("he", [None], {"Public Domain"}), ("en", [ETHERIDGE_O], {"Public Domain"})]),
     "tpj": (TORAH, lambda t: "Targum Jonathan on " + t, "text",
@@ -144,40 +136,6 @@ def flat(t):
                 yield c, v, items
 
 
-# ---- MAM against the text: the words that differ ----
-
-STRIP = re.compile("[֑-ֽ֯׀׃ׅׄ־‍‌ ׆]")     # (Accents, meteg, paseq, sof pasuq, dots, maqaf)
-
-
-def bare(word):
-    """A word for comparing: letters and vowels only (NFD order), qamats qatan as qamats, the divine name's holam
-    (MAM's יְהֹוָה) dropped."""
-    w = STRIP.sub("", unicodedata.normalize("NFD", word)).replace("ׇ", "ָ")
-    if re.sub("[^א-ת]", "", w) == "יהוה":
-        w = w.replace("ֹ", "")
-    return unicodedata.normalize("NFD", w)
-
-
-def mam_body(s, mine):
-    """A MAM verse marked against the text's words (mine: the verse's words): MAM's words not in the text at that
-    place bold. Its markers ({פ} / {ס}, the ketiv's brackets) kept as MAM prints them; its own markup dropped."""
-    plain = notes.html.unescape(re.sub(r"<[^>]*>", "", s.replace("&thinsp;", " ").replace("<br>", " ")))
-    mark = lambda x: re.fullmatch(r"\{?[פס]\}?", x)     # (A paragraph mark, MAM's {פ} or the text's פ: not compared)
-    theirs = [(w, [] if mark(w) else [bare(x) for x in w.split("־") if bare(x)]) for w in plain.split()]
-    a = [p for _, ps in theirs for p in ps]
-    b = [bare(x) for w in mine if not mark(w) for x in w.split("־") if bare(x)]
-    same = set()
-    for blk in difflib.SequenceMatcher(None, a, b, autojunk=False).get_matching_blocks():
-        same.update(range(blk.a, blk.a + blk.size))
-    out, k = [], 0
-    for w, ps in theirs:
-        differs = any(k + i not in same for i in range(len(ps)))
-        k += len(ps)
-        w = notes.html.escape(w, quote=False)
-        out.append(f"<b>{w}</b>" if differs else w)
-    return f'<p dir="rtl"><span class="he">{" ".join(out)}</span></p>'
-
-
 # ---- Building ----
 
 def rows(src, main_db):
@@ -195,17 +153,9 @@ def rows(src, main_db):
         if len(langs) > 1:
             et, _ = text(src, title, *langs[1])
             english = {(c, v): items for c, v, items in flat(et)}
-        mine = {}
-        if kind == "mam":
-            for c, v, w in main_db.execute("SELECT chapter, verse, text FROM words WHERE book = ? ORDER BY chapter,"
-                                           " verse, word", (b,)):
-                mine.setdefault((c, v), []).append(w)
         for c, v, items in flat(t):
             if kind == "commentary":
                 bodies = [html(x, rtl=lang == "he") for x in items]
-            elif kind == "mam":
-                targets = notes.hebrew_target(b, c, v)
-                bodies = [mam_body(" ".join(items), [w for tc, tv in targets for w in mine.get((tc, tv), [])])]
             else:
                 body = "".join(html(x, rtl=lang == "he") for x in items)
                 if (c, v) in english:
