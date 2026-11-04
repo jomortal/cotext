@@ -22,6 +22,8 @@ Tables:
             made by notes.py, whose docstring describes them and their table
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
             public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
+  greek_lex, greek_lex_file  the Greek words' full lexicons (Abbott-Smith, Thayer, Middle Liddell, Dodson: src/panel.ts'
+            LEXICON), each its own file public/data/notes/<lexicon>.db: made by greek_lex.py, whose docstring describes them
   words_full  a view: each word with its parsing and lemma.
 
 Versification is the English Bibles' (NRSV), as the source gives it first; the Hebrew's own verse numbers differ in
@@ -43,6 +45,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import bdb  # noqa: E402
 import fetch  # noqa: E402
 import grammar  # noqa: E402
+import greek_lex  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
 
@@ -234,6 +237,7 @@ def build():
     grammar_counts = grammar.build(db, parsings, greek)
     note_counts = notes.build(db, [code for code, _ in BOOKS])
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
+    greek_counts = greek_lex.build(db)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
@@ -247,7 +251,8 @@ def build():
           f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
           + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()) + "; notes "
           + ", ".join(f"{k} {n} ({b / 1e6:.1f} MB)" for k, (n, b) in note_counts.items())
-          + f"; BDB {bdb_entries} entries for {bdb_keys} Strong's keys ({bdb_bytes / 1e6:.1f} MB)")
+          + f"; BDB {bdb_entries} entries for {bdb_keys} Strong's keys ({bdb_bytes / 1e6:.1f} MB); "
+          + ", ".join(f"{k} {e} entries for {n} keys ({b / 1e6:.1f} MB)" for k, (n, e, b) in greek_counts.items()))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Brown-Driver-Briggs: the full BDB entry a Hebrew word's panel opens (src/panel.ts' BDB button).
+"""Brown-Driver-Briggs: the full BDB entry a Hebrew word's panel opens (src/panel.ts' LEXICON picker).
 
 Source: the Open Scriptures Hebrew Bible project's HebrewLexicon (github.com/openscriptures/HebrewLexicon, commit
 21c9add, 2019-09-02; the files CC BY 4.0, BDB's own text public domain), pinned by URL and SHA-256 and fetched once
@@ -14,11 +14,11 @@ into pipeline/downloads/bdb/:
 Mapping: a COTEXT key (the lexicon's extended Strong's, H1254A) goes to the index's words with the same number. One
 word: its entry. Several: those whose dictionary form matches the key's (accents ignored; else consonants alone),
 narrowed by the key's letter where it agrees with the index's (H1254A to 1254a); none matching, all of them, in order.
-A key with no number in the index (STEPBible's prefixes and names, H9001...) has no BDB entry: the button is hidden.
+A key with no number in the index (STEPBible's prefixes and names, H9001...) has no BDB entry: BDB isn't offered.
 
 Output: public/data/notes/bdb.db, beside the notes panel's files - downloaded the first time a BDB is opened and kept
 (src/db.ts' openNotesDb), so the main database stays small:
-  entries  id (BDB's, a.ab.ab), html: the entry as readable HTML - <div class=bdbEntry> holding its text, <span
+  entries  id (BDB's, a.ab.ab), html: the entry as readable HTML - <div class=lexEntry> holding its text, <span
            class=he> round Hebrew, <span class=grc> round Greek, <b> meanings and stems (as BDB prints them), <i> parts
            of speech and other languages' words, <div class=sense> each sense (<b>1.</b> its number), nested as in BDB;
            a homograph's number (I., II.) before its headword. Nothing else.
@@ -93,7 +93,7 @@ def entry_html(el):
     body = re.sub(r"\s+", " ", inline(el)).strip()
     body = re.sub(r"\s*(<div[^>]*>|</div>)\s*", r"\1", body)     # (No stray spaces round a sense's block)
     mod = el.get("mod")
-    return f'<div class="bdbEntry">{f"<b>{html.escape(mod)}.</b> " if mod else ""}{body}</div>'
+    return f'<div class="lexEntry">{f"<b>{html.escape(mod)}.</b> " if mod else ""}{body}</div>'
 
 
 # ---- Strong's to BDB ----

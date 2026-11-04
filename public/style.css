@@ -269,9 +269,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #sheet.grammarOpen #gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
 #sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
 #moreDef[hidden] { display: none; }
-#sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A BDB entry's senses, nested as BDB numbers them: pipeline/bdb.py) */
-#sheet .def .bdbEntry + .bdbEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several BDB entries) */
-#bdbCredit { margin-top: 8px; }
+#sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A fuller lexicon's senses, nested as it numbers them: pipeline/bdb.py, greek_lex.py) */
+#sheet .def .lexEntry + .lexEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several entries) */
+#lexCredit { margin-top: 8px; }
 
 /* A verb form's pattern (paradigm.ts; the Verb chart and the paradigm cards): the root's letters (Hebrew) or the stem
    (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the accent's

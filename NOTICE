@@ -65,6 +65,25 @@ Lexicon (a Hebrew word's BDB, public/data/notes/bdb.db - pipeline/bdb.py):
   Changes made by COTEXT: the entries' markup is reduced to Hebrew and Greek spans, bold, italics and nested senses;
   page breaks and the transcription's status marks are dropped; entries are keyed by STEPBible's extended Strong's.
 
+Lexicons (a Greek word's fuller entries, public/data/notes/<lexicon>.db - pipeline/greek_lex.py):
+  - G. Abbott-Smith, A Manual Greek Lexicon of the New Testament (T. & T. Clark / Scribner's, 1922): public domain.
+    Text from the Abbott-Smith TEI project (github.com/translatable-exegetical-tools/Abbott-Smith, commit 8c00cb2,
+    2024-07-01: abbott-smith.tei.xml), whose lexicon and markup are in the public domain as its README states.
+  - Joseph Henry Thayer, A Greek-English Lexicon of the New Testament (corrected edition, 1889): public domain. Text
+    from Every Promise's edition (github.com/imbennyhim/Every-Promise-Thayers, commit a31ff38, 2026-08-04:
+    thayers.html), dedicated to the public domain under CC0 1.0.
+  - Henry George Liddell and Robert Scott, An Intermediate Greek-English Lexicon (Oxford, 1889): the Perseus Digital
+    Library's edition (Perseus:text:1999.04.0058), via github.com/blinskey/middle-liddell (commit 5db8d88:
+    Perseus_text_1999.04.0058.xml, with its typo fixes), licensed CC BY-SA 3.0 US
+    (https://creativecommons.org/licenses/by-sa/3.0/us/). Text provided by Perseus Digital Library, with funding from
+    The Annenberg CPB/Project. Original version available for viewing and download at http://www.perseus.tufts.edu/hopper/.
+    Its entries as they're kept in COTEXT (public/data/notes/ml.db) are this adaptation, shared under the same licence.
+  - John Jeffrey Dodson, A Greek-English Lexicon of the New Testament (2010): public domain. Text from Biblical
+    Humanities (github.com/biblicalhumanities/Dodson-Greek-Lexicon, commit 74f7035, 2018-01-11: dodson.xml), CC0 1.0.
+  Changes made by COTEXT: the entries' markup is reduced to Greek and Hebrew spans, bold, italics, paragraphs, tables
+  and nested senses; the Middle Liddell's Beta Code is converted to Unicode Greek; references are kept as their text;
+  page breaks and occurrence counts are dropped; entries are keyed by STEPBible's extended Strong's.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as

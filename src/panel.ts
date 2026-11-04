@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the entry concise, More opening the full one, LEXICON a fuller lexicon's (Hebrew: Brown-Driver-Briggs; Greek: Abbott-Smith, Thayer, the Middle Liddell, Dodson); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
@@ -43,69 +43,93 @@ const label = () => { knowIt.textContent = knownWords ().includes (pickedStrong)
 onHelpsChange (() => { if (picked) label (); });
 
 // The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the full entry in the
-// lexicon picked - LEXICON, a picker as GRAMMAR's, over the entry, for a Hebrew word BDB has: the STEPBible brief
-// lexicon, or Brown-Driver-Briggs (its entry - or entries, where BDB splits the Strong's number -, its credit under
-// it); kept on the device. Greek, or a word BDB lacks: the brief lexicon, no picker. Less goes back to the meaning.
-// BDB's entries are their own file (data/notes/bdb.db: pipeline/bdb.py), downloaded the first time BDB is shown and
-// kept (db.ts: openNotesDb).
+// lexicon picked - LEXICON, a picker as GRAMMAR's, over the entry, where a fuller lexicon has the word: the STEPBible
+// brief lexicon, or (Hebrew) Brown-Driver-Briggs, (Greek) Abbott-Smith, Thayer, the Middle Liddell or Dodson - those
+// that have an entry for the word; each lexicon's entry (or entries, where it splits the Strong's number or has
+// homographs) with its credit under it. The choice is kept on the device per language; a word the lexicon picked
+// lacks opens the brief one. No fuller lexicon has it: the brief lexicon, no picker. Less goes back to the meaning.
+// Each lexicon's entries are their own file (data/notes/<id>.db: pipeline/bdb.py, pipeline/greek_lex.py), downloaded
+// the first time it's shown and kept (db.ts: openNotesDb).
 const moreBtn = document.getElementById ("moreDef")!;
-const bdbCredit = document.getElementById ("bdbCredit")!;
+const lexCredit = document.getElementById ("lexCredit")!;
 const lexRow = document.getElementById ("lexRow")!, lexPick = document.getElementById ("lexPick") as HTMLSelectElement;
-lexPick.innerHTML = `<option value="full">STEPBible (abridged BDB)</option><option value="bdb">Brown-Driver-Briggs</option>`;
-const LEX_KEY = "cotext.lexicon";
-let lexChoice = "full";     // (The Hebrew lexicon picked: full - the brief lexicon - or bdb)
-try { lexChoice = localStorage.getItem (LEX_KEY) === "bdb" ? "bdb" : "full"; } catch { /* private mode */ }
+/** The fuller lexicons, in the picker's order: their names (and the short one their loading says) and credits. */
+const LEXICONS: Record<string, { name: string; short: string; credit: string }> = {
+  bdb: { name: "Brown-Driver-Briggs", short: "BDB",
+         credit: "Brown-Driver-Briggs (1906), public domain; text from Open Scriptures' HebrewLexicon (CC BY 4.0), still being transcribed." },
+  abbott: { name: "Abbott-Smith", short: "Abbott-Smith",
+            credit: "Abbott-Smith, A Manual Greek Lexicon of the New Testament (1922), public domain; text from the Abbott-Smith TEI project (translatable-exegetical-tools)." },
+  thayer: { name: "Thayer", short: "Thayer",
+            credit: "Thayer, A Greek-English Lexicon of the New Testament (1889), public domain; text from Every Promise's edition (CC0)." },
+  ml: { name: "Middle Liddell", short: "Middle Liddell",
+        credit: "Liddell and Scott, An Intermediate Greek-English Lexicon (1889). Text provided by Perseus Digital Library, with funding from The Annenberg CPB/Project (CC BY-SA 3.0 US)." },
+  dodson: { name: "Dodson", short: "Dodson",
+            credit: "Dodson, A Greek-English Lexicon of the New Testament (2010), public domain; text from Biblical Humanities (CC0)." },
+};
+const LEX_KEY = { H: "cotext.lexicon", G: "cotext.lexicon.greek" };     // (Hebrew's key as it always was)
+const lexChoice = { H: "full", G: "full" };     // (The lexicon picked per language: full - the brief lexicon - or an id above)
+for (const l of ["H", "G"] as const) try { lexChoice[l] = localStorage.getItem (LEX_KEY[l]) ?? "full"; } catch { /* private mode */ }
+const lang = () => entry.hebrew ? "H" : "G";
 lexPick.addEventListener ("change", () => {
-  lexChoice = lexPick.value;
-  try { localStorage.setItem (LEX_KEY, lexChoice); } catch { /* private mode: not kept */ }
-  showEntry (lexChoice as Shown);
+  lexChoice[lang ()] = lexPick.value;
+  try { localStorage.setItem (LEX_KEY[lang ()], lexPick.value); } catch { /* private mode: not kept */ }
+  showEntry (lexPick.value);
 });
-type Shown = "concise" | "full" | "bdb";
-let entry = { concise: "", full: "", bdb: "", hebrew: true };     // (bdb: the word's BDB ids, space-separated; "" none)
+type Shown = "concise" | "full" | string;     // (string: a fuller lexicon's id)
+// (extra: each fuller lexicon with an entry for the word -> its entry ids, space-separated, in LEXICONS' order)
+let entry = { concise: "", full: "", extra: {} as Record<string, string>, hebrew: true };
 let shown: Shown = "concise";
 let mainDb: Db | null = null;
-let bdbDb: Promise<Db> | null = null;     // (BDB's file, once opened)
-moreBtn.addEventListener ("click", () => showEntry (shown !== "concise" ? "concise" : entry.bdb && lexChoice === "bdb" ? "bdb" : "full"));
+const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, once opened)
+moreBtn.addEventListener ("click", () => showEntry (shown !== "concise" ? "concise" : entry.extra[lexChoice[lang ()]] ? lexChoice[lang ()] : "full"));
 
-/** The entry, concise, full or BDB's; under the concise one More (Less under the others); over a full one LEXICON,
- *  where BDB has the word (its name then said by the picker, not the label). */
+/** The entry, concise, the brief lexicon's or a fuller one's; under the concise one More (Less under the others); over
+ *  a full one LEXICON, where a fuller lexicon has the word (its name then said by the picker, not the label). */
 function showEntry (to: Shown) {
   shown = to;
-  lexRow.hidden = to === "concise" || ! entry.bdb;
-  if (! lexRow.hidden) lexPick.value = to;
+  const extras = Object.keys (entry.extra);
+  lexRow.hidden = to === "concise" || ! extras.length;
+  if (! lexRow.hidden) {
+    lexPick.innerHTML = `<option value="full">STEPBible (abridged ${entry.hebrew ? "BDB" : "Abbott-Smith"})</option>`
+      + extras.map ((id) => `<option value="${id}">${LEXICONS[id].name}</option>`).join ("");
+    lexPick.value = to;
+  }
   srcEl.hidden = ! lexRow.hidden;
   srcEl.textContent = to === "concise" ? "Meaning" : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
   // The brief lexicon's entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything
-  // else); BDB's the few tags bdb.py writes, its Hebrew and Greek styled as a grammar's (.gBody).
-  defEl.classList.toggle ("gBody", to === "bdb");
+  // else); a fuller lexicon's the few tags its pipeline writes, its Hebrew and Greek styled as a grammar's (.gBody).
+  const fuller = to !== "concise" && to !== "full";
+  defEl.classList.toggle ("gBody", fuller);
   if (to === "full") defEl.innerHTML = entry.full;
   else if (to === "concise") defEl.textContent = entry.concise;
-  else showBdb ();
-  bdbCredit.hidden = to !== "bdb";
-  moreBtn.hidden = to === "concise" && entry.full === entry.concise && ! entry.bdb;     // (Nothing more to open)
+  else showLexicon (to);
+  lexCredit.hidden = ! fuller;
+  if (fuller) lexCredit.textContent = LEXICONS[to].credit;
+  moreBtn.hidden = to === "concise" && entry.full === entry.concise && ! extras.length;     // (Nothing more to open)
   moreBtn.textContent = to === "concise" ? "More" : "Less";
 }
 
-/** The word's BDB entries into the panel - BDB's file loaded first if it isn't yet (its progress shown). */
-async function showBdb () {
-  const ids = entry.bdb.split (" "), word = picked;
-  const still = () => shown === "bdb" && picked === word;     // (Another word, or Less, while it loaded: left alone)
+/** The word's entries in a fuller lexicon into the panel - its file loaded first if it isn't yet (its progress shown). */
+async function showLexicon (id: string) {
+  const ids = entry.extra[id].split (" "), word = picked, name = LEXICONS[id].short;
+  const still = () => shown === id && picked === word;     // (Another word, another lexicon, or Less, while it loaded: left alone)
   try {
-    if (! bdbDb) {
-      const [f] = mainDb!.all ("SELECT file, version FROM bdb_file");
-      bdbDb = openNotesDb ("bdb", String (f.file), String (f.version), (p) => {
-        if (still ()) defEl.textContent = `Loading BDB… ${Math.round (p * 100)}%`;
+    if (! lexDbs[id]) {
+      const [f] = id === "bdb" ? mainDb!.all ("SELECT file, version FROM bdb_file")
+                               : mainDb!.all ("SELECT file, version FROM greek_lex_file WHERE lexicon = ?", [id]);
+      lexDbs[id] = openNotesDb (id, String (f.file), String (f.version), (p) => {
+        if (still ()) defEl.textContent = `Loading ${name}… ${Math.round (p * 100)}%`;
       });
-      bdbDb.catch (() => { bdbDb = null; });     // (Tried again on the next tap)
+      lexDbs[id].catch (() => { delete lexDbs[id]; });     // (Tried again on the next tap)
     }
-    defEl.textContent = "Loading BDB…";
-    const db = await bdbDb;
+    defEl.textContent = `Loading ${name}…`;
+    const db = await lexDbs[id];
     if (! still ()) return;
     const byId = new Map (db.all (`SELECT id, html FROM entries WHERE id IN (${ids.map (() => "?").join (",")})`, ids)
       .map ((r) => [String (r.id), String (r.html)]));
     defEl.innerHTML = ids.map ((i) => byId.get (i) ?? "").join ("");
   } catch {
-    if (still ()) defEl.textContent = "BDB couldn't be loaded.";
+    if (still ()) defEl.textContent = `${name} couldn't be loaded.`;
   }
 }
 
@@ -130,7 +154,14 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   const hebrew = w.strong.startsWith ("H");
   const [lex] = db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]);
   const [parsing] = db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]);
-  const [bdb] = hebrew ? db.all ("SELECT entries FROM bdb WHERE strong = ?", [w.strong]) : [];
+  // (The fuller lexicons with an entry for the word, in LEXICONS' order)
+  const extraRows = hebrew ? db.all ("SELECT 'bdb' AS lexicon, entries FROM bdb WHERE strong = ?", [w.strong])
+                           : db.all ("SELECT lexicon, entries FROM greek_lex WHERE strong = ?", [w.strong]);
+  const extra: Record<string, string> = {};
+  for (const id of Object.keys (LEXICONS)) {
+    const r = extraRows.find ((r) => r.lexicon === id);
+    if (r) extra[id] = String (r.entries);
+  }
   mainDb = db;
   lemmaEl.textContent = String (lex?.lemma ?? w.text);
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
@@ -142,7 +173,7 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   nameNote.hidden = ! note;
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
   entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""),
-            bdb: String (bdb?.entries ?? ""), hebrew };
+            extra, hebrew };
   showEntry ("concise");
   sheet.hidden = false;
   sheet.scrollTop = 0;
