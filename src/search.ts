@@ -135,17 +135,21 @@ function start () {
 
 //==== ROOT WORD ====
 // The verses with a word of the roots: in the Bible's books they occur in (freq) - the Old Testament read and the New;
-// the Septuagint's only those the book list shows (books.heb) -, in the book list's order.
-const hitsOf = (count: number) => `SELECT DISTINCT w.book, w.chapter, w.verse FROM freq f JOIN books b ON b.id = f.book
-                JOIN words w ON w.book = b.id AND w.strong = f.strong
-              WHERE f.strong IN (${Array (count).fill ("?").join (",")}) AND b.testament IN (?, 'NT') AND (b.testament <> 'LXX' OR b.heb > 0)
+// the Septuagint's only those the book list shows (books.heb) -, in the book list's order. (The books as a
+// constraint on words' own book - not a join - so only those books' words are read: db.ts' words view.)
+const hitsOf = (count: number) => {
+  const roots = Array (count).fill ("?").join (",");
+  return `SELECT DISTINCT w.book, w.chapter, w.verse FROM words w JOIN books b ON b.id = w.book
+              WHERE w.strong IN (${roots}) AND w.book IN (SELECT book FROM freq WHERE strong IN (${roots}))
+                AND b.testament IN (?, 'NT') AND (b.testament <> 'LXX' OR b.heb > 0)
               ORDER BY CASE WHEN b.testament = 'LXX' THEN b.heb ELSE b.id END, b.id, w.chapter, w.verse`;
+};
 /** A result: its verse (end: a note's last verse, chapter * 1000 + verse, when it covers several) and a source's text. */
 interface Hit { book: number; chapter: number; verse: number; end?: number; text?: string; }
 
 async function searchRoots (strongs: string[], n: number) {
   if (! db) return;
-  const hits = await db.all (hitsOf (strongs.length), [...strongs, ot ()]) as unknown as Hit[];
+  const hits = await db.all (hitsOf (strongs.length), [...strongs, ...strongs, ot ()]) as unknown as Hit[];
   if (n !== searching) return;
   counted (hits.length, "verse");
   const set = new Set (strongs);

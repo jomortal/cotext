@@ -1,15 +1,17 @@
-// The database: public/data/cotext.db (built by pipeline/build_db.py) and the notes panel's and lexicons' files
-// (data/notes/<id>.db: pipeline/notes.py...), each opened only once it's needed. SQLite runs in a worker
-// (dbworker.ts; what it does with the files - kept in OPFS and opened where they lie, or the old way in memory - is
-// dbserver.ts'), so every query is asked for and answered by message: all () returns a promise. Where no worker starts
-// the same server runs in the page (without OPFS: the old way).
+// The database: the main one, data/db/<part>.db (pipeline/split_db.py splits it by what changes together, so an
+// update downloads only the parts that changed), and the notes panel's and lexicons' files (data/notes/<id>.db:
+// pipeline/notes.py...), each opened only once it's needed. SQLite runs in a worker (dbworker.ts; what it does with
+// the files - kept in OPFS and opened where they lie, or the old way in memory; an older version kept opened at once
+// while the new one comes in the background - is dbserver.ts'), so every query is asked for and answered by message:
+// all () returns a promise. Where no worker starts the same server runs in the page (without OPFS: the old way).
 
-/** The database's version, set by build.mjs from its contents: a new database gets a new URL (and file). */
-declare const DB_VERSION: string;
+/** The main database's parts, set by build.mjs: core first (the main schema), each with its version (a hash of its
+ *  bytes: a new one gets a new URL and file) and size. */
+declare const DB_FILES: { part: string; version: string; bytes: number }[];
 /** The worker's script, its address with its content's hash (build.mjs): a new build's never an old copy. */
 declare const DB_WORKER: string;
 
-import { serve, type Request, type Reply } from "./dbserver";
+import { serve, type DbFile, type Request, type Reply } from "./dbserver";
 
 export type Row = Record<string, string | number | null>;
 
@@ -56,22 +58,34 @@ function ask<T> (req: Omit<Request, "id">, progress?: (p: number) => void): Prom
   });
 }
 
-/** A file opened (url; kept under prefix + version), as a Db; onProgress gets 0-1 as it arrives. */
-async function openFile (url: string, prefix: string, version: string, onProgress: (fraction: number) => void): Promise<Db> {
-  const db = await ask<number> ({ op: "open", url, prefix, version }, onProgress);
+/** A set of files opened as one database (dbserver.ts' open), as a Db; onProgress gets 0-1 as they arrive. */
+async function openFiles (files: DbFile[], onProgress: (fraction: number) => void, more: { legacy?: string; setup?: string } = {}): Promise<Db> {
+  const db = await ask<number> ({ op: "open", files, ...more }, onProgress);
   return {
     all: (sql, params = []) => ask<Row[]> ({ op: "all", db, sql, params }),
     close: () => { ask ({ op: "close", db }).catch (() => {}); },
   };
 }
 
-/** Opens the database - downloaded the first time (and for each new version), then kept; onProgress gets 0-1 as it
- *  arrives. */
+/** The words, split by testament (ot.words, nt.words, lxx.words: split_db.py), as one table again - a temporary view
+ *  named words, found before any table of that name - so every query reads them as before. A query's constraints on
+ *  words' own columns reach into each testament's table (its key: book, chapter, verse, word); a join's from another
+ *  table don't (the view is read whole first), so a query joining words is written with its constraints on words'
+ *  columns (search.ts' root search). */
+const WORDS_VIEW = "CREATE TEMP VIEW words AS SELECT * FROM ot.words UNION ALL SELECT * FROM nt.words UNION ALL SELECT * FROM lxx.words";
+
+/** Opens the main database - its parts, each downloaded the first time and for each new version (only that part),
+ *  then kept; one kept from before is opened at once while its new version comes in the background (dbserver.ts).
+ *  core is the main schema, the others attached under their part's name. onProgress gets 0-1 as they arrive. */
 export function openDb (onProgress: (fraction: number) => void): Promise<Db> {
-  return openFile (`data/cotext.db?v=${DB_VERSION}`, "cotext-data-", DB_VERSION, onProgress);
+  const files = DB_FILES.map ((f, i) => ({ schema: i === 0 ? "main" : f.part, url: `data/db/${f.part}.db?v=${f.version}`,
+                                            prefix: `cotext-data-${f.part}-`, version: f.version, bytes: f.bytes }));
+  // (legacy: the whole database as kept before the split, "cotext-data-" + its version)
+  return openFiles (files, onProgress, { legacy: "cotext-data-", setup: WORDS_VIEW });
 }
 
-/** A notes source's file (note_sources: its file and version), downloaded once and kept like the main database. */
+/** A notes source's file (note_sources: its file and version), downloaded once and kept like the main database's
+ *  parts. */
 export function openNotesDb (id: string, file: string, version: string, onProgress: (fraction: number) => void): Promise<Db> {
-  return openFile (`${file}?v=${version}`, `cotext-notes-${id}-`, version, onProgress);
+  return openFiles ([{ schema: "main", url: `${file}?v=${version}`, prefix: `cotext-notes-${id}-`, version }], onProgress);
 }

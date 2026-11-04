@@ -1,5 +1,6 @@
 """Builds COTEXT's database, public/data/cotext.db, from the STEPBible-Data files and the grammars (fetched first if
-missing).
+missing), then splits it into the files the app downloads, public/data/db/<part>.db (split_db.py: which tables go
+where).
 
 Run: python3 pipeline/build_db.py   (Python's standard library only; about a minute; the grammars' first download
 a few minutes more - grammar.py)
@@ -60,6 +61,7 @@ import greek_lex  # noqa: E402
 import lxx  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
+import split_db  # noqa: E402
 import sefaria_lex  # noqa: E402
 import atlas  # noqa: E402
 import tyndale_dict  # noqa: E402
@@ -292,6 +294,7 @@ def build():
     db.execute("VACUUM")
     db.close()
     tmp.replace(OUT)
+    parts = split_db.split(OUT)     # (The files the app downloads: split_db.py)
     print(f"LXX: {len(lxx_books)} books, {len(lxx_rows)} words - " + ", ".join(f"{k} {n}" for k, n in lxx_stats.items()))
     print(f"{OUT} - {OUT.stat().st_size / 1e6:.1f} MB; {len(lex_rows)} lexicon entries "
           f"({len(extra_lex)} from the text's own tags); {len(parsings)} parsing codes; grammar sections "
@@ -300,6 +303,7 @@ def build():
           + f"; BDB {bdb_entries} entries for {bdb_keys} Strong's keys ({bdb_bytes / 1e6:.1f} MB); "
           + ", ".join(f"{k} {e} entries for {n} keys ({b / 1e6:.1f} MB)" for k, (n, e, b) in greek_counts.items())
           + f"; Tyndale Open Bible Dictionary {tobd_articles} articles for {tobd_lemmas} keys ({tobd_bytes / 1e6:.1f} MB)")
+    print("Split into public/data/db/: " + ", ".join(f"{p} {n / 1e6:.1f} MB" for p, n in parts.items()))
 
 
 if __name__ == "__main__":
