@@ -9,8 +9,7 @@ a non-commercial license are marked so in NOTICE.
       picker. Decide: Thayer's the Greek default?
 - [ ] **Moulton & Milligan**: only an unlicensed, AI-OCR digitization exists (curran-gehring/moulton-milligan) - ask its
       author for a license, or wait.
-- [ ] **Non-commercial resources** (background survey, research only): what's possible, free for non-commercial use
-      with no permission needed - a list to choose from, nothing added until picked.
+- [x] **Non-commercial resources** surveyed: see Possible additions below.
 
 ## Smaller downloads (back burner: not yet)
 
