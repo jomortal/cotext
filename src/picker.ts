@@ -8,7 +8,6 @@ import type { Book } from "./reader";
 
 const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
-const title = document.getElementById ("pickerTitle")!;
 
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 
@@ -22,7 +21,6 @@ export function openPicker (groups: [string, Book[]][], go: Go, chaptersOf: Chap
 }
 
 function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
-  title.textContent = "Books";
   body.textContent = "";
   let open: HTMLElement | null = null;     // (The chapters open under their book: one at a time)
   for (const [heading, books] of groups) {

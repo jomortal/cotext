@@ -134,6 +134,7 @@ async function switchLanguage (l: "H" | "G") {
   const target = to ?? books.find ((b) => b.testament === (l === "G" ? "LXX" : "OT"))!;
   const cs = await chaptersOf (target);
   go (target, to && cs.includes (chapter) ? chapter : cs[0]);
+  if (! document.getElementById ("picker")!.hidden) openPicker (groups (), go, chaptersOf);     // (Switched in the book list, which it heads: its books follow)
 }
 
 async function start () {
