@@ -19,10 +19,11 @@ Shai, Sinaiticus, TCENT, IGNTP (apparatus); Targums Onkelos and Jonathan (a new 
 unfoldingWord Hebrew and Greek grammars (GRAMMAR); Shmuelof's recorded Tanakh (a voice for reading aloud).
 
 Round 2 (after round 1):
-- [ ] Syntax: ETCBC BHSA and add-ons (phono, parallels, valence), PROIEL treebank, OpenText.org, OpenGNT - a way to
-      show clause and phrase structure.
-- [ ] Septuagint (Swete, tagged): a HEBREW / GREEK choice at the top of the ☰ menu - Hebrew: the OT in Hebrew; Greek:
-      the OT in the Septuagint and the NT.
+- [x] Sentence diagrams (MACULA, both testaments) in the notes panel's SYNTAX - to tune by trying them.
+- [ ] BHSA as a second OT diagram; ETCBC add-ons (phono, parallels, valence), PROIEL, OpenText.org, OpenGNT - not yet.
+- [x] Septuagint (Swete text, lxx-morph tags) with HEBREW / GREEK in the ☰ menu.
+- [ ] Septuagint gaps: 2,098 untagged words, 6,861 LXX-only lemmas without a gloss; diagrams / UBS "used here" for it.
+- [ ] Decide: LXX-Swete-1930's digitization is GPL-3.0 - redistributing its text may put COTEXT's data under the GPL.
 
 ## Possible additions (from the survey, 2026-11-03 - to pick from; nothing added until chosen)
 

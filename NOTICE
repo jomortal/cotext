@@ -46,6 +46,10 @@ Lexicons added 2026-11-03 (the word panel's LEXICON; each its own file in public
   Klein, A Comprehensive Etymological Dictionary of the Hebrew Language for Readers of English (Carta Jerusalem, 1987);
     text from Sefaria, CC BY-NC - for non-commercial use only (NC).
 
+The Septuagint: H. B. Swete, The Old Testament in Greek according to the Septuagint (1909-1930), public domain - text
+from Eliran Wong's LXX-Swete-1930 (GPL-3.0); morphology and lemmas adapted from Seth Kushniryk's lxx-morph (Rahlfs
+1935, Eliran Wong digital edition), CC BY 4.0, aligned to Swete's text by COTEXT.
+
 Sentence diagrams (the notes panel's SYNTAX): MACULA Hebrew Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0
 (github.com/Clear-Bible/macula-hebrew) - its syntax trees from the Westminster Hebrew Syntax ((c) 1991-2018 the J. Alan
 Groves Center, CC BY 4.0), Open Scriptures Hebrew Bible morphology and Cherith glosses (CC BY 4.0); MACULA Greek
