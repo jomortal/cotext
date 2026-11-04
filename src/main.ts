@@ -112,7 +112,7 @@ const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testamen
 function groups (): [string, Book[]][] {
   const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
   if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
-  return [["Old Testament - Septuagint (Greek)", lxxBooks ()], nt];
+  return [["Old Testament - Greek Septuagint", lxxBooks ()], nt];
 }
 
 // The Septuagint's books in the traditional English order (Genesis to Malachi, by the Hebrew book each matches;
