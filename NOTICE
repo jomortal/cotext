@@ -46,6 +46,12 @@ Lexicons added 2026-11-03 (the word panel's LEXICON; each its own file in public
   Klein, A Comprehensive Etymological Dictionary of the Hebrew Language for Readers of English (Carta Jerusalem, 1987);
     text from Sefaria, CC BY-NC - for non-commercial use only (NC).
 
+Sentence diagrams (the notes panel's SYNTAX): MACULA Hebrew Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0
+(github.com/Clear-Bible/macula-hebrew) - its syntax trees from the Westminster Hebrew Syntax ((c) 1991-2018 the J. Alan
+Groves Center, CC BY 4.0), Open Scriptures Hebrew Bible morphology and Cherith glosses (CC BY 4.0); MACULA Greek
+Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0 (github.com/Clear-Bible/macula-greek) - Nestle 1904 syntax
+trees. Adapted: drawn as clauses and phrases.
+
 Notes panel sources added 2026-11-03 (each its own file in public/data/notes/; credits also shown under its notes;
 non-commercial ones marked NC - usable because COTEXT is free and never sold):
   Translations: NJPS Tanakh (c) 1985 Jewish Publication Society; The Contemporary Torah (c) 2006 JPS; The Koren
