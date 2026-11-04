@@ -355,7 +355,7 @@ table.chart th.group { text-align: left; color: var(--fg); font-size: var(--fs-x
 table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--edge); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
 table.chart .cForm { min-height: 1.5em; }
 table.chart .pattern.he { font-size: var(--word-he); } table.chart .pattern.gr { font-size: var(--word-gr); }     /* (Its forms as big as the text's words) */
-table.chart .parse { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .02em; margin-top: 6px; }
+table.chart .parse { margin-top: 6px; }     /* (Its codes as the interlinear's: .parse) */
 table.chart .mean { font-size: var(--fs-s); color: var(--soft); }     /* (Its English as big as the interlinear's) */
 table.chart .count { display: block; font-size: var(--fs-xs); color: var(--soft); }
 table.chart .none, table.chart .same { color: var(--soft); font-size: var(--fs-xs); }
