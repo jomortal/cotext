@@ -155,6 +155,53 @@ function wayyiqtol (impf: string): string {
 export type English = [string, string, string, string, string];
 export const DO: English = ["do", "did", "done", "doing", "does"];
 
+// English verbs whose past and past participle aren't -ed (the meanings a lexicon's first sense most often gives).
+const IRREGULAR: Record<string, [string, string]> = {
+  be: ["was", "been"], become: ["became", "become"], begin: ["began", "begun"], bear: ["bore", "borne"], beat: ["beat", "beaten"],
+  bind: ["bound", "bound"], bite: ["bit", "bitten"], blow: ["blew", "blown"], break: ["broke", "broken"], bring: ["brought", "brought"],
+  build: ["built", "built"], burn: ["burned", "burned"], buy: ["bought", "bought"], cast: ["cast", "cast"], catch: ["caught", "caught"],
+  choose: ["chose", "chosen"], come: ["came", "come"], cut: ["cut", "cut"], dig: ["dug", "dug"], do: ["did", "done"],
+  draw: ["drew", "drawn"], drink: ["drank", "drunk"], drive: ["drove", "driven"], eat: ["ate", "eaten"], fall: ["fell", "fallen"],
+  feed: ["fed", "fed"], feel: ["felt", "felt"], fight: ["fought", "fought"], find: ["found", "found"], flee: ["fled", "fled"],
+  fly: ["flew", "flown"], forget: ["forgot", "forgotten"], forgive: ["forgave", "forgiven"], get: ["got", "gotten"], give: ["gave", "given"],
+  go: ["went", "gone"], grow: ["grew", "grown"], hang: ["hung", "hung"], have: ["had", "had"], hear: ["heard", "heard"],
+  hide: ["hid", "hidden"], hit: ["hit", "hit"], hold: ["held", "held"], keep: ["kept", "kept"], know: ["knew", "known"],
+  lay: ["laid", "laid"], lead: ["led", "led"], leave: ["left", "left"], lend: ["lent", "lent"], let: ["let", "let"],
+  lie: ["lay", "lain"], lose: ["lost", "lost"], make: ["made", "made"], mean: ["meant", "meant"], meet: ["met", "met"],
+  pay: ["paid", "paid"], put: ["put", "put"], read: ["read", "read"], ride: ["rode", "ridden"], rise: ["rose", "risen"],
+  run: ["ran", "run"], say: ["said", "said"], see: ["saw", "seen"], seek: ["sought", "sought"], sell: ["sold", "sold"],
+  send: ["sent", "sent"], set: ["set", "set"], shake: ["shook", "shaken"], shine: ["shone", "shone"], shoot: ["shot", "shot"],
+  shut: ["shut", "shut"], sing: ["sang", "sung"], sit: ["sat", "sat"], slay: ["slew", "slain"], sleep: ["slept", "slept"],
+  smite: ["smote", "smitten"], sow: ["sowed", "sown"], speak: ["spoke", "spoken"], spend: ["spent", "spent"], spread: ["spread", "spread"],
+  stand: ["stood", "stood"], steal: ["stole", "stolen"], strike: ["struck", "struck"], swear: ["swore", "sworn"], take: ["took", "taken"],
+  teach: ["taught", "taught"], tear: ["tore", "torn"], tell: ["told", "told"], think: ["thought", "thought"], throw: ["threw", "thrown"],
+  understand: ["understood", "understood"], wake: ["woke", "woken"], wear: ["wore", "worn"], weep: ["wept", "wept"], win: ["won", "won"],
+  write: ["wrote", "written"],
+};
+
+/** "be" as English says it, where the templates built on "do" don't: was / were by the subject (you, we, they
+ *  were), and its ongoing past just "was" (not "was being"). */
+const beFixed = (m: string) => m.replace (/\b(you|we|they)( \([^)]*\))? was\b/g, "$1$2 were").replace (/\b(was|were) being\b/g, "$1");
+
+/** A verb's English from its meaning (the lexicon's concise meaning: "to create, shape, form" -> create, created,
+ *  created, creating, creates): its first sense without "to", its first word inflected (go out -> went out; the rest
+ *  kept), by the irregular verbs above or the regular rules (-e dropped before -ing, -y after a consonant to -ied /
+ *  -ies, -s / -sh / -ch / -x / -o + es; no doubling: an occasional "stoped" beats a wrong guess). null: no verb sense
+ *  found (the chart keeps "do"). */
+export function englishOf (meaning: string): English | null {
+  const first = meaning.split (/[,;]/)[0].trim ().toLowerCase ().replace (/\([^)]*\)|\[[^\]]*\]/g, "").trim ();
+  const m = first.match (/^to ([a-z]+)(.*)$/);
+  if (! m) return null;
+  const [, v, rest] = m;
+  const [past, part] = IRREGULAR[v] ?? (() => {
+    const ed = /e$/.test (v) ? v + "d" : /[^aeiou]y$/.test (v) ? v.slice (0, -1) + "ied" : v + "ed";
+    return [ed, ed];
+  }) ();
+  const ing = v === "be" ? "being" : /ie$/.test (v) ? v.slice (0, -2) + "ying" : /[^e]e$/.test (v) ? v.slice (0, -1) + "ing" : v + "ing";
+  const s = v === "be" ? "is" : v === "have" ? "has" : /[^aeiou]y$/.test (v) ? v.slice (0, -1) + "ies" : /(s|sh|ch|x|o)$/.test (v) ? v + "es" : v + "s";
+  return [v + rest, past + rest, part + rest, ing + rest, s + rest];
+}
+
 const HEB_SUBJECT: Record<string, string> = { "3MS": "he", "3FS": "she", "2MS": "you (m.)", "2FS": "you (f.)", "1CS": "I",
   "3CP": "they", "3MP": "they (m.)", "3FP": "they (f.)", "2MP": "you (m. pl.)", "2FP": "you (f. pl.)", "1CP": "we" };
 const GN_WORDS: Record<string, string> = { MS: "m. sg.", FS: "f. sg.", MP: "m. pl.", FP: "f. pl." };
@@ -184,7 +231,7 @@ function hebrewMeaning (kind: Voice, form: string, pgn: string, e: English): str
   else if (form === "INC") m = `to ${verb ("bare")}`;
   else m = `(surely) ${verb ("bare")}`;
   m = m.replace ("{was}", was (subj));
-  return m + (kind.startsWith ("intensive") ? " (intensive)" : kind === "reflexive" ? " (reflexive)" : "");
+  return beFixed (m) + (kind.startsWith ("intensive") ? " (intensive)" : kind === "reflexive" ? " (reflexive)" : "");
 }
 
 /** One Hebrew cell: the template and its code. */
@@ -218,10 +265,10 @@ const rootLetters = (root: string) => root.match (/.[ׁׂ]?/g)!;     // (Each le
 
 /** A Hebrew cell as the screens show it: the pattern, or with a model verb its form (rootL colored); text: the form
  *  as plain text (the flashcards' "on a model root"). */
-export function hebrewForm (stem: Stem, c: HebrewCell, model: HebrewModel | null): Form & { text: string } {
+export function hebrewForm (stem: Stem, c: HebrewCell, model: HebrewModel | null, english?: English): Form & { text: string } {
   const parts = parse (c.template);
   const text = hebrewFill (parts, rootLetters ((model ?? HEBREW_MODELS[0]).root), false);
-  return { code: c.code, meaning: hebrewMeaning (stem.kind, c.form, c.pgn, model?.english ?? DO), text,
+  return { code: c.code, meaning: hebrewMeaning (stem.kind, c.form, c.pgn, english ?? model?.english ?? DO), text,
            pattern: model ? `<span class="pattern he filled">${hebrewFill (parts, rootLetters (model.root), true)}</span>` : hebrewPattern (parts) };
 }
 
@@ -361,7 +408,7 @@ function greekMeaning (tv: TenseVoice, mood: string, pn: string, e: English): st
       ? (pass ? (t === "R" ? `(having been) ${done}` : `having been ${done}`) : `having ${done}`) : pass ? `being ${done}` : doing;
     m = `${v} (${PTC_WORDS[pn]})`;
   }
-  return m + self;
+  return beFixed (m) + self;
 }
 
 /** One Greek cell: its code (Robinson's, as the reader shows: PAI-1S, AAN, PAP-NSM), mood and person. */
@@ -384,7 +431,7 @@ export function greekCells (tv: TenseVoice) {
 
 /** A Greek cell as the screens show it: the pattern (the augment ἐ, a reduplication's consonant a small square + ε,
  *  the stem a square, the ending unaccented), or with a model verb its form, accented; text: the form on λύω. */
-export function greekForm (tv: TenseVoice, c: GreekCell, model: GreekModel | null): Form & { text: string } {
+export function greekForm (tv: TenseVoice, c: GreekCell, model: GreekModel | null, english?: English): Form & { text: string } {
   const word = (m: GreekModel) => {
     const stem = tv.long ? m.stem : m.short;
     return accent ((tv.augment && c.mood === "I" ? "ἐ" : "") + (tv.redup ? m.redup : "") + stem + c.ending[0], c.ending[1]);
@@ -404,7 +451,7 @@ export function greekForm (tv: TenseVoice, c: GreekCell, model: GreekModel | nul
         return `<span class="pattern gr filled">${j (0, at2)}<span class="rootL">${j (at2, at)}</span>${j (at)}</span>`;
       }) ()
     : `<span class="pattern gr">${aug ? "<span>ἐ</span>" : ""}${tv.redup ? `<span class="slot small"></span><span>ε</span>` : ""}<span class="slot wide"></span><span>${plain (c.ending[0])}</span></span>`;
-  return { code: c.code, meaning: greekMeaning (tv, c.mood, c.pn, model?.english ?? DO), pattern,
+  return { code: c.code, meaning: greekMeaning (tv, c.mood, c.pn, english ?? model?.english ?? DO), pattern,
            text: word (model ?? GREEK_MODELS[0]) };
 }
 

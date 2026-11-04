@@ -2,7 +2,7 @@
 // page, a heading for each group and a row per form - Hebrew: perfect, imperfect, wayyiqtol and imperative (the 2nd
 // person's; none for the Pual and Hophal), each a row per person / gender / number, then the participles (and the
 // Qal's passive one) and the infinitives (picked by a row each for stem type, voice and form - one form, or all); Greek (picked by a row each for tense, voice and mood - one mood, or all):
-// indicative, subjunctive and imperative where the tense has them, a row per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" (paradigm.ts).
+// indicative, subjunctive and imperative where the tense has them, a row per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" - a verb of the text's on its own English (paradigm.ts' englishOf).
 //
 // The verb picker fills it: "Pattern" (dotted squares), a model verb (the templates filled: paradigm.ts), the verbs of
 // the chapter shown, or the word's own (its panel's Verb chart). A verb
@@ -16,7 +16,7 @@ import type { Db } from "./db";
 import type { Word } from "./reader";
 import { onScreen, currentTestament, openScreen } from "./study";
 import { HEBREW_STEMS, HEBREW_MODELS, HEBREW_PGN, HEBREW_GN, GREEK_TENSES, GREEK_MODELS, GREEK_PN, GREEK_PTC,
-         hebrewCells, hebrewForm, greekCells, greekForm, rootModel, type Form, type HebrewModel, type GreekModel } from "./paradigm";
+         hebrewCells, hebrewForm, greekCells, greekForm, rootModel, type Form, type HebrewModel, type GreekModel, englishOf } from "./paradigm";
 
 let db: Db;
 let chapterWords: Word[] = [];
@@ -142,7 +142,8 @@ function hebrewTables (verb: Verb, stemIdx: number, mood = ""): string {
   const stem = HEBREW_STEMS[stemIdx];
   const model = verb.kind === "model" ? HEBREW_MODELS[verb.i] : verb.kind === "text" ? rootModel (verb.lemma, true) as HebrewModel | null : null;
   const c = hebrewCells (stem);
-  const form = (cell: Parameters<typeof hebrewForm>[1]) => cellHtml (hebrewForm (stem, cell, model), verb, true);
+  const english = verb.kind === "text" ? englishOf (verb.gloss) ?? undefined : undefined;     // (A verb of the text: its meanings in its own English)
+  const form = (cell: Parameters<typeof hebrewForm>[1]) => cellHtml (hebrewForm (stem, cell, model, english), verb, true);
   const cols: [string, string][] = [["P", "PERFECT"], ["I", "IMPERFECT"], ["W", "WAYYIQTOL"]];
   if (stem.IMP) cols.push (["IMP", "IMPERATIVE"]);
   const groups: Group[] = cols.map (([k, name]) => [name, HEBREW_PGN.flatMap ((pgn): [string, string][] => {
@@ -162,7 +163,8 @@ function greekTables (verb: Verb, tvIdx: number, mood = ""): string {
   const tv = GREEK_TENSES[tvIdx];
   const model = verb.kind === "model" ? GREEK_MODELS[verb.i] : verb.kind === "text" ? rootModel (verb.lemma, false) as GreekModel | null : null;
   const c = greekCells (tv);
-  const form = (cell: Parameters<typeof greekForm>[1]) => cellHtml (greekForm (tv, cell, model), verb, false);
+  const english = verb.kind === "text" ? englishOf (verb.gloss) ?? undefined : undefined;
+  const form = (cell: Parameters<typeof greekForm>[1]) => cellHtml (greekForm (tv, cell, model, english), verb, false);
   const names = { I: "INDICATIVE", S: "SUBJUNCTIVE", M: "IMPERATIVE" };
   const groups: Group[] = (["I", "S", "M"] as const).filter ((m) => c.grid[m]).map ((m) =>
     [names[m], GREEK_PN.filter ((pn) => c.grid[m][pn]).map ((pn): [string, string] => [pn, form (c.grid[m][pn])])]);
@@ -248,7 +250,7 @@ function render (body: HTMLElement) {
       <label>Verb<select class="choose" id="chartVerb">${options.join ("")}</select></label>
     </div>
     <p>${verb.kind === "text"
-      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it.`
+      ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it. Under each: its parsing and its meaning on "${esc ((englishOf (verb.gloss) ?? ["do"])[0])}".`
       : hebrew ? "The root's letters as dotted squares, the form's own letters written. Under each: its parsing and its meaning on \"do\"."
                : "The stem as a dotted square, the augment and endings written. Under each: its parsing and its meaning on \"do\"."}</p>
     ${hebrew ? hebrewTables (verb, st.stem, st.mood) : greekTables (verb, st.stem, st.mood)}`;
