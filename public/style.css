@@ -401,10 +401,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 @media (min-width: 700px) {
   body { display: grid; grid-template-columns: minmax(0, 1fr) 0 0; grid-template-rows: auto minmax(0, 1fr) auto; }
   body:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto calc(var(--notesW, 33.333) * 1%); }
-  .head, #playBar { grid-column: 1 / -1; }
+  .head, #playBar { grid-column: 1; }     /* (The heading and the play bar the text's only: the resources run the full height beside them) */
   #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
   .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  #textCol { grid-column: 1; } #notesSplit { grid-row: 2; grid-column: 2; } #notesCol { grid-column: 3; }
+  #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 2; } #notesCol { grid-row: 1 / -1; grid-column: 3; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
   #notes:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
   .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */
@@ -427,7 +427,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
   :is(.sheet, #notes) > .panelScroll > * { max-width: none; }
   /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
-  #notes > .top { flex: none; margin: 0; padding: var(--pad) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
+  #notes > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
+  #notes > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
+  #notes > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
   #notes > .panelScroll { padding-top: 0; }
   #sheetSplit, #besideSplit { height: 14px; cursor: row-resize; }
   :is(#sheetSplit, #besideSplit)::before { left: 0; right: 0; top: 6.5px; height: 1px; }
