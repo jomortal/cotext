@@ -92,6 +92,16 @@ Needs permission (later): Willker's Textual Commentary on the Greek Gospels (fre
 
 ## Ask permission (once the app is polished - all at once, the user's plan; Claude drafts the requests)
 
+To prepare first (trust as much as polish):
+- [ ] Written references - Bible school professors (Greek, Hebrew, Septuagint) vouching for the user and the app;
+      better still one named as an advisor, or who'd use it with students.
+- [ ] A short project page: what COTEXT is, who's behind it, free with no ads, how each source is credited.
+- [ ] A demo (the beta link, or a short video) showing their resource in use, credited.
+- [ ] Clear commitments: non-commercial, their attribution wording, their text unchanged, the data hard to extract
+      (inside the app's database, never offered as a file); willing to sign their agreement; errors found sent back;
+      what happens to their data if the project stops.
+
+
 - [ ] **CATSS LXX morphology** (Rahlfs, tagged) - CCAT / the Kraft-Tov team.
 - [ ] **NET Bible** and its translators' notes - bible.org.
 - [ ] **Analytic Septuagint** - its author and the LXXM rights holders.
