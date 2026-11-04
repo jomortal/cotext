@@ -28,7 +28,7 @@ Non-commercial, no permission needed (each license quoted in the survey; NC part
 - [ ] eBible NC texts: English Majority Text Version, Greek NT Family 35, Wycliffe modern spelling (BY-NC-ND)
 
 Open licenses (CC BY / BY-SA / public domain), also not yet in:
-- [ ] UBS Semantic Dictionary of Biblical Hebrew and the UBS Greek NT dictionary - LEXICON choices by meaning (CC BY-SA 4.0)
+- [ ] UBS Dictionary of Biblical Hebrew (SDBH, 99% of OT words, keyed by Strong's) and the UBS Dictionary of the Greek NT (Louw-Nida) - LEXICON choices by meaning; each sense lists every verse it's used in, so the panel could show the sense used right here (CC BY-SA 4.0)
 - [ ] UBS HOTTP - OT text-critical analysis with A-D ratings: an apparatus source; UBS parallel passages (incl. OT quotes in the NT)
 - [ ] Sefaria: Miqra according to the Masorah, Minchat Shai, Targums Onkelos and Jonathan with Etheridge's English, Rashi (Judaica Press / Metsudah, CC BY), Ramban (Chavel, CC BY), Jastrow
 - [ ] NET Bible text (quotable with credit, no permission) - a translation
@@ -37,7 +37,9 @@ Open licenses (CC BY / BY-SA / public domain), also not yet in:
 - [ ] Tagged Septuagint: LXX-Swete-1930 (Tauber's morphology, GPL-3.0); Brenton's English (public domain)
 - [ ] Rabbi Dan Be'eri's Hebrew Tanakh audio (CC BY-SA; about a third missing)
 - [ ] unfoldingWord Hebrew and Greek grammars (CC BY-SA; license not checked)
-- [ ] Still being checked: Gesenius' Hebrew and Chaldee Lexicon (Tregelles), Davidson's Analytical Lexicon, Klein's Etymological Dictionary
+- [ ] Jastrow (1903, public domain) - Aramaic and rabbinic Hebrew lexicon, via Sefaria's API (by headword): for Daniel and Ezra's Aramaic, or with Targums
+- [ ] Klein's Etymological Dictionary (CC BY-NC, Sefaria) - an etymology note beside BDB
+- (Not available as clean text: Gesenius' Hebrew and Chaldee Lexicon (Tregelles) - OCR in progress at machshev/gesenius-lexicon; Davidson's Analytical Lexicon - scans only)
 
 Needs permission (later): CATSS LXX morphology and its Hebrew-Greek alignment, NET notes, Analytic Septuagint, NETS, CAL Targum data; the Lexham English Bible's license has conditions.
 
