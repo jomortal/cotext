@@ -152,6 +152,7 @@ export function grammarIn (sheet: HTMLElement) {
     bodyEl.classList.toggle ("one", count === 1);
     showPick ();
     bodyEl.hidden = false; otherEl.hidden = true; otherEl.replaceChildren ();
+    box.classList.remove ("other");
     box.hidden = false;
     for (const t of sheet.querySelectorAll<HTMLElement> (".term")) t.classList.toggle ("on", t.parentElement?.parentElement === term.parentElement?.parentElement && t.dataset.key === term.dataset.key);     // (Every piece of the tapped term)
     sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until its ✕)
@@ -169,6 +170,7 @@ export function grammarIn (sheet: HTMLElement) {
     bodyEl.hidden = true; otherEl.hidden = false; otherEl.replaceChildren ();
     pick.closest ("label")!.hidden = true;
     fill (otherEl);
+    box.classList.add ("other");     // (Its heading in GRAMMAR's row: style.css)
     box.hidden = false;
     sheet.classList.add ("grammarOpen");
     sheet.scrollTop = 0;

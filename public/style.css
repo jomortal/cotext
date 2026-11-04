@@ -318,6 +318,11 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen .gInline .sheetPick { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
 .sheet.grammarOpen .giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 .sheet.grammarOpen .gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
+/* Something else in the box (grammar.ts' showOther: the Verb chart) has no GRAMMAR: its heading up in that row, beside
+   the ✕ (kept over it) - no empty bar above it. */
+.sheet.grammarOpen .gInline.other .giScroll { grid-row: 1 / -1; }
+.sheet.grammarOpen .gInline.other .xRow { position: relative; z-index: 1; }
+.sheet.grammarOpen .gInline.other .top { padding-right: 52px; }
 .sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A fuller lexicon's senses, nested as it numbers them: pipeline/bdb.py, greek_lex.py) */
 .sheet .def .lexEntry + .lexEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several entries) */
 .sheet .lexCredit { margin-top: 8px; }
