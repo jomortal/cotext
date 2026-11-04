@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
@@ -54,11 +54,11 @@ document.querySelector ("#sheet .heads > .btns")!.before (vocabGloss);
 // The entry, as LEXICON picks it (a picker as GRAMMAR's, over the entry): the STEPBible brief lexicon, or a fuller
 // lexicon that has the word - (Hebrew)
 // Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; (Greek) Abbott-Smith, Thayer, the Middle
-// Liddell, Dodson, the UBS Dictionary of the Greek New Testament - each fuller one's entry (or entries, where it splits
+// Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - each fuller one's entry (or entries, where it splits
 // the Strong's number or has homographs) with its credit under it. The choice is kept on the device per language (the
 // brief one at first; "concise", the vocab gloss once picked here, now the brief one too); a word the lexicon picked
 // lacks opens the brief one. Each fuller lexicon's entries are their
-// own file (data/notes/<id>.db: pipeline/bdb.py, greek_lex.py, ubs_lex.py, sefaria_lex.py), downloaded the first time
+// own file (data/notes/<id>.db: pipeline/bdb.py, greek_lex.py, lsj.py, ubs_lex.py, sefaria_lex.py), downloaded the first time
 // it's shown and kept (db.ts: openNotesDb); its file and version in the main database's table named here (table).
 const lexCredit = document.getElementById ("lexCredit")!;
 const lexPick = document.getElementById ("lexPick") as HTMLSelectElement;
@@ -79,6 +79,8 @@ const LEXICONS: Record<string, { name: string; short: string; credit: string; ta
             credit: "Thayer, A Greek-English Lexicon of the New Testament (1889), public domain; text from Every Promise's edition (CC0)." },
   ml: { name: "Liddell & Scott (Intermediate)", short: "Liddell & Scott", table: "greek_lex_file",
         credit: "Liddell and Scott, An Intermediate Greek-English Lexicon (1889). Text provided by Perseus Digital Library, with funding from The Annenberg CPB/Project (CC BY-SA 3.0 US)." },
+  lsj: { name: "Liddell-Scott-Jones (LSJ)", short: "LSJ", table: "greek_lex_file",
+         credit: "Liddell, Scott, Jones and McKenzie, A Greek-English Lexicon (9th ed., 1940). Text provided by the Perseus Digital Library (perseus.tufts.edu; github.com/PerseusDL/lexica), CC BY-SA 4.0." },
   dodson: { name: "Dodson", short: "Dodson", table: "greek_lex_file",
             credit: "Dodson, A Greek-English Lexicon of the New Testament (2010), public domain; text from Biblical Humanities (CC0)." },
   ubs_gr: { name: "UBS Dictionary of the Greek NT (Louw-Nida)", short: "UBS", table: "ubs_lex_file",

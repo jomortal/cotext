@@ -26,7 +26,8 @@ The code: Robinson's, built from the parsing and the lemma's use in the NT (TAGN
 N where the NT has the verb so in that tense) and an indeclinable's whole code (PRT-N, COND). Where the parsing
 leaves a case open (a neuter's nominative or accusative) the word before decides it if it agrees (the article),
 else an accusative preposition before it, else the first named; a gender left open the same way, else the NT's.
-The gloss: the NT's commonest for that key and code, else for the key; blank for a word the NT lacks.
+The gloss: the NT's commonest for that key and code, else for the key; a lemma TBESG lacks (a GL key) gets a few words
+of its first sense in Liddell-Scott-Jones (lsj.glosses) as its gloss and concise meaning, blank where LSJ lacks it.
 
 Books are build_db's ids 67 on, in Swete's order, testament 'LXX'. The main database's books table gets two more
 columns for them: heb - the Hebrew Bible's book it corresponds to (0 for the books the Hebrew Bible lacks; the
@@ -42,6 +43,8 @@ import pathlib
 import re
 import unicodedata
 import urllib.request
+
+import lsj
 
 HERE = pathlib.Path(__file__).parent
 DL = HERE / "downloads" / "lxx"
@@ -428,11 +431,14 @@ def words(nt_rows, lex):
     names = {"noun": "noun", "proper noun": "proper name", "adjective": "adjective", "verb": "verb",
              "participle": "verb", "adverb": "adverb", "pronoun": "pronoun", "numeral": "number"}
     new_lex = {}
+    short = lsj.glosses({k: lemma for k, (lemma, _pos) in keys.pos.items()})     # (The LXX-only lemmas' gloss: LSJ's)
     for k, (lemma, pos) in keys.pos.items():
         part = names.get(pos, pos)
-        new_lex[k] = (lemma, "", "", f"<b>{lemma}</b>" + (f" - {part}" if part else "") +
-                      ". A word of the Septuagint the brief lexicon lacks.", "")
+        new_lex[k] = (lemma, "", short.get(k, ""), f"<b>{lemma}</b>" + (f" - {part}" if part else "") +
+                      ". A word of the Septuagint the brief lexicon lacks.", short.get(k, ""))
+    rows = [(*r[:6], short.get(r[7], ""), *r[7:]) if not r[6] and r[7] in short else r for r in rows]
     stats["new keys"] = len(new_lex)
+    stats["new keys glossed from LSJ"] = len(short)
     return books, rows, new_lex, stats
 
 
