@@ -204,12 +204,13 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
    then chapters, at most the text's 8 inches wide. */
 #picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20;
           padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) 0 max(var(--pad), env(safe-area-inset-left, 0px)); }
-/* Its heading (Books, and ✕) a row that doesn't scroll, the list scrolling under it in its own box (#pickerBody) - so
-   neither the heading nor its ✕ moves, not even with the bounce at the list's ends. */
-#picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; }
-#picker .top { flex: none; align-items: center; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) 0 8px; }
-#picker .top { display: flex; justify-content: flex-end; }     /* (Its ✕ at the right) */
-#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
+/* The list scrolls in its own box (#pickerBody), its ✕ placed over the top right corner outside it - no bar of its own -
+   so the ✕ never moves, not even with the bounce at the list's ends. */
+#picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; position: relative; }
+#picker .top { position: absolute; z-index: 1; top: calc(var(--pad) + env(safe-area-inset-top, 0px)); right: 0; }
+#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) 0 calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
+#pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings - one line on a phone, beside the ✕) */
+#pickerBody > .src:first-child { margin-top: 6px; padding-right: 36px; }     /* (The first level with the ✕, clear of it) */
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: 10px; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
