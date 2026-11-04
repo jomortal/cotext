@@ -44,7 +44,9 @@ function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
         open.scrollIntoView ({ block: "nearest" });
       });
       row.className = "chooseItem";
-      const native = nativeName (b.code);     // (Its name in its own language, beside the English)
+      // (Its English name in a box of its own - the middle column -, its name in its own language beside it: style.css)
+      const en = document.createElement ("span"); en.className = "bookEn"; en.textContent = b.name; row.replaceChildren (en);
+      const native = nativeName (b.code);
       if (native) { const n = document.createElement ("span"); n.className = "bookNative " + native[1]; n.textContent = native[0]; row.append (n); }
       list.append (row);
     }
