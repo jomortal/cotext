@@ -138,7 +138,13 @@ function makePanel (sheet: HTMLElement) {
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
     const two = sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
-    if (two) info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
+    if (two) {
+      info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
+      // (Plus its scroll bar's width, where it has one that takes room - Windows', always shown: else the bar would take
+      // that much from the lines and wrap them)
+      const bar = info.offsetWidth - info.clientWidth;
+      if (bar > 0) info.style.width = `${Math.ceil (width + bar)}px`;
+    }
   };
   new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
