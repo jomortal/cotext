@@ -117,13 +117,26 @@ function makePanel (sheet: HTMLElement) {
     // line, whatever its own width says)
     const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formGloss, .vocabGloss")];
     for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
-    const need = Math.max (heads.getBoundingClientRect ().width, ...wraps.map (e => e.getBoundingClientRect ().width));
+    const rest = heads.getBoundingClientRect ().width;     // (The lines that don't wrap: the words, buttons)
+    const need = Math.max (rest, ...wraps.map (e => e.getBoundingClientRect ().width));
+    // (The word's side, two columns: as wide as its lines unwrapped when that's at most half the panel; wider, its lines
+    // wrapped to fit half - and then only as wide as their longest wrapped line, so nothing's narrower than it must be)
+    const pad = getComputedStyle (sheetScroll);
+    const half = (sheetScroll.clientWidth - parseFloat (pad.paddingLeft) - parseFloat (pad.paddingRight)) / 2;
+    let width = natural;
+    if (natural > half) {
+      width = rest;
+      for (const e of wraps) {
+        e.style.width = `${half}px`;
+        const left = e.getBoundingClientRect ().left, r = document.createRange ();
+        r.selectNodeContents (e);
+        for (const line of r.getClientRects ()) width = Math.max (width, line.right - left);
+      }
+    }
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
     const two = sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
-    // (Two columns: the word's side as wide as its lines unwrapped, at most half - style.css' max-width -, so the parsing
-    // wraps only when it must to fit that half; the lexicon the rest)
-    if (two) info.style.width = `${Math.ceil (natural)}px`;
+    if (two) info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
   };
   new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
