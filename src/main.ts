@@ -106,14 +106,26 @@ function chaptersOf (b: Book): Promise<number[]> {
 
 /** The books of the language picked, in order: the Hebrew OT or the Septuagint, then the NT. */
 // (Hebrew: the Hebrew OT alone; Greek: the Septuagint and the NT - the user's choice)
-const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : books.filter ((b) => b.testament === "LXX").concat (books.filter ((b) => b.testament === "NT"));
+const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : lxxBooks ().concat (books.filter ((b) => b.testament === "NT"));     // (‹ › step through them in this order)
 
-/** The picker's groups: the OT as picked (the Septuagint's Apocrypha - the books the Hebrew Bible lacks - apart), then the NT. */
+/** The picker's groups: the OT as picked (the Septuagint's books in the traditional English order, the Apocrypha after), then the NT. */
 function groups (): [string, Book[]][] {
   const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
   if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
+  return [["Old Testament - Septuagint (Greek)", lxxBooks ()], nt];
+}
+
+// The Septuagint's books in the traditional English order: those the Hebrew Bible has in its English Bibles' order
+// (Genesis to Malachi, by the book each matches; Daniel's two Greek forms together), then the Apocrypha in the order
+// English Bibles printed them (the KJV's: 1 Esdras, Tobit, Judith, Wisdom, Sirach, Baruch, the Letter of Jeremiah,
+// Susanna, Bel and the Dragon, 1 and 2 Maccabees), then the rest (3 and 4 Maccabees, the Psalms of Solomon, Odes,
+// Enoch) in the LXX's order.
+const APOCRYPHA = ["LXX1Es", "LXXTob", "LXXTbs", "LXXJdt", "LXXWis", "LXXSip", "LXXSir", "LXXBar", "LXXEpj",
+  "LXXSus", "LXXSut", "LXXBel", "LXXBet", "LXX1Ma", "LXX2Ma"];
+function lxxBooks (): Book[] {
   const lxx = books.filter ((b) => b.testament === "LXX");
-  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Apocrypha", lxx.filter ((b) => ! b.heb)], nt];
+  const rank = (b: Book) => b.heb ? b.heb : APOCRYPHA.includes (b.code) ? 100 + APOCRYPHA.indexOf (b.code) : 200;
+  return [...lxx].sort ((a, b) => rank (a) - rank (b) || a.id - b.id);
 }
 
 /** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
