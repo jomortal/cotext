@@ -382,7 +382,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseList[hidden] { display: none; }
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
 .chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
-/* One line: the English, a dash, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
+/* One line: the English, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
    reads right to left within the line), muted beside the English. */
 .bookNative { font-size: 1.15em; line-height: 1.6; unicode-bidi: isolate; color: var(--soft); }     /* (One line height for both, so the rows are the same height in either list) */
 .bookNative.he { font-family: var(--heb); } .bookNative.gr { font-family: var(--grk); }
