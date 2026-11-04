@@ -227,8 +227,8 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#screenMenu { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
-#screenClose { position: fixed; z-index: 31; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }     /* (✕: back to the text; fixed like the ☰) */
+#screenMenu { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - 760px) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
+#screenClose { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - 760px) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
@@ -285,6 +285,13 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    column, the picker over the section's own scroller (.giScroll: its heading and text), so the text never runs up
    behind the picker. */
 .sheet.grammarOpen .panelScroll { display: flex; flex-direction: column; overflow: hidden; }
+/* Two columns (panel.ts' .twoCol: the panel at least twice as wide as the word's info needs): the info - the words,
+   parsing, vocab gloss and buttons, the divine name's note - on the left, the lexicon - its picker, entry and credit -
+   on the right, each scrolling on its own. A grammar section still takes the panel over, one column. */
+.sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
+.sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  max-width: none; margin: 0; padding-block: var(--pad); }     /* (Each column scrolls on its own) */
+.sheet.twoCol:not(.grammarOpen) .lexBox > .lexRow { margin-top: 0; }
 .sheet.grammarOpen .gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 .sheet.grammarOpen .gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
@@ -416,6 +423,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      the text, the heading and the ⋯ menu, the panels' contents. */
   main { grid-template-columns: minmax(0, 1fr); }
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+  #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
   :is(.sheet, #notes) > .panelScroll > * { max-width: none; }
   /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
   #notes > .top { flex: none; margin: 0; padding: var(--pad) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }

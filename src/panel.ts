@@ -99,6 +99,27 @@ function makePanel (sheet: HTMLElement) {
   const sheetScroll = document.createElement ("div");
   sheetScroll.className = "panelScroll";
   { const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
+  // Two columns where there's room: once the panel is at least twice as wide as the word's info (everything but the
+  // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
+  // style.css). Measured at the info's natural width whenever the panel resizes or shows another word.
+  const heads = q ("heads");
+  { const info = document.createElement ("div");     // (The word's info in one box, the lexicon's parts in another: the two columns)
+    info.className = "infoBox";
+    heads.before (info);
+    info.append (heads, nameNote);
+    const box = document.createElement ("div");
+    box.className = "lexBox";
+    info.after (box);
+    box.append (q ("lexRow"), defEl, q ("lexCredit")); }
+  const columns = () => {
+    if (sheet.hidden) return;
+    sheet.classList.remove ("twoCol");
+    heads.style.width = "max-content";
+    const need = heads.getBoundingClientRect ().width;
+    heads.style.width = "";
+    sheet.classList.toggle ("twoCol", sheetScroll.clientWidth >= 2 * need);
+  };
+  new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
   q ("speakBtn").addEventListener ("click", () => { if (picked) sayWord (picked); });
   q ("speakRoot").addEventListener ("click", () => sayText (lemmaEl.textContent ?? ""));     // (The dictionary form)
@@ -231,6 +252,7 @@ function makePanel (sheet: HTMLElement) {
     showEntry (extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word - or "concise", from before: the brief one)
     sheet.hidden = false;
     sheetScroll.scrollTop = 0;
+    columns ();
     // Keep the word in view above the panels - a word of the text read only (one in the notes panel stays where it is).
     const main = wordEl.closest ("main");
     if (main) requestAnimationFrame (() => {
