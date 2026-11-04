@@ -1,6 +1,7 @@
 // The search pane: the icon at the play bar's right opens and closes it (or its ✕). Built as the notes panel is
 // (layout.ts' paneFrame: the same frame, ✕ and top row - here the search bar, the picker of what's searched under it): on a
-// narrow screen in the page's column above the play bar, on a wide one a column at the right, full height (layout.ts).
+// narrow screen in the page's column above the play bar, on a wide one in the panes' column at the right, over the
+// notes when they're open, else its full height (layout.ts).
 // - The picker (a <select class="choose">, as the notes'): ROOT WORD, INTERLINEAR (ENGLISH) - the default - and the
 //   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, translations, ancient versions - not
 //   the diagrams), grouped and named as the notes' picker has them, only those for the testament shown. The choice is
@@ -8,7 +9,8 @@
 // - What's typed is searched on Enter (the phone keyboard's search key), not on every key; picking another kind
 //   searches the bar's text again. Every kind lists its results alike: counted, each a row - its reference over its
 //   text, what matched in the accent - drawn CHUNK at a time as the list scrolls to its end; a row tapped goes to that
-//   verse (main.ts), a source's also opening the notes on that source there (notes.ts' showSource).
+//   verse in the text (main.ts) - a source's too: the notes are left as they are (opening them on it is the reader's
+//   choice, the user's call).
 // - ROOT WORD: every verse of the testament (the Hebrew OT, the NT, or the Septuagint's books the list shows) with a
 //   word of the root (the same Strong's number), its original text, the root's words marked. From a word's panel's
 //   "Search" (panel.ts) the root is the word's and the bar shows its dictionary form; typed, the dictionary forms
@@ -27,7 +29,7 @@
 import type { Db, Row } from "./db";
 import type { Book } from "./reader";
 import { paneFrame } from "./layout";
-import { textSources, sourceGroups, openSource, showSource, type Source } from "./notes";
+import { textSources, sourceGroups, openSource, type Source } from "./notes";
 
 const pane = document.getElementById ("search")!;
 const btn = document.getElementById ("searchBtn")!;
@@ -225,7 +227,7 @@ async function searchSource (src: Source, typed: string, n: number) {
   }
   hits.sort ((a, b) => order (books.get (a.book)!) - order (books.get (b.book)!) || a.book - b.book);     // (Stable: each book's in its order)
   counted (hits.length, src.kind === "translation" || src.kind === "version" ? "verse" : "note");
-  draw (hits, n, async () => (h) => snippet (h.text!, typed), src.id);
+  draw (hits, n, async () => (h) => snippet (h.text!, typed));
 }
 
 /** The stretch of a source's text around its first match (up to 80 characters before, 200 after, cut at spaces,
@@ -284,8 +286,8 @@ const original = (mark: (w: Row) => boolean, english: boolean): Texts => async (
 
 const CHUNK = 100;
 /** The results drawn CHUNK at a time, each chunk's text made as it's drawn (texts): the next once the last drawn comes
- *  near the view (an observer on it). A row tapped goes to its verse - with source, the notes opened on it there. */
-async function draw (hits: Hit[], n: number, texts: Texts, source?: string, from = 0) {
+ *  near the view (an observer on it). A row tapped goes to its verse in the text, whatever kind it is. */
+async function draw (hits: Hit[], n: number, texts: Texts, from = 0) {
   const chunk = hits.slice (from, from + CHUNK);
   if (! chunk.length || ! db) return;
   const make = await texts (chunk);
@@ -299,18 +301,14 @@ async function draw (hits: Hit[], n: number, texts: Texts, source?: string, from
     const end = ! h.end ? "" : Math.floor (h.end / 1000) === h.chapter ? `–${h.end % 1000}` : `–${Math.floor (h.end / 1000)}:${h.end % 1000}`;
     ref.textContent = `${b?.name ?? ""} ${h.chapter}:${h.verse}${end}`;
     row.append (ref, make (h));
-    row.addEventListener ("click", async () => {
-      if (! b) return;
-      await goVerse (b, h.chapter, h.verse);
-      if (source) showSource (source);
-    });
+    row.addEventListener ("click", () => { if (b) goVerse (b, h.chapter, h.verse); });
     hitsEl.append (row);
   }
   if (from + CHUNK >= hits.length) return;
   const watch = new IntersectionObserver (([e]) => {
     if (! e.isIntersecting) return;
     watch.disconnect ();
-    if (n === searching) draw (hits, n, texts, source, from + CHUNK);
+    if (n === searching) draw (hits, n, texts, from + CHUNK);
   }, { root: scroll, rootMargin: "400px" });
   watch.observe (hitsEl.lastElementChild!);
 }

@@ -4,7 +4,7 @@
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
 // (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word). ✕ (or tapping the word again) hides it.
 // Two of them, each its own: #sheet for a word of the text read, above the notes panel, and a second (cloned from
-// #sheet's markup, under the notes, just above the play bar) for a word of the notes' Hebrew OT beside the Septuagint
+// #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
@@ -61,7 +61,7 @@ const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, onc
 const textSheet = document.getElementById ("sheet")!;
 const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
-document.getElementById ("notesCol")!.append (besideSheet);     // (Under the notes: in their column when wide, layout.ts)
+document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes: at the foot of the panes' column when wide, layout.ts)
 addDock (besideSheet);     // (Narrow, it shares the room with the other panels: layout.ts)
 
 /** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */

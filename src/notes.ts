@@ -2,7 +2,7 @@
 // text, following it. The icon at the play bar's right (left of the search's)
 // opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
 // (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
-// text), at most half the screen, scrolling; on a wide one it's a column at the right of the text, left of the search (layout.ts).
+// text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
 //   VERSIONS - the database's note_sources (pipeline/notes.py) - so
@@ -113,18 +113,6 @@ export const textSources = () => mine ().filter ((s) => s.file && s.kind !== "sy
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
  *  search's own handle on it, so searching never closes the notes' open source. */
 export const openSource = (s: Source, onProgress: (fraction: number) => void) => openNotesDb (s.id, s.file, s.version, onProgress);
-
-/** A search result in a source tapped (search.ts, once the text is at its verse): the panel opened on that source -
- *  picked and kept as the testament's choice, as if picked by hand - following the text to the verse. */
-export function showSource (id: string) {
-  if (! book || ! mine ().some ((s) => s.id === id)) return;
-  picked[scope ()] = id;
-  try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
-  pick.value = id;
-  if (panel.hidden) { btn.click (); return; }
-  shownVerse = ""; shownIds = null;
-  show ();
-}
 
 /** The picker's list and its kept choice: per testament, an LXX book with a Hebrew counterpart apart (LXXH). */
 const scope = () => book?.testament === "LXX" && heb ? "LXXH" : book?.testament ?? "";

@@ -137,7 +137,7 @@ body.noVerbColors .w .parse { color: inherit; }
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between two of the
    panels open (.dock: the word's panel, the notes, the second word's panel, the search - in that order), and over the
    play bar when a panel is open above it. */
-/* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol, #notesCol and #searchCol - index.html) */
+/* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol and #paneCol - index.html) */
 body:has(#sheet:not([hidden])) #notes:not([hidden]), body:has(#sheet:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]),
 body:has(#sheet:not([hidden]), #notes:not([hidden]), #besideSheet:not([hidden])) #search:not([hidden]) { border-top: 1px solid var(--edge); }
 body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
@@ -421,27 +421,31 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
 
 /* The wide layout (layout.ts; the same 700 px as its matchMedia): the body a grid - the heading across the top, then
-   columns: at the left the text with its word's panel at its foot (#textCol), then the notes' divider and the notes
-   with the second word's panel - a word of their Hebrew OT - at their foot (#notesCol), then the search's divider and
-   the search pane (#searchCol) at the right, the panes the full height down to the play bar - text | notes | search. Each word's panel as wide as its column, its height set by its own divider on its top edge (--sheetH,
-   --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The notes' column --notesW % of
-   the width (a third at first), the search's --searchW % (a quarter at first), each column empty (0) while its pane is
-   closed, the text taking the rest. The text and the panes fill what their panels leave, each scrolling on its own;
-   their contents (and the heading's) the full width. One grid for both layouts: its columns 4 and 5 (the word beside
+   columns: at the left the text with its word's panel at its foot (#textCol), then the panes' divider and at the right
+   the panes' column (#paneCol), the full height down to the play bar: the search pane, the divider between the panes
+   (#paneSplit), then the notes with the second word's panel - a word of their Hebrew OT - at their foot - text |
+   search over notes (put so by order: index.html has them in the narrow layout's order, the notes first). Each word's panel as wide as its column, its height set by its own divider on its top edge
+   (--sheetH, --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The panes' column
+   --notesW % of the width (a third at first), empty (0) while both panes are closed, the text taking the rest. The text and the panes fill what their panels leave, each scrolling on its own;
+   their contents (and the heading's) the full width. One grid for both layouts: its columns 2 and 3 (the word beside
    the text: body.sideWord, below) empty unless the word is there. */
 .split { display: none; }
 @media (min-width: 700px) {
-  body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px) auto var(--searchCol, 0px);
-         grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the notes' divider, the notes, the search's divider, the search; a divider's column empty while hidden) */
-  body:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
-  body:has(#search:not([hidden])) { --searchCol: calc(var(--searchW, 25) * 1%); }     /* (layout.ts' NOTES_W and SEARCH_W the same) */
+  body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--paneCol, 0px);
+         grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the panes' divider, the panes; a divider's column empty while hidden) */
+  body:has(#notes:not([hidden]), #search:not([hidden])) { --paneCol: calc(var(--notesW, 33.333) * 1%); }     /* (layout.ts' NOTES_W the same) */
   .head, #playBar { grid-column: 1 / 4; }     /* (The heading and the play bar the text's only - and the word's beside it: the panes run the full height beside them) */
   #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
   .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-  #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 4; } #notesCol { grid-row: 1 / -1; grid-column: 5; }
-  #searchSplit { grid-row: 1 / -1; grid-column: 6; } #searchCol { grid-row: 1 / -1; grid-column: 7; }
+  #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 4; } #paneCol { grid-row: 1 / -1; grid-column: 5; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
-  .pane:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0; }
+  .pane:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0 !important; }     /* (Its divider, or the screen's top, is its top line) */
+  /* The search on top, its divider under it, then the notes (the second word's panel at their foot); the two share the
+     column's room by --searchH (the search's %, layout.ts' #paneSplit; half each at first): one open alone fills it
+     whatever its share. */
+  #search { order: -2; } #paneSplit { order: -1; }
+  #search { flex-grow: var(--searchH, 50); } #notes { flex-grow: calc(100 - var(--searchH, 50)); }
+  body:has(#notes[hidden]) :is(#besideSplit, #besideSheet) { display: none !important; }     /* (The second word's panel only with the notes it belongs to, not under the search alone) */
   .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */
   #sheet { height: min(var(--sheetH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
   #besideSheet { height: min(var(--besideH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
@@ -451,12 +455,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .split::before { content: ""; position: absolute; background: var(--edge); }
   .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
   .split.on::after { background: var(--accent); opacity: 1; }
-  /* Drawn by its orientation (aria-orientation): vertical - the notes', the search's and, beside the text, the word's
-     panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height - sets a height. */
+  /* Drawn by its orientation (aria-orientation): vertical - the panes' column's and, beside the text, the word's
+     panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height, the search's against the notes' -
+     sets a height. */
   .split[aria-orientation="vertical"] { width: 14px; cursor: col-resize; }
   .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
   .split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
-  body:has(#notes[hidden]) #notesSplit, body:has(#search[hidden]) #searchSplit { display: none; }
+  body:has(#notes[hidden]):has(#search[hidden]) #notesSplit, body:is(:has(#notes[hidden]), :has(#search[hidden])) #paneSplit { display: none; }     /* (The column's divider while either pane is open, the panes' only while both are) */
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
@@ -465,6 +470,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      right end; clear of the notch at whichever side the pane is. */
   .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px max(var(--pad), env(safe-area-inset-left, 0px)); }
   .pane > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
+  body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); } body:has(#search:not([hidden])) #notes > .xRow { top: var(--pad); }     /* (The notes under the search: away from the screen's top, no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
   .pane > .panelScroll { padding-top: 0; }
   .pane > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
@@ -474,8 +480,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
 }
 /* The word beside the text (layout.ts' body.sideWord: wide, with at least 1200 px left for the text and its word once
-   the notes' and the search's columns are taken off): the text's word's panel a column of its own between the text
-   and the notes - text | word | notes | search -, between the same heading and play bar as the text, --sheetW % of
+   the panes' column is taken off, while either pane is open): the text's word's panel a column of its own between the
+   text and the panes - text | word | panes -, between the same heading and play bar as the text, --sheetW % of
    the width (a quarter at first), set by #sheetSplit on its left edge, now vertical. With no word picked it and its
    divider are gone and the text takes the room, as when a pane closes. Always one column (panel.ts); its ✕ frozen and
    its margins as the panes'. Less room - a pane opened or widened, the window narrowed - and it goes back under the
