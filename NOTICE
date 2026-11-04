@@ -35,6 +35,26 @@ Grammars (the word's panel links each term of a parsing to its section):
 Hebrew Bible audio: the Tanakh read by Abraham Shmuelof, ebible.org/multimedia/hbo, Creative Commons BY-NC-ND 4.0
 (https://creativecommons.org/licenses/by-nc-nd/4.0/: non-commercial use; the recordings unaltered).
 
+Notes panel sources added 2026-11-03 (each its own file in public/data/notes/; credits also shown under its notes;
+non-commercial ones marked NC - usable because COTEXT is free and never sold):
+  Translations: NJPS Tanakh (c) 1985 Jewish Publication Society; The Contemporary Torah (c) 2006 JPS; The Koren
+    Jerusalem Bible - via Sefaria, CC BY-NC (NC). NET: "Scripture quoted by permission. Quotations designated (NET) are
+    from the NET Bible(R) copyright (c)1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights
+    reserved." Brenton's English Septuagint (1844), public domain, via eBible.org. English Majority Text Version
+    (c) 2014 Paul W. Esposito and Wycliffe's Bible in modern spelling (c) 2001-2015 Terry Noble - CC BY-NC-ND 4.0 (NC;
+    kept verbatim).
+  Commentaries: Rashi - Rosenbaum & Silbermann (public domain); Judaica Press, tr. A. J. Rosenberg, and Metsudah
+    (CC BY) - via Sefaria. Ibn Ezra on the Torah, tr. Strickman & Silver (Menorah) - Sefaria, CC BY-NC (NC). Ramban on
+    the Torah, tr. Chavel (Shilo) - Sefaria, CC BY.
+  Apparatus: UBS Hebrew Old Testament Text Project (HOTTP) (c) United Bible Societies 1973-1980, 2003-2023, CC BY-SA
+    4.0. Miqra according to the Masorah, ed. Avi Kadish - Sefaria, CC BY-SA. Minchat Shai (Norzi, 1742), public domain,
+    via Sefaria. ETCBC Dead Sea Scrolls (Abegg's transcriptions; Jacobs, Naaijer, Roorda), CC BY-NC 4.0 (NC). Text-
+    Critical English New Testament (c) 2022 Robert Adam Boyd, CC BY 4.0 (footnotes verbatim). Codex Sinaiticus
+    Project transcription, CC BY-NC-SA 3.0 (NC). IGNTP manuscript transcriptions, CC BY 4.0 (only the files so
+    licensed); Codex Bezae, IGNTP for Cambridge University Library, CC BY-NC-SA 3.0 (NC).
+  Ancient versions: Targum Onkelos, Targum Pseudo-Jonathan and Targum Jonathan on the Prophets - Sefaria, public domain;
+    English: J. W. Etheridge (1862) and C. W. H. Pauli (1871), public domain.
+
 Commentaries and apparatus (the notes panel; each source its own file, public/data/notes/<id>.db - pipeline/notes.py):
   - unfoldingWord Translation Notes (git.door43.org/unfoldingWord/en_tn, commit bf603342, 2026-11-02), (c) 2022
     unfoldingWord, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). The original work by
