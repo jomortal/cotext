@@ -5,7 +5,7 @@ a non-commercial license are marked so in NOTICE.
 
 ## Next up (queued 2026-11-04)
 
-- [ ] **Tyndale Bible Dictionary, linked both ways** (the word pane's DICTIONARY is in): by word through the UBS
+- [x] **Tyndale Bible Dictionary, linked both ways** (done 2026-11-04): by word through the UBS
       semantic domains as well as the exact English (flock, lamb -> Sheep); by passage, a resources choice listing the
       articles citing the verses shown (and those its words lead to), most relevant first; searchable in the search
       dropdown, each hit linked back by word or verse.
