@@ -4,8 +4,8 @@
 //   printed reader's editions do - except a hard form's parsing and gloss, always shown: a verb whose form is hard to recognize
 //   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT or the book shown
 //   (FREQUENCY);
-// - a word's panel flips one word by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
-//   slider), "Show helps" shows both, on top of the slider;
+// - a word's panel marks one word known by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
+//   slider), on top of the slider; tapped again (✓ In known words) taken off;
 // - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on).
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
@@ -21,7 +21,7 @@ interface Settings {
   slider: number;                       // how many of the most common words the slider hides: 0 none, 20s up to 1,000
   scope: "whole" | "book";              // frequency counted over the whole testament or the book shown
   mine: boolean;                        // HIDE KNOWN WORDS: the hand choices apply
-  modes: Record<string, "show" | "hide">;   // hand choices, by Strong's key
+  modes: Record<string, "hide">;          // the words known by hand, by Strong's key
   gloss?: boolean;                      // INTERLINEAR: each word's English shown (default on)
   parse?: boolean;                      // PARSING: each word's code shown (default on)
   translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it (default off)
@@ -30,6 +30,7 @@ interface Settings {
 
 const s: Settings = { slider: 0, scope: "whole", mine: true, modes: {} };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
+for (const k in s.modes) if (s.modes[k] !== "hide") delete s.modes[k];     // (A word shown by hand - SHOW HELPS, gone - back to the slider)
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } catch { /* private mode: not kept */ } };
 
 /** One scope's counts: each lemma's, each lemma + form's (key strong|code), the lemmas' counts sorted high to low,
@@ -85,11 +86,10 @@ function lemmaOf (strong: string): string {
   return lemmas.get (strong) ?? "";
 }
 
-/** Whether a word's parsing is hidden: "Show helps" by hand shows it, and a hard form's always shows; otherwise the
+/** Whether a word's parsing is hidden: a hard form's always shows; otherwise the
  *  slider by its root word's place, as its gloss (whether or not the word is known by hand: + Known words hides only
  *  the gloss). */
 export function isFormHidden (strong: string, code: string): boolean {
-  if (s.mine && s.modes[strong] === "show") return false;
   if (hardForm (lemmaOf (strong), code, strong.startsWith ("H"))) return false;
   return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
 }
@@ -112,18 +112,6 @@ export function knownWords (): string[] {
   return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
 }
 
-/** A lemma's count in the scope shown. */
-export function wordCount (strong: string): number { return counts ().byStrong.get (strong) ?? 0; }
-
-/** The panel's button: flips the word. If the slider alone would now give the flipped state, the hand choice is
- *  dropped (back to the slider); otherwise it's set. HIDE KNOWN WORDS turns on, so the choice shows. */
-export function flip (strong: string) {
-  const hidden = isHidden (strong);
-  delete s.modes[strong];
-  s.mine = true;
-  if (isHidden (strong) === hidden) s.modes[strong] = hidden ? "show" : "hide";
-  changed ();
-}
 
 /** Called when anything here changes (the panel relabels its button). */
 export function onHelpsChange (f: () => void) { listeners.push (f); }
