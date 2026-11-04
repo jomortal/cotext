@@ -1,6 +1,7 @@
 // Choosing a passage: the heading's button opens a list over the text - the whole screen, or on a wide one only the
 // text's column, the panes' column at its right (the search over the notes) left uncovered - the books under their headings (main.ts: the Old Testament in
-// the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart -, then the New Testament), one under another; a book tapped opens its chapters (numbers, six
+// the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart: HEBREW / GREEK LXX in its
+// heading -, then the New Testament, always), one under another; a book tapped opens its chapters (numbers, six
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
 // closed - and picking a chapter goes there (a one-chapter book goes straight there).
 
@@ -28,20 +29,21 @@ addEventListener ("resize", fit);
 type Go = (book: Book, chapter: number) => void;
 type Chapters = (book: Book) => Promise<number[]>;
 
-/** groups: [heading, its books]...; chaptersOf: a book's chapter numbers (from the database: a promise). */
-export function openPicker (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
+/** groups: [heading - its text, or what it's made of (the Old Testament's: its language buttons) -, its books]...;
+ *  chaptersOf: a book's chapter numbers (from the database: a promise). */
+export function openPicker (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
   fit ();
   picker.hidden = false;
 }
 
-function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
+function showBooks (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
   body.textContent = "";
   let open: HTMLElement | null = null;     // (The chapters open under their book: one at a time)
   for (const [heading, books] of groups) {
     const h = document.createElement ("div");
     h.className = "src";
-    h.textContent = heading;
+    if (typeof heading === "string") h.textContent = heading; else h.replaceChildren (...heading);
     const list = document.createElement ("div");
     list.className = "chooseList inline";     // (A vertical list, a row per book: the pickers' list, style.css)
     for (const b of books) {

@@ -19,10 +19,11 @@ export type Testament = "OT" | "NT" | "LXX";
 let testament: Testament = "OT";
 const screens = new Map<string, (body: HTMLElement) => void | Promise<void>> ();
 
-/** The testament shown (the study screens follow it); an OT or LXX book sets the language too. */
+/** The testament shown (the study screens follow it); an OT or LXX book sets the language too - the NT leaves it
+ *  as it is (shown whichever Old Testament is picked). */
 export function setTestament (t: Testament) {
   testament = t;
-  showLanguage (t === "OT" ? "H" : "G");     // (The NT is Greek's, as the Septuagint is)
+  if (t !== "NT") showLanguage (t === "OT" ? "H" : "G");
 }
 /** The testament shown: the study screens follow it. */
 export const currentTestament = () => testament;
@@ -40,16 +41,24 @@ export function onLanguage (f: (l: "H" | "G") => void) { languageChanged = f; }
 function showLanguage (l: "H" | "G") {
   language = l;
   try { localStorage.setItem (LANG, l); } catch { /* private mode: not kept */ }
-  for (const b of document.querySelectorAll<HTMLElement> ("#langPick [data-lang]")) b.setAttribute ("aria-pressed", String (b.dataset.lang === l));
 }
 showLanguage (language);
-for (const b of document.querySelectorAll<HTMLElement> ("#langPick [data-lang]"))
-  b.addEventListener ("click", () => {
-    const l = b.dataset.lang as "H" | "G";
-    if (l === language) return;
-    showLanguage (l);
-    languageChanged (l);
+/** The book list's Old Testament heading's choice (picker.ts): HEBREW and GREEK LXX, the one picked lit; tapped, the
+ *  other Old Testament (main.ts' switchLanguage: the same place in it, the list following). */
+export function languageButtons (): HTMLElement[] {
+  return ([["H", "Hebrew"], ["G", "Greek LXX"]] as const).map (([l, name]) => {
+    const b = document.createElement ("button");
+    b.className = "pill langPick";
+    b.textContent = name;
+    b.setAttribute ("aria-pressed", String (l === language));
+    b.addEventListener ("click", () => {
+      if (l === language) return;
+      showLanguage (l);
+      languageChanged (l);
+    });
+    return b;
   });
+}
 
 /** A study screen's drawing: called with its body each time it opens (it may draw later, once the database answers). */
 export function onScreen (name: string, draw: (body: HTMLElement) => void | Promise<void>) { screens.set (name, draw); }

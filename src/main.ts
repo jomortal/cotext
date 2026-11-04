@@ -8,7 +8,7 @@ import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker } from "./picker";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
-import { setTestament, currentLanguage, onLanguage } from "./study";
+import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
 import { initChart, setChartPassage } from "./chart";
@@ -117,14 +117,14 @@ function chaptersOf (b: Book): Promise<number[]> {
 }
 
 /** The books of the language picked, in order: the Hebrew OT or the Septuagint, then the NT. */
-// (Hebrew: the Hebrew OT alone; Greek: the Septuagint and the NT - the user's choice)
-const shown = () => currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : lxxBooks ().concat (books.filter ((b) => b.testament === "NT"));     // (‹ › step through them in this order)
+// (The Old Testament picked - Hebrew or the Septuagint - then always the NT)
+const shown = () => (currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : lxxBooks ()).concat (books.filter ((b) => b.testament === "NT"));     // (‹ › step through them in this order)
 
-/** The picker's groups: the OT as picked (the Septuagint's books the Hebrew Bible has, in the traditional English order), then the NT. */
-function groups (): [string, Book[]][] {
-  const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
-  if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
-  return [["Old Testament - Greek Septuagint", lxxBooks ()], nt];
+/** The picker's groups: the OT as picked (the Septuagint's books the Hebrew Bible has, in the traditional English
+ *  order), its heading the choice of the two (study.ts' languageButtons), then the NT, whichever is picked. */
+function groups (): [string | Node[], Book[]][] {
+  const ot = currentLanguage () === "H" ? books.filter ((b) => b.testament === "OT") : lxxBooks ();
+  return [[["Old Testament - ", ...languageButtons ()], ot], ["New Testament - Greek", books.filter ((b) => b.testament === "NT")]];
 }
 
 // The Septuagint's books in the traditional English order (Genesis to Malachi, by the Hebrew book each matches;
@@ -146,7 +146,10 @@ async function step (dir: number) {
  *  Theodotion's, the one usually read) or the Hebrew's for an LXX one, at the same chapter where it has it (else its
  *  first); Genesis 1 where the other has no such book. The NT stays. */
 async function switchLanguage (l: "H" | "G") {
-  if (book.testament === "NT" && l === "G") return;     // (Already Greek; to Hebrew from the NT: Genesis 1, below)
+  if (book.testament === "NT") {     // (The NT stays: only the list's Old Testament changes)
+    if (! document.getElementById ("picker")!.hidden) openPicker (groups (), go, chaptersOf);
+    return;
+  }
   const to = l === "G" ? books.filter ((b) => b.testament === "LXX" && b.heb === book.id).pop ()
                        : books.find ((b) => b.id === book.heb);
   const target = to ?? books.find ((b) => b.testament === (l === "G" ? "LXX" : "OT"))!;

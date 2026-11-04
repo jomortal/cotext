@@ -208,8 +208,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
    neither the heading nor its ✕ moves, not even with the bounce at the list's ends. */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; }
 #picker .top { flex: none; align-items: center; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) 0 8px; }
-#picker .top { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }     /* (HEBREW / GREEK centered, ✕ at the right) */
-#picker .top #langPick { grid-column: 2; } #picker .top #pickerClose { grid-column: 3; justify-self: end; }
+#picker .top { display: flex; justify-content: flex-end; }     /* (Its ✕ at the right) */
 #pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: 10px; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -224,9 +223,8 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
                padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(3 * var(--pad)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
-#langPick .pill { font-size: var(--fs-l); display: inline-flex; align-items: center; gap: 8px; }     /* (HEBREW / GREEK: the book list's heading, in place of "Books") */
-#langPick .langSym { font-size: 1.25em; line-height: 1; }     /* (Alef-tav and alpha-omega, the first and last letters, before each name) */
-#langPick .langSym.he { font-family: var(--heb); direction: rtl; } #langPick .langSym.gr { font-family: var(--grk); }
+.src .langPick { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--soft); padding: 0; margin-right: 10px; }     /* (The book list's Old Testament heading: HEBREW and GREEK LXX in its own small capitals, the one picked in the accent - .pill[aria-pressed]) */
+.src .langPick[aria-pressed="true"] { color: var(--accent); }
 #drawerPanel > .pill { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 0; font-size: var(--fs-l); }
 #drawerPanel > .pill::before { content: ""; flex: none; width: 20px; height: 20px; background: currentColor;
                              -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
