@@ -199,7 +199,9 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
                padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) var(--pad) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #drawerPanel .top { align-items: center; justify-content: space-between; }     /* (HEBREW / GREEK at the left, ✕ at the right) */
-#langPick .pill { font-size: var(--fs-l); }     /* (As the drawer's items) */
+#langPick .pill { font-size: var(--fs-l); display: inline-flex; align-items: center; gap: 8px; }     /* (As the drawer's items) */
+#langPick .langSym { font-size: 1.25em; line-height: 1; }     /* (Alef-tav and alpha-omega, the first and last letters, before each name) */
+#langPick .langSym.he { font-family: var(--heb); direction: rtl; } #langPick .langSym.gr { font-family: var(--grk); }
 #drawerPanel > .pill { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 0; font-size: var(--fs-l); }
 #drawerPanel > .pill::before { content: ""; flex: none; width: 20px; height: 20px; background: currentColor;
                              -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
