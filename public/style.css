@@ -223,6 +223,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    (dictionary form) with + Known words - each with its speaker; the buttons in a column at the right. */
 #sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 #sheet .heads > .pill, #sheet .heads > .btns { justify-self: end; }
+#sheet .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
+#sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
 #sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */
 #sheet .btns { display: flex; gap: 10px 24px; flex-wrap: wrap; justify-content: flex-end; }
 #sheet .nameNote { font-size: var(--fs-s); line-height: 1.5; color: var(--soft); margin: 10px 0 0; }     /* (The divine name's note: panel.ts) */

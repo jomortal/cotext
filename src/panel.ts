@@ -21,7 +21,12 @@ chartBtn.addEventListener ("click", () => { if (chartFor) openChartFor (...chart
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
-const formEl = document.getElementById ("form")!;     // (The word as it stands in the text, before its dictionary form)
+const formEl = document.getElementById ("form")!;
+// The head, top to bottom: the word as written, its English as the interlinear gives it here, its parsing spelled out,
+// then its dictionary form (the root word) with its buttons - or, when the two are the same (the word's own line left
+// out), the dictionary form, then its English and parsing.
+const formGloss = document.createElement ("span");
+formGloss.className = "formGloss";     // (The word as it stands in the text, before its dictionary form)
 const fullEl = document.getElementById ("full")!;
 const srcEl = document.getElementById ("src")!;
 const defEl = document.getElementById ("def")!;
@@ -139,6 +144,8 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   // The word as written left out when it's the dictionary form itself (λόγος, בֵּן): one line, kept clear of the ✕.
   const one = bare (w.text) === bare (lemmaEl.textContent ?? "");
   formEl.parentElement!.hidden = one;
+  formGloss.textContent = w.gloss ?? "";
+  if (one) formEl.parentElement!.parentElement!.append (formGloss, fullEl); else formEl.parentElement!.after (formGloss, fullEl);
   formEl.parentElement!.parentElement!.classList.toggle ("one", one);
   const note = NAME_NOTE[w.strong.match (/^H\d+/)?.[0] ?? ""];
   nameNote.textContent = note ?? "";
