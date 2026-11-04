@@ -157,7 +157,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc
 #notes .credit { margin-top: 12px; }
 
 /* The word's panel: a sheet from the bottom. */
-#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; }     /* (At most half the screen, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
+#sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: calc(var(--mid, 100dvh) / 2); }     /* (At most half the room between the bars - --mid, notes.ts -, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
 /* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
    what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
 :is(#sheet, #notes) > .xRow { position: absolute; z-index: 3; top: var(--pad); right: max(var(--pad), env(safe-area-inset-right, 0px)); }
