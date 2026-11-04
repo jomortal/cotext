@@ -255,9 +255,16 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
 #sheet .sheetPick[hidden] { display: none; }
 #sheet .sheetPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); margin: 10px 0; }
-/* GRAMMAR frozen at the panel's top (beside the ✕) while the section scrolls under it: its box reaching 2px past
-   the panel's 16px top padding (clipped there), so Safari's rounding leaves no sliver of text above it. */
-#sheet.grammarOpen #gInline .sheetPick { position: sticky; top: -18px; z-index: 2; background: var(--bg); margin: -18px 0 10px; padding-top: 18px; padding-bottom: 8px; }
+/* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
+   column, the picker over the section's own scroller (#giScroll: its heading and text), so the text never runs up
+   behind the picker. */
+#sheet.grammarOpen { display: flex; flex-direction: column; overflow: hidden; }
+#sheet.grammarOpen #gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
+  flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
+#sheet.grammarOpen #gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
+#sheet.grammarOpen #gInline .sheetPick { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
+#sheet.grammarOpen #giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#sheet.grammarOpen #gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
 #sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
 #moreDef[hidden] { display: none; }
 #sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A BDB entry's senses, nested as BDB numbers them: pipeline/bdb.py) */

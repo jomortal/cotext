@@ -120,6 +120,7 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
   for (const t of sheet.querySelectorAll (".term")) t.classList.toggle ("on", t === term);
   sheet.classList.add ("grammarOpen");     // (The section takes the word's panel over - style.css - until its ✕)
   sheet.scrollTop = 0;
+  document.getElementById ("giScroll")!.scrollTop = 0;     // (The section scrolls on its own, under GRAMMAR: style.css)
 }
 
 export function hideGrammar () {
