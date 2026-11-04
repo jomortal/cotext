@@ -139,7 +139,7 @@ body.noVerbColors .w .parse { color: inherit; }
          padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
-#notes .top { align-items: center; position: sticky; top: -12px; z-index: 2; background: var(--bg); margin-top: -12px; padding: 12px 0 8px; box-shadow: 0 -4px 0 var(--bg); }     /* (Frozen: the picker and Close stay at the top while the notes scroll; -12px the panel's own top padding; the shadow covers the sliver Safari's rounding leaves above it) */
+#notes .top { align-items: center; position: sticky; top: -14px; z-index: 2; background: var(--bg); margin-top: -14px; padding: 14px 0 8px; }     /* (Frozen: the picker and ✕ stay at the top while the notes scroll; the box reaching 2px past the panel's 12px top padding, clipped there, so Safari's rounding leaves no sliver above it) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 10px; }
@@ -255,9 +255,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
 #sheet .sheetPick[hidden] { display: none; }
 #sheet .sheetPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); margin: 10px 0; }
-/* GRAMMAR frozen at the panel's top (beside the ✕) while the section scrolls under it: -16px the panel's own top
-   padding; the shadow covers the sliver Safari's rounding leaves. */
-#sheet.grammarOpen #gInline .sheetPick { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin: -16px 0 10px; padding-top: 16px; padding-bottom: 8px; box-shadow: 0 -4px 0 var(--bg); }
+/* GRAMMAR frozen at the panel's top (beside the ✕) while the section scrolls under it: its box reaching 2px past
+   the panel's 16px top padding (clipped there), so Safari's rounding leaves no sliver of text above it. */
+#sheet.grammarOpen #gInline .sheetPick { position: sticky; top: -18px; z-index: 2; background: var(--bg); margin: -18px 0 10px; padding-top: 18px; padding-bottom: 8px; }
 #sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
 #moreDef[hidden] { display: none; }
 #sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A BDB entry's senses, nested as BDB numbers them: pipeline/bdb.py) */
