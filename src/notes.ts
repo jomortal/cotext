@@ -11,8 +11,8 @@
 //   open at a time.
 // - Narrow: the notes on one verse - the one being read aloud while ▶ reads (audio.ts signals each word lit), otherwise
 //   the first whose last line is still in view at the text's top (until half of it is gone) - following as the text scrolls. Wide: the
-//   notes on every verse of the chapter, each under its reference, scrolled in step with the text both ways (TWO-WAY
-//   SCROLLING, below). A note on a range (1:1-18) shows once, at its first verse shown, its range above it; a
+//   notes on every verse of the chapter, each under its reference, following the text both ways (TWO-WAY SCROLLING,
+//   below: a translation in step, any other kind loosely). A note on a range (1:1-18) shows once, at its first verse shown, its range above it; a
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
 //   note read through several verses keeps its place. A translation or an ancient version (a Targum: its Aramaic,
 //   right to left, with the English under it) is a source with a "note" per verse: its text.
@@ -360,7 +360,7 @@ async function drawAtlas (per: { v: number; where: number[][] }[], n: number, ma
 /** The notes just drawn placed: narrow, from their top; wide, at the text's place (TWO-WAY SCROLLING). */
 function placed () {
   if (! isWide ()) { notesScroll.scrollTop = 0; return; }
-  leader = "text"; anchors = null; sync ();
+  leader = "text"; anchors = null; jump = true; sync ();
 }
 
 /** The Hebrew verses an LXX verse translates, as the panel labels them: 23:0–1, 10:18; 11:0. */
@@ -396,7 +396,15 @@ onWideChange (() => { shownVerse = ""; shownIds = null; if (! panel.hidden) show
 //==== TWO-WAY SCROLLING ====
 // Wide, the text and the notes scroll together: whichever the finger, pen or wheel was last put on leads (pointerdown,
 // touchstart, wheel), the other follows - set a frame at a time from the leader's place. The follower's own scroll
-// events (from being set) are ignored, so neither drives the other back: no loop, no jitter. Places map through anchors -
+// events (from being set) are ignored, so neither drives the other back: no loop, no jitter. Two ways of following:
+// - In step (a translation, and the Hebrew OT beside the Septuagint: read verse for verse against the text): the
+//   follower moves with every bit of the leader's scroll, below.
+// - Loosely (every other kind - commentaries, apparatus, ancient versions, diagrams, the dictionary - not tied line
+//   for line to the text, so the reader can move about in them): the follower stays put while the verse it leads with
+//   (its first verse in view - the panel's block at its top, the text's first row in view) is still in the leader's
+//   view, and only once that verse has left it jumps straight to the leader's first verse (loose, below). The atlas
+//   is one map, no blocks: neither follows.
+// In step, places map through anchors -
 // each verse's row top in the text paired with its notes' top in the panel, plus both tops and both ends - piecewise
 // linearly, so at a verse's start in either the other is at the same verse's start, and in between both move smoothly
 // (a long note on one verse scrolls through while the text moves through that verse). A verse whose notes are another
@@ -442,8 +450,42 @@ function across (x: number, from: "t" | "r", to: "t" | "r") {
 /** The follower set from the leader (wide, the panel open with its notes drawn). */
 function sync () {
   if (! isWide () || panel.hidden || ! blocks.length) return;
+  const kind = current ()?.kind;
+  if (kind !== "translation" && kind !== "original") { loose (); return; }
   const [lead, follower, from, to] = leader === "text" ? [main, notesScroll, "t", "r"] as const : [notesScroll, main, "r", "t"] as const;
   const want = Math.round (across (lead.scrollTop, from, to));
+  if (Math.abs (follower.scrollTop - want) >= 1) follower.scrollTop = want;
+}
+
+// (Loose following. jump: the notes just drawn - the panel goes to the text's first verse whatever it showed before)
+let jump = false;
+
+/** Loose following (above): the follower jumps to the leader's first verse in view only once its own first verse has
+ *  left the leader's view. A verse with no block of its own (inside a range note) is its block's - the last at or
+ *  before it. */
+function loose () {
+  const mt = main.getBoundingClientRect (), nt = notesScroll.getBoundingClientRect ();
+  const top = { t: mt.top + 6, r: nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop) };     // (6: as the anchors')
+  const bottom = { t: mt.bottom, r: nt.bottom };
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const verse = (r: HTMLElement) => Number (r.dataset.verse ?? 1);
+  // Each side's verses as [verse, its element's top and the next's top (its end)] in order; its first in view the first
+  // ending more than 2 px below its top (a block just scrolled to sits a fraction of a pixel off)
+  const textSpans = rows.map ((r, i) => [verse (r), r.getBoundingClientRect ().top,
+                                         i + 1 < rows.length ? rows[i + 1].getBoundingClientRect ().top : r.getBoundingClientRect ().bottom] as const);
+  const noteSpans = blocks.map (([v, el], i) => [v, el.getBoundingClientRect ().top,
+                                                 i + 1 < blocks.length ? blocks[i + 1][1].getBoundingClientRect ().top : el.getBoundingClientRect ().bottom] as const);
+  const spans = { t: textSpans, r: noteSpans };
+  const first = (side: "t" | "r") => spans[side].find (([, , e]) => e > top[side] + 2) ?? spans[side][spans[side].length - 1];
+  const at = (side: "t" | "r", v: number) => spans[side].filter (([w]) => w <= v).pop () ?? spans[side][0];
+  const seen = (side: "t" | "r", v: number) => { const [, a, e] = at (side, v); return e > top[side] && a < bottom[side]; };
+  const [from, to, follower] = leader === "text" ? ["t", "r", notesScroll] as const : ["r", "t", main] as const;
+  if (! spans.t.length || ! spans.r.length) return;
+  const mine = first (to);
+  if (! jump && mine && seen (from, mine[0])) return;
+  jump = false;
+  const target = at (to, first (from)[0]);
+  const want = Math.round (follower.scrollTop + target[1] - top[to]);
   if (Math.abs (follower.scrollTop - want) >= 1) follower.scrollTop = want;
 }
 
