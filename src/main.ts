@@ -19,6 +19,7 @@ import { initChoose } from "./choose";
 import "./pronounce";     // (Registers the Pronunciation screen)
 import { initNotes, setNotesPassage } from "./notes";
 import { initSearch, setSearchPassage } from "./search";
+import { initDictionary } from "./dictionary";
 import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
@@ -182,6 +183,7 @@ async function start () {
   status.hidden = true;
   books = rows as unknown as Book[];
   initSearch (db, books, goVerse);
+  initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

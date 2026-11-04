@@ -4,8 +4,8 @@
 // (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
 // text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
-//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
-//   VERSIONS - the database's note_sources (pipeline/notes.py) - so
+//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, DICTIONARY, TRANSLATIONS and
+//   ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -19,13 +19,18 @@
 // - A sentence diagram (SYNTAX: MACULA's trees, pipeline/diagram.py) is a "note" per sentence, its body the sentence's
 //   tree as JSON, drawn here (drawDiagram) - so the drawing changes without the data rebuilt. A sentence running over
 //   several verses shows on each, the words of the others dimmed.
+// - The dictionary (DICTIONARY: the Tyndale Bible Dictionary) lists articles, not notes: for each verse those citing it,
+//   then those its words lead to (dictionary.ts' passageArticles), each its title over a line of it, tapped opening
+//   the article in place - drawn as the notes are (narrow one verse, wide the chapter in step with the text; an article
+//   listed once, at the first verse shown it's for).
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
+import { passageArticles, entry } from "./dictionary";
 
-export interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
+export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
 
 //==== BESIDE THE SEPTUAGINT ====
@@ -72,9 +77,9 @@ let blocks: [number, HTMLElement][] = [];          // Wide: each verse shown and
 
 export async function initNotes (db: Db) {
   textDb = db;
-  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources WHERE kind != 'dictionary'"),
+  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources"),
                                      db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books")]);
-  sources = s as unknown as Source[];     // (Not the dictionary, also listed there: the word's panel's - dictionary.ts)
+  sources = s as unknown as Source[];
   books = b as unknown as Book[];
   btn.hidden = ! sources.length;
 }
@@ -103,7 +108,8 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
     return g.children.length ? [g] : [];
   };
   return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),
-          ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"), ...group ("version", "Ancient versions")];
+          ...group ("commentary", "Commentaries"), ...group ("dictionary", "Dictionary"), ...group ("translation", "Translations"),
+          ...group ("version", "Ancient versions")];
 }
 
 /** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
@@ -161,8 +167,8 @@ async function show () {
   const src = current ();
   if (! book || ! src) return;
   creditEl.textContent = src.credit;
-  if (src.file && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
-    const n = ++loading;
+  const n = ++loading;     // (A file still arriving for a source picked before: not shown)
+  if (src.file && src.kind !== "dictionary" && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's; the dictionary's is dictionary.ts')
     ++updating;     // (Any update still reading the old source: dropped)
     open?.db.close (); open = null;
     refEl.textContent = "";
@@ -190,7 +196,7 @@ let updating = 0;
 const update = () => { drawNotes ().catch ((e) => console.warn ("Notes:", e)); };
 async function drawNotes () {
   const src = current ();
-  if (panel.hidden || ! book || ! src || ! textDb || (src.file && open?.id !== src.id)) return;
+  if (panel.hidden || ! book || ! src || ! textDb || (src.file && src.kind !== "dictionary" && open?.id !== src.id)) return;
   const vs = versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;
@@ -237,6 +243,7 @@ async function drawNotes () {
     placed ();
     return;
   }
+  if (src.kind === "dictionary") { drawArticles (per, n, wide, many); return; }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
   const seen = new Set<number> ();
   const read = await Promise.all (per.map (({ where }) => Promise.all (where.map (([nb, c, vv]) =>
@@ -300,6 +307,34 @@ async function drawNotes () {
     }
   }
   if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
+  placed ();
+}
+
+/** The dictionary's articles for the verses (dictionary.ts' passageArticles: those citing each verse, then those its
+ *  words lead to - one listed for an earlier verse not again), drawn as the notes are: each verse's under its
+ *  reference when there are several (wide, each in its block; a verse with none of its own left out), each article an
+ *  entry - its title over a line of it, tapped opening it in place. */
+async function drawArticles (per: { v: number; where: number[][] }[], n: number, wide: boolean, many: boolean) {
+  const lists = await passageArticles (textDb!, per.map ((p) => p.where));
+  if (n !== updating) return;
+  const ids = per.map ((p, i) => p.v + ":" + lists[i].map ((a) => a.id).join (".")).join (",");
+  if (ids === shownIds) return;
+  shownIds = ids;
+  clearInterlinear ();
+  bodyEl.replaceChildren ();
+  per.forEach (({ v, where }, i) => {
+    if (! lists[i].length && (many || ! where.length)) { if (! where.length && ! many) bodyEl.innerHTML = LXX_ONLY; return; }
+    const box = wide ? document.createElement ("div") : bodyEl;
+    if (wide) { box.className = "vBlock"; box.dataset.verse = String (v); bodyEl.append (box); blocks.push ([v, box]); }
+    if (many) {
+      const h = document.createElement ("div");
+      h.className = "src verseHead";
+      h.textContent = `${chapter}:${v}`;
+      box.append (h);
+    }
+    for (const a of lists[i]) box.append (entry (textDb!, a.id, a.title, a.line, a.why));
+  });
+  if (! bodyEl.children.length) bodyEl.innerHTML = "<p>No articles on this verse.</p>";
   placed ();
 }
 

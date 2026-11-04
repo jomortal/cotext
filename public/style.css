@@ -272,7 +272,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the accent; one tapped, its
    section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back; the
    panel stays at most half the screen, scrolling. */
-.sheet .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+:is(.sheet, .pane) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 .sheet .term.on { font-weight: 700; }
 .gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
 .gInline[hidden] { display: none; }
@@ -508,3 +508,9 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
 .hitText.gr { font-family: var(--grk); }
 .hitWord { color: var(--accent); }
+/* The dictionary's entries (dictionary.ts: the notes' passage list, the search's results) - a result's row, its text one
+   line cut short; tapped, the article opens under it, a grammar section's look (.gBody), set in from the row. */
+.dictLine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dictWhy { text-transform: none; letter-spacing: 0; }
+.dictBody { padding: 0 0 8px 12px; border-left: 2px solid var(--line); margin-bottom: 8px; }
+.dictBody[hidden] { display: none; }

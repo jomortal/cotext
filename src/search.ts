@@ -3,8 +3,8 @@
 // narrow screen in the page's column above the play bar, on a wide one in the panes' column at the right, over the
 // notes when they're open, else its full height (layout.ts).
 // - The picker (a <select class="choose">, as the notes'): ROOT WORD, INTERLINEAR (ENGLISH) - the default - and the
-//   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, translations, ancient versions - not
-//   the diagrams), grouped and named as the notes' picker has them, those for the whole Bible. The choice is kept per
+//   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, the dictionary, translations, ancient
+//   versions - not the diagrams), grouped and named as the notes' picker has them, those for the whole Bible. The choice is kept per
 //   Old Testament (Hebrew, Septuagint) on the device (cotext.search); a word's panel's Search sets it to ROOT WORD (not kept).
 // - Every kind searches the whole Bible: the Old Testament read (the Hebrew Bible, or the Septuagint's books the list
 //   shows - HEBREW / GREEK) and the New; a New Testament result tapped opens the Greek NT there.
@@ -24,6 +24,8 @@
 // - A source: its entries (notes.body and its quote, the tags taken off) containing the typed
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
+// - The dictionary (THE DICTIONARY, below): its articles, not verses - those whose title has the typed text first -, each
+//   its title over the stretch that matched; tapped, the article opens under it, its cited verses tappable (dictionary.ts).
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the
 //   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the Bible read (LIKE, then
 //   a whole-word check here); a source every entry (LIKE).
@@ -33,6 +35,7 @@ import type { Book } from "./reader";
 import { paneFrame } from "./layout";
 import { textSources, sourceGroups, openSource, type Source } from "./notes";
 import { currentLanguage } from "./study";
+import { searchArticles, entry } from "./dictionary";
 
 const pane = document.getElementById ("search")!;
 const btn = document.getElementById ("searchBtn")!;
@@ -114,7 +117,10 @@ async function search () {
     if (! strongs.length) { countEl.textContent = `No dictionary form “${text}” found.`; return; }
     searchRoots (strongs, n);
   } else if (pick.value === "english") searchEnglish (text, n);
-  else { const src = textSources (ot ()).find ((s) => s.id === pick.value); if (src) searchSource (src, text, n); }
+  else {
+    const src = textSources (ot ()).find ((s) => s.id === pick.value);
+    if (src?.kind === "dictionary") searchDictionary (text, n); else if (src) searchSource (src, text, n);
+  }
 }
 
 // (Each search numbered: one still arriving when another starts isn't shown)
@@ -233,6 +239,24 @@ async function searchSource (src: Source, typed: string, n: number) {
   draw (hits, n, async () => (h) => snippet (h.text!, typed));
 }
 
+//==== THE DICTIONARY ====
+// Its articles (dictionary.ts' searchArticles) - each an entry as the notes list them: its title over the stretch that
+// matched (or, matched in the title alone, the article's opening), tapped opening the article in place, its scripture
+// references going to the verse.
+async function searchDictionary (typed: string, n: number) {
+  let hits: Awaited<ReturnType<typeof searchArticles>>;
+  try {
+    hits = await searchArticles (db!, typed, (f) => { if (n === searching) countEl.textContent = `Loading the dictionary… ${Math.round (f * 100)}%`; });
+  } catch {
+    if (n === searching) countEl.textContent = "The dictionary couldn't be loaded.";
+    return;
+  }
+  if (n !== searching) return;
+  counted (hits.length, "article");
+  drawChunks (hits, n, async (chunk) => chunk.map ((h) => entry (db!, h.id, h.title,
+    h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200))));
+}
+
 /** The stretch of a source's text around its first match (up to 80 characters before, 200 after, cut at spaces,
  *  "…" where cut), every match in it marked. */
 function snippet (text: string, typed: string): HTMLElement {
@@ -288,30 +312,39 @@ const original = (mark: (w: Row) => boolean, english: boolean): Texts => async (
 };
 
 const CHUNK = 100;
-/** The results drawn CHUNK at a time, each chunk's text made as it's drawn (texts): the next once the last drawn comes
- *  near the view (an observer on it). A row tapped goes to its verse in the text, whatever kind it is. */
-async function draw (hits: Hit[], n: number, texts: Texts, from = 0) {
-  const chunk = hits.slice (from, from + CHUNK);
+/** The results drawn CHUNK at a time, each chunk's text made as it's drawn (texts): a row tapped goes to its verse in
+ *  the text, whatever kind it is. */
+function draw (hits: Hit[], n: number, texts: Texts) {
+  drawChunks (hits, n, async (chunk) => {
+    const make = await texts (chunk);
+    return chunk.map ((h) => {
+      const row = document.createElement ("button");
+      row.className = "hit";
+      const b = books.get (h.book);
+      const ref = document.createElement ("span");
+      ref.className = "src";
+      const end = ! h.end ? "" : Math.floor (h.end / 1000) === h.chapter ? `–${h.end % 1000}` : `–${Math.floor (h.end / 1000)}:${h.end % 1000}`;
+      ref.textContent = `${b?.name ?? ""} ${h.chapter}:${h.verse}${end}`;
+      row.append (ref, make (h));
+      row.addEventListener ("click", () => { if (b) goVerse (b, h.chapter, h.verse); });
+      return row;
+    });
+  });
+}
+
+/** Any list drawn CHUNK at a time (rows: a chunk's elements): the next once the last drawn comes near the view (an
+ *  observer on it). */
+async function drawChunks<T> (items: T[], n: number, rows: (chunk: T[]) => Promise<HTMLElement[]>, from = 0) {
+  const chunk = items.slice (from, from + CHUNK);
   if (! chunk.length || ! db) return;
-  const make = await texts (chunk);
+  const els = await rows (chunk);
   if (n !== searching) return;
-  for (const h of chunk) {
-    const row = document.createElement ("button");
-    row.className = "hit";
-    const b = books.get (h.book);
-    const ref = document.createElement ("span");
-    ref.className = "src";
-    const end = ! h.end ? "" : Math.floor (h.end / 1000) === h.chapter ? `–${h.end % 1000}` : `–${Math.floor (h.end / 1000)}:${h.end % 1000}`;
-    ref.textContent = `${b?.name ?? ""} ${h.chapter}:${h.verse}${end}`;
-    row.append (ref, make (h));
-    row.addEventListener ("click", () => { if (b) goVerse (b, h.chapter, h.verse); });
-    hitsEl.append (row);
-  }
-  if (from + CHUNK >= hits.length) return;
+  hitsEl.append (...els);
+  if (from + CHUNK >= items.length) return;
   const watch = new IntersectionObserver (([e]) => {
     if (! e.isIntersecting) return;
     watch.disconnect ();
-    if (n === searching) draw (hits, n, texts, from + CHUNK);
+    if (n === searching) drawChunks (items, n, rows, from + CHUNK);
   }, { root: scroll, rootMargin: "400px" });
   watch.observe (hitsEl.lastElementChild!);
 }

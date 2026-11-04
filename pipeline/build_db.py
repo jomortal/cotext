@@ -23,8 +23,8 @@ Tables:
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
             (Gesenius, Smyth, Machen, unfoldingWord's Hebrew and Greek): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
-            made by notes.py, whose docstring describes them and their table; also the word panel's dictionary (kind
-            'dictionary', public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py)
+            made by notes.py, whose docstring describes them and their table; also the dictionary (kind 'dictionary',
+            public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py)
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
             public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
   greek_lex, greek_lex_file  the Greek words' full lexicons (Abbott-Smith, Thayer, Middle Liddell, Dodson: src/panel.ts'
@@ -274,12 +274,12 @@ def build():
     db.execute("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)", (*lxx.BRENTON_SOURCE, "data/notes/brenton_lxx.db",
                hashlib.sha256(data).hexdigest()[:12], len(data)))
     note_counts["brenton_lxx"] = (n, len(data))
-    tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The word panel's Dictionary: its own file, a note_sources row - after the lexicon, which it matches)
     lxx_heb.build(db)     # (Each LXX verse's Hebrew verse(s): the notes beside the LXX)
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
     lsj_counts = lsj.build(db)     # (LSJ: greek_lex rows for 'lsj' and its file - after greek_lex.build, whose tables it adds to)
     ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
+    tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The Dictionary: its own file, a note_sources row - after the lexicon and ubs_lex, which it matches)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
