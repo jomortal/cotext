@@ -440,7 +440,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .split::before { content: ""; position: absolute; background: var(--edge); }
   .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
   .split.on::after { background: var(--accent); opacity: 1; }
-  /* Drawn by its orientation (aria-orientation): vertical - the notes' and, at 1200 px, the word's panel's (layout.ts
+  /* Drawn by its orientation (aria-orientation): vertical - the notes' and, beside the text, the word's panel's (layout.ts
      sets it) - sets a width; horizontal - a word's panel's height - sets a height. */
   .split[aria-orientation="vertical"] { width: 14px; cursor: col-resize; }
   .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
@@ -461,18 +461,17 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
   body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
 }
-/* Wider still (layout.ts' WIDEST, the same 1200 px): the text's word's panel a column of its own between the text and
-   the notes - text | word | notes -, the full height beside the heading and the play bar (the text's only, as the
-   notes' are), --sheetW % of the width (a quarter at first), set by #sheetSplit on its left edge, now vertical. With no
-   word picked it and its divider are gone and the text takes the room, as when the notes close. One column at that
-   width (panel.ts' .twoCol only once it's dragged wide enough); its ✕ frozen and its margins as the notes'. */
-@media (min-width: 1200px) {
-  #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
-  body, body:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px); }     /* (The text, the word's divider and panel, the notes' divider and column; a divider's column empty while hidden. Both selectors: to outweigh the 700 px block's) */
-  body:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
-  body:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
-  main { grid-column: 1; grid-row: 2; }
-  .head, #playBar { grid-column: 1 / 4; }     /* (The heading and the play bar over the text and the word's panel both: the panel between the same bars as the text) */
-  #sheetSplit { grid-column: 2; grid-row: 2; } #sheet { grid-column: 3; grid-row: 2; height: auto; }
-  #notesSplit { grid-column: 4; } #notesCol { grid-column: 5; }
-}
+/* The word beside the text (layout.ts' body.sideWord: wide, with at least 1200 px left for the text and its word once
+   the notes column is taken off): the text's word's panel a column of its own between the text and the notes - text |
+   word | notes -, between the same heading and play bar as the text, --sheetW % of the width (a quarter at first), set
+   by #sheetSplit on its left edge, now vertical. With no word picked it and its divider are gone and the text takes the
+   room, as when the notes close. Always one column (panel.ts); its ✕ frozen and its margins as the notes'. Less room -
+   the notes opened or widened, the window narrowed - and it goes back under the text. */
+body.sideWord #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
+body.sideWord, body.sideWord:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px); }     /* (The text, the word's divider and panel, the notes' divider and column; a divider's column empty while hidden. Both selectors: to outweigh the 700 px block's) */
+body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
+body.sideWord:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
+body.sideWord main { grid-column: 1; grid-row: 2; }
+body.sideWord :is(.head, #playBar) { grid-column: 1 / 4; }     /* (The heading and the play bar over the text and the word's panel both: the panel between the same bars as the text) */
+body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
+body.sideWord #notesSplit { grid-column: 4; } body.sideWord #notesCol { grid-column: 5; }

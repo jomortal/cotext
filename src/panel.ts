@@ -10,7 +10,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isWidest } from "./layout";
+import { isSideWord } from "./layout";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { grammarIn } from "./grammar";
@@ -98,7 +98,7 @@ function makePanel (sheet: HTMLElement) {
   // Two columns where there's room: once the panel is at least twice as wide as the word's info (everything but the
   // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
   // style.css). Measured at the info's natural width whenever the panel resizes or shows another word. The text's word's
-  // panel as a column beside the text (1200 px and up) is always one column.
+  // panel as a column beside the text (layout.ts' placeWord) is always one column.
   const heads = q ("heads");
   const info = document.createElement ("div");
   {      // (The word's info in one box, the lexicon's parts in another: the two columns)
@@ -112,7 +112,7 @@ function makePanel (sheet: HTMLElement) {
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
-    if (sheet.id === "sheet" && isWidest ()) return;     // (A column beside the text - 1200 px and up: always one column, the lexicon under the word)
+    if (sheet.id === "sheet" && isSideWord ()) return;     // (A column beside the text - layout.ts: always one column, the lexicon under the word)
     info.style.width = "";
     heads.style.width = "max-content";
     const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)

@@ -1,15 +1,16 @@
-// The page's layout by the window's width (style.css's @media blocks, at the same 700 px and 1200 px):
+// The page's layout by the window's width (style.css's @media blocks, at the same 700 px; and the room left beside the notes):
 // - Narrow (a phone, or an iPad's narrow Split View window): one column - the heading, the text, the word's panel, the
 //   notes panel, the second word's panel, the play bar - the panels sharing the room evenly with the text (style.css).
 // - Wide (an iPad, a desktop): two columns between the heading and the play bar (index.html's #textCol, #notesCol) -
-//   the text, and at the RIGHT the notes panel, a third of the width at first; each word's panel (below 1200 px) at the foot of the
+//   the text, and at the RIGHT the notes panel, a third of the width at first; each word's panel (unless beside the text, below) at the foot of the
 //   column whose text it's about (the text's word under the text; a word of the notes' Hebrew OT under the notes), as
 //   wide as its column. Dividers set the sizes by dragging (pointer events, so a finger, a pen or a mouse): #notesSplit,
 //   between the columns (the notes' width, 22-60 % of the window), and #sheetSplit / #besideSplit, on each word's
 //   panel's top edge (its height, from 120 px to the room between the bars less 160 px for what's above it). All kept
 //   on the device (localStorage) and set on the root as --notesW (a percentage, unitless), --sheetH and --besideH (px).
-// - Widest (1200 px and up, style.css's third block): the text's word's panel a column of its own between the text and
-//   the notes - text | word | notes -, its width (--sheetW, a percentage, unitless: 15-40 % of the window, the text
+// - The word beside the text (wide, with 1200 px or more for the text and its word once the notes column is taken off:
+//   placeWord, body.sideWord in style.css): the text's word's panel a column of its own between the text and the notes
+//   - text | word | notes -, its width (--sheetW, a percentage, unitless: 15-40 % of the window, the text
 //   keeping 30 % at least) set by #sheetSplit, now a vertical divider on its left edge.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
@@ -18,9 +19,6 @@ const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: 
 export const isWide = () => WIDE.matches;
 /** Calls f whenever the layout changes between narrow and wide. */
 export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", f);
-const WIDEST = matchMedia ("(min-width: 1200px)");     // (style.css's third block: keep the two the same)
-/** Whether the text's word's panel is a column beside the text (1200 px and up). */
-export const isWidest = () => WIDEST.matches;
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
@@ -57,18 +55,34 @@ const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo,
 drag (document.getElementById ("notesSplit")!, (x) => {
   sizes.notesW = Math.round (clamp ((innerWidth - x) / innerWidth * 100, 22, 60) * 10) / 10;
   root.setProperty ("--notesW", String (sizes.notesW));
+  placeWord ();
 });
-// The text's word's divider: vertical at 1200 px and up (its panel a column: style.css draws a divider by its
-// aria-orientation), else horizontal - kept so as the window crosses 1200 px.
-const sheetSplit = document.getElementById ("sheetSplit")!;
-const orient = () => sheetSplit.setAttribute ("aria-orientation", WIDEST.matches ? "vertical" : "horizontal");
-orient ();
-WIDEST.addEventListener ("change", orient);
-// A word's panel's height: from its divider down to the play bar; at 1200 px and up the text's word's panel's width
+// The word beside the text (body.sideWord: style.css): while wide, whenever the text and its word have at least
+// SIDE px between them - the window less the notes column and its divider, while the notes are open. Kept so as the
+// window resizes, the notes open or close and their divider is dragged; the text's word's divider with it, vertical
+// beside the text (style.css draws a divider by its aria-orientation), else horizontal.
+const SIDE = 1200;
+const sheetSplit = document.getElementById ("sheetSplit")!, notesEl = document.getElementById ("notes")!;
+let side = false;
+/** Whether the text's word's panel is a column beside the text now. */
+export const isSideWord = () => side;
+function placeWord () {
+  const notes = notesEl.hidden ? 0 : innerWidth * (sizes.notesW ?? 33.333) / 100 + 14;
+  const now = WIDE.matches && innerWidth - notes >= SIDE;
+  if (now === side) return;
+  side = now;
+  document.body.classList.toggle ("sideWord", side);
+  sheetSplit.setAttribute ("aria-orientation", side ? "vertical" : "horizontal");
+}
+placeWord ();
+addEventListener ("resize", placeWord);
+WIDE.addEventListener ("change", placeWord);
+new MutationObserver (placeWord).observe (notesEl, { attributes: true, attributeFilter: ["hidden"] });
+// A word's panel's height: from its divider down to the play bar; beside the text the text's word's panel's width
 // instead: from its divider to the notes' divider (the window's right edge while the notes are closed).
 for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] as const)
   drag (document.getElementById (id)!, (x, y) => {
-    if (id === "sheetSplit" && WIDEST.matches) {
+    if (id === "sheetSplit" && side) {
       const notes = document.getElementById ("notesSplit")!.getBoundingClientRect ();
       const right = notes.width ? notes.left : innerWidth;
       sizes.sheetW = Math.round (clamp ((right - x) / innerWidth * 100, 15, Math.max (15, Math.min (40, right / innerWidth * 100 - 30))) * 10) / 10;
