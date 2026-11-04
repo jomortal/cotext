@@ -110,6 +110,7 @@ function makePanel (sheet: HTMLElement) {
     sheet.classList.remove ("twoCol");
     info.style.width = "";
     heads.style.width = "max-content";
+    const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
     // (The parsing may wrap at its commas, its +s and before a bracket: its widest part counts, not its whole line; the
     // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
     // - each measured on its own, taken out of the grid: Safari sizes a grid at max-content from a spanning item's whole
@@ -120,8 +121,9 @@ function makePanel (sheet: HTMLElement) {
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
     const two = sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
-    // (Two columns: the word's side at that wrapped width - its parsing wrapping at its breaks - the lexicon the rest)
-    if (two) info.style.width = `${Math.ceil (need)}px`;
+    // (Two columns: the word's side as wide as its lines unwrapped, at most half - style.css' max-width -, so the parsing
+    // wraps only when it must to fit that half; the lexicon the rest)
+    if (two) info.style.width = `${Math.ceil (natural)}px`;
   };
   new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));

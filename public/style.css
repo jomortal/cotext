@@ -175,14 +175,14 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 :is(.sheet, #notes):not([hidden]) { display: flex; flex-direction: column; position: relative; }
 :is(.sheet, #notes) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
   padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-:is(.sheet, #notes) > .panelScroll > * { max-width: 760px; margin-inline: auto; }
+:where(.sheet, #notes) > .panelScroll > * { max-width: 760px; margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 #notes .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
 .gInline .top, .gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
 .sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
-.sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; }
+.sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; line-height: 1.5; }     /* (Room between its lines when it wraps) */
 .src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 12px; }
 .sheet .def { font-size: var(--fs-m); line-height: 1.55; margin-top: 4px; font-family: var(--ui); }
 .sheet .def b { font-family: var(--grk); }
@@ -432,7 +432,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   main { grid-template-columns: minmax(0, 1fr); }
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
   #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
-  :is(.sheet, #notes) > .panelScroll > * { max-width: none; }
+  :where(.sheet, #notes) > .panelScroll > * { max-width: none; }
   /* The notes' picker and ✕ a row fixed over the notes' scroller (notes.ts' placeTop), the ✕ over its right end. */
   #notes > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--pad); }
   #notes > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
