@@ -166,7 +166,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 .pane[hidden] { display: none; }
 .pane .top { align-items: center; margin-bottom: 10px; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
-#search .chooseWrap { flex: 0 1 40%; min-width: 0; }     /* (What's searched, beside the search bar) */
+#search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
 .pane .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }
 #notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
@@ -485,9 +485,9 @@ body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1
 body.sideWord main { grid-column: 1; grid-row: 2; }
 body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
 
-/* The search pane (search.ts): its picker (what's searched) and bar the top row's width, beside the ✕; the count, then
-   the results - each its reference (.src) over its text (the verse's original, or a source's), what matched in the
-   accent, an English search's glosses of it under it - a row to tap (the verse gone to). */
+/* The search pane (search.ts): its bar the top row's width, beside the ✕, the picker (what's searched) under it; the count, then
+   the results - each its reference (.src) over its text (the verse's original or interlinear English, or a source's), what matched in the
+   accent - a row to tap (the verse gone to). */
 #searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
 #searchCount { margin-top: 0; }
 #searchCount:empty { display: none; }
@@ -498,4 +498,3 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
 .hitText.gr { font-family: var(--grk); }
 .hitWord { color: var(--accent); }
-.hitGloss { font-size: var(--fs-s); color: var(--soft); }

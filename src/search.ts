@@ -1,5 +1,5 @@
 // The search pane: the icon at the play bar's right opens and closes it (or its ✕). Built as the notes panel is
-// (layout.ts' paneFrame: the same frame, ✕ and top row - here the picker of what's searched, then the search bar): on a
+// (layout.ts' paneFrame: the same frame, ✕ and top row - here the search bar, the picker of what's searched under it): on a
 // narrow screen in the page's column above the play bar, on a wide one a column at the right, full height (layout.ts).
 // - The picker (a <select class="choose">, as the notes'): ROOT WORD, INTERLINEAR (ENGLISH) - the default - and the
 //   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, translations, ancient versions - not
@@ -15,8 +15,8 @@
 //   (lexicon.lemma, of the testament's language) equal to the typed word - accents, breathings and vowel points
 //   ignored, a lemma's comma-separated forms each matched - are searched together (homonyms: all of them).
 // - INTERLINEAR (ENGLISH): the verses of the testament shown whose words' interlinear English (words.gloss) has every
-//   typed word, as a whole word, any case - each its original text, the matching words marked, and their English
-//   under it.
+//   typed word, as a whole word, any case - each only its interlinear English, word by word in the text's order
+//   ("in [the] beginning | he created | ..."), the matching words' marked.
 // - A source: its entries (notes.body and its quote, the tags taken off) of the testament shown containing the typed
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
@@ -256,11 +256,11 @@ function snippet (text: string, typed: string): HTMLElement {
 const counted = (n: number, what: string) => { countEl.textContent = `${n.toLocaleString ("en-US")} ${n === 1 ? what : what + "s"}`; };
 
 /** A chunk's text maker: given the chunk (reading what it needs first), a function making each result's text. */
-type Texts = (chunk: Hit[]) => Promise<(h: Hit) => HTMLElement | HTMLElement[]>;
+type Texts = (chunk: Hit[]) => Promise<(h: Hit) => HTMLElement>;
 
-/** The verses' original text (their words read by their key), the words mark says marked - with glosses, their
- *  English in a line under it. */
-const original = (mark: (w: Row) => boolean, glosses: boolean): Texts => async (chunk) => {
+/** The verses' words (read by their key), those mark says marked (in the accent): english false, their original text
+ *  (ROOT WORD); true, only their interlinear English, each word's in the text's order, joined by " | " (INTERLINEAR). */
+const original = (mark: (w: Row) => boolean, english: boolean): Texts => async (chunk) => {
   const words = await db!.all (`SELECT book, chapter, verse, word, text, gloss, strong FROM words
                                 WHERE (book, chapter, verse) IN (VALUES ${chunk.map (() => "(?,?,?)").join (",")})
                                 ORDER BY book, chapter, verse, word`, chunk.flatMap ((h) => [h.book, h.chapter, h.verse]));
@@ -269,21 +269,16 @@ const original = (mark: (w: Row) => boolean, glosses: boolean): Texts => async (
   return (h) => {
     const hebrew = books.get (h.book)?.testament === "OT";
     const text = document.createElement ("span");
-    text.className = "hitText " + (hebrew ? "he" : "gr");
-    text.dir = hebrew ? "rtl" : "ltr";
-    const marked: string[] = [];
+    text.className = "hitText" + (english ? "" : hebrew ? " he" : " gr");
+    text.dir = hebrew && ! english ? "rtl" : "ltr";
     (byVerse.get (`${h.book}.${h.chapter}.${h.verse}`) ?? []).forEach ((w, i) => {
-      if (i) text.append (" ");
+      if (i) text.append (english ? " | " : " ");
       const s = document.createElement ("span");
-      if (mark (w)) { s.className = "hitWord"; marked.push (String (w.gloss ?? "")); }     // (What matched: in the accent)
-      s.textContent = String (w.text);
+      if (mark (w)) s.className = "hitWord";     // (What matched: in the accent)
+      s.textContent = String ((english ? w.gloss : w.text) ?? "");
       text.append (s);
     });
-    if (! glosses) return text;
-    const g = document.createElement ("span");
-    g.className = "hitGloss";
-    g.textContent = marked.join (" · ");
-    return [text, g];
+    return text;
   };
 };
 
@@ -303,7 +298,7 @@ async function draw (hits: Hit[], n: number, texts: Texts, source?: string, from
     ref.className = "src";
     const end = ! h.end ? "" : Math.floor (h.end / 1000) === h.chapter ? `–${h.end % 1000}` : `–${Math.floor (h.end / 1000)}:${h.end % 1000}`;
     ref.textContent = `${b?.name ?? ""} ${h.chapter}:${h.verse}${end}`;
-    row.append (ref, ...[make (h)].flat ());
+    row.append (ref, make (h));
     row.addEventListener ("click", async () => {
       if (! b) return;
       await goVerse (b, h.chapter, h.verse);
