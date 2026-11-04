@@ -156,7 +156,7 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The panel's ✕ (and a grammar section's) frozen at its upper right while everything else scrolls - drawn as every ✕
    is (a plain icon pill, no fill: as a screen's ✕) - sticky in a row of no height, so what's beside it runs on under it (kept clear by .heads.one's and the section heading's padding). */
 #sheet .xRow { position: sticky; top: 0; z-index: 3; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; }
-#sheet .heads.one, #gInline .top { padding-right: 52px; }
+#sheet .heads.one, #gInline .top, #gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 #sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 #sheet > * { max-width: 760px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
