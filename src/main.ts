@@ -107,7 +107,7 @@ function groups (): [string, Book[]][] {
   const nt: [string, Book[]] = ["New Testament - Greek", books.filter ((b) => b.testament === "NT")];
   if (currentLanguage () === "H") return [["Old Testament - Hebrew", books.filter ((b) => b.testament === "OT")]];
   const lxx = books.filter ((b) => b.testament === "LXX");
-  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Septuagint - Apocrypha", lxx.filter ((b) => ! b.heb)], nt];
+  return [["Old Testament - Septuagint (Greek)", lxx.filter ((b) => b.heb)], ["Apocrypha", lxx.filter ((b) => ! b.heb)], nt];
 }
 
 /** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
