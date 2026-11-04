@@ -48,11 +48,11 @@ interface WordCard extends Card { strong: string; }
 const whole = () => currentTestament () === "LXX" ? -1 : 0;
 
 /** The words' details: lemma, concise meaning and count - in the whole testament, or in the book (its id), by Strong's key. */
-function details (strongs: string[], bookId = whole ()): Map<string, { lemma: string; meaning: string; count: number }> {
+async function details (strongs: string[], bookId = whole ()): Promise<Map<string, { lemma: string; meaning: string; count: number }>> {
   const out = new Map<string, { lemma: string; meaning: string; count: number }> ();
   for (let i = 0; i < strongs.length; i += 500) {     // (SQLite's bound parameters, a chunk at a time)
     const part = strongs.slice (i, i + 500), q = part.map (() => "?").join (",");
-    for (const r of db.all (`SELECT l.strong, l.lemma, l.concise, l.gloss, f.count FROM lexicon l
+    for (const r of await db.all (`SELECT l.strong, l.lemma, l.concise, l.gloss, f.count FROM lexicon l
                              LEFT JOIN freq f ON f.strong = l.strong AND f.book = ? WHERE l.strong IN (${q})`, [bookId, ...part]))
       out.set (String (r.strong), { lemma: String (r.lemma), meaning: String (r.concise || r.gloss || ""), count: Number (r.count ?? 0) });
   }
@@ -62,8 +62,8 @@ function details (strongs: string[], bookId = whole ()): Map<string, { lemma: st
 /** The speaker icon, as the word panel's (index.html). */
 const SPEAKER = document.querySelector ("#sheet .speakRoot")!.innerHTML;
 
-function cardsFor (strongs: string[]): WordCard[] {
-  const d = details (strongs), hebrew = currentTestament () === "OT";
+async function cardsFor (strongs: string[]): Promise<WordCard[]> {
+  const d = await details (strongs), hebrew = currentTestament () === "OT";
   return strongs.filter ((k) => d.has (k)).map ((k) => {
     const w = d.get (k)!;
     const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><button class="pill icon" data-say="${esc (w.lemma)}" aria-label="Say the word">${SPEAKER}</button></span>`, meaning = `<div class="meaning">${esc (w.meaning)}</div>`;
@@ -73,10 +73,10 @@ function cardsFor (strongs: string[]): WordCard[] {
 
 /** The testament's words (Strong's keys, by its H / G prefix) not yet known, most frequent first - in the whole
  *  testament, or in the book (its id): the frequency lists. */
-function toLearn (prefix: string, known: string[], bookId = 0): string[] {
+async function toLearn (prefix: string, known: string[], bookId = 0): Promise<string[]> {
   const k = new Set (known);
-  return db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = ? AND f.strong LIKE ?
-                  ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"]).map ((r) => String (r.strong)).filter ((s) => ! k.has (s));
+  return (await db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = ? AND f.strong LIKE ?
+                         ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"])).map ((r) => String (r.strong)).filter ((s) => ! k.has (s));
 }
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
@@ -91,18 +91,17 @@ let listShown = false;                 // (SHOW LIST: its words under the cards 
 
 
 /** My vocab's lists, worked out afresh (on drawing, and after each card's REMOVE FROM LIST / + KNOWN WORDS). */
-function lists () {
+async function lists () {
   const t = currentTestament (), prefix = t === "OT" ? "H" : "G";
   const known = knownWords ().filter ((k) => k.startsWith (prefix));
   const learn = Object.keys (learning).filter ((k) => k.startsWith (prefix) && ! known.includes (k));
-  const ranked = toLearn (prefix, known, bookId ());
-  const d = details ([...learn, ...known]);
+  const [ranked, d] = await Promise.all ([toLearn (prefix, known, bookId ()), details ([...learn, ...known])]);
   const byCount = (a: string, b: string) => (d.get (b)?.count ?? 0) - (d.get (a)?.count ?? 0);
   return { t, known: known.filter ((k) => d.has (k)).sort (byCount), learn: learn.filter ((k) => d.has (k)).sort (byCount), ranked, d,
            count: Math.ceil (ranked.length / LIST) };
 }
 
-function draw (body: HTMLElement) {
+async function draw (body: HTMLElement) {
   const t = currentTestament ();
   body.innerHTML = `<div class="bar"><button class="pill" data-list="freq">${t} frequency</button><button class="pill" data-list="book">Book frequency</button>
       <button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button></div>
@@ -115,13 +114,18 @@ function draw (body: HTMLElement) {
   const freqRow = body.querySelector<HTMLElement> ("#freqRow")!;
   const listBtn = body.querySelector<HTMLElement> ("#showList")!, listEl = body.querySelector<HTMLElement> (".vocabLists")!;
   // The words of the list picked, from the lists as they are now.
-  const words = (l: ReturnType<typeof lists>) => picked === "learn" ? l.learn : picked === "known" ? l.known
+  const words = (l: Awaited<ReturnType<typeof lists>>) => picked === "learn" ? l.learn : picked === "known" ? l.known
     : l.ranked.slice ((pickedList[listKey ()] ?? 0) * LIST, ((pickedList[listKey ()] ?? 0) + 1) * LIST);
   // Everything but the deck shown, from the lists as they are now: a card made known moves into Known words at once,
-  // and the frequency lists move up (the deck open keeps its cards until it's opened again).
-  const refresh = () => {
-    const l = lists ();
+  // and the frequency lists move up (the deck open keeps its cards until it's opened again). (Each drawn once its words
+  // are read, a later one winning over one still arriving: refreshing, opening.)
+  let refreshing = 0, opening = 0;
+  const refresh = async () => {
+    const n = ++refreshing;
+    const l = await lists ();
     pickedList[listKey ()] = Math.min (pickedList[listKey ()] ?? 0, Math.max (0, l.count - 1));
+    const d = byFreq () ? await details (words (l), bookId ()) : l.d;
+    if (n !== refreshing) return;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.setAttribute ("aria-pressed", String (b.dataset.list === picked));
     freqRow.style.display = byFreq () ? "" : "none";     // (Its 20s only for the frequency lists)
     bookRow.style.display = picked === "book" ? "" : "none";     // (And the book only for Book frequency)
@@ -129,7 +133,6 @@ function draw (body: HTMLElement) {
     freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
       `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
     freqPick.value = String (pickedList[listKey ()]);
-    const d = byFreq () ? details (words (l), bookId ()) : l.d;
     listBtn.setAttribute ("aria-pressed", String (listShown));
     body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
     listEl.style.display = listShown ? "" : "none";
@@ -140,21 +143,23 @@ function draw (body: HTMLElement) {
   };
   // The list picked as flashcards. A card's button: in My vocab REMOVE FROM LIST (off My vocab); in Known words REMOVE
   // FROM LIST (no longer known: its helps back); in Words by frequency + KNOWN WORDS (known: into Known words).
-  const open = () => {
+  const open = async () => {
     const remove = (c: WordCard) => {
       if (picked === "learn") { delete learning[c.strong]; save (); }
       else if (picked === "known") unsetKnown (c.strong);
       else { delete learning[c.strong]; save (); setKnown (c.strong); }
       refresh ();
     };
-    const cards = cardsFor (words (lists ()));
+    const n = ++opening;
+    const cards = await cardsFor (words (await lists ()));
+    if (n !== opening) return;
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
     showDeck (deckEl, cards, remove, byFreq () ? "+ Known words" : undefined, true);     // (Turned over: only the English)
   };
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
   body.querySelector ("#reverse")!.addEventListener ("click", () => { reversed = ! reversed; refresh (); open (); });
   const bookPick = body.querySelector<HTMLSelectElement> ("#bookPick")!, bookRow = body.querySelector<HTMLElement> ("#bookRow")!;
-  bookPick.innerHTML = db.all ("SELECT id, name FROM books WHERE testament = ? ORDER BY id", [t])
+  bookPick.innerHTML = (await db.all ("SELECT id, name FROM books WHERE testament = ? ORDER BY id", [t]))
     .map ((r) => `<option value="${r.id}">${esc (String (r.name))}</option>`).join ("");
   bookPick.addEventListener ("change", () => { pickedBook[t] = Number (bookPick.value); refresh (); open (); });
   freqPick.addEventListener ("change", () => { pickedList[listKey ()] = Number (freqPick.value); refresh (); open (); });

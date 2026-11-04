@@ -11,9 +11,9 @@ export function initGuide (theDb: Db) { db = theDb; }
 
 const esc = (s: string) => s.replace (/[&<>"]/g, (c) => `&#${c.charCodeAt (0)};`);
 
-function draw (body: HTMLElement) {
+async function draw (body: HTMLElement) {
   const hebrew = currentTestament () === "OT";
-  const rows = db.all ("SELECT grp, code, meaning FROM guide WHERE lang = ? ORDER BY ord", [hebrew ? "H" : "G"]);
+  const rows = await db.all ("SELECT grp, code, meaning FROM guide WHERE lang = ? ORDER BY ord", [hebrew ? "H" : "G"]);
   let html = "", grp = "";
   for (const r of rows) {
     if (r.grp !== grp) { grp = String (r.grp); html += `<div class="ref">${esc (grp)}</div>`; }

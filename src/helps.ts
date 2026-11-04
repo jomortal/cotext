@@ -39,28 +39,50 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify (s)); } cat
  *  and each lemma's place in that order (0 the most common; ties by key, so it never changes). */
 interface Counts { byStrong: Map<string, number>; sorted: number[]; rank: Map<string, number>;
   cum: number[]; }     // (cum[i]: the occurrences of the i most common lemmas, cum[0] 0 - the coverage's)
+// What the helps need from the database - a scope's counts, a language's dictionary forms - is read once (prepareHelps,
+// a promise each) and kept, so the helps themselves are worked out at once: drawing waits for it to be read (go in
+// main.ts; applyHelps and helpsBeside wait by themselves).
 const cache = new Map<string, Counts> ();
+const reading = new Map<string, Promise<unknown>> ();     // (What's read or being read: a scope's counts, "lemmas H" / "lemmas G")
+const done = new Set<string> ();     // (What's read)
+const EMPTY: Counts = { byStrong: new Map (), sorted: [], rank: new Map (), cum: [0] };     // (A scope not read yet: nothing hidden)
 let db: Db;
 let book: Book;
 const listeners: (() => void)[] = [];
 
+/** The scope's key in the cache: the book (its id), or the whole testament. */
+const scopeKey = (b: Book) => s.scope === "book" ? String (b.id) : b.testament;
 /** Counts for the scope chosen: the whole testament (freq's book 0, its Strong's keys starting H or G; the
  *  Septuagint's book -1) or the book - the reader's, or another text's shown beside it (b: the notes panel's Hebrew OT). */
-function counts (b: Book = book): Counts {
-  const key = s.scope === "book" ? String (b.id) : b.testament;
-  let c = cache.get (key);
-  if (! c) {
-    const rows = s.scope === "book" || b.testament === "LXX"
-      ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [s.scope === "book" ? b.id : -1])
-      : db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong LIKE ? ORDER BY count DESC, strong",
-                [b.testament === "OT" ? "H%" : "G%"]);
-    c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
-          sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])), cum: [0] };
-    for (const n of c.sorted) c.cum.push (c.cum[c.cum.length - 1] + n);
-    cache.set (key, c);
-  }
-  return c;
+function counts (b: Book = book): Counts { return cache.get (scopeKey (b)) ?? EMPTY; }
+
+/** Reads what b's helps need, if it isn't yet: its scope's counts (as chosen now) and its language's dictionary forms. */
+export function prepareHelps (b: Book): Promise<unknown> {
+  const key = scopeKey (b), freqBook = s.scope === "book" ? b.id : b.testament === "LXX" ? -1 : 0;
+  const once = (k: string, read: () => Promise<void>) => {
+    let p = reading.get (k);
+    if (! p) { p = read ().then (() => { done.add (k); }); reading.set (k, p); p.catch (() => reading.delete (k)); }     // (Failed: read again next time)
+    return p;
+  };
+  return Promise.all ([
+    once (key, async () => {
+      const rows = freqBook !== 0
+        ? await db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [freqBook])
+        : await db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong >= ? AND strong < ? ORDER BY count DESC, strong",
+                        b.testament === "OT" ? ["H", "I"] : ["G", "H"]);     // (A range, not LIKE 'H%': it reads only the language's half of the table)
+      const c: Counts = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
+                          sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])), cum: [0] };
+      for (const n of c.sorted) c.cum.push (c.cum[c.cum.length - 1] + n);
+      cache.set (key, c);
+    }),
+    once ("lemmas " + (b.testament === "OT" ? "H" : "G"), async () => {
+      const l = b.testament === "OT" ? "H" : "G";
+      for (const r of await db.all ("SELECT strong, lemma FROM lexicon WHERE strong >= ? AND strong < ?", l === "H" ? ["H", "I"] : ["G", "H"])) lemmas.set (String (r.strong), String (r.lemma));
+    }),
+  ]);
 }
+/** Whether b's helps are read (prepareHelps). */
+const ready = (b: Book) => done.has (scopeKey (b)) && done.has ("lemmas " + (b.testament === "OT" ? "H" : "G"));
 
 /** How many of the most common words the slider hides in the scope shown: at most every word there. */
 function hiddenWords (b: Book = book): number { return Math.min (s.slider, 1000, counts (b).sorted.length); }
@@ -87,14 +109,8 @@ export function isHidden (strong: string, b: Book = book): boolean {
   return (counts (b).rank.get (strong) ?? Infinity) < hiddenWords (b);
 }
 
-const lemmas = new Map<string, string> ();     // (Strong's key -> its dictionary form, the language's - H or G - read once)
-function lemmaOf (strong: string): string {
-  const l = strong[0];
-  if (! lemmas.has (strong) && ! lemmas.has (l))
-    for (const r of db.all ("SELECT strong, lemma FROM lexicon WHERE strong LIKE ?", [l + "%"]).concat ([{ strong: l, lemma: "" }]))
-      lemmas.set (String (r.strong), String (r.lemma));
-  return lemmas.get (strong) ?? "";
-}
+const lemmas = new Map<string, string> ();     // (Strong's key -> its dictionary form, the language's - H or G - read once: prepareHelps)
+const lemmaOf = (strong: string) => lemmas.get (strong) ?? "";
 
 /** Whether a word's parsing is hidden: a hard form's always shows; otherwise the
  *  slider by its root word's place, as its gloss (whether or not the word is known by hand: + Known words hides only
@@ -127,8 +143,9 @@ export function knownWords (): string[] {
 /** Called when anything here changes (the panel relabels its button). */
 export function onHelpsChange (f: () => void) { listeners.push (f); }
 
-/** The passage shown changed: book-scoped counts follow it. */
-export function setBook (theDb: Db, b: Book) { db = theDb; book = b; }
+export function initHelps (theDb: Db) { db = theDb; }
+/** The passage shown changed: book-scoped counts follow it (read first: prepareHelps). */
+export function setBook (b: Book) { book = b; }
 /** The book shown (Vocab's BOOK FREQUENCY, until another is picked). */
 export function currentBook (): Book { return book; }
 
@@ -150,11 +167,14 @@ let beside: [HTMLElement, Book] | null = null;
 /** Helps for a text beside the reader's (its root and book), from now on; null: none. */
 export function helpsBeside (root: HTMLElement | null, b?: Book) {
   beside = root && b ? [root, b] : null;
-  if (beside) mark (...beside);
+  if (beside) applyHelps ();
 }
 
-/** Marks the chapter's words (and the text's beside it), and the body's switches for every word's lines. */
+/** Marks the chapter's words (and the text's beside it), and the body's switches for every word's lines - once what
+ *  they need is read (at once when it is). */
 export function applyHelps () {
+  const need = [book, beside?.[1]].filter ((b): b is Book => !! b && ! ready (b));
+  if (need.length) { Promise.all (need.map (prepareHelps)).then (applyHelps, () => {}); return; }
   mark (document.getElementById ("chapter")!, book);
   if (beside) mark (...beside);
   document.body.classList.toggle ("noGloss", s.gloss === false);

@@ -54,15 +54,18 @@ function greekKeys (code: string): string[] {
   return voices.map ((v) => m[1] + v + m[3] + m[4]);
 }
 
+const attestedKey = (base: string) => (base.startsWith ("H") ? "OT" : currentTestament ()) + " " + base;
+/** A verb's forms already read (attested): the chart's cells are drawn from them. */
+const attestedNow = (base: string) => attestedCache.get (attestedKey (base)) ?? new Map<string, Seen> ();
 /** Every form of a verb in the testament shown (a Greek verb's in the NT or the Septuagint), by the chart's code.
  *  (One pass over the words: the words table isn't indexed by Strong's number; kept per testament and verb.) */
-function attested (base: string): Map<string, Seen> {
-  const t = base.startsWith ("H") ? "OT" : currentTestament (), key = t + " " + base;
+async function attested (base: string): Promise<Map<string, Seen>> {
+  const t = base.startsWith ("H") ? "OT" : currentTestament (), key = attestedKey (base);
   let m = attestedCache.get (key);
   if (m) return m;
   m = new Map ();
   const greek = base.startsWith ("G");
-  const rows = db.all (`SELECT w.text, p.code FROM words w JOIN parsings p ON p.morph = w.morph
+  const rows = await db.all (`SELECT w.text, p.code FROM words w JOIN parsings p ON p.morph = w.morph
                         WHERE (w.strong = ? OR w.strong GLOB ?) AND w.book IN (SELECT id FROM books WHERE testament = ?)`, [base, base + "[A-Z]", t]);
   for (const r of rows) {
     const text = greek ? cleanGreek (String (r.text)) : cleanHebrew (String (r.text));
@@ -79,7 +82,7 @@ function attested (base: string): Map<string, Seen> {
 
 /** How many of a verb's forms each stem (or tense / voice) has: the stem picker's counts. */
 function stemCounts (base: string): number[] {
-  const seen = attested (base);
+  const seen = attestedNow (base);
   const total = (prefix: string) => [...seen].reduce ((n, [k, s]) => n + (k.startsWith (prefix) ? s.count : 0), 0);
   return base.startsWith ("H") ? HEBREW_STEMS.map ((s) => total (s.code + "-")) : GREEK_TENSES.map ((t) => total (t.tense + t.voice));
 }
@@ -87,9 +90,17 @@ function stemCounts (base: string): number[] {
 // ---- Finding verbs ----
 
 
-function textVerb (base: string): Verb {
-  const [lex] = db.all ("SELECT lemma, concise, gloss FROM lexicon WHERE strong = ? OR strong GLOB ? ORDER BY strong LIMIT 1", [base, base + "[A-Z]"]);
-  return { kind: "text", base, lemma: String (lex?.lemma ?? base), gloss: String (lex?.concise || lex?.gloss || "") };
+/** A verb of the text, by its Strong's number: its dictionary form and meaning (read once each). */
+const verbs = new Map<string, Promise<Extract<Verb, { kind: "text" }>>> ();
+function textVerb (base: string): Promise<Extract<Verb, { kind: "text" }>> {
+  let v = verbs.get (base);
+  if (! v) {
+    v = db.all ("SELECT lemma, concise, gloss FROM lexicon WHERE strong = ? OR strong GLOB ? ORDER BY strong LIMIT 1", [base, base + "[A-Z]"])
+      .then (([lex]) => ({ kind: "text" as const, base, lemma: String (lex?.lemma ?? base), gloss: String (lex?.concise || lex?.gloss || "") }));
+    verbs.set (base, v);
+    v.catch (() => verbs.delete (base));
+  }
+  return v;
 }
 
 /** A verb's stem or tense and voice in the chart (its index), from its COTEXT code ("CONJ+Q-W-3MS" -> Qal, "AAI-3S"
@@ -106,11 +117,12 @@ export function chartStemOf (strong: string, code: string): number {
 /** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked - a Hebrew verb's
  *  as the Hebrew Bible's whatever text is read (one tapped in the notes panel's Hebrew OT beside the Septuagint). */
 let forWord: Testament | null = null;     // (The testament the next opening shows: the word's; null - the text's)
-export function openChartFor (strong: string, code: string) {
+export async function openChartFor (strong: string, code: string) {
+  const verb = await textVerb (baseOf (strong));
   forWord = strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT";
   const st = state[forWord];
   st.stem = Math.max (0, chartStemOf (strong, code));
-  st.verb = textVerb (baseOf (strong));
+  st.verb = verb;
   st.mood = "";     // (Every form shown: the word's own among them)
   openScreen ("Verb chart");
 }
@@ -128,7 +140,7 @@ function chapterVerbs (lang: string): string[] {
 function cellHtml (f: Form, verb: Verb, hebrew: boolean): string {
   let shown = f.pattern;
   if (verb.kind === "text") {
-    const s = attested (verb.base).get (f.code);
+    const s = attestedNow (verb.base).get (f.code);
     const best = s && [...s.spellings].sort ((a, b) => b[1] - a[1])[0][0];
     // (Not in the text: filled in from the verb's root by the regular pattern, faded, if it has one - rootModel)
     shown = s ? `<span class="pattern ${hebrew ? "he" : "gr"} filled"><span class="rootL">${esc (best!)}</span></span><span class="count">×${s.count.toLocaleString ()}</span>`
@@ -233,15 +245,20 @@ function greekRows (st: { stem: number; mood: string }, counts: number[] | null)
     <div class="src">Mood</div><div class="choices">${G_MOOD_NAMES.map (([k, name]) => btn ("mood", k, name, st.mood === k, ! has[k])).join ("")}</div>`;
 }
 
-/** The screen: the pickers, what the verb is, and its tables. */
-function render (body: HTMLElement, t: Testament) {
+/** The screen: the pickers, what the verb is, and its tables - drawn once the verb's forms and the chapter's verbs
+ *  are read (a newer drawing asked for by then: left to it). */
+let rendering = 0;
+async function render (body: HTMLElement, t: Testament) {
+  const n = ++rendering;
   const hebrew = t === "OT";
   const st = state[t];
   const verb = st.verb;
+  const inText = chapterVerbs (hebrew ? "H" : "G");
+  const [inTextVerbs] = await Promise.all ([Promise.all (inText.map (textVerb)), verb.kind === "text" ? attested (verb.base) : null]);
+  if (n !== rendering) return;
   const counts = verb.kind === "text" ? stemCounts (verb.base) : null;
   const models = hebrew ? HEBREW_MODELS.map ((m) => `${m.root} - ${m.english[0]}`) : GREEK_MODELS.map ((m) => `${m.lemma} - ${m.english[0]}`);
-  const inText = chapterVerbs (hebrew ? "H" : "G");
-  const label = (base: string) => { const v = textVerb (base) as Extract<Verb, { kind: "text" }>; return `${v.lemma} - ${v.gloss}`; };
+  const label = (base: string) => { const v = inTextVerbs[inText.indexOf (base)]; return `${v.lemma} - ${v.gloss}`; };
   const value = verb.kind === "pattern" ? "p" : verb.kind === "model" ? `m${verb.i}` : `t${verb.base}`;
   const options = [`<option value="p">Pattern (${hebrew ? "⬚⬚⬚" : "⬚"})</option>`,
     `<optgroup label="Model verbs">${models.map ((m, i) => `<option value="m${i}">${esc (m)}</option>`).join ("")}</optgroup>`,
@@ -276,9 +293,9 @@ function render (body: HTMLElement, t: Testament) {
   });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-hvoice]")) b.addEventListener ("click", () => { st.stem = stemAt (hRow ()[2][Number (b.dataset.hvoice)]); render (body, t); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-mood]")) b.addEventListener ("click", () => { st.mood = b.dataset.mood!; render (body, t); });
-  verbPick.addEventListener ("change", () => {
+  verbPick.addEventListener ("change", async () => {
     const v = verbPick.value;
-    st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : textVerb (v.slice (1));
+    st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : await textVerb (v.slice (1));
     render (body, t);
   });
 }

@@ -36,13 +36,13 @@ const WORDS = `SELECT w.book, w.chapter, w.word, w.verse, w.text, w.translit, w.
                FROM words w LEFT JOIN parsings p ON p.morph = w.morph`;
 
 /** The chapter's words, in order. */
-export function chapterWords (db: Db, book: number, chapter: number): Word[] {
-  return db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? ORDER BY w.verse, w.word`, [book, chapter]) as unknown as Word[];
+export async function chapterWords (db: Db, book: number, chapter: number): Promise<Word[]> {
+  return await db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? ORDER BY w.verse, w.word`, [book, chapter]) as unknown as Word[];
 }
 
 /** One verse's words, in order (interlinear.ts: a verse shown beside another text). */
-export function verseWords (db: Db, book: number, chapter: number, verse: number): Word[] {
-  return db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? AND w.verse = ? ORDER BY w.word`, [book, chapter, verse]) as unknown as Word[];
+export async function verseWords (db: Db, book: number, chapter: number, verse: number): Promise<Word[]> {
+  return await db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? AND w.verse = ? ORDER BY w.word`, [book, chapter, verse]) as unknown as Word[];
 }
 
 /** Draws the chapter (or any run of verses: interlinear.ts) into el; onTap gets the tapped word and its element. */

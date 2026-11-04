@@ -8,7 +8,7 @@
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
-import { openNotesDb, type Db } from "./db";
+import { openNotesDb, type Db, type Row } from "./db";
 import type { Word } from "./reader";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -96,7 +96,8 @@ function makePanel (sheet: HTMLElement) {
   // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
   // style.css). Measured at the info's natural width whenever the panel resizes or shows another word.
   const heads = q ("heads");
-  { const info = document.createElement ("div");     // (The word's info in one box, the lexicon's parts in another: the two columns)
+  const info = document.createElement ("div");
+  {      // (The word's info in one box, the lexicon's parts in another: the two columns)
     info.className = "infoBox";
     heads.before (info);
     info.append (heads);
@@ -107,11 +108,18 @@ function makePanel (sheet: HTMLElement) {
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
+    info.style.width = "";
     heads.style.width = "max-content";
-    fullEl.style.width = "min-content";     // (The parsing may wrap at its commas: its widest part counts, not its whole line)
+    // (The parsing may wrap at its commas, its +s and before a bracket: its widest part counts, not its whole line; the
+    // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
+    const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formGloss, .vocabGloss")];
+    for (const e of wraps) e.style.width = "min-content";
     const need = heads.getBoundingClientRect ().width;
-    heads.style.width = ""; fullEl.style.width = "";
-    sheet.classList.toggle ("twoCol", sheetScroll.clientWidth >= 2 * need);
+    heads.style.width = ""; for (const e of wraps) e.style.width = "";
+    const two = sheetScroll.clientWidth >= 2 * need;
+    sheet.classList.toggle ("twoCol", two);
+    // (Two columns: the word's side at that wrapped width - its parsing wrapping at its breaks - the lexicon the rest)
+    if (two) info.style.width = `${Math.ceil (need)}px`;
   };
   new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
@@ -168,20 +176,23 @@ function makePanel (sheet: HTMLElement) {
     try {
       if (! lexDbs[id]) {
         const table = LEXICONS[id].table;
-        const [f] = table === "bdb_file" ? mainDb!.all ("SELECT file, version FROM bdb_file")
-                                         : mainDb!.all (`SELECT file, version FROM ${table} WHERE lexicon = ?`, [id]);
-        lexDbs[id] = openNotesDb (id, String (f.file), String (f.version), (p) => {
-          for (const set of progress) set (id, p);
-        });
+        lexDbs[id] = (table === "bdb_file" ? mainDb!.all ("SELECT file, version FROM bdb_file")
+                                           : mainDb!.all (`SELECT file, version FROM ${table} WHERE lexicon = ?`, [id]))
+          .then (([f]) => openNotesDb (id, String (f.file), String (f.version), (p) => {
+            for (const set of progress) set (id, p);
+          }));
         lexDbs[id].catch (() => { delete lexDbs[id]; });     // (Tried again on the next tap)
       }
       defEl.textContent = `Loading ${name}…`;
       const db = await lexDbs[id];
       if (! still ()) return;
-      const byId = new Map (db.all (`SELECT id, html FROM entries WHERE id IN (${ids.map (() => "?").join (",")})`, ids)
-        .map ((r) => [String (r.id), String (r.html)]));
+      const [entries, here] = await Promise.all ([
+        db.all (`SELECT id, html FROM entries WHERE id IN (${ids.map (() => "?").join (",")})`, ids),
+        LEXICONS[id].table === "ubs_lex_file" ? usedHere (db, ids) : Promise.resolve ([])]);
+      if (! still ()) return;
+      const byId = new Map (entries.map ((r) => [String (r.id), String (r.html)]));
       defEl.innerHTML = ids.map ((i) => byId.get (i) ?? "").join ("");
-      if (LEXICONS[id].table === "ubs_lex_file") markUsedHere (db, ids);
+      markUsedHere (here);
     } catch {
       if (still ()) defEl.textContent = `${name} couldn't be loaded.`;
     }
@@ -191,9 +202,10 @@ function makePanel (sheet: HTMLElement) {
 
   /** The UBS entry's senses this word uses, moved first and labeled "Used here" (pipeline/ubs_lex.py matches each of
    *  the dictionary's references to the word in its verse it's about). */
-  function markUsedHere (db: Db, ids: string[]) {
-    const rows = db.all (`SELECT entry, sense FROM here WHERE book = ? AND chapter = ? AND verse = ? AND word = ?
-                          AND entry IN (${ids.map (() => "?").join (",")}) ORDER BY entry, sense DESC`, [...entry.place, ...ids]);
+  const usedHere = (db: Db, ids: string[]) =>
+    db.all (`SELECT entry, sense FROM here WHERE book = ? AND chapter = ? AND verse = ? AND word = ?
+             AND entry IN (${ids.map (() => "?").join (",")}) ORDER BY entry, sense DESC`, [...entry.place, ...ids]);
+  function markUsedHere (rows: Row[]) {
     for (const r of rows) {
       const box = defEl.querySelector<HTMLElement> (`.lexEntry[data-entry="${r.entry}"]`);
       const sense = box?.querySelector<HTMLElement> (`.sense[data-sense="${r.sense}"]`);
@@ -206,24 +218,28 @@ function makePanel (sheet: HTMLElement) {
     }
   }
 
-  function show (db: Db, w: Word, wordEl: HTMLElement) {
+  /** The word tapped shown - once its entries are read (another word tapped by then: left to that one). */
+  async function show (db: Db, w: Word, wordEl: HTMLElement) {
     if (picked === wordEl && ! sheet.hidden) { hide (); return; }
     picked?.classList.remove ("on");
     picked = wordEl;
     wordEl.classList.add ("on");
+    const hebrew = w.strong.startsWith ("H");
+    // (The fuller lexicons with an entry for the word, in LEXICONS' order)
+    const tables = hebrew ? ["SELECT 'bdb' AS lexicon, entries FROM bdb WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?",
+                              "SELECT lexicon, entries FROM sefaria_lex WHERE strong = ?"]
+                           : ["SELECT lexicon, entries FROM greek_lex WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?"];
+    const [[lex], [parsing], ...extras] = await Promise.all ([
+      db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]),
+      db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]),
+      ...tables.map ((q) => db.all (q, [w.strong]).catch (() => []))]);     // (A database built without a lexicon's tables: that lexicon not offered)
+    if (picked !== wordEl) return;
+    const extraRows = extras.flat ();
     pickedStrong = w.strong;
     label ();
     setVocabWord (w.strong);
     chartFor = w.stem && chartStemOf (w.strong, w.code) >= 0 ? [w.strong, w.code] : null;
     chartBtn.hidden = ! chartFor;
-    const hebrew = w.strong.startsWith ("H");
-    const [lex] = db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]);
-    const [parsing] = db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]);
-    // (The fuller lexicons with an entry for the word, in LEXICONS' order)
-    const tables = hebrew ? ["SELECT 'bdb' AS lexicon, entries FROM bdb WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?",
-                              "SELECT lexicon, entries FROM sefaria_lex WHERE strong = ?"]
-                           : ["SELECT lexicon, entries FROM greek_lex WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?"];
-    const extraRows = tables.flatMap ((q) => { try { return db.all (q, [w.strong]); } catch { return []; } });     // (A database built without a lexicon's tables: that lexicon not offered)
     const extra: Record<string, string> = {};
     for (const id of Object.keys (LEXICONS)) {
       const r = extraRows.find ((r) => r.lexicon === id);

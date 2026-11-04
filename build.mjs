@@ -1,5 +1,5 @@
-// Builds the app into dist/: public/ copied as it is, src/ bundled by esbuild into app.js, and the service worker
-// given the app's file list and versions. Run: npm run build  (after python3 pipeline/build_db.py has made the database)
+// Builds the app into dist/: public/ copied as it is, src/ bundled by esbuild into app.js (and the database's worker,
+// dbworker.js), and the service worker given the app's file list and its hash. Run: npm run build  (after python3 pipeline/build_db.py has made the database)
 import * as esbuild from "esbuild";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -15,13 +15,17 @@ const hash = (buf) => crypto.createHash ("sha256").update (buf).digest ("hex").s
 fs.rmSync ("dist", { recursive: true, force: true });
 fs.cpSync ("public", "dist", { recursive: true });
 
+// The database's worker first (src/dbworker.ts: SQLite and its files off the page's thread), then the app, which
+// starts it by its address with its content's hash (DB_WORKER) - so a new build's is never an old copy.
+const options = { bundle: true, format: "esm", minify: true, sourcemap: true, target: ["safari15", "chrome100", "firefox100"] };
+await esbuild.build ({ ...options, entryPoints: ["src/dbworker.ts"], outfile: "dist/dbworker.js" });
 await esbuild.build ({
-  entryPoints: ["src/main.ts"], bundle: true, format: "esm", minify: true, sourcemap: true,
-  target: ["safari15", "chrome100", "firefox100"], outfile: "dist/app.js",
-  define: { DB_VERSION: JSON.stringify (hash (fs.readFileSync (DB))) },
+  ...options, entryPoints: ["src/main.ts"], outfile: "dist/app.js",
+  define: { DB_VERSION: JSON.stringify (hash (fs.readFileSync (DB))),
+            DB_WORKER: JSON.stringify (`dbworker.js?v=${hash (fs.readFileSync ("dist/dbworker.js"))}`) },
 });
 
-// Every file but the database (cached on its own) and the source map, as the page asks for them.
+// Every file but the data (the page keeps its own: src/dbserver.ts) and the source maps, as the page asks for them.
 const files = [];
 const walk = (dir) => {
   for (const f of fs.readdirSync (dir, { withFileTypes: true })) {
@@ -43,7 +47,6 @@ const shell = files.filter ((f) => ! f.startsWith ("data/") && ! f.endsWith (".m
 const shellHash = hash (Buffer.concat (shell.map ((f) => fs.readFileSync (path.join ("dist", f)))));
 const sw = fs.readFileSync ("dist/sw.js", "utf8")
   .replace ("__SHELL__", shellHash)
-  .replace ("__DATA__", hash (fs.readFileSync (DB)))
   .replace ("__FILES__", JSON.stringify (["./", ...shell]));
 fs.writeFileSync ("dist/sw.js", sw);
 

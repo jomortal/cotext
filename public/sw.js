@@ -1,11 +1,10 @@
-// COTEXT's service worker: keeps the app and its database for offline reading.
-// build.mjs fills in the three placeholders below: a hash of the app's files, the database's version and the list of
-// the app's files. The app's files are cached together under their hash, the database on its own under
-// its version, so an app update doesn't download the database again; old caches are deleted once a new worker runs.
-// The notes panel's sources and BDB's entries (data/notes/) are left to the page, which keeps each in its own
-// "cotext-notes-" cache (src/db.ts) - the worker neither caches nor deletes them.
+// COTEXT's service worker: keeps the app for offline reading.
+// build.mjs fills in the two placeholders below: a hash of the app's files and the list of them. The app's files are
+// cached together under their hash; old caches are deleted once a new worker runs.
+// The data (data/: the database, the notes panel's sources, the lexicons, recorded audio) is left to the page, which
+// keeps its own: the database's worker in OPFS (src/dbserver.ts), or - without OPFS - in its "cotext-data-" and
+// "cotext-notes-" caches, which the worker neither fills nor deletes.
 const SHELL = "cotext-shell-__SHELL__";
-const DATA = "cotext-data-__DATA__";
 const FILES = __FILES__;
 
 self.addEventListener ("install", (e) => {
@@ -14,19 +13,18 @@ self.addEventListener ("install", (e) => {
 
 self.addEventListener ("activate", (e) => {
   e.waitUntil (caches.keys ()
-    .then ((keys) => Promise.all (keys.filter ((k) => k !== SHELL && k !== DATA && ! k.startsWith ("cotext-notes-"))
+    .then ((keys) => Promise.all (keys.filter ((k) => k !== SHELL && ! k.startsWith ("cotext-data-") && ! k.startsWith ("cotext-notes-"))
       .map ((k) => caches.delete (k))))
     .then (() => self.clients.claim ()));
 });
 
-// Cache first; anything not cached is fetched and kept (the database the first time it's read). The page itself
-// ("./" or index.html) is the same cached file however it's asked for.
+// Cache first; anything not cached is fetched and kept. The page itself ("./" or index.html) is the same cached file
+// however it's asked for.
 self.addEventListener ("fetch", (e) => {
   const url = new URL (e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname.includes ("/data/notes/") || url.pathname.includes ("/data/audio/")) return;     // (Recorded audio: the page fetches and keeps its own few chapters)
-  const cacheName = url.pathname.endsWith ("/data/cotext.db") ? DATA : SHELL;
+  if (e.request.method !== "GET" || url.origin !== location.origin || url.pathname.includes ("/data/")) return;     // (The data: the page's own, above)
   const key = e.request.mode === "navigate" ? new URL ("index.html", location.href).href : e.request;
-  e.respondWith (caches.open (cacheName).then ((c) => c.match (key, { ignoreSearch: e.request.mode === "navigate" })
+  e.respondWith (caches.open (SHELL).then ((c) => c.match (key, { ignoreSearch: e.request.mode === "navigate" })
     .then ((hit) => hit || fetch (e.request).then ((res) => {
       if (res.ok) c.put (key, res.clone ());
       return res;

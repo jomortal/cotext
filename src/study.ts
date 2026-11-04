@@ -17,7 +17,7 @@ const close = () => { drawer.hidden = true; };
  *  own frequency counts apart). */
 export type Testament = "OT" | "NT" | "LXX";
 let testament: Testament = "OT";
-const screens = new Map<string, (body: HTMLElement) => void> ();
+const screens = new Map<string, (body: HTMLElement) => void | Promise<void>> ();
 
 /** The testament shown (the study screens follow it); an OT or LXX book sets the language too. */
 export function setTestament (t: Testament) {
@@ -51,15 +51,19 @@ for (const b of document.querySelectorAll<HTMLElement> ("#langPick [data-lang]")
     languageChanged (l);
   });
 
-/** A study screen's drawing: called with its body each time it opens. */
-export function onScreen (name: string, draw: (body: HTMLElement) => void) { screens.set (name, draw); }
+/** A study screen's drawing: called with its body each time it opens (it may draw later, once the database answers). */
+export function onScreen (name: string, draw: (body: HTMLElement) => void | Promise<void>) { screens.set (name, draw); }
 
 /** Opens a study screen by its name (as the drawer's items name them). */
 export function openScreen (name: string) {
   screenTitle.textContent = name;
-  screenBody.textContent = "";
+  // (Each opening drawn into a body of its own, laid out as #screenBody's own children: a screen still drawing when
+  // another opens draws into one no longer shown)
+  const body = document.createElement ("div");
+  body.style.display = "contents";
+  screenBody.replaceChildren (body);
   const draw = screens.get (name);
-  if (draw) draw (screenBody); else screenBody.innerHTML = "<p>Coming soon.</p>";
+  if (draw) draw (body); else body.innerHTML = "<p>Coming soon.</p>";
   screen.hidden = false;
   screen.scrollTop = 0;
 }

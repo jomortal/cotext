@@ -18,12 +18,20 @@ try { Object.assign (picked, JSON.parse (localStorage.getItem (KEY) ?? "{}")); }
 
 let db: Db;
 let grammars: { id: string; name: string; lang: string }[] = [];
-const mapped = new Map<string, Set<string>> ();     // grammar -> the term keys it has a section for
+const mapped = new Map<string, Set<string>> ();     // grammar -> the term keys it has a section for (initGrammar)
 const all: { setLang: (l: Lang) => void; repick: (l: Lang) => void }[] = [];     // (Every panel's: GRAMMAR follows the text, a choice every panel)
 
-export function initGrammar (theDb: Db) {
+/** Reads the grammars and the terms each explains (once, at the start: a parsing's links are drawn at once). */
+export async function initGrammar (theDb: Db) {
   db = theDb;
-  grammars = db.all ("SELECT id, name, lang FROM grammars ORDER BY rowid")     /* (the pipeline's order: a language's first is the default) */ as unknown as typeof grammars;
+  const [gs, terms] = await Promise.all ([
+    db.all ("SELECT id, name, lang FROM grammars ORDER BY rowid"),     /* (the pipeline's order: a language's first is the default) */
+    db.all ("SELECT DISTINCT grammar, key FROM grammar_terms")]);
+  grammars = gs as unknown as typeof grammars;
+  for (const r of terms) {
+    if (! mapped.has (String (r.grammar))) mapped.set (String (r.grammar), new Set ());
+    mapped.get (String (r.grammar))!.add (String (r.key));
+  }
 }
 
 /** The grammar choice follows the text: Hebrew grammars for the OT, Greek for the NT and the Septuagint. */
@@ -34,14 +42,7 @@ function current (lang: Lang): string {
   return mine.find ((g) => g.id === picked[lang])?.id ?? mine[0]?.id ?? "";
 }
 
-function keysOf (grammar: string): Set<string> {
-  let k = mapped.get (grammar);
-  if (! k) {
-    k = new Set (db.all ("SELECT DISTINCT key FROM grammar_terms WHERE grammar = ?", [grammar]).map ((r) => String (r.key)));
-    mapped.set (grammar, k);
-  }
-  return k;
-}
+const keysOf = (grammar: string): Set<string> => mapped.get (grammar) ?? new Set ();
 
 /** A word's panel's grammar (sheet: the panel's root; its elements found by class within it): showParsing writes the
  *  parsing's terms in, a term tapped opens its section over the word's info; hideGrammar closes it. */
@@ -87,12 +88,12 @@ export function grammarIn (sheet: HTMLElement) {
     if (lang !== (hebrew ? "H" : "G")) setLang (hebrew ? "H" : "G");
     const g = current (lang);
     const keys = keysOf (g);
-    // Each comma's part its own unbreakable span (.seg: style.css), so the line wraps only after a comma ("Qal perfect, /
+    // Each comma's part its own unbreakable span (.seg: style.css), so the line wraps only after a comma or before a bracket ("Qal perfect, /
     // 3rd masculine singular") - and the panel's two-column test (panel.ts) can measure the widest part.
     let seg = document.createElement ("span");
     seg.className = "seg";
     el.append (seg);
-    const text = (t: string) => t.split (/(?<=,) /).forEach ((piece, i) => {
+    const text = (t: string) => t.split (/(?<=,) | (?=\()|(?<= \+) /).forEach ((piece, i) => {     // (After a comma or a +, or before a bracket: "Hiphil wayyiqtol / (sequential imperfect),")
       if (i) { el.append (" "); seg = document.createElement ("span"); seg.className = "seg"; el.append (seg); }
       seg.append (piece);
     });
@@ -114,13 +115,14 @@ export function grammarIn (sheet: HTMLElement) {
   /** The key's sections in the grammar, over the word's info: the first section's heading as the title, the § numbers
    *  ("Gesenius §§44, 106"), then the text - each section's number (and its heading, where it changes) before it when
    *  there's more than one. */
-  function openSection (grammar: string, key: string, term: HTMLElement) {
-    const parts = db.all ("SELECT first, last FROM grammar_terms WHERE key = ? AND grammar = ? ORDER BY part", [key, grammar]);
+  async function openSection (grammar: string, key: string, term: HTMLElement) {
+    const parts = await db.all ("SELECT first, last FROM grammar_terms WHERE key = ? AND grammar = ? ORDER BY part", [key, grammar]);
+    const sections = await Promise.all (parts.map ((p) => db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
+                                                                  [grammar, Number (p.first), Number (p.last)])));
+    if (! term.isConnected) return;     // (Another word shown while they were read)
     const blocks: string[] = [], labels: string[] = [];
     let title = "", count = 0, lastHeading = "";
-    for (const p of parts) {
-      const rows = db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
-                           [grammar, Number (p.first), Number (p.last)]);
+    for (const rows of sections) {
       if (! rows.length) continue;
       title ||= String (rows[0].heading);
       if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));

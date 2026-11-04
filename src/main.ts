@@ -3,11 +3,11 @@
 // books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
 // the icon beside it opens the notes panel (notes.ts).
 
-import { openDb, type Db } from "./db";
+import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker } from "./picker";
-import { setBook, applyHelps } from "./helps";
+import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage } from "./study";
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
@@ -56,17 +56,22 @@ function showPlace () {
 }
 window.addEventListener ("resize", showPlace);
 
-function go (b: Book, c: number) {
+// (Each go numbered: a chapter still arriving from the database when another is picked isn't shown)
+let going = 0;
+async function go (b: Book, c: number) {
+  const n = ++going;
+  const [words] = await Promise.all ([chapterWords (db, b.id, c), prepareHelps (b)]);
+  if (n !== going) return;
+  if (! words.length) { const cs = await chaptersOf (b); if (n === going && cs.length && ! cs.includes (c)) go (b, cs[0]); return; }     // (Enoch's fragments: a chapter it lacks)
   book = b;
   chapter = c;
   hidePanel ();
   showPlace ();
   document.title = `${b.name} ${c} - COTEXT`;
-  setBook (db, b);
+  setBook (b);
   setTestament (b.testament);
   setAudioTestament (b.testament);     // (Reading stops)
   setGrammarTestament (b.testament);
-  const words = chapterWords (db, b.id, c);
   setChartPassage (words);     // (The Verb chart offers the chapter's verbs)
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
   applyHelps ();
@@ -80,19 +85,20 @@ function go (b: Book, c: number) {
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }
 }
 
-/** "Gen.1" -> that book and chapter, if it exists. */
+/** "Gen.1" -> that book and chapter, if the book has it (a chapter within its count: one of Enoch's it lacks goes to
+ *  its first - go). */
 function parseRef (ref: string | null): [Book, number] | null {
   const m = ref?.match (/^(\w+)\.(\d+)$/);
   const b = m && books.find ((x) => x.code === m[1]);
-  return b && chaptersOf (b).includes (+m![2]) ? [b, +m![2]] : null;
+  return b && +m![2] >= 1 && +m![2] <= b.chapters ? [b, +m![2]] : null;
 }
 
 /** A book's chapters: 1 to its last, but for Enoch's fragments only those it has (read once). */
-const chapterCache = new Map<number, number[]> ();
-function chaptersOf (b: Book): number[] {
+const chapterCache = new Map<number, Promise<number[]>> ();
+function chaptersOf (b: Book): Promise<number[]> {
   let cs = chapterCache.get (b.id);
   if (! cs) {
-    cs = db.all ("SELECT DISTINCT chapter FROM words WHERE book = ? ORDER BY chapter", [b.id]).map ((r) => Number (r.chapter));
+    cs = db.all ("SELECT DISTINCT chapter FROM words WHERE book = ? ORDER BY chapter", [b.id]).then ((rows) => rows.map ((r) => Number (r.chapter)));
     chapterCache.set (b.id, cs);
   }
   return cs;
@@ -111,22 +117,22 @@ function groups (): [string, Book[]][] {
 }
 
 /** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
-function step (dir: number) {
-  const cs = chaptersOf (book), i = cs.indexOf (chapter) + dir;
+async function step (dir: number) {
+  const cs = await chaptersOf (book), i = cs.indexOf (chapter) + dir;
   if (i >= 0 && i < cs.length) return go (book, cs[i]);
   const list = shown (), next = list[list.indexOf (book) + dir];
-  if (next) { const ncs = chaptersOf (next); go (next, dir > 0 ? ncs[0] : ncs[ncs.length - 1]); }
+  if (next) { const ncs = await chaptersOf (next); go (next, dir > 0 ? ncs[0] : ncs[ncs.length - 1]); }
 }
 
 /** HEBREW / GREEK changed (the drawer): the same place in the other - the Septuagint's book for a Hebrew one (Daniel:
  *  Theodotion's, the one usually read) or the Hebrew's for an LXX one, at the same chapter where it has it (else its
  *  first); Genesis 1 where the other has no such book. The NT stays. */
-function switchLanguage (l: "H" | "G") {
+async function switchLanguage (l: "H" | "G") {
   if (book.testament === "NT" && l === "G") return;     // (Already Greek; to Hebrew from the NT: Genesis 1, below)
   const to = l === "G" ? books.filter ((b) => b.testament === "LXX" && b.heb === book.id).pop ()
                        : books.find ((b) => b.id === book.heb);
   const target = to ?? books.find ((b) => b.testament === (l === "G" ? "LXX" : "OT"))!;
-  const cs = chaptersOf (target);
+  const cs = await chaptersOf (target);
   go (target, to && cs.includes (chapter) ? chapter : cs[0]);
 }
 
@@ -138,14 +144,21 @@ async function start () {
     status.textContent = String ((e as Error).message ?? e);
     return;
   }
-  status.hidden = true;
-  initGrammar (db);
   initChart (db);
   initGuide (db);
   initVocab (db);
-  initNotes (db);
+  initHelps (db);
   initChoose ();
-  books = db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books ORDER BY id") as unknown as Book[];
+  // (What every chapter needs, read once and together: the books, the grammars' terms, the notes' sources)
+  let rows: Row[];
+  try {
+    [rows] = await Promise.all ([db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books ORDER BY id"), initGrammar (db), initNotes (db)]);
+  } catch (e) {
+    status.textContent = String ((e as Error).message ?? e);
+    return;
+  }
+  status.hidden = true;
+  books = rows as unknown as Book[];
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

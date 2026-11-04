@@ -13,9 +13,9 @@ const title = document.getElementById ("pickerTitle")!;
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 
 type Go = (book: Book, chapter: number) => void;
-type Chapters = (book: Book) => number[];
+type Chapters = (book: Book) => Promise<number[]>;
 
-/** groups: [heading, its books]...; chaptersOf: a book's chapter numbers. */
+/** groups: [heading, its books]...; chaptersOf: a book's chapter numbers (from the database: a promise). */
 export function openPicker (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
   picker.hidden = false;
@@ -32,8 +32,8 @@ function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
     const list = document.createElement ("div");
     list.className = "chooseList inline";     // (A vertical list, a row per book: the pickers' list, style.css)
     for (const b of books) {
-      const row = pill (b.name, () => {
-        const cs = chaptersOf (b);
+      const row = pill (b.name, async () => {
+        const cs = await chaptersOf (b);
         if (cs.length === 1) { picker.hidden = true; go (b, cs[0]); return; }
         const same = open?.previousElementSibling === row;
         open?.remove (); open = null;

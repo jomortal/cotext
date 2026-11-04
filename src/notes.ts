@@ -79,10 +79,12 @@ let shownVerse = "";      // The verses shown ("1,2,3"): redrawn only when they 
 let shownIds: string | null = null;               // The notes drawn (their ids; null: none yet): redrawn only when they change
 let blocks: [number, HTMLElement][] = [];          // Wide: each verse shown and where its notes start in the panel (TWO-WAY SCROLLING)
 
-export function initNotes (db: Db) {
+export async function initNotes (db: Db) {
   textDb = db;
-  sources = db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources") as unknown as Source[];
-  books = db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books") as unknown as Book[];
+  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources"),
+                                     db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books")]);
+  sources = s as unknown as Source[];
+  books = b as unknown as Book[];
   btn.hidden = ! sources.length;
 }
 
@@ -155,6 +157,7 @@ async function show () {
   creditEl.textContent = src.credit;
   if (src.file && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
     const n = ++loading;
+    ++updating;     // (Any update still reading the old source: dropped)
     open?.db.close (); open = null;
     refEl.textContent = "";
     bodyEl.innerHTML = "<p>Loading…</p>";
@@ -174,25 +177,32 @@ async function show () {
 
 /** The notes for the verses now, drawn if they differ from those shown: each verse's in turn, under its reference
  *  when there are several (a note on a range of verses shown once, at the first); the Hebrew OT, all their Hebrew
- *  verses as one interlinear; the diagram, each sentence once. */
-function update () {
+ *  verses as one interlinear; the diagram, each sentence once. Drawn once they're read from the database - a later
+ *  update (the text scrolled on, another source) winning over one still arriving (updating). */
+let updating = 0;
+// (A query of a source closed meanwhile - another picked - fails: that update was already superseded)
+const update = () => { drawNotes ().catch ((e) => console.warn ("Notes:", e)); };
+async function drawNotes () {
   const src = current ();
   if (panel.hidden || ! book || ! src || ! textDb || (src.file && open?.id !== src.id)) return;
   const vs = versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;
   shownVerse = key;
+  const n = ++updating, still = () => n === updating;
   const wide = isWide ();
   const many = wide || vs.length > 1;
-  blocks = []; anchors = null;
-  refEl.textContent = wide ? `${book.name} ${chapter}` : `${book.name} ${chapter}:${vs[0]}`;
+  const b = book, db = open?.db;
   // Each verse's places whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses it
   // translates ([book, chapter, verse]; none: the Hebrew lacks it); otherwise its own.
   const hebrewKeyed = !! heb && (src.kind === "original" || offers (src, "OT"));
-  const per = vs.map ((v) => ({ v, where: hebrewKeyed
-    ? textDb!.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
-                   [book!.id, chapter, v]).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
-    : [[book!.id, chapter, v]] }));
+  const per = await Promise.all (vs.map (async (v) => ({ v, where: hebrewKeyed
+    ? (await textDb.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
+                         [b.id, chapter, v])).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
+    : [[b.id, chapter, v]] })));
+  if (! still ()) return;
+  blocks = []; anchors = null;
+  refEl.textContent = wide ? `${b.name} ${chapter}` : `${b.name} ${chapter}:${vs[0]}`;
   const all = per.flatMap ((p) => p.where);
   // (The interlinear out of .gBody: its .he would restyle the reader's rows as inline Hebrew text)
   bodyEl.classList.toggle ("gBody", src.kind !== "original");
@@ -210,10 +220,10 @@ function update () {
     shownIds = ids;
     const el = document.createElement ("div");
     el.className = "besideText";
-    bodyEl.replaceChildren (el);
     // (Each Hebrew verse once, though two LXX verses may translate it; wide, each LXX verse placed at the first of its own)
     const once = [...new Map (all.map (([, c, vv]) => [c * 1000 + vv, [c, vv] as [number, number]])).values ()];
-    drawInterlinear (el, textDb, heb!, once);
+    await drawInterlinear (el, textDb, heb!, once, () => still () && (bodyEl.replaceChildren (el), true));
+    if (! still ()) return;
     if (wide) for (const p of per) {
       const row = p.where.length && el.querySelector<HTMLElement> (`.vrow[data-chapter="${p.where[0][1]}"][data-verse="${p.where[0][2]}"]`);
       if (row) blocks.push ([p.v, row]);
@@ -223,16 +233,26 @@ function update () {
   }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
   const seen = new Set<number> ();
-  const groups = per.map (({ v, where }) => {
+  const read = await Promise.all (per.map (({ where }) => Promise.all (where.map (([nb, c, vv]) =>
+    db!.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
+              ORDER BY start, "end" DESC, ord`, [nb, c * 1000 + vv, c * 1000 + vv]) as unknown as Promise<Note[]>))));
+  if (! still ()) return;
+  const groups = per.map (({ v, where }, i) => {
     const notes: Note[] = [];
-    for (const [b, c, vv] of where)
-      for (const n of open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
-                                     ORDER BY start, "end" DESC, ord`, [b, c * 1000 + vv, c * 1000 + vv]) as unknown as Note[])
-        if (! seen.has (n.id)) { seen.add (n.id); notes.push (n); }
+    for (const n of read[i].flat ()) if (! seen.has (n.id)) { seen.add (n.id); notes.push (n); }
     return { v, where, notes };
   });
   const ids = groups.map ((g) => g.v + ":" + (g.where.length ? g.notes.map ((n) => n.id).join (".") : "-")).join (",");
   if (ids === shownIds) return;
+  // (A diagram's words: the text's words of its sentences' verses, read first - "ref:n" -> [text, gloss])
+  const text = new Map<string, [string, string]> ();
+  if (src.kind === "syntax") {
+    const spans = groups.flatMap ((g) => g.notes.map ((nt) => [nt.start, nt.end]));
+    for (const rows of await Promise.all (spans.map (([s0, s1]) => textDb!.all (`SELECT chapter * 1000 + verse AS ref, word, text, gloss FROM words
+                                                                               WHERE book = ? AND chapter * 1000 + verse BETWEEN ? AND ?`, [b.id, s0, s1]))))
+      for (const r of rows) text.set (`${r.ref}:${r.word}`, [String (r.text), String (r.gloss ?? "")]);
+    if (! still ()) return;
+  }
   shownIds = ids;
   clearInterlinear ();
   bodyEl.replaceChildren ();
@@ -261,7 +281,7 @@ function update () {
     }
     if (kind === "syntax") {
       const at = g.where[0][1] * 1000 + g.where[0][2];
-      for (const n of g.notes) box.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
+      for (const n of g.notes) box.append (drawDiagram (JSON.parse (n.body) as Sentence, text, at));
       continue;
     }
     for (const n of g.notes) {
@@ -385,14 +405,9 @@ const ROLES: Record<string, string> = { s: "subject", v: "verb", vc: "verb (link
 const KINDS: Record<string, string> = { relative: "relative clause", participle: "participle clause",
   infinitive: "infinitive clause" };
 
-function drawDiagram (s: Sentence, start: number, end: number, at: number): HTMLElement {
-  // The text's words of the sentence's verses, read once: "ref:n" -> [text, gloss]
-  const text = new Map<string, [string, string]> ();
-  if (textDb && book) {
-    for (const r of textDb.all (`SELECT chapter * 1000 + verse AS ref, word, text, gloss FROM words
-                                 WHERE book = ? AND chapter * 1000 + verse BETWEEN ? AND ?`, [book.id, start, end]))
-      text.set (`${r.ref}:${r.word}`, [String (r.text), String (r.gloss ?? "")]);
-  }
+/** A sentence's diagram; text: the text's words of its verses ("ref:n" -> [text, gloss], read by update); at: the verse
+ *  shown (ref), the others' words dimmed. */
+function drawDiagram (s: Sentence, text: Map<string, [string, string]>, at: number): HTMLElement {
   const he = s.l === "he";
   const el = (tag: string, cls: string, txt?: string) => {
     const e = document.createElement (tag);
