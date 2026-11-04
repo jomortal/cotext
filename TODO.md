@@ -11,6 +11,13 @@ a non-commercial license are marked so in NOTICE.
 - [ ] **Non-commercial resources** (background survey): everything free for non-commercial use with no permission
       needed (e.g. ETCBC BHSA clause data, Ewald's NT Greek) - then added in rounds, to try out and sort through.
 
+## Smaller downloads
+
+- [ ] Split the 48 MB first download: each book's text when first opened, each grammar on its first link, each
+      testament's lexicon on its first word; the Bible-wide counts (frequency, Vocab's lists) stay in the first, small
+      download. Each piece kept once fetched (offline for what's been read), plus DOWNLOAD FOR OFFLINE: everything at
+      once. After the Greek lexicons job (both change how files are fetched).
+
 ## Major translations (online, by publishers' free APIs)
 
 - [ ] **ESV** - Crossway's ESV API: the user signs up for a key (free, non-commercial terms).
