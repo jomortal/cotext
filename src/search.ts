@@ -24,8 +24,9 @@
 // - A source: its entries (notes.body and its quote, the tags taken off) containing the typed
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
-// - The dictionary (THE DICTIONARY, below): its articles, not verses - those whose title has the typed text first -, each
-//   its title over the stretch that matched; tapped, the article opens under it, its cited verses tappable (dictionary.ts).
+// - A dictionary (THE DICTIONARY, below: the Tyndale Bible Dictionary, the Archaeology finds): its articles, not verses -
+//   those whose title has the typed text first -, each its title over the stretch that matched (a find its photo at the
+//   right); tapped, the article opens under it, its cited verses tappable (dictionary.ts).
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the
 //   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the Bible read (LIKE, then
 //   a whole-word check here); a source every entry (LIKE).
@@ -119,7 +120,7 @@ async function search () {
   } else if (pick.value === "english") searchEnglish (text, n);
   else {
     const src = textSources (ot ()).find ((s) => s.id === pick.value);
-    if (src?.kind === "dictionary") searchDictionary (text, n); else if (src) searchSource (src, text, n);
+    if (src?.kind === "dictionary") searchDictionary (src, text, n); else if (src) searchSource (src, text, n);
   }
 }
 
@@ -244,13 +245,13 @@ async function searchSource (src: Source, typed: string, n: number) {
 }
 
 //==== THE DICTIONARY ====
-// Its articles (dictionary.ts' searchArticles) - each an entry as the notes list them: its title over the stretch that
-// matched (or, matched in the title alone, the article's opening), tapped opening the article in place, its scripture
-// references going to the verse.
-async function searchDictionary (typed: string, n: number) {
+// A dictionary source's articles (dictionary.ts' searchArticles) - each an entry as the notes list them: its title over
+// the stretch that matched (or, matched in the title alone, the article's opening), its photo at the right where it has
+// one, tapped opening the article in place, its scripture references going to the verse.
+async function searchDictionary (src: Source, typed: string, n: number) {
   let hits: Awaited<ReturnType<typeof searchArticles>>;
   try {
-    hits = await searchArticles (db!, typed, (f) => { if (n === searching) countEl.textContent = `Loading the dictionary… ${Math.round (f * 100)}%`; });
+    hits = await searchArticles (db!, typed, (f) => { if (n === searching) countEl.textContent = `Loading the dictionary… ${Math.round (f * 100)}%`; }, src.id);
   } catch {
     if (n === searching) countEl.textContent = "The dictionary couldn't be loaded.";
     return;
@@ -258,7 +259,7 @@ async function searchDictionary (typed: string, n: number) {
   if (n !== searching) return;
   counted (hits.length, "article");
   drawChunks (hits, n, async (chunk) => chunk.map ((h) => entry (db!, h.id, h.title,
-    h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200))));
+    h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200), "", src.id, h.photo)));
 }
 
 /** The stretch of a source's text around its first match (up to 80 characters before, 200 after, cut at spaces,

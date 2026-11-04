@@ -158,6 +158,18 @@ Bible dictionary (the word panel's Dictionary, the notes' and search's Tyndale B
   they're included; maps, pictures and the introduction left out; each article matched to the Strong's numbers of
   the words it's about.
 
+Archaeology finds (the word panel's Finds, the notes' and search's Archaeology finds - public/data/notes/finds.db,
+  pipeline/finds.py):
+  - Text from Wikipedia (https://en.wikipedia.org): "List of inscriptions in biblical archaeology" and each find's own
+    article, at the revisions in pipeline/finds_pins.json, licensed CC BY-SA 4.0
+    (https://creativecommons.org/licenses/by-sa/4.0/). Changes made by COTEXT: each find's row (date, where found,
+    where now, writing, significance) and its article's lead reduced to plain text, references and templates left
+    out; its scripture references made links to their verse (and indexed by verse); matched to the Strong's numbers
+    of the persons and places it names. This adaptation is shared under the same license.
+  - Photos from Wikimedia Commons, each under its own free license (CC0, public domain, CC BY or CC BY-SA), its author
+    and license credited under it; reduced to 300 px JPEGs.
+  - Names matched through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
+
 Atlas (the word panel's Map, the notes' Atlas - public/data/notes/atlas.db and atlas_<map>.db, pipeline/atlas.py):
   - Places: OpenBible.info's Bible Geocoding Data (Stephen Smith, 2021), licensed CC BY 4.0
     (https://creativecommons.org/licenses/by/4.0/; github.com/openbibleinfo/Bible-Geocoding-Data). Changes: each

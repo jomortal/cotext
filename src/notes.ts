@@ -20,10 +20,10 @@
 // - A sentence diagram (SYNTAX: MACULA's trees, pipeline/diagram.py) is a "note" per sentence, its body the sentence's
 //   tree as JSON, drawn here (drawDiagram) - so the drawing changes without the data rebuilt. A sentence running over
 //   several verses shows on each, the words of the others dimmed.
-// - The dictionary (DICTIONARY: the Tyndale Bible Dictionary) lists articles, not notes: for each verse those citing it,
-//   then those its words lead to (dictionary.ts' passageArticles), each its title over a line of it, tapped opening
-//   the article in place - drawn as the notes are (narrow one verse, wide the chapter in step with the text; an article
-//   listed once, at the first verse shown it's for).
+// - A dictionary (DICTIONARY: the Tyndale Bible Dictionary, the Archaeology finds) lists articles, not notes: for each
+//   verse those citing it, then those its words lead to (dictionary.ts' passageArticles), each its title over a line of
+//   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow one verse,
+//   wide the chapter in step with the text; an article listed once, at the first verse shown it's for).
 // - The atlas (MAPS: atlas.ts) is one map of the places the verses shown name (narrow the verse, wide the chapter),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 
@@ -255,7 +255,7 @@ async function drawNotes () {
     placed ();
     return;
   }
-  if (src.kind === "dictionary") { drawArticles (per, n, wide, many); return; }
+  if (src.kind === "dictionary") { drawArticles (src.id, per, n, wide, many); return; }
   if (src.kind === "atlas") { drawAtlas (per, n, many); return; }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
   const seen = new Set<number> ();
@@ -323,14 +323,15 @@ async function drawNotes () {
   placed ();
 }
 
-/** The dictionary's articles for the verses (dictionary.ts' passageArticles: those citing each verse, then those its
- *  words lead to - one listed for an earlier verse not again), drawn as the notes are: each verse's under its
- *  reference when there are several (wide, each in its block; a verse with none of its own left out), each article an
- *  entry - its title over a line of it, tapped opening it in place. */
-async function drawArticles (per: { v: number; where: number[][] }[], n: number, wide: boolean, many: boolean) {
-  const lists = await passageArticles (textDb!, per.map ((p) => p.where));
+/** A dictionary's (id: its source) articles for the verses (dictionary.ts' passageArticles: those citing each verse,
+ *  then those its words lead to - one listed for an earlier verse not again), drawn as the notes are: each verse's
+ *  under its reference when there are several (wide, each in its block; a verse with none of its own left out), each
+ *  article an entry - its title over a line of it (its photo at the right, where it has one), tapped opening it in
+ *  place. */
+async function drawArticles (id: string, per: { v: number; where: number[][] }[], n: number, wide: boolean, many: boolean) {
+  const lists = await passageArticles (textDb!, per.map ((p) => p.where), id);
   if (n !== updating) return;
-  const ids = per.map ((p, i) => p.v + ":" + lists[i].map ((a) => a.id).join (".")).join (",");
+  const ids = id + " " + per.map ((p, i) => p.v + ":" + lists[i].map ((a) => a.id).join (".")).join (",");
   if (ids === shownIds) return;
   shownIds = ids;
   clearInterlinear ();
@@ -345,7 +346,7 @@ async function drawArticles (per: { v: number; where: number[][] }[], n: number,
       h.textContent = `${chapter}:${v}`;
       box.append (h);
     }
-    for (const a of lists[i]) box.append (entry (textDb!, a.id, a.title, a.line, a.why));
+    for (const a of lists[i]) box.append (entry (textDb!, a.id, a.title, a.line, a.why, id, a.photo));
   });
   if (! bodyEl.children.length) bodyEl.innerHTML = "<p>No articles on this verse.</p>";
   placed ();

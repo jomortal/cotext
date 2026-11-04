@@ -14,6 +14,11 @@ a non-commercial license are marked so in NOTICE.
 - [x] **Atlas, by word and by passage** (built 2026-11-04 - pick a base map to keep) (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;
       base maps from Natural Earth (public domain), the Ancient World Mapping Center (CC BY), the Digital Atlas of the
       Roman Empire (CC BY); a place name tapped shows its map, a resources choice maps the chapter's places.
+- [x] **Archaeology** (trial, 2026-11-04 - try them out):
+  - [x] **Archaeology finds** (Wikipedia's list of inscribed finds, CC BY-SA; photos from Wikimedia Commons): 68 finds,
+        each its date, find spot, museum, writing, what it bears on, its article's lead and a photo (45); by passage
+        (notes' Archaeology finds), by word (a word panel's Finds) and searchable.
+  - [ ] ~~Barton, Archaeology and the Bible (1916)~~ - skipped: only scans and raw OCR (archive.org); no clean text.
 - [ ] Before the public beta: slim the resources down (the user's pick).
 
 ## In progress
