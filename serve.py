@@ -1,7 +1,8 @@
 """Serves dist/ for trying COTEXT locally: python3 serve.py [port]  (default 8090, this machine only).
 
 The beta: python3 serve.py 8091 beta  serves beta/ (gitignored), a frozen copy of a build - beta.cotext.org, public,
-through the tunnel; python3 serve.py --publish  copies dist/ there (the one way the beta changes).
+through the tunnel; python3 serve.py --publish  copies dist/ there (the one way the beta changes), less the resources
+beta-exclude.txt lists.
 
 Python's own server, with .wasm served as application/wasm (SQLite's WebAssembly build needs it) and nothing
 kept by the browser or Cloudflare, so a rebuild shows on reload. (The service worker still keeps its own copy: a new build's
@@ -14,10 +15,35 @@ import sys
 
 HERE = pathlib.Path(__file__).parent
 if sys.argv[1:] == ["--publish"]:     # (dist/ copied over beta/, replacing it whole)
+    import hashlib
+    import re
     import shutil
+    import sqlite3
     shutil.rmtree(HERE / "beta", ignore_errors=True)
     shutil.copytree(HERE / "dist", HERE / "beta")
-    print("COTEXT beta published from dist/")
+    # The resources kept out of the beta (beta-exclude.txt: a note_sources id a line, # a comment): their rows taken
+    # from the beta's core.db and their files deleted; core's new version and size (build.mjs' hash: the first 12 hex
+    # of its SHA-256) written into the beta's app.js in place of dev's, so devices fetch the beta's own core.
+    out = [ln.split("#")[0].strip() for ln in (HERE / "beta-exclude.txt").read_text().splitlines()]
+    out = [x for x in out if x]
+    core = HERE / "beta" / "data" / "db" / "core.db"
+    if out:
+        old_ver = hashlib.sha256(core.read_bytes()).hexdigest()[:12]
+        db = sqlite3.connect(core)
+        for sid, file in db.execute(f"SELECT id, file FROM note_sources WHERE id IN ({','.join('?' * len(out))})", out).fetchall():
+            (HERE / "beta" / file).unlink(missing_ok=True)
+        db.execute(f"DELETE FROM note_sources WHERE id IN ({','.join('?' * len(out))})", out)
+        db.commit()
+        db.execute("VACUUM")
+        db.close()
+        data = core.read_bytes()
+        app = HERE / "beta" / "app.js"
+        js, n = re.subn(r'part:"core",version:"' + old_ver + r'",bytes:\d+',
+                        f'part:"core",version:"{hashlib.sha256(data).hexdigest()[:12]}",bytes:{len(data)}', app.read_text())
+        if n != 1:
+            sys.exit("beta: core's version not found in app.js - not published right; run the publish again after a build")
+        app.write_text(js)
+    print("COTEXT beta published from dist/" + (f" (without {', '.join(out)})" if out else ""))
     sys.exit()
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
 DIST = HERE / (sys.argv[2] if len(sys.argv) > 2 else "dist")     # (The folder served: dist/, or beta/ for the beta)
