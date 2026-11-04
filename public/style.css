@@ -194,6 +194,8 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
    neither the heading nor its ✕ moves, not even with the bounce at the list's ends. */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; }
 #picker .top { flex: none; align-items: center; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) 0 8px; }
+#picker .top { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }     /* (HEBREW / GREEK centered, ✕ at the right) */
+#picker .top #langPick { grid-column: 2; } #picker .top #pickerClose { grid-column: 3; justify-self: end; }
 #pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
 .pickerCard { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
