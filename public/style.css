@@ -141,14 +141,13 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])) main { min-height: calc
 /* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
    never over the text;
    at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
-   least a third (main's min-height); its picker and ✕ - a row the panel keeps at its top, never pulled down - then its own scroller (#notesScroll): the verse, the notes (a grammar section's look:
+   least a third (main's min-height); its picker and ✕ (scrolling with the rest), the verse, the notes (a grammar section's look:
    .gBody), the source's credit. Under it the play bar, last, with the home indicator's room. */
-#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow: hidden; display: flex; flex-direction: column;
+#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto; overflow-x: hidden;
          padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
-#notes .top { align-items: center; flex: none; margin-bottom: 10px; width: 100%; }
-#notes .notesScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; width: 100%; }     /* (The notes scroll here, under the picker: it never moves) */
+#notes .top { align-items: center; margin-bottom: 10px; }     /* (Not frozen: the picker and ✕ scroll away with the notes) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }

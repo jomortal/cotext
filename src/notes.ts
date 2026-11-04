@@ -145,7 +145,7 @@ function update () {
   }
   if (current ()?.kind === "syntax") {
     for (const n of notes) bodyEl.append (drawDiagram (JSON.parse (n.body) as Sentence, n.start, n.end, at));
-    document.getElementById ("notesScroll")!.scrollTop = 0;
+    panel.scrollTop = 0;
     return;
   }
   for (const n of notes) {
@@ -156,7 +156,7 @@ function update () {
                  + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
     bodyEl.append (el);
   }
-  document.getElementById ("notesScroll")!.scrollTop = 0;     // (The notes scroll on their own, under the picker)
+  panel.scrollTop = 0;
 }
 
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */
