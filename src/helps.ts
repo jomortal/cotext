@@ -45,15 +45,15 @@ let book: Book;
 const listeners: (() => void)[] = [];
 
 /** Counts for the scope chosen: the whole testament (freq's book 0, its Strong's keys starting H or G; the
- *  Septuagint's book -1) or the book. */
-function counts (): Counts {
-  const key = s.scope === "book" ? String (book.id) : book.testament;
+ *  Septuagint's book -1) or the book - the reader's, or another text's shown beside it (b: the notes panel's Hebrew OT). */
+function counts (b: Book = book): Counts {
+  const key = s.scope === "book" ? String (b.id) : b.testament;
   let c = cache.get (key);
   if (! c) {
-    const rows = s.scope === "book" || book.testament === "LXX"
-      ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [s.scope === "book" ? book.id : -1])
+    const rows = s.scope === "book" || b.testament === "LXX"
+      ? db.all ("SELECT strong, count FROM freq WHERE book = ? ORDER BY count DESC, strong", [s.scope === "book" ? b.id : -1])
       : db.all ("SELECT strong, count FROM freq WHERE book = 0 AND strong LIKE ? ORDER BY count DESC, strong",
-                [book.testament === "OT" ? "H%" : "G%"]);
+                [b.testament === "OT" ? "H%" : "G%"]);
     c = { byStrong: new Map (rows.map ((r) => [String (r.strong), Number (r.count)])),
           sorted: rows.map ((r) => Number (r.count)), rank: new Map (rows.map ((r, i) => [String (r.strong), i])), cum: [0] };
     for (const n of c.sorted) c.cum.push (c.cum[c.cum.length - 1] + n);
@@ -63,7 +63,7 @@ function counts (): Counts {
 }
 
 /** How many of the most common words the slider hides in the scope shown: at most every word there. */
-function hiddenWords (): number { return Math.min (s.slider, 1000, counts ().sorted.length); }
+function hiddenWords (b: Book = book): number { return Math.min (s.slider, 1000, counts (b).sorted.length); }
 
 /** How much of the scope's text the n most common words make up, 0-1. */
 function coverage (n: number): number { const c = counts ().cum; return c[Math.min (n, c.length - 1)] / (c[c.length - 1] || 1); }
@@ -78,18 +78,20 @@ function wordsFor (pos: number): number { return wordsAt (Math.min (pos, sliderM
 let learning: (strong: string) => boolean = () => false;
 export function setLearning (f: (strong: string) => boolean) { learning = f; }
 
-/** Whether a word's gloss is hidden: its hand choice (if HIDE KNOWN WORDS), else the slider by its lemma's place. */
-export function isHidden (strong: string): boolean {
+/** Whether a word's gloss is hidden: its hand choice (if HIDE KNOWN WORDS), else the slider by its lemma's place
+ *  (in b's counts: the reader's book, or the text beside it). */
+export function isHidden (strong: string, b: Book = book): boolean {
   if (s.showVocab !== false && learning (strong)) return false;
   const mode = s.mine ? s.modes[strong] : undefined;
   if (mode) return mode === "hide";
-  return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
+  return (counts (b).rank.get (strong) ?? Infinity) < hiddenWords (b);
 }
 
-const lemmas = new Map<string, string> ();     // (Strong's key -> its dictionary form, the testament's, read once)
+const lemmas = new Map<string, string> ();     // (Strong's key -> its dictionary form, the language's - H or G - read once)
 function lemmaOf (strong: string): string {
-  if (! lemmas.has (strong) && ! lemmas.has (book.testament))
-    for (const r of db.all ("SELECT strong, lemma FROM lexicon WHERE strong LIKE ?", [book.testament === "OT" ? "H%" : "G%"]).concat ([{ strong: book.testament, lemma: "" }]))
+  const l = strong[0];
+  if (! lemmas.has (strong) && ! lemmas.has (l))
+    for (const r of db.all ("SELECT strong, lemma FROM lexicon WHERE strong LIKE ?", [l + "%"]).concat ([{ strong: l, lemma: "" }]))
       lemmas.set (String (r.strong), String (r.lemma));
   return lemmas.get (strong) ?? "";
 }
@@ -97,10 +99,10 @@ function lemmaOf (strong: string): string {
 /** Whether a word's parsing is hidden: a hard form's always shows; otherwise the
  *  slider by its root word's place, as its gloss (whether or not the word is known by hand: + Known words hides only
  *  the gloss). */
-export function isFormHidden (strong: string, code: string): boolean {
+export function isFormHidden (strong: string, code: string, b: Book = book): boolean {
   if (s.showVocab !== false && learning (strong)) return false;
   if (hardForm (lemmaOf (strong), code, strong.startsWith ("H"))) return false;
-  return (counts ().rank.get (strong) ?? Infinity) < hiddenWords ();
+  return (counts (b).rank.get (strong) ?? Infinity) < hiddenWords (b);
 }
 
 /** Marks a word known by hand (as "+ Known words"; a slider deck's REMOVE FROM LIST): its gloss hidden. */
@@ -130,15 +132,31 @@ export function setBook (theDb: Db, b: Book) { db = theDb; book = b; }
 /** The book shown (Vocab's BOOK FREQUENCY, until another is picked). */
 export function currentBook (): Book { return book; }
 
-/** Marks the chapter's words: .known on those whose gloss is hidden, .knownForm on those whose parsing is (style.css
- *  hides or fades them). */
-export function applyHelps () {
-  for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w")) {
+/** Marks the words in root: .known on those whose gloss is hidden, .knownForm on those whose parsing is (style.css
+ *  hides or fades them) - counted in b's scope. */
+function mark (root: ParentNode, b: Book) {
+  for (const el of root.querySelectorAll<HTMLElement> (".w")) {
     // (A hard form's gloss shows as its parsing does, however common the word - unless it's known by hand)
     const strong = el.dataset.strong!, byHand = s.mine && s.modes[strong] === "hide";
-    el.classList.toggle ("known", isHidden (strong) && (byHand || ! hardForm (lemmaOf (strong), el.dataset.code ?? "", strong.startsWith ("H"))));
-    el.classList.toggle ("knownForm", isFormHidden (el.dataset.strong!, el.dataset.code ?? ""));
+    el.classList.toggle ("known", isHidden (strong, b) && (byHand || ! hardForm (lemmaOf (strong), el.dataset.code ?? "", strong.startsWith ("H"))));
+    el.classList.toggle ("knownForm", isFormHidden (strong, el.dataset.code ?? "", b));
   }
+}
+
+// Another text drawn as an interlinear beside the reader's (interlinear.ts: the notes panel's Hebrew OT): its words
+// helped as the reader's are, counted in its own book's scope (the slider's N most common words of the Hebrew OT, or
+// of its book), marked again with every change.
+let beside: [HTMLElement, Book] | null = null;
+/** Helps for a text beside the reader's (its root and book), from now on; null: none. */
+export function helpsBeside (root: HTMLElement | null, b?: Book) {
+  beside = root && b ? [root, b] : null;
+  if (beside) mark (...beside);
+}
+
+/** Marks the chapter's words (and the text's beside it), and the body's switches for every word's lines. */
+export function applyHelps () {
+  mark (document.getElementById ("chapter")!, book);
+  if (beside) mark (...beside);
   document.body.classList.toggle ("noGloss", s.gloss === false);
   document.body.classList.toggle ("noParse", s.parse === false);
   document.body.classList.toggle ("showTranslit", s.translit === true);

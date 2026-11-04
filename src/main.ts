@@ -70,10 +70,10 @@ function go (b: Book, c: number) {
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
   applyHelps ();
   document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
-  // (After the scroll to the top: the notes panel shows the first verse. An LXX book numbered as its Hebrew one has
-  // the Hebrew's notes - its translations, Brenton's among them, and commentaries; any other only Brenton's, by its
-  // own numbers - lxx.py)
-  setNotesPassage (books.find ((x) => x.id === b.notes) ?? b, c);
+  // (After the scroll to the top: the notes panel shows the first verse. An LXX book with a Hebrew counterpart has the
+  // Hebrew's notes, verse by verse on the Hebrew verses it translates, and the Hebrew OT beside it; any other only
+  // Brenton's, by its own numbers - notes.ts)
+  setNotesPassage (b, c);
   const ref = `${b.code}.${c}`;
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }

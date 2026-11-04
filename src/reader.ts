@@ -32,14 +32,20 @@ export interface Book { id: number; code: string; name: string; testament: Testa
 export interface Word { verse: number; text: string; translit: string; gloss: string; strong: string; morph: string; code: string;
                         stem: string; }
 
+const WORDS = `SELECT w.verse, w.text, w.translit, w.gloss, w.strong, w.morph, p.code, p.stem
+               FROM words w LEFT JOIN parsings p ON p.morph = w.morph`;
+
 /** The chapter's words, in order. */
 export function chapterWords (db: Db, book: number, chapter: number): Word[] {
-  return db.all (`SELECT w.verse, w.text, w.translit, w.gloss, w.strong, w.morph, p.code, p.stem
-                  FROM words w LEFT JOIN parsings p ON p.morph = w.morph
-                  WHERE w.book = ? AND w.chapter = ? ORDER BY w.verse, w.word`, [book, chapter]) as unknown as Word[];
+  return db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? ORDER BY w.verse, w.word`, [book, chapter]) as unknown as Word[];
 }
 
-/** Draws the chapter into el; onTap gets the tapped word and its element. */
+/** One verse's words, in order (interlinear.ts: a verse shown beside another text). */
+export function verseWords (db: Db, book: number, chapter: number, verse: number): Word[] {
+  return db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? AND w.verse = ? ORDER BY w.word`, [book, chapter, verse]) as unknown as Word[];
+}
+
+/** Draws the chapter (or any run of verses: interlinear.ts) into el; onTap gets the tapped word and its element. */
 export function showChapter (el: HTMLElement, book: Book, chapter: number, words: Word[],
                              onTap: (w: Word, wordEl: HTMLElement) => void) {
   el.textContent = "";

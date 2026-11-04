@@ -43,8 +43,12 @@ export function initGrammar (theDb: Db) {
 }
 
 /** The grammar choice follows the text: Hebrew grammars for the OT, Greek for the NT and the Septuagint. */
-export function setGrammarTestament (t: Testament) {
-  lang = t === "OT" ? "H" : "G";
+export function setGrammarTestament (t: Testament) { setLang (t === "OT" ? "H" : "G"); }
+
+/** GRAMMAR's choices for a language: the text's, or a tapped word's own (a Hebrew word beside the Septuagint: the
+ *  notes panel's Hebrew OT). */
+function setLang (l: Lang) {
+  lang = l;
   pick.replaceChildren (...grammars.filter ((g) => g.lang === lang).map ((g) => new Option (g.name, g.id)));
   pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language: nothing to pick)
   pick.value = current ();
@@ -70,7 +74,7 @@ export function showParsing (el: HTMLElement, spelled: string, terms: string | n
   shown = [el, spelled, terms, hebrew];
   hideGrammar ();
   el.textContent = "";
-  lang = hebrew ? "H" : "G";
+  if (lang !== (hebrew ? "H" : "G")) setLang (hebrew ? "H" : "G");
   const g = current ();
   const keys = keysOf (g);
   let at = 0;

@@ -14,7 +14,7 @@
 
 import type { Db } from "./db";
 import type { Word } from "./reader";
-import { onScreen, currentTestament, openScreen } from "./study";
+import { onScreen, currentTestament, openScreen, type Testament } from "./study";
 import { HEBREW_STEMS, HEBREW_MODELS, HEBREW_PGN, HEBREW_GN, GREEK_TENSES, GREEK_MODELS, GREEK_PN, GREEK_PTC,
          hebrewCells, hebrewForm, greekCells, greekForm, rootModel, type Form, type HebrewModel, type GreekModel, englishOf } from "./paradigm";
 
@@ -57,7 +57,7 @@ function greekKeys (code: string): string[] {
 /** Every form of a verb in the testament shown (a Greek verb's in the NT or the Septuagint), by the chart's code.
  *  (One pass over the words: the words table isn't indexed by Strong's number; kept per testament and verb.) */
 function attested (base: string): Map<string, Seen> {
-  const t = currentTestament (), key = t + " " + base;
+  const t = base.startsWith ("H") ? "OT" : currentTestament (), key = t + " " + base;
   let m = attestedCache.get (key);
   if (m) return m;
   m = new Map ();
@@ -103,19 +103,22 @@ export function chartStemOf (strong: string, code: string): number {
   return k ? GREEK_TENSES.findIndex ((t) => t.code === k.slice (0, 2)) : -1;
 }
 
-/** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked. */
+/** The word panel's "Verb chart": the chart opened on that verb, its stem (or tense and voice) picked - a Hebrew verb's
+ *  as the Hebrew Bible's whatever text is read (one tapped in the notes panel's Hebrew OT beside the Septuagint). */
+let forWord: Testament | null = null;     // (The testament the next opening shows: the word's; null - the text's)
 export function openChartFor (strong: string, code: string) {
-  const st = state[strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT"];
+  forWord = strong.startsWith ("H") ? "OT" : currentTestament () === "LXX" ? "LXX" : "NT";
+  const st = state[forWord];
   st.stem = Math.max (0, chartStemOf (strong, code));
   st.verb = textVerb (baseOf (strong));
   st.mood = "";     // (Every form shown: the word's own among them)
   openScreen ("Verb chart");
 }
 
-/** The chapter's verbs, each once (by Strong's number), in order. */
-function chapterVerbs (): string[] {
+/** The chapter's verbs of the chart's language (H or G), each once (by Strong's number), in order. */
+function chapterVerbs (lang: string): string[] {
   const out: string[] = [];
-  for (const w of chapterWords) if (w.stem && ! out.includes (baseOf (w.strong))) out.push (baseOf (w.strong));
+  for (const w of chapterWords) if (w.stem && w.strong[0] === lang && ! out.includes (baseOf (w.strong))) out.push (baseOf (w.strong));
   return out;
 }
 
@@ -231,14 +234,13 @@ function greekRows (st: { stem: number; mood: string }, counts: number[] | null)
 }
 
 /** The screen: the pickers, what the verb is, and its tables. */
-function render (body: HTMLElement) {
-  const t = currentTestament ();
+function render (body: HTMLElement, t: Testament) {
   const hebrew = t === "OT";
   const st = state[t];
   const verb = st.verb;
   const counts = verb.kind === "text" ? stemCounts (verb.base) : null;
   const models = hebrew ? HEBREW_MODELS.map ((m) => `${m.root} - ${m.english[0]}`) : GREEK_MODELS.map ((m) => `${m.lemma} - ${m.english[0]}`);
-  const inText = chapterVerbs ();
+  const inText = chapterVerbs (hebrew ? "H" : "G");
   const label = (base: string) => { const v = textVerb (base) as Extract<Verb, { kind: "text" }>; return `${v.lemma} - ${v.gloss}`; };
   const value = verb.kind === "pattern" ? "p" : verb.kind === "model" ? `m${verb.i}` : `t${verb.base}`;
   const options = [`<option value="p">Pattern (${hebrew ? "⬚⬚⬚" : "⬚"})</option>`,
@@ -262,7 +264,7 @@ function render (body: HTMLElement) {
   const pickTV = (tense: string, voice: string) => {
     const i = GREEK_TENSES.findIndex ((x) => x.tense === tense && x.voice === voice);
     st.stem = i >= 0 ? i : GREEK_TENSES.findIndex ((x) => x.tense === tense);
-    render (body);
+    render (body, t);
   };
   for (const b of body.querySelectorAll<HTMLElement> ("[data-tense]")) b.addEventListener ("click", () => pickTV (b.dataset.tense!, GREEK_TENSES[st.stem].voice));
   for (const b of body.querySelectorAll<HTMLElement> ("[data-voice]")) b.addEventListener ("click", () => pickTV (GREEK_TENSES[st.stem].tense, b.dataset.voice!));
@@ -270,15 +272,15 @@ function render (body: HTMLElement) {
   const hRow = () => H_GRID.find ((r) => r[2].includes (HEBREW_STEMS[st.stem].code))!;
   for (const b of body.querySelectorAll<HTMLElement> ("[data-htype]")) b.addEventListener ("click", () => {
     const row = H_GRID.find ((r) => r[0] === b.dataset.htype)!, v = hRow ()[2].indexOf (HEBREW_STEMS[st.stem].code);
-    st.stem = stemAt (row[2][v] ?? row[2][0]); render (body);
+    st.stem = stemAt (row[2][v] ?? row[2][0]); render (body, t);
   });
-  for (const b of body.querySelectorAll<HTMLElement> ("[data-hvoice]")) b.addEventListener ("click", () => { st.stem = stemAt (hRow ()[2][Number (b.dataset.hvoice)]); render (body); });
-  for (const b of body.querySelectorAll<HTMLElement> ("[data-mood]")) b.addEventListener ("click", () => { st.mood = b.dataset.mood!; render (body); });
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-hvoice]")) b.addEventListener ("click", () => { st.stem = stemAt (hRow ()[2][Number (b.dataset.hvoice)]); render (body, t); });
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-mood]")) b.addEventListener ("click", () => { st.mood = b.dataset.mood!; render (body, t); });
   verbPick.addEventListener ("change", () => {
     const v = verbPick.value;
     st.verb = v === "p" ? { kind: "pattern" } : v[0] === "m" ? { kind: "model", i: Number (v.slice (1)) } : textVerb (v.slice (1));
-    render (body);
+    render (body, t);
   });
 }
 
-onScreen ("Verb chart", render);
+onScreen ("Verb chart", (body) => { const t = forWord ?? currentTestament (); forWord = null; render (body, t); });

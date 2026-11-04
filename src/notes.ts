@@ -3,7 +3,8 @@
 // ▶ in the play bar opens and closes it; it takes its place in the page's column above the play bar (under the word's
 // panel when that's open - nothing floats over the text), at most half the screen, scrolling.
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
-//   SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py) - so
+//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, TRANSLATIONS and ANCIENT
+//   VERSIONS - the database's note_sources (pipeline/notes.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -19,9 +20,24 @@
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
+import { drawInterlinear, clearInterlinear } from "./interlinear";
 
-interface Source { id: string; kind: "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
+interface Source { id: string; kind: "original" | "commentary" | "apparatus" | "translation" | "version" | "syntax"; name: string; testaments: string; credit: string;
                    file: string; version: string; }
+
+//==== BESIDE THE SEPTUAGINT ====
+// An LXX book with a Hebrew counterpart (books.heb) is offered the Hebrew book's sources, each LXX verse showing the
+// notes of the Hebrew verse or verses it translates (the main database's lxx_heb: pipeline/lxx_heb.py) - or, where it
+// has none, that it's in the Septuagint only - and, at the top (ORIGINAL TEXT), the Hebrew OT: those Hebrew verses as
+// COTEXT's interlinear (interlinear.ts), a word tapped opening the word's panel. Brenton's Septuagint is offered in the
+// LXX's own numbering (brenton_lxx), not on the Hebrew's. A book the Hebrew Bible lacks has only brenton_lxx.
+const HEBREW_OT: Source = { id: "hebrew_ot", kind: "original", name: "Hebrew OT", testaments: "LXX", file: "", version: "",
+  credit: "Hebrew text, parsing and glosses: STEPBible Data's TAHOT, Tyndale House, Cambridge (CC BY 4.0)." };
+/** The sources about the Hebrew text itself, not offered beside the Septuagint (the user's choice): the Hebrew's
+ *  sentence diagram, its Masoretic notes, text-critical apparatus and Dead Sea Scrolls readings. */
+const HEBREW_TEXT = new Set (["diagram_ot", "mam", "minchatshai", "hottp", "stepbible", "dss"]);
+const NOT_BESIDE_LXX = new Set ([...HEBREW_TEXT, "brenton"]);     // (Brenton: brenton_lxx instead, in the LXX's own numbers)
+const LXX_ONLY = "<p>This verse is in the Septuagint only - not in the Hebrew Bible.</p>";
 interface Note { id: number; start: number; end: number; quote: string; body: string; }
 
 const KEY = "cotext.notes";
@@ -45,6 +61,8 @@ const main = document.querySelector ("main")!;
 let sources: Source[] = [];
 let textDb: Db | null = null;                     // The main database: a diagram's matched words are read from it
 let book: Book | null = null;
+let heb: Book | null = null;                      // An LXX book's Hebrew Bible book (null: none, or not an LXX book)
+let books: Book[] = [];
 let chapter = 1;
 let open: { id: string; db: Db } | null = null;     // The source's file open now
 let loading = 0;                                   // (A load's number: a later pick wins over one still arriving)
@@ -54,21 +72,24 @@ let shownIds: string | null = null;               // The notes drawn (their ids;
 export function initNotes (db: Db) {
   textDb = db;
   sources = db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources") as unknown as Source[];
+  books = db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books") as unknown as Book[];
   btn.hidden = ! sources.length;
 }
 
 /** The chapter shown (main.ts): the picker's sources follow its testament; the notes its verses. */
 export function setNotesPassage (b: Book, c: number) {
-  const testament = book?.testament;
+  const was = book && scope ();
   book = b; chapter = c;
-  if (b.testament !== testament) {
+  heb = b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
+  clearInterlinear ();
+  if (scope () !== was) {
     const group = (kind: string, label: string) => {
       const g = document.createElement ("optgroup");
       g.label = label;
       g.append (...mine ().filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
       return g.children.length ? [g] : [];
     };
-    pick.replaceChildren (...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),     // (The user's order)
+    pick.replaceChildren (...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("apparatus", "Apparatus"),     // (The user's order)
                        ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"),
                        ...group ("version", "Ancient versions"));
     pick.value = current ()?.id ?? "";
@@ -77,12 +98,17 @@ export function setNotesPassage (b: Book, c: number) {
   if (! panel.hidden) show ();
 }
 
-const mine = () => sources.filter ((s) => book && s.testaments.split (" ").includes (book.testament));
-const current = () => mine ().find ((s) => s.id === picked[book?.testament ?? ""]) ?? mine ()[0];
+/** The picker's list and its kept choice: per testament, an LXX book with a Hebrew counterpart apart (LXXH). */
+const scope = () => book?.testament === "LXX" && heb ? "LXXH" : book?.testament ?? "";
+const offers = (s: Source, t: string) => s.testaments.split (" ").includes (t);
+const mine = () => ! book ? [] : scope () === "LXXH"
+  ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)) || offers (s, "LXX"))]
+  : sources.filter ((s) => offers (s, book!.testament));
+const current = () => mine ().find ((s) => s.id === picked[scope ()]) ?? mine ()[0];
 
 pick.addEventListener ("change", () => {
   if (! book) return;
-  picked[book.testament] = pick.value;
+  picked[scope ()] = pick.value;
   try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
   shownVerse = -1; shownIds = null;
   show ();
@@ -92,7 +118,7 @@ btn.addEventListener ("click", () => {
   panel.hidden = ! panel.hidden;
   btn.setAttribute ("aria-pressed", String (! panel.hidden));
   shownVerse = -1; shownIds = null;
-  if (! panel.hidden) show ();
+  if (! panel.hidden) show (); else clearInterlinear ();
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
@@ -110,7 +136,7 @@ async function show () {
   const src = current ();
   if (! book || ! src) return;
   creditEl.textContent = src.credit;
-  if (open?.id !== src.id) {
+  if (src.file && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
     const n = ++loading;
     open?.db.close (); open = null;
     refEl.textContent = "";
@@ -131,17 +157,49 @@ async function show () {
 
 /** The notes for the verse now, drawn if they differ from those shown. */
 function update () {
-  if (panel.hidden || ! open || ! book) return;
+  const src = current ();
+  if (panel.hidden || ! book || ! src || ! textDb || (src.file && open?.id !== src.id)) return;
   const v = verseNow ();
   if (v === shownVerse) return;
   shownVerse = v;
   refEl.textContent = `${book.name} ${chapter}:${v}`;
-  const at = chapter * 1000 + v;
-  const notes = open.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
-                              ORDER BY start, "end" DESC, ord`, [book.id, at, at]) as unknown as Note[];
+  // The verses whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses this one translates
+  // ([book, chapter, verse]); otherwise its own.
+  const where = heb && (src.kind === "original" || offers (src, "OT"))
+    ? textDb.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
+                  [book.id, chapter, v]).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
+    : [[book.id, chapter, v]];
+  // (The interlinear out of .gBody: its .he would restyle the reader's rows as inline Hebrew text)
+  bodyEl.classList.toggle ("gBody", src.kind !== "original");
+  if (heb && where[0]?.[0] === heb.id) refEl.textContent += ` - Hebrew ${heb.name} ${refs (where)}`;
+  if (! where.length) {
+    if (shownIds === "lxx") return;
+    shownIds = "lxx";
+    clearInterlinear ();
+    bodyEl.innerHTML = LXX_ONLY;
+    return;
+  }
+  if (src.kind === "original") {
+    const key = "he " + where.join (" ");
+    if (key === shownIds) return;
+    shownIds = key;
+    const el = document.createElement ("div");
+    el.className = "besideText";
+    bodyEl.replaceChildren (el);
+    drawInterlinear (el, textDb, heb!, where.map (([, c, vv]) => [c, vv] as [number, number]));
+    notesScroll.scrollTop = 0;
+    return;
+  }
+  const at = where[0][1] * 1000 + where[0][2];
+  const notes: Note[] = [], seen = new Set<number> ();
+  for (const [b, c, vv] of where)
+    for (const n of open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start <= ? AND "end" >= ?
+                                   ORDER BY start, "end" DESC, ord`, [b, c * 1000 + vv, c * 1000 + vv]) as unknown as Note[])
+      if (! seen.has (n.id)) { seen.add (n.id); notes.push (n); }
   const ids = notes.map ((n) => n.id).join (",");
   if (ids === shownIds) return;
   shownIds = ids;
+  clearInterlinear ();
   bodyEl.replaceChildren ();
   if (! notes.length) {
     const kind = current ()?.kind;
@@ -165,6 +223,18 @@ function update () {
   notesScroll.scrollTop = 0;
 }
 
+/** The Hebrew verses an LXX verse translates, as the panel labels them: 23:0–1, 10:18; 11:0. */
+function refs (where: number[][]): string {
+  const out: string[] = [];
+  for (let i = 0; i < where.length;) {
+    let k = i;
+    while (k + 1 < where.length && where[k + 1][1] === where[i][1] && where[k + 1][2] === where[k][2] + 1) k++;
+    out.push (`${where[i][1]}:${where[i][2]}` + (k > i ? `–${where[k][2]}` : ""));
+    i = k + 1;
+  }
+  return out.join ("; ");
+}
+
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */
 function range (start: number, end: number): string {
   const [c1, v1, c2, v2] = [Math.floor (start / 1000), start % 1000, Math.floor (end / 1000), end % 1000];
@@ -173,7 +243,9 @@ function range (start: number, end: number): string {
 
 // Following: the text scrolled (a frame at a time), and each word lit while reading aloud (audio.ts).
 let frame = 0;
-const follow = () => { if (! frame && ! panel.hidden) frame = requestAnimationFrame (() => { frame = 0; update (); }); };
+// (Not while the word's panel shows a word of the Hebrew OT here: the panel scrolls the text to keep a word in view,
+// which would move the notes on to another verse, the word tapped with them.)
+const follow = () => { if (! frame && ! panel.hidden && ! panel.querySelector (".w.on")) frame = requestAnimationFrame (() => { frame = 0; update (); }); };
 main.addEventListener ("scroll", follow, { passive: true });
 document.addEventListener ("cotext:reading", follow);
 
