@@ -255,6 +255,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
 #sheet .sheetPick[hidden] { display: none; }
 #sheet .sheetPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); margin: 10px 0; }
+/* GRAMMAR frozen at the panel's top (beside the ✕) while the section scrolls under it: -16px the panel's own top
+   padding; the shadow covers the sliver Safari's rounding leaves. */
+#sheet.grammarOpen #gInline .sheetPick { position: sticky; top: -16px; z-index: 2; background: var(--bg); margin: -16px 0 10px; padding-top: 16px; padding-bottom: 8px; box-shadow: 0 -4px 0 var(--bg); }
 #sheet .lexBtns { justify-content: flex-start; margin-top: 8px; }     /* (More / Less, under the entry: panel.ts) */
 #moreDef[hidden] { display: none; }
 #sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A BDB entry's senses, nested as BDB numbers them: pipeline/bdb.py) */
