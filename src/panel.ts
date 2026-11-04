@@ -54,12 +54,6 @@ const lexChoice = { H: "full", G: "full" };     // (Picked per language: full - 
 for (const l of ["H", "G"] as const) try { lexChoice[l] = localStorage.getItem (LEX_KEY[l]) ?? "full"; } catch { /* private mode */ }
 let mainDb: Db | null = null;
 const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, once opened)
-// The divine name (H3068, H3069): a note on how it's said - its vowels are a reminder to read another word, so
-// written out as it stands it gives the hybrid "Jehovah"; the voice says Adonai (audio.ts' sayName).
-const NAME_NOTE: Record<string, string> = {
-  H3068: "Pronunciation: יהוה (YHWH) is God's personal name. Out of reverence it isn't spoken: the text gives it the vowels of אֲדֹנָי (Adonai, \"Lord\"), a reminder to say Adonai - many say HaShem (\"the Name\"). Its own pronunciation was lost; scholars reconstruct it as Yahweh. Read with Adonai's vowels as written, it gives the hybrid \"Jehovah\". COTEXT's voice says Adonai.",
-  H3069: "Pronunciation: יהוה (YHWH), God's personal name, here with the vowels of אֱלֹהִים (Elohim, \"God\") - written so where אֲדֹנָי (Adonai, \"Lord\") stands beside it (\"Lord GOD\"), so it's said Elohim rather than Adonai twice - as COTEXT's voice says it. Its own pronunciation was lost; scholars reconstruct it as Yahweh.",
-};
 
 // The second panel: #sheet's markup as the page has it (before makePanel below changes it), under the notes panel.
 const textSheet = document.getElementById ("sheet")!;
@@ -90,7 +84,6 @@ function makePanel (sheet: HTMLElement) {
   formEl.parentElement!.after (formGloss, fullEl);     // (The word as it stands in the text, before its dictionary form)
   const defEl = q ("def");
   const knowIt = q ("knowIt");
-  const nameNote = q ("nameNote");
   let picked: HTMLElement | null = null;
   let pickedStrong = "";
 
@@ -106,7 +99,7 @@ function makePanel (sheet: HTMLElement) {
   { const info = document.createElement ("div");     // (The word's info in one box, the lexicon's parts in another: the two columns)
     info.className = "infoBox";
     heads.before (info);
-    info.append (heads, nameNote);
+    info.append (heads);
     const box = document.createElement ("div");
     box.className = "lexBox";
     info.after (box);
@@ -242,9 +235,6 @@ function makePanel (sheet: HTMLElement) {
     formEl.textContent = w.text;
     formEl.dir = lemmaEl.dir;
     formGloss.textContent = w.gloss ?? "";
-    const note = NAME_NOTE[w.strong.match (/^H\d+/)?.[0] ?? ""];
-    nameNote.textContent = note ?? "";
-    nameNote.hidden = ! note;
     grammar.showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
     vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
     entry = { full: String (lex?.entry || lex?.gloss || ""),
