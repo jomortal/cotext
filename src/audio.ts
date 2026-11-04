@@ -13,6 +13,13 @@
 // - The device's voice for the language (Hebrew he, Greek el), its own settings' choice (GETTING OTHER VOICES in ⋯ says how to change it). READING SPEED (0.1x - 1x) and SPACE BETWEEN
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
+// - VOICE (⋯, the OT only): the device's voice, or Abraham Shmuelof's recorded reading (ebible.org/multimedia/hbo,
+//   CC BY-NC-ND 4.0: credited while it plays, non-commercial, played as published). Picked, ▶ and the verse numbers
+//   play the chapter's recording (pipeline/shmuelof.py: its MP3s and their timings, data/audio/shmuelof/) - fluent,
+//   or slowed by 20% for a READING SPEED under 0.9x (the nearer of 1x and 0.8x) - each verse lit as it's read, and
+//   within it the part being read: the recordings are timed by half-verse, the words up to the atnach (the verse's
+//   main pause) then the rest. The word's panel's speakers keep the device's voice (the recordings have no word
+//   timings).
 
 import { onScreen, openScreen } from "./study";
 
@@ -23,6 +30,7 @@ interface Settings {
   rate: number;                                  // 0.1 - 1
   gap?: number;                                  // seconds between words (0: none; then read a word at a time)
   noBoundary: string[];                          // voiceURIs found to give no word-boundary events
+  rec?: boolean;                                 // VOICE for the OT: Abraham Shmuelof's recording (else the device's)
 }
 const s: Settings = { rate: 0.8, noBoundary: [] };
 try { Object.assign (s, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
@@ -145,6 +153,7 @@ export function stopReading () {
   fromWord = null;
   keep.length = 0;
   synth?.cancel ();
+  stopRecording ();
   light ([]);
   control?.classList.remove ("playing");
   control = null;
@@ -153,6 +162,7 @@ export function stopReading () {
 }
 
 function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null = null, restart = false) {
+  if (recorded ()) { startRecording (from, rows, restart); return; }
   const was = control;
   stopReading ();
   if ((was === from && ! restart) || ! synth || ! rows.length) return;
@@ -272,6 +282,134 @@ export function sayText (text: string) {
 export function setAudioTestament (t: "OT" | "NT") {
   stopReading ();
   if (t !== testament) testament = t;
+  showVoice ();
+}
+
+// ---- The recorded voice (Abraham Shmuelof, the OT) ----
+// A chapter's clips (pipeline/shmuelof.py): [verse, part ("a" up to the atnach, "b" after it, "" the whole verse),
+// the MP3's name, begin, end (s)], in reading order; a chapter can span two MP3s (Joel 2:28-32 is the Hebrew's Joel 3).
+// Each MP3 is fetched whole and played from memory (a blob): seeking to a verse then works whatever the server or the
+// service worker does with byte ranges (Safari won't seek, or play, a file served without them).
+type Clip = [number, string, string, number, number];
+const REC = "data/audio/shmuelof/";
+// A tenth of a second of silence (8 kHz, 8-bit WAV): played within the tap that starts a recording.
+const SILENCE = "data:audio/wav;base64," + btoa ("RIFF" + le (836) + "WAVEfmt " + le (16) + "\x01\x00\x01\x00" + le (8000) + le (8000)
+  + "\x01\x00\x08\x00data" + le (800) + "\x80".repeat (800));
+function le (n: number) { return String.fromCharCode (n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >> 24) & 255); }
+const CREDIT = "Read by Abraham Shmuelof (ebible.org), CC BY-NC-ND 4.0: non-commercial use only";
+const recorded = () => testament === "OT" && !! s.rec;
+const version = () => (s.rate < 0.9 ? "slower" : "fluent");     // (The nearer of the recordings' 1x and 0.8x)
+const timings = new Map<string, Promise<Record<string, Clip[]> | null>>();     // "<version>/<Book>" -> its chapters
+const mp3s = new Map<string, Promise<string>>();     // "<version>/<file>" -> a blob URL (the last few kept in memory)
+let player: HTMLAudioElement | null = null;
+let playingVersion = "";
+let recSession = 0;                                // (So a stopped recording's late loads and events are ignored)
+// The credit (and any message), at the play bar's left while a recording plays.
+const credit = document.createElement ("span");
+credit.className = "credit";
+credit.style.cssText = "margin: 0; grid-column: 1";
+credit.hidden = true;
+document.getElementById ("playBar")!.prepend (credit);
+
+const bookTimings = (key: string) => {
+  if (! timings.has (key)) timings.set (key, fetch (REC + key + ".json").then ((r) => (r.ok ? r.json () : null)).catch (() => null)
+    .then ((t) => { if (! t) timings.delete (key); return t; }));     // (Not found: asked again next time)
+  return timings.get (key)!;
+};
+const mp3 = (key: string) => {
+  for (const [old, url] of mp3s) {     // (Four kept: a chapter's one or two and the one before)
+    if (mp3s.size < 4 || mp3s.has (key)) break;
+    mp3s.delete (old);
+    url.then (URL.revokeObjectURL, () => {});
+  }
+  if (! mp3s.has (key)) mp3s.set (key, fetch (REC + key + ".mp3").then ((r) => {
+    if (! r.ok) throw new Error (r.statusText);
+    return r.blob ();
+  }).then ((b) => URL.createObjectURL (b)));
+  const p = mp3s.get (key)!;
+  p.catch (() => mp3s.delete (key));     // (A failed load is tried again next time)
+  return p;
+};
+
+function stopRecording () {
+  recSession++;
+  player?.pause ();
+  credit.hidden = true;
+}
+
+/** The words a clip reads in its verse's row: part "a" up to and including the first word with the atnach (U+0591),
+ *  "b" the rest; a whole verse (part "", no atnach found, or a verse read in more than two clips - a Psalm's title
+ *  verse 0 is two of the Hebrew's verses) all of them. */
+function clipWords (row: HTMLElement, part: string, clips: number): HTMLElement[] {
+  const ws = [...row.querySelectorAll<HTMLElement> (".w")];
+  const at = ws.findIndex ((w) => (w.querySelector (".orig")!.textContent ?? "").includes ("\u0591"));
+  if (! part || at < 0 || clips > 2) return ws;
+  return part === "a" ? ws.slice (0, at + 1) : ws.slice (at + 1);
+}
+
+async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: boolean) {
+  const was = control;
+  stopReading ();
+  if ((was === from && ! restart) || ! rows.length) return;
+  control = from;
+  from.classList.add ("playing");
+  if (from === playBtn) { playBtn.textContent = "■"; playBtn.setAttribute ("aria-label", "Stop reading"); }
+  const id = recSession;
+  if (! player) player = new Audio ();
+  player.src = SILENCE;     // (iOS lets a page start sound only from a tap: silence played now, within it, lets this
+  player.play ().catch (() => { /* element play the recording once it has loaded) */ });
+  const m = location.hash.match (/^#(\w+)\.(\d+)$/);     // (The chapter shown: main.ts keeps it in the address)
+  const v = version (), all = m ? (await bookTimings (`${v}/${m[1]}`))?.[m[2]] : undefined;
+  if (id !== recSession) return;
+  // The rows' verses, each its row: ▶ from the verse at the top of the view to the end, a verse number that verse.
+  const byVerse = new Map (rows.map ((r) => [Number (r.querySelector (".vnum")!.textContent), r] as const));
+  const clips = (all ?? []).filter ((c) => byVerse.has (c[0]));
+  if (! clips.length) {
+    stopReading ();
+    credit.textContent = "No recording found for this chapter";
+    credit.hidden = false;
+    return;
+  }
+  const perVerse = new Map<number, number> ();
+  for (const c of all!) perVerse.set (c[0], (perVerse.get (c[0]) ?? 0) + 1);
+  playingVersion = v;
+  credit.textContent = "Loading the recording…";
+  credit.hidden = false;
+  const a = player;
+  let k = -1, file = "";
+  // Plays clip n: its MP3 loaded (if another), then from its start unless it follows on from the one before.
+  const play = async (n: number) => {
+    if (id !== recSession) return;
+    if (n >= clips.length) { stopReading (); return; }
+    const c = clips[n], prev = clips[n - 1];
+    k = n;
+    light (clipWords (byVerse.get (c[0])!, c[1], perVerse.get (c[0])!));
+    if (c[2] !== file) {
+      a.pause ();     // (The next MP3: the one before not heard on past its clip while it loads)
+      let url: string;
+      try { url = await mp3 (`${v}/${c[2]}`); } catch { if (id === recSession) { stopReading (); credit.textContent = "The recording couldn't be loaded"; credit.hidden = false; } return; }
+      if (id !== recSession) return;
+      file = c[2];
+      a.src = url;
+      const ok = await new Promise<boolean> ((done) => { a.onloadedmetadata = () => done (true); a.onerror = () => done (false); });
+      if (id !== recSession) return;
+      if (! ok) { stopReading (); return; }
+      a.currentTime = c[3];
+      try { await a.play (); } catch { if (id === recSession) stopReading (); return; }
+      if (id === recSession) credit.textContent = CREDIT;
+    } else if (! prev || Math.abs (prev[4] - c[3]) > 0.05) a.currentTime = c[3];
+  };
+  // Each frame (and each timeupdate, when frames stop in the background): past the clip's end, the next one.
+  const tick = () => {
+    if (id !== recSession) return;
+    if (k >= 0 && file === clips[k][2] && ! a.paused && a.currentTime >= clips[k][4]) void play (k + 1);
+    requestAnimationFrame (tick);
+  };
+  a.ontimeupdate = () => { if (id === recSession && k >= 0 && file === clips[k][2] && a.currentTime >= clips[k][4]) void play (k + 1); };
+  a.onended = () => { if (id === recSession) void play (k + 1); };
+  a.playbackRate = 1;
+  await play (0);
+  requestAnimationFrame (tick);
 }
 
 // ▶: the chapter from the first verse whose line shows at the top of the view; a verse number: that verse.
@@ -308,10 +446,21 @@ function respeak () {
   clearTimeout (retime);
   retime = window.setTimeout (() => {
     if (! control || ! litWord) return;
+    if (recorded () && version () === playingVersion) return;     // (A recording changes only between its versions)
     const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")], row = litWord.closest<HTMLElement> (".vrow");
     if (row) start (control, rows.slice (rows.indexOf (row)), litWord, true);
   }, 120);
 }
+// VOICE (the OT only): the device's voice, or Abraham Shmuelof's recording; a change while reading stops it.
+const voicePick = document.getElementById ("otVoice")!;
+const showVoice = () => {
+  voicePick.hidden = testament !== "OT";
+  voicePick.setAttribute ("aria-pressed", String (!! s.rec));
+  voicePick.textContent = "Voice: " + (s.rec ? "Abraham Shmuelof (recorded)" : "Device voice");
+};
+voicePick.addEventListener ("click", () => { s.rec = ! s.rec; save (); showVoice (); stopReading (); });
+showVoice ();
+
 rate.addEventListener ("input", () => { s.rate = Number (rate.value) / 100; save (); showRate (); respeak (); });
 gapIn.addEventListener ("input", () => { s.gap = Number (gapIn.value) / 10; save (); showRate (); respeak (); });
 showRate ();
