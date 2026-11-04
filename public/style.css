@@ -138,11 +138,11 @@ body.noVerbColors .w .parse { color: inherit; }
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between two of the
-   panels open (.dock: the word's panel, the notes, the second word's panel, the search - in that order), and over the
+   panels open (.dock: the word's panel, the search, the notes, the second word's panel - in that order), and over the
    play bar when a panel is open above it. */
 /* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol and #paneCol - index.html) */
-body:has(#sheet:not([hidden])) #notes:not([hidden]), body:has(#sheet:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]),
-body:has(#sheet:not([hidden]), #notes:not([hidden]), #besideSheet:not([hidden])) #search:not([hidden]) { border-top: 1px solid var(--edge); }
+body:has(#sheet:not([hidden])) #search:not([hidden]), body:has(#sheet:not([hidden]), #search:not([hidden])) #notes:not([hidden]),
+body:has(#sheet:not([hidden]), #search:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: 1px solid var(--edge); }
 body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
 /* Narrow (layout.ts), several panels open (body.docks; --docks their number - layout.ts counts them): they share the
    room between the heading and the play bar (--mid: notes.ts measures it) evenly with the text - two a third each,
