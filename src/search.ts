@@ -17,7 +17,8 @@
 //   word of the root (the same Strong's number), its original text, the root's words marked. From a word's panel's
 //   "Search" (panel.ts) the root is the word's and the bar shows its dictionary form; typed, the dictionary forms
 //   (lexicon.lemma, Hebrew or Greek) equal to the typed word - accents, breathings and vowel points
-//   ignored, a lemma's comma-separated forms each matched - are searched together (homonyms: all of them).
+//   ignored, a lemma's comma-separated forms each matched - are searched together (homonyms: all of them). Under each
+//   verse its interlinear English too, as INTERLINEAR shows it, the root's glosses marked.
 // - INTERLINEAR (ENGLISH): the verses whose words' interlinear English (words.gloss) has every
 //   typed word, as a whole word, any case - each only its interlinear English, word by word in the text's order
 //   ("in [the] beginning | he created | ..."), the matching words' marked.
@@ -154,7 +155,7 @@ async function searchRoots (strongs: string[], n: number) {
   if (n !== searching) return;
   counted (hits.length, "verse");
   const set = new Set (strongs);
-  draw (hits, n, original ((w) => set.has (String (w.strong)), false));
+  draw (hits, n, both (original ((w) => set.has (String (w.strong)), false), original ((w) => set.has (String (w.strong)), true)));
 }
 
 /** A lemma as matched: no accents, breathings or vowel points (every combining mark), lower case, final sigma as σ. */
@@ -314,6 +315,12 @@ const original = (mark: (w: Row) => boolean, english: boolean): Texts => async (
     });
     return text;
   };
+};
+
+/** Two text makers' texts, one under the other (ROOT WORD: the original, its interlinear English under it). */
+const both = (a: Texts, b: Texts): Texts => async (chunk) => {
+  const [ma, mb] = await Promise.all ([a (chunk), b (chunk)]);
+  return (h) => { const pair = document.createElement ("span"); pair.className = "hitPair"; pair.append (ma (h), mb (h)); return pair; };
 };
 
 const CHUNK = 100;
