@@ -3,6 +3,19 @@
 COTEXT stays free (never sold), so non-commercial resources are fair to use; each one's credit is kept, and parts under
 a non-commercial license are marked so in NOTICE.
 
+## Next up (queued 2026-11-04)
+
+- [ ] **Tyndale Bible Dictionary, linked both ways** (the word pane's DICTIONARY is in): by word through the UBS
+      semantic domains as well as the exact English (flock, lamb -> Sheep); by passage, a resources choice listing the
+      articles citing the verses shown (and those its words lead to), most relevant first; searchable in the search
+      dropdown, each hit linked back by word or verse.
+- [ ] **☰ Grammars**: pick a grammar (Gesenius, Machen, Smyth, unfoldingWord), its contents, read any section, search.
+- [ ] **☰ Bible Dictionary**: browse the Tyndale articles A-Z with a filter, each with its linked verses.
+- [ ] **Atlas, by word and by passage** (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;
+      base maps from Natural Earth (public domain), the Ancient World Mapping Center (CC BY), the Digital Atlas of the
+      Roman Empire (CC BY); a place name tapped shows its map, a resources choice maps the chapter's places.
+- [ ] Before the public beta: slim the resources down (the user's pick).
+
 ## In progress
 
 - [x] **Greek lexicons**: the full Abbott-Smith, Thayer's, the Middle Liddell and Dodson, in the word panel's LEXICON
