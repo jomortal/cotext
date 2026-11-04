@@ -4,6 +4,7 @@
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
 // closed - and picking a chapter goes there (a one-chapter book goes straight there).
 
+import { nativeName } from "./booknames";
 import type { Book } from "./reader";
 
 const picker = document.getElementById ("picker")!;
@@ -43,6 +44,8 @@ function showBooks (groups: [string, Book[]][], go: Go, chaptersOf: Chapters) {
         open.scrollIntoView ({ block: "nearest" });
       });
       row.className = "chooseItem";
+      const native = nativeName (b.code);     // (Its name in its own language, beside the English)
+      if (native) { const n = document.createElement ("span"); n.className = "bookNative " + native[1]; n.textContent = native[0]; row.append (n); }
       list.append (row);
     }
     body.append (h, list);

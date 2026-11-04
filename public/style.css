@@ -379,7 +379,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
               border: 1px solid var(--edge); border-radius: 8px; background: var(--bg); }
 .chooseList[hidden] { display: none; }
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
-.chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }     /* (The books: a menu's items, larger) */
+.chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
+.chooseList.inline .chooseItem { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.bookNative { color: var(--soft); } .bookNative.he { font-family: var(--heb); font-size: 1.15em; } .bookNative.gr { font-family: var(--grk); }     /* (A book's own-language name, at the row's right: booknames.ts) */     /* (The books: a menu's items, larger) */
 .chooseList .ref { padding: 6px 10px 2px; margin: 0; }
 .chooseItem { font: inherit; font-size: var(--fs-s); text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
               background: transparent; color: var(--fg); cursor: pointer; }
