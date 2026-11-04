@@ -75,7 +75,8 @@ Tables, in each source's file:
 In the main database (cotext.db):
   note_sources  id, kind ('commentary' / 'apparatus' / 'translation' / 'version' / 'syntax'), name (as the picker shows it), testaments ('OT', 'NT' or
           'OT NT'), credit (the line under the notes), file (data/notes/<id>.db), version (the file's hash: its URL
-          and cache change with it), bytes
+          and cache change with it), bytes; then books (the book ids it has notes for: source_books.py, after
+          every source is listed)
 """
 import csv
 import hashlib

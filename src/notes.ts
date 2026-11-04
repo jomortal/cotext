@@ -3,10 +3,11 @@
 // opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
 // (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
 // text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
-// - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the testament shown, grouped
+// - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the book shown (those with notes
+//   for it: note_sources.books, pipeline/source_books.py - Rashi only in the Torah), grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, APPARATUS, COMMENTARIES, DICTIONARY, TRANSLATIONS and
 //   ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
-//   swapping one is a tap; the choice is kept per testament on the device.
+//   swapping one is a tap; the choice is kept per testament on the device, and stays through every book it covers.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
 // - Narrow: the notes on one verse - the one being read aloud while ▶ reads (audio.ts signals each word lit), otherwise
@@ -34,7 +35,7 @@ import { passageArticles, entry } from "./dictionary";
 import { passageMap } from "./atlas";
 
 export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas"; name: string; testaments: string; credit: string;
-                   file: string; version: string; }
+                   file: string; version: string; books?: string; }     // (books: the book ids it has notes for, space-separated - pipeline/source_books.py; '' or none: every book of its testaments)
 
 //==== BESIDE THE SEPTUAGINT ====
 // An LXX book with a Hebrew counterpart (books.heb) is offered the Hebrew book's sources, each LXX verse showing the
@@ -80,20 +81,23 @@ let blocks: [number, HTMLElement][] = [];          // Wide: each verse shown and
 
 export async function initNotes (db: Db) {
   textDb = db;
-  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources"),
+  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version, books FROM note_sources")
+                                       .catch (() => db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources")),     // (A copy kept from before books: every source in every book, till the new one's used),
                                      db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books")]);
   sources = s as unknown as Source[];
   books = b as unknown as Book[];
   btn.hidden = ! sources.length;
 }
 
-/** The chapter shown (main.ts): the picker's sources follow its testament; the notes its verses. */
+/** The chapter shown (main.ts): the picker's sources follow its book (those with notes for it); the notes its verses.
+ *  The source picked stays picked wherever it has notes; in a book it has none for, the first offered shows meanwhile,
+ *  and the picked one comes back in the next book it covers. */
 export function setNotesPassage (b: Book, c: number) {
-  const was = book && scope ();
+  const was = book?.id;
   book = b; chapter = c;
   heb = b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
   clearInterlinear ();
-  if (scope () !== was) {
+  if (b.id !== was) {
     pick.replaceChildren (...sourceGroups (mine ()));
     pick.value = current ()?.id ?? "";
   }
@@ -129,9 +133,11 @@ export const openSource = (s: Source, onProgress: (fraction: number) => void) =>
 /** The picker's list and its kept choice: per testament, an LXX book with a Hebrew counterpart apart (LXXH). */
 const scope = () => book?.testament === "LXX" && heb ? "LXXH" : book?.testament ?? "";
 const offers = (s: Source, t: string) => s.testaments.split (" ").includes (t);
+/** Whether a source has notes for a book (none listed: every book). */
+const covers = (s: Source, b: Book | null) => !! b && (! s.books || s.books.split (" ").includes (String (b.id)));
 const mine = () => ! book ? [] : scope () === "LXXH"
-  ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)) || offers (s, "LXX"))]
-  : sources.filter ((s) => offers (s, book!.testament));
+  ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id) && covers (s, heb)) || (offers (s, "LXX") && covers (s, book)))]
+  : sources.filter ((s) => offers (s, book!.testament) && covers (s, book));
 const current = () => mine ().find ((s) => s.id === picked[scope ()]) ?? mine ()[0];
 
 pick.addEventListener ("change", () => {

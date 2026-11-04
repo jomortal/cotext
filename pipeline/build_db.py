@@ -62,6 +62,7 @@ import lxx  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
 import split_db  # noqa: E402
+import source_books  # noqa: E402
 import sefaria_lex  # noqa: E402
 import atlas  # noqa: E402
 import tyndale_dict  # noqa: E402
@@ -285,6 +286,7 @@ def build():
     ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
     tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The Dictionary: its own file, a note_sources row - after the lexicon and ubs_lex, which it matches)
     atlas.build(db)     # (The Atlas: its files, a note_sources row - after tyndale_dict, whose TIPNR it reads)
+    source_books.add(db)     # (Each source's books, for the notes' picker: after every source is listed)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss
