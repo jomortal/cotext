@@ -13,7 +13,7 @@ a non-commercial license are marked so in NOTICE.
 
 ## Picked to add (2026-11-03)
 
-Round 1 (background jobs, running): UBS Hebrew and Greek dictionaries, Jastrow, Klein (LEXICON); NJPS, NET, Brenton,
+Round 1 (done 2026-11-03): UBS Hebrew and Greek dictionaries, Jastrow, Klein (LEXICON); NJPS, NET, Brenton,
 eBible EMTV / Wycliffe (translations); Ibn Ezra, Rashi, Ramban (commentaries); HOTTP, Dead Sea Scrolls, Miqra / Minchat
 Shai, Sinaiticus, TCENT, IGNTP (apparatus); Targums Onkelos and Jonathan (a new ANCIENT VERSIONS group);
 unfoldingWord Hebrew and Greek grammars (GRAMMAR); Shmuelof's recorded Tanakh (a voice for reading aloud).

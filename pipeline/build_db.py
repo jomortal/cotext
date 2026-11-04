@@ -48,6 +48,8 @@ import grammar  # noqa: E402
 import greek_lex  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
+import sefaria_lex  # noqa: E402
+import ubs_lex  # noqa: E402
 
 ROOT = pathlib.Path(__file__).parent.parent
 OUT = ROOT / "public" / "data" / "cotext.db"
@@ -238,6 +240,7 @@ def build():
     note_counts = notes.build(db, [code for code, _ in BOOKS])
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
+    ubs_counts = ubs_lex.build(db); sefaria_counts = sefaria_lex.build(db)     # (UBS Hebrew and Greek; Jastrow and Klein, from the cached Sefaria responses)
     db.executescript("""
         CREATE VIEW words_full AS
           SELECT w.*, p.code, p.spelled, p.stem, l.lemma, l.gloss AS lemma_gloss

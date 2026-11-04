@@ -35,6 +35,17 @@ Grammars (the word's panel links each term of a parsing to its section):
 Hebrew Bible audio: the Tanakh read by Abraham Shmuelof, ebible.org/multimedia/hbo, Creative Commons BY-NC-ND 4.0
 (https://creativecommons.org/licenses/by-nc-nd/4.0/: non-commercial use; the recordings unaltered).
 
+Lexicons added 2026-11-03 (the word panel's LEXICON; each its own file in public/data/notes/):
+  UBS Dictionary of Biblical Hebrew (c) United Bible Societies, 2026. Adapted from Semantic Dictionary of Biblical
+    Hebrew (c) 2000-2026 United Bible Societies. CC BY-SA 4.0.
+  UBS Dictionary of New Testament Greek, (c) United Bible Societies, 2023. Adapted from Semantic Dictionary of Biblical
+    Greek: (c) United Bible Societies 2018-2023, which is adapted from Greek-English Lexicon of the New Testament: Based
+    on Semantic Domains, Eds. J P Louw, Eugene Albert Nida (c) United Bible Societies 1988, 1989. CC BY-SA 4.0.
+  Jastrow, A Dictionary of the Targumim, the Talmud Babli and Yerushalmi, and the Midrashic Literature (1903), public
+    domain; text from Sefaria.
+  Klein, A Comprehensive Etymological Dictionary of the Hebrew Language for Readers of English (Carta Jerusalem, 1987);
+    text from Sefaria, CC BY-NC - for non-commercial use only (NC).
+
 Notes panel sources added 2026-11-03 (each its own file in public/data/notes/; credits also shown under its notes;
 non-commercial ones marked NC - usable because COTEXT is free and never sold):
   Translations: NJPS Tanakh (c) 1985 Jewish Publication Society; The Contemporary Torah (c) 2006 JPS; The Koren
