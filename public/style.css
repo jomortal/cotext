@@ -37,12 +37,15 @@
 html, body { position: fixed; inset: 0; overflow: hidden; }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
-/* Scroll bars everywhere small and faint (the user's choice, as Claude's desktop app's): a thin thumb in the muted text
-   color at a third, on no track. (scrollbar-width / -color for Chrome, Firefox and Safari 18.2+; ::-webkit-scrollbar
-   for older Safari: 6px, rounded.) */
-* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 35%, transparent) transparent; }
+/* Scroll bars everywhere small and faint (the user's choice, as Claude's desktop app's): a 6px rounded thumb in the muted
+   text color at a third, on no track; a panel's starting below its ✕ (the track's margin), never beside it. Chrome and
+   Safari by ::-webkit-scrollbar (the standard scrollbar-width would switch it off in Chrome); Firefox, which has no
+   such styling, thin. */
 ::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
 ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--soft) 35%, transparent); border-radius: 3px; }
+:is(#sheet, #besideSheet) :is(.panelScroll, .infoBox)::-webkit-scrollbar-track { margin-top: 48px; }     /* (The ✕: 8-44px down) */
+#notes > .panelScroll::-webkit-scrollbar-track { margin-top: 56px; }     /* (Its ✕: 17-53px down, over the scroller on a phone) */
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 35%, transparent) transparent; } }
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
@@ -446,6 +449,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #notes > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
   #notes > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
   #notes > .panelScroll { padding-top: 0; }
+  #notes > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
   #sheetSplit, #besideSplit { height: 14px; cursor: row-resize; }
   :is(#sheetSplit, #besideSplit)::before { left: 0; right: 0; top: 6.5px; height: 1px; }
   :is(#sheetSplit, #besideSplit)::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
