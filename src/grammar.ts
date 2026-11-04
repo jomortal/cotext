@@ -2,8 +2,9 @@
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section takes the word's panel over (the word's
 // info hidden) - its heading, the grammar and §, its text; its ✕ closes it, the word's info back. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
-// GRAMMAR in the grammar section's box (shown once a term is tapped), one choice per language (Hebrew: Gesenius; Greek: Smyth, Machen - the list is the
-// grammars table's, in its order, the first the default, so another grammar there is simply another choice), kept on the device.
+// GRAMMAR in the grammar section's box (shown once a term is tapped), the choices per language (Hebrew: Gesenius, unfoldingWord; Greek: Machen, Smyth,
+// unfoldingWord - the list is the grammars table's, in its order, the first the default, so another grammar there is simply
+// another choice), kept on the device. A grammar without section numbers (unfoldingWord's: a page per topic) shows no §.
 
 import type { Db } from "./db";
 
@@ -44,7 +45,7 @@ export function initGrammar (theDb: Db) {
 export function setGrammarTestament (t: "OT" | "NT") {
   lang = t === "OT" ? "H" : "G";
   pick.replaceChildren (...grammars.filter ((g) => g.lang === lang).map ((g) => new Option (g.name, g.id)));
-  pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language - Hebrew's Gesenius: nothing to pick)
+  pick.closest ("label")!.hidden = pick.options.length < 2;     // (One grammar for the language: nothing to pick)
   pick.value = current ();
 }
 
@@ -98,12 +99,12 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
                          [grammar, Number (p.first), Number (p.last)]);
     if (! rows.length) continue;
     title ||= String (rows[0].heading);
-    labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
+    if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
     count += rows.length;
     for (const r of rows) {
       const head = r.heading !== lastHeading && blocks.length ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
       lastHeading = String (r.heading);
-      const num = `<b class="gNum">§${esc (String (r.label))}</b>`;     // (Run into its first paragraph)
+      const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
       const body = String (r.body);
       blocks.push (head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body));
     }
@@ -112,7 +113,7 @@ function openSection (grammar: string, key: string, term: HTMLElement) {
   openKey = key;
   const name = grammars.find ((g) => g.id === grammar)?.name ?? grammar;
   titleEl.textContent = title;
-  secEl.textContent = `${name} ${count > 1 ? "§§" : "§"}${labels.join (", ")}`;
+  secEl.textContent = labels.length ? `${name} ${count > 1 ? "§§" : "§"}${labels.join (", ")}` : name;
   // (The bodies are the pipeline's own light HTML: <p>, <b>, <i>, tables and script spans, text escaped.)
   bodyEl.innerHTML = blocks.join ("");
   bodyEl.classList.toggle ("one", count === 1);

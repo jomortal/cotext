@@ -15,15 +15,24 @@ Sources (digital text, not scans), fetched once into pipeline/downloads/ and pin
     boxes, vocabularies, drills and answers are left out. Pinned by each lesson's text's SHA-256 in machen_pins.json
     (written by the first fetch). The transcription has OCR slips and leaves out some of the book's tables ("A table
     appears here in the book").
+  unfoldingWord® Hebrew Grammar (UHG, 2019) and Greek Grammar (UGG, 2023) - unfoldingWord, CC BY-SA 4.0 (each repo's
+    LICENSE.md: credit and share-alike; the unfoldingWord® trademark kept on the unmodified work, removed from a
+    modified one). Sources at git.door43.org/unfoldingWord/en_uhg and en_ugg; taken as Read the Docs' single-page HTML
+    builds of them (uhg / ugg.readthedocs.io), pinned by SHA-256 (UW_SHA256). A page per topic (Stem Qal, Tense
+    aorist...), each a section, unnumbered; the Greek one still in progress (some pages short or under construction).
 
 Not found as clean, open digital text (scans or poor OCR only): Goodwin's Greek Grammar, Nunn's Elements of New
 Testament Greek, Davidson's Introductory Hebrew Grammar, Harper's Elements of Hebrew.
 
+Run: python3 pipeline/grammar.py - the grammar tables made again in an already built public/data/cotext.db (rebuild();
+build_db.py calls build() along with everything else).
+
 Tables (made by build(), in the main database):
-  grammars          id ('gesenius', 'smyth', 'machen'), name (as the panel shows it), lang ('H' / 'G'), credit;
+  grammars          id ('gesenius', 'smyth', 'machen', 'uhg', 'ugg'), name (as the panel shows it), lang ('H' / 'G'), credit;
                     its rowid GRAMMARS' order, the order GRAMMAR lists them (a language's first the default)
-  grammar_sections  grammar, seq (its order), label (the section's number: '43', '84a', '1889'), heading, body
-                    (HTML: <p>, <b>, <i>, <table>/<tr>/<td>, <span class=he|grc> round Hebrew / Greek; nothing else)
+  grammar_sections  grammar, seq (its order), label (the section's number: '43', '84a', '1889'; '' in an unnumbered
+                    book), heading, body (HTML: <p>, <b>, <i>, <sup>, <sub>, <br>, <table>/<tr>/<td> - a td's colspan
+                    / rowspan kept -, <span class=he|grc> round Hebrew / Greek; nothing else)
   grammar_terms     key (a parsing term: 'heb:stem:qal', 'grc:mood:subjunctive'...), grammar, part, first, last
                     (seqs: the sections shown) - a key may have several rows, its parts (shown in order); a term
                     with no good section in a grammar has none there
@@ -268,7 +277,7 @@ def _seq_key(label):
     return (int(m.group(1)), m.group(2))
 
 
-# ---- Text clean-up shared by both ----
+# ---- Text clean-up shared by all ----
 
 HEB = r"֑-״יִ-ﭏ"
 GRK = r"Ͱ-Ͽἀ-῿"
@@ -409,6 +418,154 @@ def machen_sections(pages):
             body = tidy("".join(p.out))
             body = re.sub(r"\$(?=\d)", "§", body)            # (an OCR slip: "see $51" for "see §51")
             rows.append((label, heading, mark_scripts(body)))
+    return rows
+
+
+# ---- unfoldingWord's Hebrew and Greek Grammars (Read the Docs' single-page HTML) ----
+
+UW_URL = "https://{}.readthedocs.io/_/downloads/en/latest/htmlzip/"
+UW_SHA256 = {     # (fetched 2026-11-03: Read the Docs' builds of en_uhg ddad74ff, en_ugg 4fdaadd5 - each repo's master)
+    "uhg": "072613c347b31ebb75b857b1dd02fd8cabf78ebbec85d549d2bcc0d9efea5d4c",
+    "ugg": "bf8a9a6eb6c006c99441c73ceb050f7f700e797920233f0825fe473fbea65e74",
+}
+
+
+def fetch_uw(book):
+    """The grammar's whole book as one HTML page ('uhg' / 'ugg'), from its zip in downloads/, checked against
+    UW_SHA256."""
+    import zipfile
+    f = DOWNLOADS / f"{book}.zip"
+    if not f.exists():
+        print(f"downloading unfoldingWord's {book.upper()} (Read the Docs, a few MB)")
+        DOWNLOADS.mkdir(exist_ok=True)
+        f.write_bytes(_get(UW_URL.format(book)))
+    got = hashlib.sha256(f.read_bytes()).hexdigest()
+    if got != UW_SHA256[book]:
+        raise SystemExit(f"{f}: not the pinned {book.upper()} (sha256 {got}). Delete it to fetch again, or check the "
+                         "new file and pin its hash in grammar.py's UW_SHA256.")
+    with zipfile.ZipFile(f) as z:
+        return z.read(next(n for n in z.namelist() if n.endswith("/index.html"))).decode("utf-8")
+
+
+class _UwParser(html.parser.HTMLParser):
+    """A page of the Sphinx-built book as COTEXT's light HTML. Headings under the page's own become bold lines, a note's
+    title bold; lists a paragraph an item ("• " or "1. ", indented by its depth in lists and block quotes); a table's
+    caption an italic line before it, its cells' colspan / rowspan kept (the Greek grammar's paradigm tables need
+    them); inside a cell, paragraphs and lists run on in one line. Links keep only their text; styles, scripts, images
+    and permalinks go."""
+
+    INLINE = {"i": "i", "em": "i", "cite": "i", "b": "b", "strong": "b", "sup": "sup", "sub": "sub"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.out = []
+        self.stack = []          # per open element: (tag, skipping?, emitted end or None)
+        self.skip = 0
+        self.cell = 0            # table cells open
+        self.lists = []          # per open list: [ordered?, next number]
+        self.items = 0           # list items open (outside cells)
+        self.quotes = 0          # block quotes open (Sphinx's indented blocks: a list's sub-points sit in them)
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        cls = a.get("class", "") or ""
+        if tag in ("br", "img", "col", "hr", "meta", "link", "input", "wbr"):     # (void)
+            if tag == "br" and not self.skip:
+                self.out.append("<br>")
+            return
+        skip = tag in ("style", "script", "colgroup", "footer") or "headerlink" in cls
+        end = None
+        if not self.skip and not skip:
+            o = self.out
+            if tag in self.INLINE:
+                o.append(f"<{self.INLINE[tag]}>")
+                end = f"</{self.INLINE[tag]}>"
+            elif tag in ("p", "dt", "dd", "h3", "h4", "h5", "h6"):
+                if self.cell or self.items:
+                    o.append(" ")         # (Runs on in its cell or list item)
+                elif tag[0] == "h" or "admonition-title" in cls:
+                    o.append("<p><b>")
+                    end = "</b></p>"
+                else:
+                    o.append("<p>")
+                    end = "</p>"
+            elif tag in ("table", "tr"):
+                o.append(f"<{tag}>")
+                end = f"</{tag}>"
+            elif tag in ("td", "th"):
+                span = "".join(f' {k}="{a[k]}"' for k in ("colspan", "rowspan") if (a.get(k) or "").isdigit())
+                o.append(f"<td{span}>")
+                end = "</td>"
+                self.cell += 1
+            elif tag == "blockquote":
+                self.quotes += 1
+                end = "\x00quote"
+            elif tag in ("ul", "ol"):
+                self.lists.append([tag == "ol", int(a.get("start") or 1)])
+                end = "\x00list"
+            elif tag == "li" and self.lists:
+                kind = self.lists[-1]
+                mark = f"{kind[1]}. " if kind[0] else "• "
+                kind[1] += 1
+                if self.cell:
+                    o.append(" " + mark)
+                else:
+                    if self.items:
+                        o.append("</p>")     # (A list inside an item: the item's paragraph closed first)
+                    o.append("<p>" + "&emsp;" * (len(self.lists) - 1 + self.quotes) + mark)
+                    end = "</p>\x00item"
+                    self.items += 1
+        if skip:
+            self.skip += 1
+        self.stack.append((tag, skip, end))
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if self.stack and self.stack[-1][0] == tag:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        if all(t != tag for t, *_ in self.stack):
+            return
+        while self.stack:
+            t, skip, end = self.stack.pop()
+            if skip:
+                self.skip -= 1
+            elif end == "\x00list":
+                self.lists.pop()
+            elif end == "\x00quote":
+                self.quotes -= 1
+            elif end and end.endswith("\x00item"):
+                self.items -= 1
+                self.out.append("</p>" + ("<p>" if self.items else ""))     # (The outer item's paragraph reopened)
+            elif end:
+                self.out.append(end)
+                if end == "</td>":
+                    self.cell -= 1
+            if t == tag:
+                break
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.out.append(html.escape(data, quote=False))
+
+
+def uw_sections(page):
+    """[(name, heading, body)] in the book's order: each of its pages (one a topic: 'stem_qal', 'tense_aorist') a
+    section, named by its file (the term map's name for it; the table's label is left empty - the book has no
+    numbers), its title the heading. The front matter, bibliography and paradigm tables' pages go."""
+    rows = []
+    for name, part in re.findall(r'<span id="document-([^"]+)"></span>(.*?)(?=<span id="document-|<footer|$)', page,
+                                 re.S):
+        h = re.search(r"<h[12]>(.*?)</h[12]>", part, re.S)
+        if name in ("front", "back", "paradigms") or not h:
+            continue
+        heading = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>|¶", "", h.group(1)))).strip()
+        part = part[h.end():]
+        part = re.sub(r"(<table[^>]*>)\s*<caption>(.*?)</caption>", r"<p><i>\2</i></p>\1", part, flags=re.S)
+        p = _UwParser()
+        p.feed(part)
+        rows.append((name, heading, mark_scripts(tidy("".join(p.out)))))
     return rows
 
 
@@ -764,6 +921,93 @@ MACHEN_MAP = {
     "grc:interrogative": [("478", "479")],             # questions expecting a negative (μή) or positive (οὐ) answer
 }
 
+# Some terms are split finer than the grammars above need, for unfoldingWord's books (a page per topic: masculine and
+# feminine, each person, each minor stem have their own): the older grammars give each finer key the section the
+# coarser one had.
+HEB_MINOR_STEMS = ("polel", "polal", "hithpolel", "poel", "poal", "palel", "pulal", "pilpel", "polpal", "hithpalpel",
+                   "nithpael", "pealal", "pilel", "hothpaal", "tiphil", "hishtaphel", "nithpalel", "nithpoel",
+                   "hithpoel")
+GRC_TENSES = ("present", "imperfect", "future", "aorist", "perfect", "pluperfect")
+
+
+def _split(m, old, new):
+    r = m.pop(old)
+    m.update({k: r for k in new})
+
+
+_split(GESENIUS_MAP, "heb:stem:other", [f"heb:stem:other:{s}" for s in HEB_MINOR_STEMS])
+_split(GESENIUS_MAP, "heb:gender", ["heb:gender:masculine", "heb:gender:feminine"])
+GESENIUS_MAP["heb:demonstrative particle"] = GESENIUS_MAP["heb:demonstrative"]
+GESENIUS_MAP["heb:relative particle"] = GESENIUS_MAP["heb:relative"]
+for _m in (SMYTH_MAP, MACHEN_MAP):
+    _split(_m, "grc:tense:other", [f"grc:tense:{t}:other" for t in GRC_TENSES])
+    _split(_m, "grc:person", ["grc:person:1st", "grc:person:2nd", "grc:person:3rd"])
+    _split(_m, "grc:number", ["grc:number:singular", "grc:number:plural"])
+    _split(_m, "grc:gender", ["grc:gender:masculine", "grc:gender:feminine", "grc:gender:neuter"])
+
+# unfoldingWord's books: a section is one of the book's pages, named by its file (uw_sections). A term's
+# person / gender / number on a verb goes to the form's own page, whose paradigms give the endings.
+UHG_MAP = {
+    "heb:stem:qal": "stem_qal", "heb:stem:qal passive": "stem_qal_passive", "heb:stem:niphal": "stem_niphal",
+    "heb:stem:piel": "stem_piel", "heb:stem:pual": "stem_pual", "heb:stem:hiphil": "stem_hiphil",
+    "heb:stem:hophal": "stem_hophal", "heb:stem:hithpael": "stem_hithpael",
+    **{f"heb:stem:other:{s}": f"stem_{s}" for s in HEB_MINOR_STEMS if s not in ("nithpalel", "nithpoel")},
+    "heb:stem:other:nithpalel": "stem", "heb:stem:other:nithpoel": "stem",      # (no page: Stem Formation)
+    "heb:form:perfect": "verb_perfect", "heb:form:imperfect": "verb_imperfect",
+    "heb:form:weqatal": "verb_sequential_perfect", "heb:form:wayyiqtol": "verb_sequential_imperfect",
+    "heb:form:weyiqtol": "verb_imperfect", "heb:form:cohortative": "verb_cohortative",
+    "heb:form:jussive": "verb_jussive", "heb:form:imperative": "verb_imperative",
+    "heb:form:participle": ["participle_active", "participle_passive"],
+    "heb:form:infinitive absolute": "infinitive_absolute", "heb:form:infinitive construct": "infinitive_construct",
+    "heb:pgn:perfect": "verb_perfect", "heb:pgn:imperfect": "verb_imperfect", "heb:pgn:imperative": "verb_imperative",
+    "heb:suffix:perfect": "suffix_pronominal", "heb:suffix:imperfect": "suffix_pronominal",
+    "heb:suffix:verbal noun": "suffix_pronominal", "heb:suffix:noun": "suffix_pronominal",
+    "heb:suffix:particle": "suffix_pronominal",
+    "heb:paragogic he:verb": "suffix_paragogic_he", "heb:paragogic he:noun": "suffix_paragogic_he",
+    "heb:directional he": "suffix_directional_he", "heb:paragogic nun": "suffix_paragogic_nun",
+    "heb:article": "particle_definite_article", "heb:preposition with the article": "preposition_definite_article",
+    "heb:preposition:prefix": "preposition", "heb:preposition": "preposition", "heb:conjunction": "conjunction",
+    "heb:interrogative": "particle_interrogative",
+    "heb:gender:masculine": "gender_masculine", "heb:gender:feminine": "gender_feminine",
+    "heb:gender:either": "gender_both",       # (a noun masculine in some places, feminine in others)
+    "heb:plural": "number_plural", "heb:dual": "number_dual", "heb:construct": "state_construct",
+    "heb:noun": "noun", "heb:adjective": "adjective", "heb:cardinal": "adjective_cardinal_number",
+    "heb:ordinal": "adjective_ordinal_number", "heb:gentilic": ["noun_gentilic", "adjective_gentilic"],
+    "heb:proper name": "noun_proper_name", "heb:personal pronoun": "pronoun_personal",
+    "heb:demonstrative": "pronoun_demonstrative", "heb:demonstrative particle": "particle_demonstrative",
+    "heb:interrogative pronoun": "pronoun_interrogative", "heb:indefinite pronoun": "pronoun_indefinite",
+    "heb:relative": "pronoun_relative", "heb:relative particle": "particle_relative",
+    "heb:negative": "particle_negative", "heb:object marker": "particle_direct_object_marker",
+    "heb:interjection": "particle_interjection", "heb:adverb": "adverb",
+}
+
+# (No page for a correlative pronoun or a conditional - the book's "Cond" page isn't in it yet -, nor the deponents:
+# they go to the middle's or the passive's page.)
+UGG_MAP = {
+    **{f"grc:tense:{t}:{m}": f"tense_{t}" for t in GRC_TENSES for m in ("ind", "other")},
+    "grc:second": "tense_aorist",                      # (its 1st and 2nd aorists)
+    "grc:voice:active": "voice_active", "grc:voice:middle": "voice_middle", "grc:voice:passive": "voice_passive",
+    "grc:voice:middle or passive": ["voice_middle", "voice_passive"], "grc:voice:middle deponent": "voice_middle",
+    "grc:voice:passive deponent": "voice_passive",
+    "grc:voice:middle or passive deponent": ["voice_middle", "voice_passive"],
+    **{f"grc:mood:{m}": f"mood_{m}" for m in ("indicative", "subjunctive", "optative", "imperative", "infinitive",
+                                              "participle")},
+    **{f"grc:person:{p}": f"person_{w}" for p, w in (("1st", "first"), ("2nd", "second"), ("3rd", "third"))},
+    "grc:number:singular": "number_singular", "grc:number:plural": "number_plural",
+    **{f"grc:gender:{g}": f"gender_{g}" for g in ("masculine", "feminine", "neuter")},
+    **{f"grc:case:{c}": f"case_{c}" for c in ("nominative", "genitive", "dative", "accusative", "vocative")},
+    "grc:article": "determiner_article", "grc:noun": "noun", "grc:adjective": "adjective",
+    "grc:personal pronoun": "pronoun_personal", "grc:possessive pronoun": "determiner_possessive",
+    "grc:reflexive pronoun": "pronoun_reflexive", "grc:reciprocal pronoun": "pronoun_reciprocal",
+    "grc:demonstrative pronoun": "pronoun_demonstrative", "grc:interrogative pronoun": "pronoun_interrogative",
+    "grc:indefinite pronoun": "pronoun_indefinite", "grc:relative pronoun": "pronoun_relative",
+    "grc:preposition": "preposition", "grc:conjunction": "conjunction", "grc:particle": "particle",
+    "grc:adverb": "adverb", "grc:comparative": "comparative", "grc:superlative": "superlative",
+    "grc:negative": "negative", "grc:interrogative": "interrogative",
+}
+for _m in (UHG_MAP, UGG_MAP):     # (As the other maps: a list of (first, last) ranges, here one page each)
+    _m.update({k: [(p, p) for p in ([v] if isinstance(v, str) else v)] for k, v in _m.items()})
+
 HEB_MAIN_STEMS = {"qal", "qal passive", "niphal", "piel", "pual", "hiphil", "hophal", "hithpael"}
 PERFECTS, IMPERFECTS = {"perfect", "weqatal"}, {"imperfect", "wayyiqtol", "weyiqtol", "jussive", "cohortative"}
 
@@ -809,7 +1053,7 @@ def _heb_stem(m, ctx):
     if ctx["aramaic"]:
         return None
     s = m.group(0).lower()
-    return f"heb:stem:{s if s in HEB_MAIN_STEMS else 'other'}"
+    return f"heb:stem:{s}" if s in HEB_MAIN_STEMS else f"heb:stem:other:{s}"
 
 
 def _heb_pgn(m, ctx):
@@ -838,8 +1082,10 @@ HEBREW_RULES = [
     (r"interrogative particle|interrogative", "heb:interrogative"),
     (r"indefinite pronoun", "heb:indefinite pronoun"),
     (r"personal pronoun", "heb:personal pronoun"),
-    (r"demonstrative pronoun|demonstrative particle", "heb:demonstrative"),
-    (r"relative pronoun|relative particle", "heb:relative"),
+    (r"demonstrative pronoun", "heb:demonstrative"),
+    (r"demonstrative particle", "heb:demonstrative particle"),
+    (r"relative pronoun", "heb:relative"),
+    (r"relative particle", "heb:relative particle"),
     (r"negative particle", "heb:negative"),
     (r"conjunctive particle|conjunction", "heb:conjunction"),
     (r"interjection", "heb:interjection"),
@@ -852,7 +1098,7 @@ HEBREW_RULES = [
     (r"noun", "heb:noun"),
     (r"adjective", "heb:adjective"),
     (r"masculine or feminine", "heb:gender:either"),
-    (r"masculine|feminine", "heb:gender"),
+    (r"masculine|feminine", lambda m, c: "heb:gender:" + m.group(0).lower()),
     (r"plural", "heb:plural"),
     (r"dual", "heb:dual"),
     (r"construct", "heb:construct"),
@@ -861,15 +1107,15 @@ HEBREW_RULES = [
 GREEK_RULES = [
     (r"second", "grc:second"),
     (r"present|imperfect|future|aorist|pluperfect|perfect",
-     lambda m, c: f"grc:tense:{m.group(0).lower()}:ind" if c["mood"] == "I" else "grc:tense:other"),
+     lambda m, c: f"grc:tense:{m.group(0).lower()}:{'ind' if c['mood'] == 'I' else 'other'}"),
     (r"middle or passive deponent|middle deponent|passive deponent|middle or passive|active|middle|passive",
      lambda m, c: "grc:voice:" + m.group(0).lower()),
     (r"indicative|subjunctive|optative|imperative|infinitive|participle",
      lambda m, c: "grc:mood:" + m.group(0).lower()),
-    (r"(?:1st|2nd|3rd) person", "grc:person"),
+    (r"(?:1st|2nd|3rd) person", lambda m, c: "grc:person:" + m.group(0)[:3]),
     (r"nominative|genitive|dative|accusative|vocative", lambda m, c: "grc:case:" + m.group(0).lower()),
-    (r"singular|plural", "grc:number"),
-    (r"masculine|feminine|neuter", "grc:gender"),
+    (r"singular|plural", lambda m, c: "grc:number:" + m.group(0).lower()),
+    (r"masculine|feminine|neuter", lambda m, c: "grc:gender:" + m.group(0).lower()),
     (r"correlative or interrogative pronoun|correlative pronoun", "grc:correlative pronoun"),
     (r"(?:personal|possessive|reflexive|reciprocal|demonstrative|interrogative|indefinite|relative) pronoun",
      lambda m, c: "grc:" + m.group(0).lower()),
@@ -890,7 +1136,7 @@ def term_spans(code, spelled, greek):
         parts = code.split("-")
         mood = parts[1].lstrip("2")[2:3] if parts[0] == "V" and len(parts) > 1 else ""
         rx, rules, ctx = GREEK_RX, GREEK_RULES, {"mood": mood}
-    known = set(GESENIUS_MAP) | set(SMYTH_MAP) | set(MACHEN_MAP)
+    known = set().union(*MAPS.values())
     out = []
     for m in rx.finditer(spelled):
         key = rules[int(m.lastgroup[1:])][1]
@@ -907,15 +1153,21 @@ GRAMMARS = [     # (A language's first is its default: Machen for Greek, the use
      "machengreek.com"),
     ("smyth", "Smyth", "G", "H. W. Smyth, A Greek Grammar for Colleges (1920); Perseus Digital Library, Tufts "
      "University, CC BY-SA 3.0 US"),
+    ("uhg", "unfoldingWord", "H", "unfoldingWord® Hebrew Grammar (2019), unfoldingWord, CC BY-SA 4.0; "
+     "unfoldingword.org/uhg (git.door43.org/unfoldingWord/en_uhg)"),
+    ("ugg", "unfoldingWord", "G", "unfoldingWord® Greek Grammar (2023), unfoldingWord, CC BY-SA 4.0; "
+     "unfoldingword.org/ugg (git.door43.org/unfoldingWord/en_ugg)"),
 ]
-MAPS = {"gesenius": GESENIUS_MAP, "smyth": SMYTH_MAP, "machen": MACHEN_MAP}
+MAPS = {"gesenius": GESENIUS_MAP, "smyth": SMYTH_MAP, "machen": MACHEN_MAP, "uhg": UHG_MAP, "ugg": UGG_MAP}
+UNNUMBERED = {"uhg", "ugg"}     # (Books without section numbers: their label stays empty - the panel shows no §)
 
 
 def build(db, parsings, greek):
     """The grammar tables, and parsings.terms. `parsings`: {source morph code: (code, spelled, stem)}; `greek`: the
     set of those codes that are Greek (TAGNT's)."""
     sections = {"gesenius": gesenius_sections(fetch_gesenius()), "smyth": smyth_sections(fetch_smyth()),
-                "machen": machen_sections(fetch_machen())}
+                "machen": machen_sections(fetch_machen()), "uhg": uw_sections(fetch_uw("uhg")),
+                "ugg": uw_sections(fetch_uw("ugg"))}
     db.executescript("""
         CREATE TABLE grammars (id TEXT PRIMARY KEY, name TEXT, lang TEXT, credit TEXT);   -- (rowid: GRAMMARS' order)
         CREATE TABLE grammar_sections (grammar TEXT, seq INTEGER, label TEXT, heading TEXT, body TEXT,
@@ -927,7 +1179,8 @@ def build(db, parsings, greek):
     db.executemany("INSERT INTO grammars VALUES (?,?,?,?)", GRAMMARS)
     for g, rows in sections.items():
         db.executemany("INSERT INTO grammar_sections VALUES (?,?,?,?,?)",
-                       [(g, i, label, h, body) for i, (label, h, body) in enumerate(rows)])
+                       [(g, i, "" if g in UNNUMBERED else label, h, body)
+                        for i, (label, h, body) in enumerate(rows)])
         seq = {label: i for i, (label, _, _) in enumerate(rows)}
         for key, ranges in MAPS[g].items():
             for part, (a, b) in enumerate(ranges):
@@ -935,3 +1188,24 @@ def build(db, parsings, greek):
     db.executemany("UPDATE parsings SET terms = ? WHERE morph = ?",
                    [(json.dumps(term_spans(m, spelled, m in greek)), m) for m, (_, spelled, _) in parsings.items()])
     return {g: len(r) for g, r in sections.items()}
+
+
+def rebuild(path=HERE.parent / "public" / "data" / "cotext.db"):
+    """The grammar tables and parsings.terms made again in a built database, the rest left as it is (build_db.py
+    makes them along with everything else)."""
+    import sqlite3
+    db = sqlite3.connect(path)
+    db.executescript("DROP TABLE IF EXISTS grammars; DROP TABLE IF EXISTS grammar_sections; "
+                     "DROP TABLE IF EXISTS grammar_terms; ALTER TABLE parsings DROP COLUMN terms;")
+    parsings = {m: (c, sp, st) for m, c, sp, st in db.execute("SELECT morph, code, spelled, stem FROM parsings")}
+    greek = {m for (m,) in db.execute("SELECT DISTINCT morph FROM words JOIN books ON books.id = words.book "
+                                      "WHERE testament = 'NT'")}
+    counts = build(db, parsings, greek)
+    db.commit()
+    db.execute("VACUUM")
+    db.close()
+    print("grammar sections: " + ", ".join(f"{g} {n}" for g, n in counts.items()))
+
+
+if __name__ == "__main__":      # python3 pipeline/grammar.py: the grammars made again in public/data/cotext.db
+    rebuild()
