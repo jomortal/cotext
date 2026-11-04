@@ -56,6 +56,15 @@ Groves Center, CC BY 4.0), Open Scriptures Hebrew Bible morphology and Cherith g
 Linguistic Datasets, (c) 2022-2024 Biblica, Inc., CC BY 4.0 (github.com/Clear-Bible/macula-greek) - Nestle 1904 syntax
 trees. Adapted: drawn as clauses and phrases.
 
+NT commentaries added 2026-11-03 (the notes panel):
+  A. T. Robertson, Word Pictures in the New Testament (1930-33): volumes 1-4 public domain; volumes 5-6 (John, Hebrews,
+    the General Epistles, Revelation) (c) 1932, 1933, renewed 1960 Broadman Press, used by permission - free
+    non-commercial distribution (NC) (CrossWire's SWORD module RWP 2.0, from www.bf.org).
+  John Lightfoot, A Commentary on the New Testament from the Talmud and Hebraica (1658-74), on the Gospels: public domain
+    (CrossWire's SWORD module Lightfoot 1.0, from philologos.org).
+  J. B. Lightfoot, St Paul's Epistles to the Colossians and to Philemon (Macmillan, 1875): public domain (Project
+    Gutenberg's transcription, eBook 50857; its notes only, the Greek text and readings left out).
+
 Notes panel sources added 2026-11-03 (each its own file in public/data/notes/; credits also shown under its notes;
 non-commercial ones marked NC - usable because COTEXT is free and never sold):
   Translations: NJPS Tanakh (c) 1985 Jewish Publication Society; The Contemporary Torah (c) 2006 JPS; The Koren
