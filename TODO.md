@@ -76,6 +76,10 @@ Needs permission (later): Willker's Textual Commentary on the Greek Gospels (fre
 
 ## Smaller downloads (back burner: not yet)
 
+- [x] Updates without waiting (2026-11-04): the main database split into parts (core, lexicon, grammar, ot, nt, lxx),
+      each versioned on its own; an update opens the copy on the device at once and fetches only the changed parts in
+      the background, used from the next start.
+
 - [ ] Split the 48 MB first download: each book's text when first opened, each grammar on its first link, each
       testament's lexicon on its first word; the Bible-wide counts (frequency, Vocab's lists) stay in the first, small
       download. Each piece kept once fetched (offline for what's been read), plus DOWNLOAD FOR OFFLINE: everything at
