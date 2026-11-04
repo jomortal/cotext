@@ -425,7 +425,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    columns: at the left the text with its word's panel at its foot (#textCol), then the panes' divider and at the right
    the panes' column (#paneCol), the full height down to the play bar: the search pane, the divider between the panes
    (#paneSplit), then the notes with the second word's panel - a word of their Hebrew OT - at their foot - text |
-   search over notes (put so by order: index.html has them in the narrow layout's order, the notes first). Each word's panel as wide as its column, its height set by its own divider on its top edge
+   search over notes (index.html's order, the narrow layout's too). Each word's panel as wide as its column, its height set by its own divider on its top edge
    (--sheetH, --besideH; 40 % of the room at first, the column above it keeping 172 px at least). The panes' column
    --notesW % of the width (a third at first), empty (0) while both panes are closed, the text taking the rest. The text and the panes fill what their panels leave, each scrolling on its own;
    their contents (and the heading's) the full width. One grid for both layouts: its columns 2 and 3 (the word beside
@@ -441,10 +441,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 4; } #paneCol { grid-row: 1 / -1; grid-column: 5; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
   .pane:not([hidden]) { flex: 1 1 0; max-height: none; min-height: 0; border-top: 0 !important; }     /* (Its divider, or the screen's top, is its top line) */
-  /* The search on top, its divider under it, then the notes (the second word's panel at their foot); the two share the
-     column's room by --searchH (the search's %, layout.ts' #paneSplit; half each at first): one open alone fills it
-     whatever its share. */
-  #search { order: -2; } #paneSplit { order: -1; }
+  /* The search on top, its divider under it, then the notes (the second word's panel at their foot) - index.html's
+     order; the two share the column's room by --searchH (the search's %, layout.ts' #paneSplit; half each at first):
+     one open alone fills it whatever its share. */
   #search { flex-grow: var(--searchH, 50); } #notes { flex-grow: calc(100 - var(--searchH, 50)); }
   body:has(#notes[hidden]) :is(#besideSplit, #besideSheet) { display: none !important; }     /* (The second word's panel only with the notes it belongs to, not under the search alone) */
   .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */

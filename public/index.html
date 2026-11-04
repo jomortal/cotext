@@ -77,10 +77,16 @@
 </div>
 </div>
 <div id="notesSplit" class="split" role="separator" aria-orientation="vertical" aria-label="Resize the notes and the search"></div>
-<!-- The panes' column (wide, at the right): the notes with the second word's panel at their foot (panel.ts puts it after
-     #besideSplit), the divider between the two panes (#paneSplit), the search pane - in the narrow layout's order;
-     wide, style.css puts the search and its divider on top. -->
+<!-- The panes' column (wide, at the right): the search pane, the divider between the two panes (#paneSplit), the notes
+     with the second word's panel at their foot (panel.ts puts it after #besideSplit) - the same order narrow, the search
+     above the notes. -->
 <div id="paneCol" class="col">
+<section id="search" class="dock pane" hidden>
+  <div class="top"><input id="searchBar" class="choose" type="search" enterkeyhint="search" dir="auto" placeholder="Search" aria-label="Search" autocomplete="off" autocapitalize="off" spellcheck="false"><select id="searchPick" class="choose" aria-label="What to search"></select><button class="pill icon" id="searchClose" aria-label="Close">✕</button></div>
+  <div class="src" id="searchCount"></div>
+  <div id="searchHits"></div>
+</section>
+<div id="paneSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the search against the notes"></div>
 <section id="notes" class="dock pane" hidden>
   <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesClose" aria-label="Close">✕</button></div>
   <div class="notesScroll" id="notesScroll">
@@ -90,12 +96,6 @@
   </div>
 </section>
 <div id="besideSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the Hebrew word's panel"></div>
-<div id="paneSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the search against the notes"></div>
-<section id="search" class="dock pane" hidden>
-  <div class="top"><input id="searchBar" class="choose" type="search" enterkeyhint="search" dir="auto" placeholder="Search" aria-label="Search" autocomplete="off" autocapitalize="off" spellcheck="false"><select id="searchPick" class="choose" aria-label="What to search"></select><button class="pill icon" id="searchClose" aria-label="Close">✕</button></div>
-  <div class="src" id="searchCount"></div>
-  <div id="searchHits"></div>
-</section>
 </div>
 <!-- The play bar: ▶ centered, the search's icon then the notes' at the right. -->
 <div id="playBar"><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><span class="playRight"><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg></button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button></span></div>
