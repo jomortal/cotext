@@ -137,16 +137,17 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The notes panel (notes.ts): in the page's column under the play bar - and under the word's panel when it's open -
    never over the text;
    at most half the screen, scrolling - with the word's panel open too, the two shrink together so the text keeps at
-   least a third (main's min-height); its picker and ✕ (frozen at the top), the verse, the notes (a grammar section's look:
+   least a third (main's min-height); its picker and ✕ - a row the panel keeps at its top, never pulled down - then its own scroller (#notesScroll): the verse, the notes (a grammar section's look:
    .gBody), the source's credit. Under it the play bar, last, with the home indicator's room. */
-#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow-y: auto;
+#notes { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: 50dvh; overflow: hidden; display: flex; flex-direction: column;
          padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #notes[hidden] { display: none; }
 #notes > * { max-width: 760px; margin-inline: auto; }
-#notes .top { align-items: center; position: sticky; top: calc(-2px - var(--pad)); z-index: 2; background: var(--bg); margin-top: calc(-2px - var(--pad)); padding: calc(2px + var(--pad)) 0 8px; }     /* (Frozen: the picker and ✕ stay at the top while the notes scroll; the box reaching 2px past the panel's top padding, clipped there, so Safari's rounding leaves no sliver above it) */
+#notes .top { align-items: center; flex: none; margin-bottom: 10px; width: 100%; }
+#notes .notesScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; width: 100%; }     /* (The notes scroll here, under the picker: it never moves) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #notes .chooseBtn { width: 100%; box-sizing: border-box; }
-#notesRef { margin-top: 10px; }
+#notesRef { margin-top: 0; }
 #notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
 #notes .note .src { margin: 0 0 4px; }

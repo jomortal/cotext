@@ -140,7 +140,7 @@ function update () {
                  + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
     bodyEl.append (el);
   }
-  panel.scrollTop = 0;
+  document.getElementById ("notesScroll")!.scrollTop = 0;     // (The notes scroll on their own, under the picker)
 }
 
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */
