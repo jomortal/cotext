@@ -219,7 +219,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */
 #drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed; tapping it still closes the drawer) */
-#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); background: var(--bg);
+#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(var(--page), 80vw); background: var(--bg);     /* (Its items as wide as the text may be - --page -, at most 80% of the screen: the page beside it still tappable, to close it) */
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
                padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) var(--pad) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
