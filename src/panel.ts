@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" / "Show helps" flips the word's
-// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (left out when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// helps (helps.ts: every form of it, everywhere); the entry concise, More opening the full one, BDB (Hebrew) the word's full Brown-Driver-Briggs entry; the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
@@ -23,10 +23,10 @@ const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
 const formEl = document.getElementById ("form")!;
 // The head, top to bottom: the word as written, its English as the interlinear gives it here, its parsing spelled out,
-// then its dictionary form (the root word) with its buttons - or, when the two are the same (the word's own line left
-// out), the dictionary form, then its English and parsing.
+// then its dictionary form (the root word) with its buttons - the word repeated when it's the dictionary form itself.
 const formGloss = document.createElement ("span");
-formGloss.className = "formGloss";     // (The word as it stands in the text, before its dictionary form)
+formGloss.className = "formGloss";
+formEl.parentElement!.after (formGloss, document.getElementById ("full")!);     // (The word as it stands in the text, before its dictionary form)
 const fullEl = document.getElementById ("full")!;
 const srcEl = document.getElementById ("src")!;
 const defEl = document.getElementById ("def")!;
@@ -109,11 +109,6 @@ async function showBdb () {
   }
 }
 
-/** A word as compared with its dictionary form: Hebrew's accents, meteg, maqaf and punctuation dropped; Greek's
- *  punctuation dropped, a grave as an acute, lower case. */
-const bare = (t: string) => t.normalize ("NFD").replace (/[\u0591-\u05af\u05bd\u05be\u05c0\u05c3-\u05c6]/g, "").replace (/\u0300/g, "\u0301")
-  .replace (/[^\p{L}\p{M}]/gu, "").toLowerCase ().normalize ("NFC");
-
 // The divine name (H3068, H3069): a note on how it's said - its vowels are a reminder to read another word, so
 // written out as it stands it gives the hybrid "Jehovah"; the voice says Adonai (audio.ts' sayName).
 const nameNote = document.getElementById ("nameNote")!;
@@ -141,12 +136,7 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   lemmaEl.dir = hebrew ? "rtl" : "ltr";
   formEl.textContent = w.text;
   formEl.dir = lemmaEl.dir;
-  // The word as written left out when it's the dictionary form itself (λόγος, בֵּן): one line, kept clear of the ✕.
-  const one = bare (w.text) === bare (lemmaEl.textContent ?? "");
-  formEl.parentElement!.hidden = one;
   formGloss.textContent = w.gloss ?? "";
-  if (one) formEl.parentElement!.parentElement!.append (formGloss, fullEl); else formEl.parentElement!.after (formGloss, fullEl);
-  formEl.parentElement!.parentElement!.classList.toggle ("one", one);
   const note = NAME_NOTE[w.strong.match (/^H\d+/)?.[0] ?? ""];
   nameNote.textContent = note ?? "";
   nameNote.hidden = ! note;
