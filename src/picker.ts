@@ -15,9 +15,10 @@ document.getElementById ("pickerClose")!.addEventListener ("click", () => { pick
 
 // (On a wide screen it ends where the text's column does, so the notes at the right stay in view: kept so as the column
 // changes - the notes opened or closed, their split dragged, the window resized)
-const textCol = document.getElementById ("textCol")!;
-const fit = () => { picker.style.right = isWide () ? `${Math.max (0, innerWidth - textCol.getBoundingClientRect ().right)}px` : ""; };
-new ResizeObserver (fit).observe (textCol);
+// (Measured on the text itself, main: at 1200 px #textCol has no box of its own - style.css)
+const text = document.querySelector ("main")!;
+const fit = () => { picker.style.right = isWide () ? `${Math.max (0, innerWidth - text.getBoundingClientRect ().right)}px` : ""; };
+new ResizeObserver (fit).observe (text);
 addEventListener ("resize", fit);
 
 type Go = (book: Book, chapter: number) => void;

@@ -438,9 +438,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .split::before { content: ""; position: absolute; background: var(--edge); }
   .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
   .split.on::after { background: var(--accent); opacity: 1; }
-  #notesSplit { width: 14px; cursor: col-resize; }
-  #notesSplit::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
-  #notesSplit::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
+  /* Drawn by its orientation (aria-orientation): vertical - the notes' and, at 1200 px, the word's panel's (layout.ts
+     sets it) - sets a width; horizontal - a word's panel's height - sets a height. */
+  .split[aria-orientation="vertical"] { width: 14px; cursor: col-resize; }
+  .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
+  .split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
   body:has(#notes[hidden]) #notesSplit { display: none; }
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
@@ -452,8 +454,25 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #notes > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
   #notes > .panelScroll { padding-top: 0; }
   #notes > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
-  #sheetSplit, #besideSplit { height: 14px; cursor: row-resize; }
-  :is(#sheetSplit, #besideSplit)::before { left: 0; right: 0; top: 6.5px; height: 1px; }
-  :is(#sheetSplit, #besideSplit)::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
+  .split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
+  .split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
+  .split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
   body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
+}
+/* Wider still (layout.ts' WIDEST, the same 1200 px): the text's word's panel a column of its own between the text and
+   the notes - text | word | notes -, the full height beside the heading and the play bar (the text's only, as the
+   notes' are), --sheetW % of the width (a quarter at first), set by #sheetSplit on its left edge, now vertical. With no
+   word picked it and its divider are gone and the text takes the room, as when the notes close. One column at that
+   width (panel.ts' .twoCol only once it's dragged wide enough); its ✕ frozen and its margins as the notes'. */
+@media (min-width: 1200px) {
+  #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
+  body, body:has(#notes:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--notesCol, 0px); }     /* (The text, the word's divider and panel, the notes' divider and column; a divider's column empty while hidden. Both selectors: to outweigh the 700 px block's) */
+  body:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
+  body:has(#notes:not([hidden])) { --notesCol: calc(var(--notesW, 33.333) * 1%); }
+  main { grid-column: 1; grid-row: 2; }
+  #sheetSplit { grid-column: 2; grid-row: 1 / -1; } #sheet { grid-column: 3; grid-row: 1 / -1; height: auto; }     /* (The full height, as the notes) */
+  #notesSplit { grid-column: 4; } #notesCol { grid-column: 5; }
+  #sheet > .panelScroll { padding-top: calc(var(--pad) + env(safe-area-inset-top, 0px)); padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }     /* (It reaches the screen's top and bottom: clear of the clock and the home indicator) */
+  #sheet > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (Level with the notes' ✕) */
+  #sheet :is(.panelScroll, .infoBox)::-webkit-scrollbar-track { margin-top: 56px; }     /* (Below its ✕, lower here) */
 }
