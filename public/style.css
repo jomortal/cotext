@@ -246,6 +246,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet .heads > .btns { grid-column: 1 / -1; justify-self: start; justify-content: flex-start; }     /* (+ My vocab and + Known words: a line under the root word) */
 .sheet .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
 .sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
+.full .seg { white-space: nowrap; }     /* (The spelled-out parsing wraps only after a comma: grammar.ts) */
 .sheet .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
 .sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */
 .sheet .btns { display: flex; gap: 10px 24px; flex-wrap: wrap; justify-content: flex-end; }

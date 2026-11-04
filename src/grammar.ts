@@ -87,19 +87,28 @@ export function grammarIn (sheet: HTMLElement) {
     if (lang !== (hebrew ? "H" : "G")) setLang (hebrew ? "H" : "G");
     const g = current (lang);
     const keys = keysOf (g);
+    // Each comma's part its own unbreakable span (.seg: style.css), so the line wraps only after a comma ("Qal perfect, /
+    // 3rd masculine singular") - and the panel's two-column test (panel.ts) can measure the widest part.
+    let seg = document.createElement ("span");
+    seg.className = "seg";
+    el.append (seg);
+    const text = (t: string) => t.split (/(?<=,) /).forEach ((piece, i) => {
+      if (i) { el.append (" "); seg = document.createElement ("span"); seg.className = "seg"; el.append (seg); }
+      seg.append (piece);
+    });
     let at = 0;
     for (const [a, b, key] of JSON.parse (terms || "[]") as [number, number, string][]) {
       if (! keys.has (key) || a < at) continue;
-      el.append (spelled.slice (at, a));
+      text (spelled.slice (at, a));
       const s = document.createElement ("span");
       s.className = "term";
       s.dataset.key = key;
       s.textContent = spelled.slice (a, b);
       s.addEventListener ("click", () => openSection (g, key, s));
-      el.append (s);
+      seg.append (s);
       at = b;
     }
-    el.append (spelled.slice (at));
+    text (spelled.slice (at));
   }
 
   /** The key's sections in the grammar, over the word's info: the first section's heading as the title, the § numbers

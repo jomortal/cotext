@@ -115,8 +115,9 @@ function makePanel (sheet: HTMLElement) {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
     heads.style.width = "max-content";
+    fullEl.style.width = "min-content";     // (The parsing may wrap at its commas: its widest part counts, not its whole line)
     const need = heads.getBoundingClientRect ().width;
-    heads.style.width = "";
+    heads.style.width = ""; fullEl.style.width = "";
     sheet.classList.toggle ("twoCol", sheetScroll.clientWidth >= 2 * need);
   };
   new ResizeObserver (columns).observe (sheet);
