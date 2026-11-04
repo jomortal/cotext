@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the entry concise, More opening the full one, LEXICON a fuller lexicon's (Hebrew: Brown-Driver-Briggs; Greek: Abbott-Smith, Thayer, the Middle Liddell, Dodson); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the entry as LEXICON picks it - the short gloss (at first), the brief lexicon, or a fuller lexicon's (Hebrew: Brown-Driver-Briggs; Greek: Abbott-Smith, Thayer, the Middle Liddell, Dodson); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts). ✕ (or tapping the word again) hides it.
 
 import { openNotesDb, type Db } from "./db";
 import type { Word } from "./reader";
@@ -28,7 +28,6 @@ const formGloss = document.createElement ("span");
 formGloss.className = "formGloss";
 formEl.parentElement!.after (formGloss, document.getElementById ("full")!);     // (The word as it stands in the text, before its dictionary form)
 const fullEl = document.getElementById ("full")!;
-const srcEl = document.getElementById ("src")!;
 const defEl = document.getElementById ("def")!;
 const knowIt = document.getElementById ("knowIt")!;
 let picked: HTMLElement | null = null;
@@ -42,17 +41,15 @@ document.getElementById ("speakRoot")!.addEventListener ("click", () => sayText 
 const label = () => { knowIt.textContent = knownWords ().includes (pickedStrong) ? "✓ In known words" : "+ Known words"; };
 onHelpsChange (() => { if (picked) label (); });
 
-// The entry: the meaning to learn (a few words: build_db.py's concise()), with More opening the full entry in the
-// lexicon picked - LEXICON, a picker as GRAMMAR's, over the entry, where a fuller lexicon has the word: the STEPBible
-// brief lexicon, or (Hebrew) Brown-Driver-Briggs, (Greek) Abbott-Smith, Thayer, the Middle Liddell or Dodson - those
-// that have an entry for the word; each lexicon's entry (or entries, where it splits the Strong's number or has
-// homographs) with its credit under it. The choice is kept on the device per language; a word the lexicon picked
-// lacks opens the brief one. No fuller lexicon has it: the brief lexicon, no picker. Less goes back to the meaning.
-// Each lexicon's entries are their own file (data/notes/<id>.db: pipeline/bdb.py, pipeline/greek_lex.py), downloaded
-// the first time it's shown and kept (db.ts: openNotesDb).
-const moreBtn = document.getElementById ("moreDef")!;
+// The entry, as LEXICON picks it (a picker as GRAMMAR's, over the entry): the short gloss (the meaning to learn, a few
+// words: build_db.py's concise()), the STEPBible brief lexicon, or a fuller lexicon that has the word - (Hebrew)
+// Brown-Driver-Briggs, (Greek) Abbott-Smith, Thayer, the Middle Liddell or Dodson - each fuller one's entry (or entries,
+// where it splits the Strong's number or has homographs) with its credit under it. The choice is kept on the device
+// per language (the short gloss at first); a word the lexicon picked lacks opens the brief one. Each fuller lexicon's
+// entries are their own file (data/notes/<id>.db: pipeline/bdb.py, pipeline/greek_lex.py), downloaded the first time
+// it's shown and kept (db.ts: openNotesDb).
 const lexCredit = document.getElementById ("lexCredit")!;
-const lexRow = document.getElementById ("lexRow")!, lexPick = document.getElementById ("lexPick") as HTMLSelectElement;
+const lexPick = document.getElementById ("lexPick") as HTMLSelectElement;
 /** The fuller lexicons, in the picker's order: their names (and the short one their loading says) and credits. */
 const LEXICONS: Record<string, { name: string; short: string; credit: string }> = {
   bdb: { name: "Brown-Driver-Briggs", short: "BDB",
@@ -67,8 +64,8 @@ const LEXICONS: Record<string, { name: string; short: string; credit: string }> 
             credit: "Dodson, A Greek-English Lexicon of the New Testament (2010), public domain; text from Biblical Humanities (CC0)." },
 };
 const LEX_KEY = { H: "cotext.lexicon", G: "cotext.lexicon.greek" };     // (Hebrew's key as it always was)
-const lexChoice = { H: "full", G: "full" };     // (The lexicon picked per language: full - the brief lexicon - or an id above)
-for (const l of ["H", "G"] as const) try { lexChoice[l] = localStorage.getItem (LEX_KEY[l]) ?? "full"; } catch { /* private mode */ }
+const lexChoice = { H: "concise", G: "concise" };     // (Picked per language: concise - the short gloss -, full - the brief lexicon - or an id above)
+for (const l of ["H", "G"] as const) try { lexChoice[l] = localStorage.getItem (LEX_KEY[l]) ?? "concise"; } catch { /* private mode */ }
 const lang = () => entry.hebrew ? "H" : "G";
 lexPick.addEventListener ("change", () => {
   lexChoice[lang ()] = lexPick.value;
@@ -81,21 +78,14 @@ let entry = { concise: "", full: "", extra: {} as Record<string, string>, hebrew
 let shown: Shown = "concise";
 let mainDb: Db | null = null;
 const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, once opened)
-moreBtn.addEventListener ("click", () => showEntry (shown !== "concise" ? "concise" : entry.extra[lexChoice[lang ()]] ? lexChoice[lang ()] : "full"));
-
-/** The entry, concise, the brief lexicon's or a fuller one's; under the concise one More (Less under the others); over
- *  a full one LEXICON, where a fuller lexicon has the word (its name then said by the picker, not the label). */
+/** The entry LEXICON picks - the short gloss, the brief lexicon's or a fuller one's - its picker listing those the word
+ *  has. */
 function showEntry (to: Shown) {
   shown = to;
   const extras = Object.keys (entry.extra);
-  lexRow.hidden = to === "concise" || ! extras.length;
-  if (! lexRow.hidden) {
-    lexPick.innerHTML = `<option value="full">STEPBible (abridged ${entry.hebrew ? "BDB" : "Abbott-Smith"})</option>`
-      + extras.map ((id) => `<option value="${id}">${LEXICONS[id].name}</option>`).join ("");
-    lexPick.value = to;
-  }
-  srcEl.hidden = ! lexRow.hidden;
-  srcEl.textContent = to === "concise" ? "Meaning" : entry.hebrew ? "STEPBible brief lexicon (abridged BDB)" : "STEPBible brief lexicon (Abbott-Smith)";
+  lexPick.innerHTML = `<option value="concise">Short gloss</option><option value="full">STEPBible (abridged ${entry.hebrew ? "BDB" : "Abbott-Smith"})</option>`
+    + extras.map ((id) => `<option value="${id}">${LEXICONS[id].name}</option>`).join ("");
+  lexPick.value = to;
   // The brief lexicon's entry holds only <b>, <i> and <br> (pipeline/build_db.py's entry_html escapes everything
   // else); a fuller lexicon's the few tags its pipeline writes, its Hebrew and Greek styled as a grammar's (.gBody).
   const fuller = to !== "concise" && to !== "full";
@@ -105,8 +95,6 @@ function showEntry (to: Shown) {
   else showLexicon (to);
   lexCredit.hidden = ! fuller;
   if (fuller) lexCredit.textContent = LEXICONS[to].credit;
-  moreBtn.hidden = to === "concise" && entry.full === entry.concise && ! extras.length;     // (Nothing more to open)
-  moreBtn.textContent = to === "concise" ? "More" : "Less";
 }
 
 /** The word's entries in a fuller lexicon into the panel - its file loaded first if it isn't yet (its progress shown). */
@@ -174,7 +162,8 @@ export function showPanel (db: Db, w: Word, wordEl: HTMLElement) {
   showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
   entry = { concise: String (lex?.concise || lex?.gloss || ""), full: String (lex?.entry || lex?.gloss || ""),
             extra, hebrew };
-  showEntry ("concise");
+  const pick = lexChoice[hebrew ? "H" : "G"];
+  showEntry (pick === "concise" || pick === "full" || extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word: the brief one)
   sheet.hidden = false;
   sheet.scrollTop = 0;
   // Keep the word in view above the sheet.
