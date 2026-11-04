@@ -11,6 +11,19 @@ a non-commercial license are marked so in NOTICE.
       author for a license, or wait.
 - [x] **Non-commercial resources** surveyed: see Possible additions below.
 
+## Picked to add (2026-11-03)
+
+Round 1 (background jobs, running): UBS Hebrew and Greek dictionaries, Jastrow, Klein (LEXICON); NJPS, NET, Brenton,
+eBible EMTV / Wycliffe (translations); Ibn Ezra, Rashi, Ramban (commentaries); HOTTP, Dead Sea Scrolls, Miqra / Minchat
+Shai, Sinaiticus, TCENT, IGNTP (apparatus); Targums Onkelos and Jonathan (a new ANCIENT VERSIONS group);
+unfoldingWord Hebrew and Greek grammars (GRAMMAR); Shmuelof's recorded Tanakh (a voice for reading aloud).
+
+Round 2 (after round 1):
+- [ ] Syntax: ETCBC BHSA and add-ons (phono, parallels, valence), PROIEL treebank, OpenText.org, OpenGNT - a way to
+      show clause and phrase structure.
+- [ ] Septuagint (Swete, tagged): a HEBREW / GREEK choice at the top of the ☰ menu - Hebrew: the OT in Hebrew; Greek:
+      the OT in the Septuagint and the NT.
+
 ## Possible additions (from the survey, 2026-11-03 - to pick from; nothing added until chosen)
 
 Non-commercial, no permission needed (each license quoted in the survey; NC parts to be marked in NOTICE):
