@@ -73,7 +73,7 @@ Needs permission (later): Willker's Textual Commentary on the Greek Gospels (fre
       terms allow), its copyright line shown, hidden when offline. Each API's limits (verses per request, requests per
       day, caching) read first.
 
-## Ask permission (once the app is polished)
+## Ask permission (once the app is polished - all at once, the user's plan; Claude drafts the requests)
 
 - [ ] **CATSS LXX morphology** (Rahlfs, tagged) - CCAT / the Kraft-Tov team.
 - [ ] **NET Bible** and its translators' notes - bible.org.
