@@ -13,6 +13,16 @@ Commentaries:
            KD 2.0 (zCom4, KJV versification; text from Wikisource). A comment on a range of verses is stored once.
   vincent  Vincent's Word Studies in the New Testament (1887-1900; public domain): the MySword module (vws, 1.2.1,
            made from theWord's), which states no licence of its own - the work itself is public domain.
+  rwp      Robertson's Word Pictures in the New Testament (1930-33): CrossWire's SWORD module RWP 2.0 (zCom, OSIS;
+           from www.bf.org). Volumes 1-4 public domain; 5-6 (John, Hebrews, the General Epistles, Revelation) (c)
+           Broadman Press, renewed 1960, used by permission - the module's licence: "Copyrighted; Free non-commercial
+           distribution".
+  lightfoot  John Lightfoot, A Commentary on the New Testament from the Talmud and Hebraica (Horae Hebraicae et
+           Talmudicae, 1658-74; public domain), the Gospels: CrossWire's SWORD module Lightfoot 1.0
+           (zCom, ThML; from philologos.org).
+  jbl_col  J. B. Lightfoot, St Paul's Epistles to the Colossians and to Philemon (1875; public domain): Project
+           Gutenberg's HTML (eBook 50857, pinned in notes_pins.json) - its notes on the verses, the paraphrase too;
+           the introductions and dissertations, the Greek text and its readings left out.
   rashi, ibnezra, ramban  Rashi (public domain / CC BY), Ibn Ezra (CC BY-NC) and Ramban (CC BY) in English, from
            Sefaria: notes_sefaria.py.
 Apparatus:
@@ -46,6 +56,9 @@ Syntax (kind 'syntax'): diagram_ot, diagram_nt Sentence diagram - MACULA Hebrew'
 
 Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Minchat
   Shai's Ruth, Esther, Ecclesiastes, Song of Songs and Lamentations (not on Sefaria).
+Not found clean and open (2026-11-03): Alford's Greek Testament, the Expositor's Greek Testament, Meyer, Bengel's
+  Gnomon, Westcott (John, Hebrews, the Epistles of John), J. B. Lightfoot's Galatians and Philippians - scans with raw
+  OCR, or copies whose terms forbid republishing (CCEL's Westcott Hebrews) or give none.
 
 Versification: every verse is stored as its source numbers it. The text is NRSV-numbered (build_db.py); KD follows the
 KJV's, the others English Bibles' (Psalm titles verse 0 where a source keeps them apart: en_tn's "front") - the same
@@ -98,6 +111,11 @@ FILES = [
      "ca3bdb6a04c0b717ee2faed71b432d58195db96f217f490ce6f7d9c36a2876f7"),
     # SWORD's own KJV versification (chapters per book, verses per chapter): where each verse sits in KD's index.
     ("kd", "canon.h", "https://www.crosswire.org/svn/sword/!svn/bc/3918/trunk/include/canon.h", None),
+    ("rwp", "RWP.zip", "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/RWP.zip",
+     "f036fbb0155840da5d18444130acea493538ca375d1ff1d163627d5010691cb5"),
+    ("lightfoot", "Lightfoot.zip", "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/Lightfoot.zip",
+     "bd33d7ca67cc4a829125e16282a6cd9898d41d13ec40f1e362692abbaa5f7d97"),
+    ("jbl_col", "pg50857-h.zip", "https://www.gutenberg.org/cache/epub/50857/pg50857-h.zip", "pin"),
     ("vincent", "vws.cmt.mybible.gz", "https://mysword-bible.info/download/getfile.php?file=vws.cmt.mybible.gz",
      "e7a880d292a51baf78c671be91cab73cea423506c1a75453e301e0bab58ac4eb"),
 ]
@@ -141,6 +159,16 @@ SOURCES = [
      "Keil & Delitzsch, Biblical Commentary on the Old Testament: public domain (CrossWire's SWORD module, from Wikisource)."),
     ("vincent", "commentary", "Vincent's Word Studies (1887)", "NT",
      "Marvin R. Vincent, Word Studies in the New Testament: public domain (the MySword module)."),
+    ("rwp", "commentary", "Robertson's Word Pictures (1930)", "NT",
+     "A. T. Robertson, Word Pictures in the New Testament (1930-33): volumes 1-4 public domain; volumes 5-6 (John, "
+     "Hebrews, the General Epistles, Revelation) (c) 1932, 1933, renewed 1960 Broadman Press, used by permission - "
+     "free non-commercial distribution (CrossWire's SWORD module RWP 2.0, from www.bf.org)."),
+    ("lightfoot", "commentary", "John Lightfoot, Talmud and Hebraica (1658)", "NT",
+     "John Lightfoot, A Commentary on the New Testament from the Talmud and Hebraica (1658-74), on the Gospels: "
+     "public domain (CrossWire's SWORD module Lightfoot 1.0, from philologos.org)."),
+    ("jbl_col", "commentary", "J. B. Lightfoot, Colossians and Philemon (1875)", "NT",
+     "J. B. Lightfoot, St Paul's Epistles to the Colossians and to Philemon (Macmillan, 1875): public domain "
+     "(Project Gutenberg's transcription, eBook 50857; its notes only, the Greek text and readings left out)."),
     ("rashi", "commentary", "Rashi", "OT",
      "Rashi (Sefaria): on the Torah, M. Rosenbaum and A. M. Silbermann's translation (1929-34), public domain; on "
      "the Prophets and Writings, The Judaica Press Complete Tanach with Rashi, tr. A. J. Rosenberg, or Metsudah "
@@ -512,25 +540,59 @@ def kjv_versification():
     return out
 
 
-def kd_rows():
-    """KD's zCom4 module (OT only): ot.bzv indexes every verse slot - 12 bytes each, block / offset / size - in the
-    KJV's order (the testament's two headings, then per book its heading, per chapter its heading and its verses);
-    ot.bzs gives each zlib block's place in ot.bzz. Verses sharing one comment point at the same bytes: stored once,
-    as a range. A comment's own leading reference ("Gen 1:2-5") is dropped: the panel shows the range."""
-    with zipfile.ZipFile(DL / "kd" / "KD.zip") as z:
-        base = "modules/comments/zcom4/kd/"
-        bzs, bzv, bzz = (z.read(base + "ot." + x) for x in ("bzs", "bzv", "bzz"))
+def sword_rows(zip_path, base, testament, rule, encoding="utf-8"):
+    """A CrossWire SWORD commentary module's verses, one testament ('ot' / 'nt'): (book, start, end, 0, '', body)
+    each. Its index (<testament>.?zv: zCom4's 12 bytes a verse slot - block / offset / size -, zCom's 10, its size two
+    bytes) holds every slot in the KJV's order (the testament's two headings, then per book its heading, per chapter
+    its heading and its verses); <testament>.?zs gives each zlib block's place in .?zz. Only verse slots are read (book
+    and chapter introductions left out). Verses sharing one comment point at the same bytes: stored once, as a range.
+    A comment's own leading reference ("Gen 1:2-5") is dropped: the panel shows the range. rule: Clean's, for the
+    module's markup; <note> becomes "(...)" small."""
+    with zipfile.ZipFile(zip_path) as z:
+        names = {n.rsplit(".", 1)[1][-1]: n for n in z.namelist() if n.startswith(base + testament + ".")}
+        bzs, bzv, bzz = (z.read(names[x]) for x in "svz")
     blocks = [struct.unpack_from("<III", bzs, i) for i in range(0, len(bzs), 12)]
+    size = 12 if "/zcom4/" in base else 10
+    fmt = "<IIH" if size == 10 else "<III"
     cache = {}
 
     def text(key):
-        blk, off, size = key
+        blk, off, n = key
         if blk not in cache:
             cache.clear()
             o, cs, _ = blocks[blk]
             cache[blk] = zlib.decompress(bzz[o:o + cs])
-        return cache[blk][off:off + size].decode("utf-8")
+        return cache[blk][off:off + n].decode(encoding)
 
+    books = kjv_versification()
+    books = books[:39] if testament == "ot" else books[39:]
+    slots = []
+    i = 2
+    for b, verses in books:
+        i += 1                                                    # (The book's heading)
+        for c, n in enumerate(verses, 1):
+            i += 1                                                # (The chapter's heading)
+            for v in range(1, n + 1):
+                slots.append((b, ref(c, v), struct.unpack_from(fmt, bzv, i * size)))
+                i += 1
+    assert i * size == len(bzv), f"{zip_path.name}: its index isn't the KJV versification"
+    k = 0
+    while k < len(slots):
+        b, start, key = slots[k]
+        end = k
+        while end + 1 < len(slots) and slots[end + 1][2] == key and slots[end + 1][0] == b:
+            end += 1
+        if key[2]:
+            raw = re.sub(r"^\s*<reference[^>]*>[^<]*</reference>", "", text(key))
+            body = clean(raw.replace("<note", " <note").replace("</note>", "</note> "), rule)
+            body = body.replace("<small>", "<small>(").replace("</small>", ")</small>")
+            if body:
+                yield b, start, slots[end][1], 0, "", body
+        k = end + 1
+
+
+def kd_rows():
+    """KD's zCom4 module (OSIS; OT only)."""
     def rule(tag, a):
         t = a.get("type", "")
         if tag == "hi":
@@ -546,30 +608,51 @@ def kd_rows():
         if tag in ("chapter", "milestone"):
             return "drop"
         return None
+    return sword_rows(DL / "kd" / "KD.zip", "modules/comments/zcom4/kd/", "ot", rule)
 
-    slots = []
-    i = 2
-    for b, verses in kjv_versification()[:39]:
-        i += 1                                                    # (The book's heading)
-        for c, n in enumerate(verses, 1):
-            i += 1                                                # (The chapter's heading)
-            for v in range(1, n + 1):
-                slots.append((b, ref(c, v), struct.unpack_from("<III", bzv, i * 12)))
-                i += 1
-    assert i * 12 == len(bzv), "KD: its index isn't the KJV versification"
-    k = 0
-    while k < len(slots):
-        b, start, key = slots[k]
-        end = k
-        while end + 1 < len(slots) and slots[end + 1][2] == key and slots[end + 1][0] == b:
-            end += 1
-        if key[2]:
-            raw = re.sub(r"^\s*<reference[^>]*>[^<]*</reference>", "", text(key))
-            body = clean(raw.replace("<note", " <note").replace("</note>", "</note> "), rule)
-            body = body.replace("<small>", "<small>(").replace("</small>", ")</small>")
-            if body:
-                yield b, start, slots[end][1], 0, "", body
-        k = end + 1
+
+def rwp_rows():
+    """Robertson's Word Pictures, CrossWire's RWP 2.0 (zCom, OSIS; NT): each comment's catchwords (the words it's
+    about) bold, its paragraphs (milestone divs) as paragraphs; its Greek unaccented, as the module has it."""
+    def rule(tag, a):
+        t = a.get("type", "")
+        if tag == "catchword":     # (HTMLParser lowercases tag names)
+            return "b"
+        if tag == "hi":
+            return "b" if t == "bold" else "i"
+        if tag == "title":
+            return "h"
+        if tag == "div" and t == "paragraph" or tag in ("l", "lg", "item"):
+            return "p"
+        if tag == "note":
+            return "small"
+        if tag in ("chapter", "milestone"):
+            return "drop"
+        return None
+    return sword_rows(DL / "rwp" / "RWP.zip", "modules/comments/zcom/rwp/", "nt", rule)
+
+
+def lightfoot_rows():
+    """John Lightfoot's Horae Hebraicae, CrossWire's Lightfoot 1.0 (zCom, ThML in Windows-1252; the Gospels -
+    Lightfoot's Acts, Romans and 1 Corinthians aren't in it). The philologos.org editor's own "please see" boxes (<blockquote>, links to
+    other books) and its decorative images are left out."""
+    def rule(tag, a):
+        if tag in ("p", "div"):
+            return "p"
+        if tag in ("i", "em"):
+            return "i"
+        if tag in ("b", "strong"):
+            return "b"
+        if tag == "br":
+            return "br"
+        if tag in ("table", "tr"):
+            return tag
+        if tag in ("td", "th"):
+            return "td"
+        if tag == "blockquote":
+            return "drop"
+        return None     # (Images too: nothing to keep)
+    return sword_rows(DL / "lightfoot" / "Lightfoot.zip", "modules/comments/zcom/lightfoot/", "nt", rule, "cp1252")
 
 
 def vincent_rows():
@@ -590,6 +673,50 @@ def vincent_rows():
     for k, b, c, v1, v2, body in rows:
         if 40 <= b <= 66:
             yield b, ref(c, v1), ref(c, max(v1, v2 or v1)), k, "", clean(body, rule)
+
+
+def jbl_col_rows():
+    """Lightfoot's Colossians and Philemon from Project Gutenberg's HTML: the commentary after each epistle's Greek
+    heading (ΠΡΟΣ ΚΟΛΑΣΣΑΕΙΣ, to the detached note on its readings; ΠΡΟΣ ΦΙΛΗΜΟΝΑ, to the Additions). Its notes
+    (<p class=c033 / c034 / c036>) follow the Greek text they're on; one starting with a verse number ("9.", "1, 2.",
+    "21–23.", "15 sq.") begins that verse's note (a range's first verse to its last), the lemma notes after it ("τὴν
+    ἐπίγνωσιν] ...") belong to it too. The chapter: the latest of the Greek text's verse anchors (id="II_1") seen for
+    that verse number - a note on i. 29 can follow text reaching into ii. Running heads, page numbers, the Greek
+    text, its readings and the page links (← →) are left out."""
+    with zipfile.ZipFile(DL / "jbl_col" / "pg50857-h.zip") as z:
+        page = z.read(next(n for n in z.namelist() if n.endswith(".html"))).decode("utf-8")
+    roman = {"I": 1, "II": 2, "III": 3, "IV": 4}
+
+    def rule(tag, a):
+        if tag in ("em", "cite"):
+            return "i"
+        if tag == "span" and a.get("class") == "pageno" or tag == "a" and a.get("href", "").startswith("#Page_"):
+            return "drop"
+        if tag == "sup":
+            return "small"
+        return None
+    for book, head, stop in ((51, "ΠΡΟΣ ΚΟΛΑΣΣΑΕΙΣ.</h2>", "On some Various Readings"),
+                             (57, "ΠΡΟΣ ΦΙΛΗΜΟΝΑ.</h2>", "ADDITIONS AND CORRECTIONS")):
+        at = page.index(head)
+        part = page[at:page.index(stop, at)]
+        seen, notes, cur = {}, [], None      # (seen: verse -> its chapter, as the anchors so far say)
+        for m in re.finditer(r'<a id="([IV]+)_(\d+)"></a>|<p class="(c03[346])">(.*?)</p>', part, re.S):
+            if m.group(1):
+                seen[int(m.group(2))] = roman[m.group(1)]
+                continue
+            body = clean(m.group(4), rule)
+            text = re.sub(r"<[^>]*>", "", body)
+            n = re.match(r"^<p>(\d+)(?:\s*(?:,|–|-)\s*(\d+))?(?:\.|\s+sq\.)\s*", body)
+            if n:
+                v1 = int(n.group(1))
+                v2 = int(n.group(2) or v1)
+                c = 1 if book == 57 else seen.get(v1, max(seen.values(), default=1))
+                cur = [ref(c, v1), ref(c, v2), []]
+                notes.append(cur)
+            if cur and text.strip():
+                cur[2].append(body)
+        for k, (start, end, body) in enumerate(notes):
+            yield book, start, end, k, "", "".join(body)
 
 
 # ---- Apparatus ----
@@ -926,6 +1053,7 @@ def build(main_db, book_codes, only=None):
     hebrew_verses(book_id)
     makers = {
         "tn": tn_rows, "tosn": tosn_rows, "kd": kd_rows, "vincent": vincent_rows,
+        "rwp": rwp_rows, "lightfoot": lightfoot_rows, "jbl_col": jbl_col_rows,
         "stepbible": lambda: [*tagnt_rows(book_id), *tahot_rows(book_id)], "sblgnt": sblgnt_rows,
     }
     text_v0 = set(main_db.execute("SELECT DISTINCT book, chapter FROM words WHERE verse = 0"))
