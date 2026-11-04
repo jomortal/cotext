@@ -193,6 +193,13 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 .pane .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
+/* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
+   and lines; the scroller's own padding 4px less, so nothing moves at rest. */
+@media (max-width: 699.98px) {
+:is(.sheet, .pane):not([hidden]) { padding-block: 4px; }
+:is(.sheet, .pane) > .panelScroll { padding-top: calc(var(--pad) - 4px); padding-bottom: calc(var(--pad) - 4px); }
+:is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 - 4px); }
+}
 .gInline .top, .gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
