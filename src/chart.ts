@@ -1,7 +1,7 @@
 // The Verb chart (☰ > Verb chart): one stem's forms (Hebrew) or one tense and voice's (Greek) in one column down the
 // page, a heading for each group and a row per form - Hebrew: perfect, imperfect, wayyiqtol and imperative (the 2nd
 // person's; none for the Pual and Hophal), each a row per person / gender / number, then the participles (and the
-// Qal's passive one) and the infinitives (picked by a row each for stem type, voice and form - one form, or all); Greek (picked by a row each for tense, voice and mood - one mood, or all):
+// Qal's passive one) and the infinitives (picked by a row each for the stem - the seven - and the form - one form, or all); Greek (picked by a row each for tense, voice and mood - one mood, or all):
 // indicative, subjunctive and imperative where the tense has them, a row per person and number, then the participle's nominative singulars and masculine genitive and the infinitive. Each cell its form, COTEXT's code and its meaning on "do" - a verb of the text's on its own English (paradigm.ts' englishOf).
 //
 // The verb picker fills it: "Pattern" (dotted squares), a model verb (the templates filled: paradigm.ts), the verbs of
@@ -200,28 +200,18 @@ const G_MOOD_NAMES: [string, string][] = [["", "All"], ["I", "Indicative"], ["S"
 /** Hebrew's pickers: a row for the stem's type (simple, intensive, causative), one for its voice (active, passive,
  *  reflexive) - the two naming one stem, each voice button with the stem it gives (Active - Qal) - and one for the form
  *  (All, or one). With a verb of the text, each its count of forms (a type's for all its stems). */
-const H_GRID: [string, string, (string | null)[]][] = [     // [type, its name, its stems' codes by voice: active, passive, reflexive]
-  ["S", "Simple", ["Q", "N", null]], ["I", "Intensive", ["P", "PU", "HT"]], ["C", "Causative", ["HI", "HO", null]]];
-const H_VOICES = ["Active", "Passive", "Reflexive"];
 const H_FORMS: [string, string][] = [["", "All"], ["P", "Perfect"], ["I", "Imperfect"], ["W", "Wayyiqtol"], ["IMP", "Imperative"], ["PTC", "Participle"], ["INF", "Infinitive"]];
-const stemAt = (code: string | null) => code ? HEBREW_STEMS.findIndex ((x) => x.code === code) : -1;
 /** The forms a stem has (its index): "" (all) always; the imperative not in the Pual and Hophal. */
 function formsOf (stemIdx: number): Record<string, boolean> {
   return { "": true, P: true, I: true, W: true, IMP: !! HEBREW_STEMS[stemIdx].IMP, PTC: true, INF: true };
 }
 function hebrewRows (st: { stem: number; mood: string }, counts: number[] | null): string {
-  const code = HEBREW_STEMS[st.stem].code;
-  const row = H_GRID.find ((r) => r[2].includes (code))!, voice = row[2].indexOf (code);
   const n = (k: number) => counts ? ` (${k.toLocaleString ()})` : "";
   const btn = (attr: string, v: string, label: string, on: boolean, off = false) =>
     `<button class="pill" data-${attr}="${v}" aria-pressed="${on}"${off ? " disabled" : ""}>${label}</button>`;
   const has = formsOf (st.stem);
-  return `<div class="src">Stem</div><div class="choices">${H_GRID.map (([k, name, codes]) =>
-      btn ("htype", k, name + n (codes.reduce ((a, c) => a + (c ? counts?.[stemAt (c)] ?? 0 : 0), 0)), row[0] === k)).join ("")}</div>
-    <div class="src">Voice</div><div class="choices">${H_VOICES.map ((name, v) => {
-      const i = stemAt (row[2][v]);
-      return btn ("hvoice", String (v), i >= 0 ? `${name} - ${HEBREW_STEMS[i].name}${n (counts?.[i] ?? 0)}` : name, voice === v, i < 0);
-    }).join ("")}</div>
+  // (STEM: the seven, each its count of the verb's forms when it's a verb of the text's; FORM: one, or all)
+  return `<div class="src">Stem</div><div class="choices">${HEBREW_STEMS.map ((x, i) => btn ("hstem", String (i), x.name + n (counts?.[i] ?? 0), st.stem === i)).join ("")}</div>
     <div class="src">Form</div><div class="choices">${H_FORMS.map (([k, name]) => btn ("mood", k, name, st.mood === k, ! has[k])).join ("")}</div>`;
 }
 
@@ -285,13 +275,8 @@ async function render (body: HTMLElement, t: Testament) {
   };
   for (const b of body.querySelectorAll<HTMLElement> ("[data-tense]")) b.addEventListener ("click", () => pickTV (b.dataset.tense!, GREEK_TENSES[st.stem].voice));
   for (const b of body.querySelectorAll<HTMLElement> ("[data-voice]")) b.addEventListener ("click", () => pickTV (GREEK_TENSES[st.stem].tense, b.dataset.voice!));
-  // Hebrew: a type tapped keeps the voice where it can (else its active), a voice picks that stem of the type.
-  const hRow = () => H_GRID.find ((r) => r[2].includes (HEBREW_STEMS[st.stem].code))!;
-  for (const b of body.querySelectorAll<HTMLElement> ("[data-htype]")) b.addEventListener ("click", () => {
-    const row = H_GRID.find ((r) => r[0] === b.dataset.htype)!, v = hRow ()[2].indexOf (HEBREW_STEMS[st.stem].code);
-    st.stem = stemAt (row[2][v] ?? row[2][0]); render (body, t);
-  });
-  for (const b of body.querySelectorAll<HTMLElement> ("[data-hvoice]")) b.addEventListener ("click", () => { st.stem = stemAt (hRow ()[2][Number (b.dataset.hvoice)]); render (body, t); });
+  // Hebrew: a stem tapped shows it.
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-hstem]")) b.addEventListener ("click", () => { st.stem = Number (b.dataset.hstem); render (body, t); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-mood]")) b.addEventListener ("click", () => { st.mood = b.dataset.mood!; render (body, t); });
   verbPick.addEventListener ("change", async () => {
     const v = verbPick.value;
