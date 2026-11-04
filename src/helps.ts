@@ -179,7 +179,7 @@ function updateMenu () {
   slider.value = String (Math.ceil (n / 20));
   const pct = coverage (n) * 100, inWhat = s.scope === "book" ? book.name : "the " + book.testament;
   freqOut.innerHTML = n === 0 ? "Helps for every word" : n >= all ? "No helps"
-    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}`;
+    : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words - <b>${pct < 99.95 ? pct.toFixed (1) : "99.9"}%</b> of the words in ${inWhat}, each occurring <b>${counts ().sorted[n - 1].toLocaleString ()}+</b> times`;     // (The last hidden word's count)
 }
 
 optionsBtn.addEventListener ("click", () => {
