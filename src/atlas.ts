@@ -4,9 +4,10 @@
 //   is (grammar.ts' showOther), the place marked and named, the other sites proposed for it as hollow points, how sure
 //   the identification is (OpenBible's score: the share of current scholarship behind the site) and the others with
 //   theirs (wordMap).
-// - BY PASSAGE: "Atlas" in the notes' picker (notes.ts, its own MAPS group): the places named in the verses the notes
-//   show (narrow the verse, wide the chapter), each a point with its name, listed under the map with the verses naming
-//   it - a place tapped (on the map or in the list) picked out on both, a verse tapped going there (passageMap).
+// - BY PASSAGE: "Atlas" in the notes' picker (notes.ts, its own MAPS group): every place the book names, small and
+//   faint, and over them the places named in the verses the notes show (narrow the verse, wide the chapter), each a
+//   full point with its name, the map fitted to them; those listed under the map with the verses naming them - a place
+//   tapped (on the map or in the list) picked out on both, a verse tapped going there (passageMap).
 // - BASE MAPS: Natural Earth, Ancient World (AWMC) and Roman Empire (DARE), picked under the map (BASE MAP, kept on
 //   the device; every map shown follows it), each its own file downloaded the first time it's shown and kept (db.ts'
 //   openNotesDb), its credit under the map. The places' file, data/notes/atlas.db, is the main database's note_sources
@@ -16,7 +17,7 @@
 //   dragged to pan, pinched or wheeled to zoom, kept within the files' box. Each base map's shapes come at four levels of
 //   detail (atlas.py's LEVELS): the coarsest finer than a screen pixel is drawn, never more points than the screen shows;
 //   each level's paths built once (Path2D) and redrawn under a transform as it moves. Names are drawn where they fit, the
-//   picked place's first. Colors from style.css' tokens (--map-*, the accent; the provinces in the verb colors).
+//   picked place's first, the book's faint places' last. Colors from style.css' tokens (--map-*, the accent; the provinces in the verb colors).
 
 import { openNotesDb, type Db, type Row } from "./db";
 
@@ -111,6 +112,12 @@ export function passageMap (main: Db) {
   const list = el ("div", "atlasList");
   box.append (view.el, list, ...view.foot);
   let book = 0, chapter = 0;
+  const books = new Map<number, Promise<Place[]>> ();     // (Each book's places, read once: the faint points)
+  const ofBook = (db: Db, b: number) => {
+    if (! books.has (b)) books.set (b, db.all (`SELECT DISTINCT p.* FROM words w JOIN places p ON p.id = w.place
+                                                 WHERE w.book = ? AND p.lon IS NOT NULL`, [b]).then ((r) => r.map (asPlace)));
+    return books.get (b)!;
+  };
   const rows = new Map<string, HTMLElement> ();
   view.onPick ((id) => { for (const [k, r] of rows) r.classList.toggle ("on", k === id); rows.get (id)?.scrollIntoView ({ block: "nearest" }); });
   async function update (b: number, c: number, per: { v: number; where: number[][] }[], none: string): Promise<boolean> {
@@ -128,6 +135,8 @@ export function passageMap (main: Db) {
       }
     });
     const named = [...found.values ()];
+    // (The books the verses are read in - beside the Septuagint, the Hebrew's - each one's places)
+    const inBook = (await Promise.all ([...new Set (per.flatMap (({ where }) => where.map ((p) => p[0])))].map ((x) => ofBook (db, x)))).flat ();
     rows.clear ();
     list.replaceChildren (...named.map (({ place, verses }) => {
       const row = el ("div", "hit atlasRow");
@@ -145,14 +154,19 @@ export function passageMap (main: Db) {
       return row;
     }));
     if (! named.length) list.append (el ("p", "", none));
-    view.set (named.filter ((n) => n.place.lon !== null).map (({ place }) => ({ id: place.id, name: place.name, lon: place.lon!, lat: place.lat!, main: true })));
+    const pins: Pin[] = named.filter ((n) => n.place.lon !== null).map (({ place }) => ({ id: place.id, name: place.name, lon: place.lon!, lat: place.lat!, main: true }));
+    for (const p of inBook) if (! found.has (p.id) && ! pins.some ((x) => x.id === p.id))
+      pins.push ({ id: p.id, name: p.name, lon: p.lon!, lat: p.lat!, main: true, faint: true });
+    view.set (pins);
     return named.length > 0;
   }
   return { el: box, update };
 }
 
 //==== THE MAP ====
-interface Pin { id: string; name: string; lon: number; lat: number; main: boolean; }
+/** A point on the map: main a place (filled), else another site proposed for it (hollow); faint, a place of the book
+ *  not named in the verses shown (small, muted, named last). */
+interface Pin { id: string; name: string; lon: number; lat: number; main: boolean; faint?: boolean; }
 interface Base { shapes: Row[]; labels: Row[]; relief: { level: number; w: number; s: number; e: number; n: number; img: HTMLImageElement }[];
                  paths: Map<string, Path2D | null>; }
 const bases = new Map<string, Promise<Base>> ();     // (Each base map, once read: shared by every map shown)
@@ -261,12 +275,14 @@ function makeMap () {
     cx = Math.max (BOX[0] * K, Math.min (BOX[2] * K, cx));
     cy = Math.max (-BOX[3], Math.min (-BOX[1], cy));
   }
-  /** The view fitted to the points, a fifth of the size again round them, at least SPAN degrees tall. */
+  /** The view fitted to the points (not the faint ones, unless there are only those), a fifth of the size again round
+   *  them, at least SPAN degrees tall. */
   function fit () {
     const { w, h } = size ();
     if (! w || ! h) return;
-    const xs = pins.map ((p) => p.lon * K), ys = pins.map ((p) => -p.lat);
-    if (! pins.length) { cx = 35 * K; cy = -32; scale = 0; clamp (); return; }
+    const strong = pins.filter ((p) => ! p.faint), pins_ = strong.length ? strong : pins;
+    const xs = pins_.map ((p) => p.lon * K), ys = pins_.map ((p) => -p.lat);
+    if (! pins_.length) { cx = 35 * K; cy = -32; scale = 0; clamp (); return; }
     const [x0, x1, y0, y1] = [Math.min (...xs), Math.max (...xs), Math.min (...ys), Math.max (...ys)];
     cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
     scale = Math.min (w / Math.max ((x1 - x0) * 1.4, SPAN * K * w / h), h / Math.max ((y1 - y0) * 1.4, SPAN));
@@ -353,17 +369,20 @@ function makeMap () {
     };
     const ui = token ("--ui");
     const at = pins.map ((p) => ({ p, xy: toScreen (p.lon, p.lat) }));
-    const order = [...at].sort ((a, c) => Number (c.p.id === picked) - Number (a.p.id === picked) || Number (c.p.main) - Number (a.p.main));
-    for (const { xy } of order) taken.push ([xy[0] - 5, xy[1] - 5, xy[0] + 5, xy[1] + 5]);
-    for (const { p, xy } of at) {
+    const rank = (p: Pin) => (p.id === picked ? 3 : 0) + (p.faint ? 0 : p.main ? 2 : 1);
+    const order = [...at].sort ((a, c) => rank (c.p) - rank (a.p));
+    for (const { p, xy } of order) if (! p.faint) taken.push ([xy[0] - 5, xy[1] - 5, xy[0] + 5, xy[1] + 5]);
+    for (const { p, xy } of [...order].reverse ()) {     // (The faint first, so the verses' points sit over them)
       ctx.beginPath ();
-      ctx.arc (xy[0], xy[1], p.id === picked ? 6 : p.main ? 4.5 : 4, 0, 2 * Math.PI);
-      ctx.lineWidth = 2;
-      if (p.main) { ctx.fillStyle = token ("--accent"); ctx.strokeStyle = token ("--bg"); ctx.fill (); ctx.stroke (); }
+      ctx.arc (xy[0], xy[1], p.id === picked ? 6 : p.faint ? 3 : p.main ? 4.5 : 4, 0, 2 * Math.PI);
+      ctx.lineWidth = p.faint ? 1 : 2;
+      if (p.faint && p.id !== picked) { ctx.fillStyle = token ("--soft"); ctx.strokeStyle = token ("--bg"); ctx.fill (); ctx.stroke (); }
+      else if (p.main) { ctx.fillStyle = token ("--accent"); ctx.strokeStyle = token ("--bg"); ctx.fill (); ctx.stroke (); }
       else { ctx.strokeStyle = token ("--accent"); ctx.stroke (); }
     }
     for (const { p, xy } of order) {     // (Right of its point, else left of it)
-      const font = `${p.id === picked ? 600 : 400} 12px ${ui}`, color = p.main ? token ("--fg") : token ("--soft");
+      const font = `${p.id === picked ? 600 : 400} ${p.faint && p.id !== picked ? 11 : 12}px ${ui}`;
+      const color = p.main && ! (p.faint && p.id !== picked) ? token ("--fg") : token ("--soft");
       ctx.font = font;
       label (p.name, xy[0] + 8, xy[1], color, font) || label (p.name, xy[0] - 8 - ctx.measureText (p.name).width, xy[1], color, font);
     }
