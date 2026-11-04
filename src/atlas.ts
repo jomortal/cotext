@@ -277,7 +277,7 @@ function makeMap () {
   // ---- Drawing ----
   let frame = 0;
   const draw = () => { if (! frame) frame = requestAnimationFrame (() => { frame = 0; paint (); }); };
-  const css = getComputedStyle (document.documentElement);
+  const css = getComputedStyle (wrap);     // (The map's own tokens: light in either mode - style.css' .atlasMap)
   const token = (name: string) => css.getPropertyValue (name).trim ();
   function paint () {
     const dpr = devicePixelRatio || 1, { w, h } = size ();
