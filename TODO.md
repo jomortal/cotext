@@ -33,7 +33,8 @@ Open licenses (CC BY / BY-SA / public domain), also not yet in:
 - [ ] Sefaria: Miqra according to the Masorah, Minchat Shai, Targums Onkelos and Jonathan with Etheridge's English, Rashi (Judaica Press / Metsudah, CC BY), Ramban (Chavel, CC BY), Jastrow
 - [ ] NET Bible text (quotable with credit, no permission) - a translation
 - [ ] OpenText.org NT clause annotation (CC BY-SA 4.0); OpenGNT clause-by-clause English (check its license)
-- [ ] NT text-critical: IGNTP transcriptions (CC BY), the Text-Critical English NT, Greek with manuscript notes
+- [ ] NT text-critical: the Text-Critical English NT (Boyd 2022, CC BY 4.0 - footnotes on the editions' differences: the nearest open thing to Metzger; changed, it can't keep its name), IGNTP transcriptions (CC BY), Greek with manuscript notes
+- (Westcott & Hort's Notes on Select Readings, 1882: public domain, but no clean text - Wikisource has the Introduction, not the Appendix)
 - [ ] Tagged Septuagint: LXX-Swete-1930 (Tauber's morphology, GPL-3.0); Brenton's English (public domain)
 - [ ] Rabbi Dan Be'eri's Hebrew Tanakh audio (CC BY-SA; about a third missing)
 - [ ] unfoldingWord Hebrew and Greek grammars (CC BY-SA; license not checked)
@@ -41,7 +42,7 @@ Open licenses (CC BY / BY-SA / public domain), also not yet in:
 - [ ] Klein's Etymological Dictionary (CC BY-NC, Sefaria) - an etymology note beside BDB
 - (Not available as clean text: Gesenius' Hebrew and Chaldee Lexicon (Tregelles) - OCR in progress at machshev/gesenius-lexicon; Davidson's Analytical Lexicon - scans only)
 
-Needs permission (later): CATSS LXX morphology and its Hebrew-Greek alignment, NET notes, Analytic Septuagint, NETS, CAL Targum data; the Lexham English Bible's license has conditions.
+Needs permission (later): Willker's Textual Commentary on the Greek Gospels (free PDFs, a Metzger-like verse-by-verse commentary), CATSS LXX morphology and its Hebrew-Greek alignment, NET notes, Analytic Septuagint, NETS, CAL Targum data; the Lexham English Bible's license has conditions.
 
 ## Smaller downloads (back burner: not yet)
 
