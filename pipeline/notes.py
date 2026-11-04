@@ -1,5 +1,5 @@
-"""The notes panel's sources: free commentaries, text-critical apparatuses and English translations, each its own
-database file, synced to the verse being read (src/notes.ts).
+"""The notes panel's sources: free commentaries, text-critical apparatuses, English translations and the ancient
+versions, each its own database file, synced to the verse being read (src/notes.ts).
 
 Each source is fetched once into pipeline/downloads/notes/<id>/ (pinned: a release tag or commit in the URL, and the
 file's SHA-256 checked) and built into public/data/notes/<id>.db, read by the app only once the reader picks it - so
@@ -13,6 +13,8 @@ Commentaries:
            KD 2.0 (zCom4, KJV versification; text from Wikisource). A comment on a range of verses is stored once.
   vincent  Vincent's Word Studies in the New Testament (1887-1900; public domain): the MySword module (vws, 1.2.1,
            made from theWord's), which states no licence of its own - the work itself is public domain.
+  rashi, ibnezra, ramban  Rashi (public domain / CC BY), Ibn Ezra (CC BY-NC) and Ramban (CC BY) in English, from
+           Sefaria: notes_sefaria.py.
 Apparatus:
   stepbible  STEPBible's TAGNT and TAHOT (CC BY 4.0; already in downloads/ for the text): NT - TAGNT's variant notes,
            its words not in every edition (NA28, NA27, Tyndale House, SBL, Westcott-Hort, Tregelles, TR, Byzantine) and
@@ -20,23 +22,42 @@ Apparatus:
            restored or added from the LXX.
   sblgnt   The SBLGNT apparatus (Holmes 2010; LogosBible/SBLGNT, CC BY 4.0): each variation unit as printed, the
            SBLGNT's reading and its editions ] the other reading and its editions.
+  hottp, dss, sinaiticus, igntp, bezae  The UBS's HOTTP report (CC BY-SA 4.0), the biblical Dead Sea Scrolls (CC
+           BY-NC 4.0), Codex Sinaiticus (CC BY-NC-SA 3.0), the IGNTP's manuscripts of John and Paul (CC BY 4.0) and
+           Codex Bezae (CC BY-NC-SA 3.0): notes_mss.py.
+  mam, minchatshai  Miqra according to the Masorah (CC BY-SA; its differences from the text marked) and Minchat
+           Shai (public domain), from Sefaria: notes_sefaria.py.
+  tcent    The Text-Critical English New Testament (Robert Adam Boyd 2022, eBible.org's USFM; CC BY 4.0): its
+           footnotes, verbatim (the licence lets it keep its name only unchanged), on the verse each names.
 Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): web World English Bible, bsb Berean
   Standard Bible, kjv King James Version (1769), asv American Standard Version (1901), ylt Young's Literal
-  Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0).
-  Footnotes, headings and Strong's tags left out (usfm_rows).
+  Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0), net
+  NET Bible (Biblical Studies Press: quoted for non-commercial use without its notes, each verse followed by "(NET)"
+  linked to netbible.org, as its terms ask), emtv English Majority Text Version (NT) and wyc Wycliffe in modern
+  spelling (CC BY-NC-ND 4.0: verbatim), brenton Brenton's Septuagint (public domain; lxx_rows maps its verses).
+  Footnotes, headings and Strong's tags left out (usfm_rows). From Sefaria (notes_sefaria.py): njps the NJPS Tanakh,
+  ct The Contemporary Torah, koren The Koren Jerusalem Bible (CC BY-NC).
+Ancient versions (kind 'version'): onkelos Targum Onkelos, tpj Targum Pseudo-Jonathan, tj Targum Jonathan on the
+  Prophets - Aramaic with an English translation under it where there is one (notes_sefaria.py; public domain).
+
+Left out: the IGNTP's transcriptions under CC BY-NC-SA (64 of John's and Paul's; only CC BY ones kept); Minchat
+  Shai's Ruth, Esther, Ecclesiastes, Song of Songs and Lamentations (not on Sefaria).
 
 Versification: every verse is stored as its source numbers it. The text is NRSV-numbered (build_db.py); KD follows the
 KJV's, the others English Bibles' (Psalm titles verse 0 where a source keeps them apart: en_tn's "front") - the same
 nearly everywhere, a verse or two off in the few places English Bibles divide differently. The translations are
-mapped to the text's numbers where they differ (ELSEWHERE; Psalm titles in usfm_rows).
+mapped to the text's numbers where they differ (ELSEWHERE; Psalm titles in usfm_rows). The Hebrew-numbered sources
+(Sefaria's, HOTTP, the Dead Sea Scrolls) are mapped by TAHOT's own Hebrew numbers (hebrew_verses), the Hebrew number
+shown above a note where it differs; Brenton's Septuagint by matching its verses' words (lxx_rows).
 
 Tables, in each source's file:
   notes   book (1-66, build_db's ids), start, end (chapter * 1000 + verse: the first and last verse it covers - a range
           note covers several, a cross-chapter one too), ord (its order among notes starting at the same verse),
-          quote (the original-language words a note is about, en_tn's; else ''), body (HTML: <p>, <b>, <i>, <br>,
-          <small> (a footnote), <table>/<tr>/<td>, <span class=he|grc> round Hebrew / Greek; nothing else)
+          quote (the original-language words a note is about, en_tn's; else ''), body (HTML: <p> - <p dir="rtl"> for
+          a Hebrew or Aramaic paragraph -, <b>, <i>, <br>, <small> (a footnote), <table>/<tr>/<td>, <span class=he|grc>
+          round Hebrew / Greek, <a href> (only the NET's link); nothing else)
 In the main database (cotext.db):
-  note_sources  id, kind ('commentary' / 'apparatus' / 'translation'), name (as the picker shows it), testaments ('OT', 'NT' or
+  note_sources  id, kind ('commentary' / 'apparatus' / 'translation' / 'version'), name (as the picker shows it), testaments ('OT', 'NT' or
           'OT NT'), credit (the line under the notes), file (data/notes/<id>.db), version (the file's hash: its URL
           and cache change with it), bytes
 """
@@ -45,10 +66,12 @@ import hashlib
 import html
 import html.parser
 import io
+import json
 import pathlib
 import re
 import sqlite3
 import struct
+import time
 import urllib.request
 import zipfile
 import zlib
@@ -80,14 +103,21 @@ SBLGNT_BOOKS = ["Matt", "Mark", "Luke", "John", "Acts", "Rom", "1Cor", "2Cor", "
 # The translations: eBible.org's USFM downloads (its URLs aren't versioned - the bytes pinned by hash, from 2026-11-02;
 # eBible regenerates its files now and then, and a new copy is checked by hand before its hash is changed here).
 TRANSLATIONS = {"web": "eng-web", "bsb": "engbsb", "kjv": "eng-kjv", "asv": "eng-asv", "ylt": "engylt",
-                "darby": "engDBY", "lsv": "englsv"}
+                "darby": "engDBY", "lsv": "englsv", "net": "engnet", "brenton": "eng-Brenton", "emtv": "engemtv",
+                "wyc": "engwyc2017", "tcent": "engtcent"}
 for _id, _sha in [("web", "05b0440bd8994dd4da7cc53dd8167a759ed7c09617e4a562c64eb9b3343589c8"),
                   ("bsb", "75ca91d5a5c69ca4cbdeabdb03ea1a458db20cf3966abe15d86df086acf7fbc4"),
                   ("kjv", "206085ace5494f7eb46975990c0734fd8354e5ecce4d12cc74ce6f1aa8efd129"),
                   ("asv", "00b7b6c76cb1eb67b22ca51bd5ac13c2df526c13e1c38e78b862a7a2367f7071"),
                   ("ylt", "c526b4e362fef13916a14765a7e331267f6a1227db58549fc61d3288a930a12b"),
                   ("darby", "ebdd506c5cb8c2dccb3e94f834e012123e538ef294556a981f323bd855ab332e"),
-                  ("lsv", "b5fd551d49086785430ca4d670e2914b53c63fd65cb84717b7b200466305861f")]:
+                  ("lsv", "b5fd551d49086785430ca4d670e2914b53c63fd65cb84717b7b200466305861f"),
+                  # (2026-11-03)
+                  ("net", "f6541e3790f9fc47ec77cb6cb574e85a0555db1c19ed1e7f588724a0eae606c1"),
+                  ("brenton", "9b1a4e09381885c658c1cc70ea56a64c125c85d8697a4f03cb6ad66a1bcd985c"),
+                  ("emtv", "6780f45154968eb3b51ead874dc6bad5f2e6a57b31c32041ff7c2ca32919b343"),
+                  ("wyc", "107912062138c2f17acc3866667602576ebe450ade78f9ec7a7605439b7ef55b"),
+                  ("tcent", "37d08ca5078734dcfeef943e81d31c29a5ccf02e27e98e0d2877dfa33ef192b9")]:
     FILES.append((_id, TRANSLATIONS[_id] + "_usfm.zip",
                   f"https://ebible.org/Scriptures/{TRANSLATIONS[_id]}_usfm.zip", _sha))
 for _b in SBLGNT_BOOKS:
@@ -106,10 +136,51 @@ SOURCES = [
      "Keil & Delitzsch, Biblical Commentary on the Old Testament: public domain (CrossWire's SWORD module, from Wikisource)."),
     ("vincent", "commentary", "Vincent's Word Studies (1887)", "NT",
      "Marvin R. Vincent, Word Studies in the New Testament: public domain (the MySword module)."),
+    ("rashi", "commentary", "Rashi", "OT",
+     "Rashi (Sefaria): on the Torah, M. Rosenbaum and A. M. Silbermann's translation (1929-34), public domain; on "
+     "the Prophets and Writings, The Judaica Press Complete Tanach with Rashi, tr. A. J. Rosenberg, or Metsudah "
+     "Publications' where it lacks a book, CC BY. Hebrew-numbered (the Hebrew's number shown where it differs)."),
+    ("ibnezra", "commentary", "Ibn Ezra on the Torah", "OT",
+     "Ibn Ezra's Commentary on the Pentateuch, tr. and annotated by H. Norman Strickman and Arthur M. Silver "
+     "(Menorah, 1988-2004); Sefaria, CC BY-NC - non-commercial use."),
+    ("ramban", "commentary", "Ramban on the Torah", "OT",
+     "Ramban (Nachmanides), Commentary on the Torah, tr. and annotated by Charles B. Chavel (Shilo, 1971-76); "
+     "Sefaria, CC BY."),
     ("stepbible", "apparatus", "Editions and variants (STEPBible)", "OT NT",
      "STEPBible Data (TAGNT, TAHOT), Tyndale House, Cambridge, CC BY 4.0."),
     ("sblgnt", "apparatus", "SBLGNT apparatus", "NT",
      "SBLGNT apparatus, Michael W. Holmes, ed. (Society of Biblical Literature and Logos Bible Software, 2010), CC BY 4.0."),
+    ("hottp", "apparatus", "HOTTP (UBS text project)", "OT",
+     "Preliminary and Interim Report on the Hebrew Old Testament Text Project, (c) United Bible Societies "
+     "1973-1980, 2003-2023, CC BY-SA 4.0 (github.com/ubsicap/ubs-open-license). Adapted: its English only, "
+     "reformatted. Ratings: A the reading quite certain, B some doubt, C considerable doubt, D a high degree of "
+     "doubt. Factors: what weighed in the decision (its introduction numbers them)."),
+    ("mam", "apparatus", "Miqra according to the Masorah", "OT",
+     "Miqra according to the Masorah (ed. Avi Kadish; Sefaria), CC BY-SA. Bold: its words that differ from this "
+     "text (letters and vowels; accents aside)."),
+    ("minchatshai", "apparatus", "Minchat Shai (Masoretic notes)", "OT",
+     "Yedidiah Norzi, Minchat Shai (1742): public domain (Sefaria). In Hebrew."),
+    ("dss", "apparatus", "Dead Sea Scrolls", "OT",
+     "The biblical Dead Sea Scrolls: Martin Abegg's transcriptions in ETCBC's dss (CACCHT: Jacobs, Naaijer, "
+     "Roorda), CC BY-NC 4.0 - non-commercial use. [ ] restored by modern editors; Hebrew-numbered, mapped to this "
+     "text's verses."),
+    ("tcent", "apparatus", "Text-Critical English NT footnotes", "NT",
+     "Text-Critical English New Testament, (c) 2022 Robert Adam Boyd, CC BY 4.0 (eBible.org): its footnotes, "
+     "verbatim. ¦ the other readings, with the editions that have them (NA Nestle-Aland, SBL, TH Tyndale House, WH "
+     "Westcott-Hort, CT all four; TR Textus Receptus, RP Robinson-Pierpont, HF Hodges-Farstad, PCK Pickering, ANT "
+     "Antoniades; MSS manuscripts) and the share of manuscripts with each."),
+    ("sinaiticus", "apparatus", "Codex Sinaiticus", "NT",
+     "Codex Sinaiticus: the Codex Sinaiticus Project's transcription (codexsinaiticus.org, v1.04, 2014), "
+     "CC BY-NC-SA 3.0 - non-commercial use. Adapted: the first hand's text, the correctors' readings in brackets; "
+     "[ ] supplied where the leaf is damaged."),
+    ("igntp", "apparatus", "Manuscripts (IGNTP)", "NT",
+     "International Greek New Testament Project transcriptions (iohannes.com, epistulae.org; Codex Bezae for "
+     "Cambridge University Library), CC BY 4.0. Adapted: each manuscript's text of the verse, manuscripts reading "
+     "alike together; John, Galatians, Ephesians, Philippians, and Codex Bezae's Gospels and Acts."),
+    ("bezae", "apparatus", "Codex Bezae", "NT",
+     "Codex Bezae, the Greek pages: the IGNTP's transcription for Cambridge University Library (v1.03, 2016), "
+     "CC BY-NC-SA 3.0 - non-commercial use. Adapted: the first hand's text, the correctors' readings in brackets; "
+     "[ ] supplied. The Gospels and Acts."),
     ("web", "translation", "World English Bible", "OT NT", "World English Bible: public domain (eBible.org)."),
     ("bsb", "translation", "Berean Standard Bible", "OT NT", "Berean Standard Bible: public domain (eBible.org)."),
     ("kjv", "translation", "King James Version (1769)", "OT NT", "King James Version: public domain (eBible.org)."),
@@ -120,6 +191,37 @@ SOURCES = [
     ("lsv", "translation", "Literal Standard Version", "OT NT",
      "Literal Standard Version, (c) 2020 Covenant Press, CC BY-SA 4.0 (lsvbible.com; eBible.org's copy). Changed: "
      "footnotes and headings left out, line breaks kept."),
+    ("net", "translation", "NET Bible", "OT NT",
+     "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by "
+     "Biblical Studies Press, L.L.C. http://netbible.com All rights reserved. Quoted for non-commercial use, "
+     "without its notes (eBible.org's copy)."),
+    ("njps", "translation", "Tanakh (NJPS, 1985)", "OT",
+     "Tanakh: The Holy Scriptures (NJPS), (c) 1985 The Jewish Publication Society; Sefaria, CC BY-NC - "
+     "non-commercial use. Hebrew-numbered (the Hebrew's number shown where it differs)."),
+    ("ct", "translation", "The Contemporary Torah (2006)", "OT",
+     "The Contemporary Torah, (c) 2006 The Jewish Publication Society; Sefaria, CC BY-NC - non-commercial use."),
+    ("koren", "translation", "The Koren Jerusalem Bible", "OT",
+     "The Koren Jerusalem Bible, (c) Koren Publishers Jerusalem; Sefaria, CC BY-NC - non-commercial use. "
+     "Hebrew-numbered (the Hebrew's number shown where it differs)."),
+    ("brenton", "translation", "Brenton's Septuagint (1851)", "OT",
+     "Sir Lancelot C. L. Brenton, The Septuagint Version of the Old Testament in English: public domain "
+     "(eBible.org). The Septuagint's verses on this text's where they correspond (matched by their words); its own "
+     "number shown where it differs, and verses it lacks left out."),
+    ("emtv", "translation", "English Majority Text Version", "NT",
+     "English Majority Text Version, (c) 2014 Dr. Paul W. Esposito, CC BY-NC-ND 4.0 - non-commercial use, "
+     "verbatim (eBible.org); footnotes and headings not shown."),
+    ("wyc", "translation", "Wycliffe (modern spelling)", "OT NT",
+     "Wycliffe's Bible with Modern Spelling, (c) 2001-2015 Terry Noble, CC BY-NC-ND 4.0 - non-commercial use, "
+     "verbatim (eBible.org); footnotes and headings not shown."),
+    ("onkelos", "version", "Targum Onkelos", "OT",
+     "Targum Onkelos (Sefaria): public domain. English (part of Genesis): J. W. Etheridge, The Targums of Onkelos "
+     "and Jonathan ben Uzziel on the Pentateuch (1862), public domain."),
+    ("tpj", "version", "Targum Pseudo-Jonathan", "OT",
+     "Targum Pseudo-Jonathan on the Torah (Sefaria's Targum Jonathan): public domain. English: J. W. Etheridge, "
+     "The Targums of Onkelos and Jonathan ben Uzziel on the Pentateuch (1862), public domain."),
+    ("tj", "version", "Targum Jonathan (Prophets)", "OT",
+     "Targum Jonathan on the Prophets (Mikraot Gedolot; Sefaria): public domain. English (Isaiah): The Chaldee "
+     "Paraphrase on the Prophet Isaiah (C. W. H. Pauli, London, 1871), public domain."),
 ]
 
 USFM = ["GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH", "EZR", "NEH",
@@ -138,21 +240,91 @@ def ref(c, v):
     return int(c) * 1000 + int(v)
 
 
+# ---- Hebrew verse numbers: the Hebrew-numbered sources mapped to the text's ----
+
+HEB_VERSES = {}     # (book, Hebrew chapter, verse) -> [the text's (chapter, verse)...], where they differ (hebrew_verses)
+
+
+def hebrew_verses(book_id):
+    """TAHOT gives a word's verse both ways where the Hebrew Bible numbers it otherwise (Psa.3.1(3.2): the text's
+    3:1 is the Hebrew's 3:2; a Psalm title, the Hebrew's verse 1, the text's verse 0): HEB_VERSES filled with every
+    Hebrew verse numbered otherwise - the text's verses its words are in, in order."""
+    import fetch
+    pairs = {}
+    for i in range(1, 5):
+        with open(fetch.DOWNLOADS / f"TAHOT{i}.txt", encoding="utf-8-sig") as f:
+            for line in f:
+                m = re.match(r"^(\w+)\.(\d+)\.(\d+)(?:\((\d+)\.(\d+)\))?#", line)
+                if m and m.group(1) in book_id:
+                    mine = (int(m.group(2)), int(m.group(3)))
+                    heb = (int(m.group(4)), int(m.group(5))) if m.group(4) else mine
+                    at = pairs.setdefault((book_id[m.group(1)], *heb), [])
+                    if mine not in at:
+                        at.append(mine)
+    HEB_VERSES.clear()
+    HEB_VERSES.update({k: v for k, v in pairs.items() if v != [k[1:]]})
+
+
+def hebrew_target(b, c, v):
+    """The text's verses a Hebrew-numbered verse is: [(chapter, verse)...]."""
+    return HEB_VERSES.get((b, c, v), [(c, v)])
+
+
+def hebrew_rows(b, c, v, k, body, quote=""):
+    """A note on a Hebrew-numbered verse as rows on the text's verses (a run of them a range), its Hebrew number
+    above it where the text's differs."""
+    at = hebrew_target(b, c, v)
+    label = "" if at == [(c, v)] else f"<p><small>({c}:{v} in the Hebrew)</small></p>"
+    runs = [[at[0]]]
+    for t in at[1:]:
+        if t[0] == runs[-1][-1][0] and t[1] == runs[-1][-1][1] + 1:
+            runs[-1].append(t)
+        else:
+            runs.append([t])
+    return [(b, ref(*r[0]), ref(*r[-1]), k, quote, label + body) for r in runs]
+
+
 # ---- Fetching ----
+
+PINS = HERE / "notes_pins.json"     # "<source>/<file>" -> SHA-256: the files pinned "pin" (download)
+
+
+def download(src, name, url, sha=None):
+    """One file of a source's, fetched once into downloads/notes/<src>/<name>: its bytes. sha: its SHA-256 - checked;
+    None: pinned by a commit in its URL; "pin": pinned in notes_pins.json - the first fetch records it, a later
+    one must match (Sefaria's API, whose URLs aren't versioned)."""
+    out = DL / src / name
+    if out.exists():
+        return out.read_bytes()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    print("downloading", src, name)
+    req = urllib.request.Request(url, headers={"User-Agent": "COTEXT-pipeline/0.1 (Bible study app build)"})
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=600) as r:
+                data = r.read()
+            break
+        except OSError:
+            if attempt == 3:
+                raise
+            time.sleep(5 * (attempt + 1))
+    got = hashlib.sha256(data).hexdigest()
+    if sha == "pin":
+        pins = json.loads(PINS.read_text()) if PINS.exists() else {}
+        key = f"{src}/{name}"
+        if key in pins and pins[key] != got:
+            raise SystemExit(f"{key}: not the pinned file (SHA-256 differs) - check the source, then update notes_pins.json")
+        pins[key] = got
+        PINS.write_text(json.dumps(pins, indent=0, sort_keys=True, ensure_ascii=False) + "\n")
+    elif sha and got != sha:
+        raise SystemExit(f"{name}: not the pinned file (SHA-256 differs) - check the source, then update notes.py")
+    out.write_bytes(data)
+    return data
+
 
 def fetch():
     for src, name, url, sha in FILES:
-        out = DL / src / name
-        if out.exists():
-            continue
-        out.parent.mkdir(parents=True, exist_ok=True)
-        print("downloading", src, name)
-        req = urllib.request.Request(url, headers={"User-Agent": "COTEXT-pipeline/0.1 (Bible study app build)"})
-        with urllib.request.urlopen(req, timeout=600) as r:
-            data = r.read()
-        if sha and hashlib.sha256(data).hexdigest() != sha:
-            raise SystemExit(f"{name}: not the pinned file (SHA-256 differs) - check the source, then update notes.py")
-        out.write_bytes(data)
+        download(src, name, url, sha)
 
 
 # ---- HTML: every source's markup reduced to the same few tags ----
@@ -539,12 +711,13 @@ USFM_SKIP = re.compile(r"^\\(id|ide|h|toc\d|mt\d?|ms\d?|mr|s\d?|sr|r|sp|cl|cp|qa
 LINE = re.compile(r"^\\(q\d?|qc|qr|qm\d?|li\d?|pi\d?|p|m|mi|nb|pc|pmo|b)\b\s*")
 
 
-def usfm_rows(src_id, text_v0):
+def usfm_rows(src_id, text_v0, after=""):
     """One translation's USFM books -> a row per verse, its text: footnotes, cross-references, headings and word tags
     left out; a poetry line or paragraph inside a verse a <br>; words supplied by the translators (\\add: the KJV's
     italics) and \\it in italics, \\bd bold. A Psalm title (\\d) is verse 0, as the text numbers it; where the
     translation runs its title into verse 1 (Young's, the LSV), that verse is shown on verse 0 too (text_v0: the
-    text's (book, chapter) with a verse 0). A combined verse (\\v 15-16) is a range."""
+    text's (book, chapter) with a verse 0). A combined verse (\\v 15-16) is a range. after: HTML put after each
+    verse's text (the NET's "(NET)", linked as its terms ask)."""
     out = {}
     with zipfile.ZipFile(DL / src_id / (TRANSLATIONS[src_id] + "_usfm.zip")) as z:
         for name in z.namelist():
@@ -588,7 +761,7 @@ def usfm_rows(src_id, text_v0):
         body = re.sub(r"^(<br>)+|(<br>)+$", "", body)
         if body:
             start = 0 if v1 == 1 and (b, c) in text_v0 and (b, c, 0, 0) not in out else v1
-            rows.append((b, ref(c, start), ref(c, v2), 0, "", f"<p>{body}</p>"))
+            rows.append((b, ref(c, start), ref(c, v2), 0, "", f"<p>{body}{after}</p>"))
     have = {(r[0], r[1]): r for r in rows if r[1] == r[2]}
     for (b, c, v), (c2, v2) in ELSEWHERE.items():
         if (b, ref(c, v)) not in have and (r := have.get((b, ref(c2, v2)))):
@@ -616,6 +789,93 @@ def usfm_text(s):
     return s.replace(" || ", "<br>").replace("||", "<br>")
 
 
+STOP = set("the and of to in that for with unto upon his her him them they their thee thou thy shall will was were "
+           "is be are not all from which this you your have has had but who when then said out into there by as".split())
+
+
+def words(body):
+    """A verse's content words, for matching one translation's verses with another's (lxx_rows)."""
+    plain = re.sub(r"<[^>]*>", " ", body).lower()
+    return {w for w in re.findall(r"[a-z]+", plain) if len(w) > 2 and w not in STOP}
+
+
+def lxx_rows(text_v0):
+    """Brenton's Septuagint on the text's (Hebrew-based, English-numbered) verses. The LXX numbers and orders much
+    of the Old Testament otherwise (the Psalms one off, Jeremiah 25-51 in another order, Exodus 35-40, 3 Kingdoms,
+    Proverbs 24-31, Esther's and Daniel's additions), so each verse of the text is matched to Brenton's by its words:
+    the KJV's verse (the text's numbers) against each of Brenton's in the same book, rare words weighing most -
+    Brenton's own number first when it matches about as well. A verse with no match good enough (a weighted
+    overlap of 0.3; the LXX lacks it, or words it otherwise) is left out. Brenton's number shown where it differs."""
+    import math
+    lxx = usfm_rows("brenton", set())
+    kjv = [r for r in usfm_rows("kjv", text_v0) if r[1] == r[2] and "in this translation)" not in r[5]]
+    out = []
+    for b in range(1, 40):
+        theirs = [(r, words(r[5])) for r in lxx if r[0] == b]
+        ours = [(r, words(r[5])) for r in kjv if r[0] == b]
+        if not theirs:
+            continue
+        docs = len(theirs) + len(ours)
+        df = {}
+        for _, ws in theirs + ours:
+            for w in ws:
+                df[w] = df.get(w, 0) + 1
+        idf = {w: math.log(docs / n) for w, n in df.items()}
+        index = {}
+        for i, (_, ws) in enumerate(theirs):
+            for w in ws:
+                index.setdefault(w, []).append(i)
+        weight = [sum(idf[w] for w in ws) for _, ws in theirs]
+        at = {r[1]: i for i, (r, _) in enumerate(theirs)}
+        for r, ws in ours:
+            shared = {}
+            for w in ws:
+                for i in index.get(w, ()):
+                    shared[i] = shared.get(i, 0) + idf[w]
+            mine = sum(idf[w] for w in ws)
+            score = {i: 2 * x / (mine + weight[i]) for i, x in shared.items() if mine + weight[i]}
+            if not score:
+                continue
+            best = max(score, key=score.get)
+            same = at.get(r[1])
+            if same is not None and score.get(same, 0) >= score[best] - 0.05:
+                best = same
+            if score[best] < 0.3:
+                continue
+            t = theirs[best][0]
+            c2, v2 = divmod(t[1], 1000)
+            label = "" if t[1] == r[1] else f"<p><small>({c2}:{v2} in this translation)</small></p>"
+            out.append((b, r[1], r[1], 0, "", label + t[5]))
+    return out
+
+
+def tcent_rows():
+    """The Text-Critical English NT's footnotes (USFM \\f ... \\f*), each on the verse its \\fr gives, verbatim: the
+    English words it's about (\\fq) bold, then its note - the other readings and the editions with them."""
+    rows = []
+    with zipfile.ZipFile(DL / "tcent" / "engtcent_usfm.zip") as z:
+        for name in z.namelist():
+            s = z.read(name).decode("utf-8-sig")
+            m = re.match(r"\\id (\w+)", s)
+            if not m or m.group(1) not in USFM:
+                continue
+            b = USFM.index(m.group(1)) + 1
+            for k, f in enumerate(re.finditer(r"\\f\s+\S+\s+(.*?)\\f\*", s, re.S)):
+                inner = f.group(1)
+                fr = re.match(r"\\fr\s+(\d+)[:.](\d+)\s*", inner)
+                if not fr:
+                    continue
+                parts = []
+                for mark, text in re.findall(r"\\(f[a-z]+)\*?\s*([^\\]*)", inner[fr.end():]):
+                    text = usfm_text(text).strip()
+                    if text:
+                        parts.append(f"<b>{text}</b>" if mark in ("fq", "fqa") else text)
+                body = " ".join(parts)
+                if body:
+                    rows.append((b, ref(fr.group(1), fr.group(2)), ref(fr.group(1), fr.group(2)), k, "", f"<p>{body}</p>"))
+    return rows
+
+
 # ---- Building ----
 
 def write(src_id, rows):
@@ -638,12 +898,17 @@ def write(src_id, rows):
     return path, len(rows)
 
 
-def build(main_db, book_codes):
-    """Builds every source's file and lists them in the main database's note_sources. book_codes: the text's book
-    codes in id order (Gen, Exo... - the STEPBible files' own)."""
+def build(main_db, book_codes, only=None):
+    """Builds every source's file and lists them in the main database's note_sources (made afresh). book_codes: the
+    text's book codes in id order (Gen, Exo... - the STEPBible files' own). only: the ids to build (the others'
+    files kept as they are, if built before); None - all."""
     fetch()
     OUT.mkdir(parents=True, exist_ok=True)
+    import notes_mss
+    import notes_sefaria
+    notes_mss.fetch()
     book_id = {code: i + 1 for i, code in enumerate(book_codes)}
+    hebrew_verses(book_id)
     makers = {
         "tn": tn_rows, "tosn": tosn_rows, "kd": kd_rows, "vincent": vincent_rows,
         "stepbible": lambda: [*tagnt_rows(book_id), *tahot_rows(book_id)], "sblgnt": sblgnt_rows,
@@ -651,23 +916,42 @@ def build(main_db, book_codes):
     text_v0 = set(main_db.execute("SELECT DISTINCT book, chapter FROM words WHERE verse = 0"))
     for t in TRANSLATIONS:
         makers[t] = lambda t=t: usfm_rows(t, text_v0)
+    makers["net"] = lambda: usfm_rows("net", text_v0, ' <a href="http://netbible.org">(NET)</a>')
+    makers["brenton"] = lambda: lxx_rows(text_v0)
+    makers["tcent"] = tcent_rows
+    for sid in notes_sefaria.SOURCES:
+        makers[sid] = lambda sid=sid: notes_sefaria.rows(sid, main_db)
+    makers.update({"hottp": notes_mss.hottp_rows, "dss": notes_mss.dss_rows, "sinaiticus": notes_mss.sinaiticus_rows,
+                   "igntp": notes_mss.igntp_rows, "bezae": notes_mss.bezae_rows})
+    counts, listed = {}, []
+    for sid, kind, name, testaments, credit in SOURCES:
+        if only and sid not in only and (OUT / f"{sid}.db").exists():
+            path, n = OUT / f"{sid}.db", None     # (Kept as built before)
+        else:
+            print("building", sid)
+            path, n = write(sid, makers[sid]())
+        data = path.read_bytes()
+        listed.append((sid, kind, name, testaments, credit, f"data/notes/{sid}.db",
+                       hashlib.sha256(data).hexdigest()[:12], len(data)))
+        counts[sid] = (n, len(data))
+    # (The list written last, in one go: the main database is written to only once every file is built)
+    main_db.execute("DROP TABLE IF EXISTS note_sources")
     main_db.execute("CREATE TABLE note_sources (id TEXT PRIMARY KEY, kind TEXT, name TEXT, testaments TEXT, credit TEXT,"
                     " file TEXT, version TEXT, bytes INTEGER)")
-    counts = {}
-    for sid, kind, name, testaments, credit in SOURCES:
-        path, n = write(sid, makers[sid]())
-        data = path.read_bytes()
-        main_db.execute("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)",
-                        (sid, kind, name, testaments, credit, f"data/notes/{sid}.db",
-                         hashlib.sha256(data).hexdigest()[:12], len(data)))
-        counts[sid] = (n, len(data))
+    main_db.executemany("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)", listed)
     return counts
 
 
 if __name__ == "__main__":
+    # python3 pipeline/notes.py [id...]: rebuilds the sources named (all if none) and the note_sources of the
+    # database already built (public/data/cotext.db), without rebuilding the rest of it.
     import sys
     sys.path.insert(0, str(HERE))
     import build_db
-    db = sqlite3.connect(":memory:")
-    for sid, (n, size) in build(db, [c for c, _ in build_db.BOOKS]).items():
-        print(f"{sid}: {n} notes, {size / 1e6:.1f} MB")
+    import notes     # (This module by its own name: notes_sefaria and notes_mss share its state)
+    db = sqlite3.connect(HERE.parent / "public" / "data" / "cotext.db")
+    with db:
+        counts = notes.build(db, [c for c, _ in build_db.BOOKS], set(sys.argv[1:]) or None)
+    db.close()
+    for sid, (n, size) in counts.items():
+        print(f"{sid}: {'kept' if n is None else f'{n} notes'}, {size / 1e6:.1f} MB")
