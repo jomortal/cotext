@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them), then "ISBE" where the word names a place or person the International Standard Bible Encyclopedia's archaeology and site articles are about. ✕ (or tapping the word again) hides it.
 // Two of them, each its own: #sheet for a word of the text read, above the notes panel, and a second (cloned from
 // #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
@@ -92,15 +92,20 @@ function makePanel (sheet: HTMLElement) {
     const p = mapPlace;
     if (p && mainDb) grammar.showOther (p.name, (body) => { wordMap (mainDb!, body, p); }, "Atlas" + (p.sub ? ` · ${p.sub}` : ""));
   });
-  // "Finds", last: the archaeology finds naming the word's person or place (dictionary.ts reading finds.db,
-  // pipeline/finds.py) - the find, or the choice of them, over the word's info as Dictionary's articles are; shown only
-  // when the word's root names one.
-  const findsBtn = document.createElement ("button");
-  findsBtn.className = "pill"; findsBtn.textContent = "Finds"; findsBtn.hidden = true;
-  q ("speakRoot").after (chartBtn, searchBtn, dictBtn, mapBtn, findsBtn);
-  let dictFound: Found = { exact: [], subject: [] }, findsFound: Found = { exact: [], subject: [] };
+  // "Finds" and "ISBE", last: the other dictionaries' articles on the word's person or place (dictionary.ts) - the
+  // archaeology finds (finds.db, pipeline/finds.py), the ISBE's articles on archaeology and sites (isbe.db,
+  // pipeline/isbe.py) - the article, or the choice of them, over the word's info as Dictionary's are; each shown only
+  // when the word's root has one there.
+  const others = ([["finds", "Finds"], ["isbe", "ISBE"]] as const).map (([src, label]) => {
+    const btn = document.createElement ("button");
+    btn.className = "pill"; btn.textContent = label; btn.hidden = true;
+    const x = { src, btn, found: { exact: [], subject: [] } as Found };
+    btn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, x.found, grammar.showOther, src, label); });
+    return x;
+  });
+  q ("speakRoot").after (chartBtn, searchBtn, dictBtn, mapBtn, ...others.map ((x) => x.btn));
+  let dictFound: Found = { exact: [], subject: [] };
   dictBtn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, dictFound, grammar.showOther); });
-  findsBtn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, findsFound, grammar.showOther, "finds", "Finds"); });
   let searchFor: [string, string] | null = null;     // (Strong's, dictionary form)
   searchBtn.addEventListener ("click", () => { if (searchFor) searchRoot (...searchFor); });
   let chartFor: [string, string] | null = null;
@@ -308,12 +313,14 @@ function makePanel (sheet: HTMLElement) {
       dictFound = found; dictBtn.hidden = ! found.exact.length && ! found.subject.length;
       columns ();     // (A button more: the two-column test measured again)
     });
-    findsBtn.hidden = true; findsFound = { exact: [], subject: [] };
-    articlesFor (db, w.strong, "finds").then ((found) => {     // (The finds' file read - downloaded on the first word)
-      if (picked !== wordEl) return;
-      findsFound = found; findsBtn.hidden = ! found.exact.length;
-      columns ();
-    });
+    for (const x of others) {
+      x.btn.hidden = true; x.found = { exact: [], subject: [] };
+      articlesFor (db, w.strong, x.src).then ((found) => {     // (Its file read - downloaded on the first word)
+        if (picked !== wordEl) return;
+        x.found = found; x.btn.hidden = ! found.exact.length;
+        columns ();
+      });
+    }
     mapBtn.hidden = true; mapPlace = null;
     placeOf (db, [w.book, w.chapter, w.verse, w.word]).then ((p) => {     // (The atlas' file read - downloaded on the first word)
       if (picked !== wordEl) return;

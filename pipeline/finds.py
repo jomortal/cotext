@@ -404,22 +404,86 @@ def find_html(f, refs):
     return "".join(out)
 
 
-def build(main_db):
-    """Builds finds.db and its note_sources row (replaced). Returns (finds, verses linked, photos, lemmas)."""
-    tyndale_dict.download()     # (TIPNR)
+def last_verses(main_db):
+    """tyndale_dict's LAST (each chapter's last verse, for verse_spans and verses_in) filled from the main database."""
     tyndale_dict.LAST.clear()
     tyndale_dict.LAST.update(((b, c), v) for b, c, v in main_db.execute(
         "SELECT book, chapter, MAX(verse) FROM words WHERE book <= 66 GROUP BY book, chapter"))
-    finds = fetch_all()
+
+
+def namer(main_db, kinds=("person", "place")):
+    """A function (name, verses) -> the Strong's keys TIPNR writes the name with (any case; TIPNR's capitalized names
+    of the kinds given only: not its "other" names - a month, a deity, a book's "Chronicles" - nor the common words its
+    records list - Abel's "stone"): per language (Hebrew, Greek), the keys with a word in the verses given ({(book,
+    chapter * 1000 + verse)}); none, the one with the most words in the text. Also used by isbe.py."""
+    tyndale_dict.download()     # (TIPNR)
     names = {}
     for strong, (kind, ns) in tyndale_dict.tipnr().items():
-        if kind == "other":     # (A person or a place only: not a month, a deity, a book - "Chronicles")
-            continue
-        for n in ns:
-            if n[:1].isupper():     # (A name: TIPNR's records list some common words - Abel's "stone")
-                names.setdefault(n.lower(), set()).add(strong)
+        if kind in kinds:
+            for n in ns:
+                if n[:1].isupper():
+                    names.setdefault(n.lower(), set()).add(strong)
     count = dict(main_db.execute("SELECT strong, COUNT(*) FROM words WHERE book <= 66 GROUP BY strong"))
-    entries, lemmas, seen = [], {}, set()
+
+    def keys(name, verses):
+        found = names.get(name.strip().lower(), set())
+        if not found:
+            return []
+        here = set()
+        for b, cv in sorted(verses):
+            here.update(s for (s,) in main_db.execute("SELECT strong FROM words WHERE book = ? AND chapter = ? AND verse = ?",
+                                                      (b, cv // 1000, cv % 1000)))
+        out = []
+        for lang in "HG":
+            ks = [k for k in found if k.startswith(lang) and count.get(k)]
+            if ks:
+                out += [k for k in ks if k in here] or [max(ks, key=lambda k: count[k])]
+        return out
+    return keys
+
+
+def write(out, entries, lemmas, source, photos=None):
+    """A dictionary-kind file (tyndale_dict's tables, and photos when given) and its note_sources row (replaced). entries:
+    [(id, title, html, line, verses, spans)] in title order; lemmas: strong -> [ids]; photos: id -> (data URI, credit).
+    Returns its bytes. Also used by isbe.py."""
+    order = {a[0]: n for n, a in enumerate(entries)}
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_suffix(".tmp")
+    tmp.unlink(missing_ok=True)
+    db = sqlite3.connect(tmp)
+    db.executescript("""
+        PRAGMA page_size = 4096;
+        CREATE TABLE articles (id TEXT PRIMARY KEY, title TEXT, html TEXT, line TEXT, verses INTEGER) WITHOUT ROWID;
+        CREATE TABLE lemmas (strong TEXT PRIMARY KEY, ids TEXT, subject TEXT) WITHOUT ROWID;
+        CREATE TABLE refs (book INTEGER, start INTEGER, "end" INTEGER, id TEXT,
+                           PRIMARY KEY (book, start, "end", id)) WITHOUT ROWID;
+    """)
+    db.executemany("INSERT INTO articles VALUES (?,?,?,?,?)", [a[:5] for a in entries])
+    db.executemany("INSERT INTO lemmas VALUES (?,?,'')",
+                   [(s, " ".join(sorted(set(ids), key=order.get))) for s, ids in sorted(lemmas.items())])
+    db.executemany("INSERT OR IGNORE INTO refs VALUES (?,?,?,?)", [(b, st, e, a[0]) for a in entries for b, st, e in a[5]])
+    if photos is not None:
+        db.execute("CREATE TABLE photos (id TEXT PRIMARY KEY, src TEXT, credit TEXT) WITHOUT ROWID")
+        db.executemany("INSERT INTO photos VALUES (?,?,?)", [(i, *p) for i, p in sorted(photos.items())])
+    db.commit()
+    db.execute("VACUUM")
+    db.close()
+    tmp.replace(out)
+    return out.read_bytes()
+
+
+def register(main_db, source, file, data):
+    """A source's note_sources row (replaced): its file's path under public/ and version (its SHA-256's start)."""
+    main_db.execute("INSERT OR REPLACE INTO note_sources (id, kind, name, testaments, credit, file, version, bytes) "
+                    "VALUES (?,?,?,?,?,?,?,?)", (*source, file, hashlib.sha256(data).hexdigest()[:12], len(data)))
+
+
+def build(main_db):
+    """Builds finds.db and its note_sources row (replaced). Returns (finds, verses linked, photos, lemmas)."""
+    last_verses(main_db)
+    finds = fetch_all()
+    keys = namer(main_db)
+    entries, lemmas, photos, seen = [], {}, {}, set()
     for f in finds:
         fid = (f["article"]["title"] if f["article"] else f["name"]).replace(" ", "_")     # (As in its URL: lemmas' ids are space-separated)
         if fid in seen:
@@ -429,55 +493,23 @@ def build(main_db):
         refs = list(dict.fromkeys((osis, shown) for _, osis, shown in references(text)))
         spans = [sp for osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
         verses = tyndale_dict.verses_in(spans)
-        here = set()
-        for b, cv in sorted(verses):
-            here.update(s for (s,) in main_db.execute("SELECT strong FROM words WHERE book = ? AND chapter = ? AND verse = ?",
-                                                      (b, cv // 1000, cv % 1000)))
         cands = {w for w in re.findall(r"[A-Z][a-z]+", f["name"])}
         for text_, target in f["links"]:
             cands.update({text_, re.sub(r"\s*\(.*\)", "", target)})
         for n in cands:
-            keys = names.get(n.strip().lower(), set())
-            for lang in "HG":
-                ks = [k for k in keys if k.startswith(lang) and count.get(k)]
-                if not ks:
-                    continue
-                pick = [k for k in ks if k in here] or [max(ks, key=lambda k: count[k])]
-                for k in pick:
-                    lemmas.setdefault(k, []).append(fid)
+            for k in keys(n, verses):
+                lemmas.setdefault(k, []).append(fid)
         line = (f["bears"] or (f["article"]["lead"][0] if f["article"] and f["article"]["lead"] else ""))[:200]
-        entries.append((fid, f["name"], find_html(f, refs), line, len(verses), spans, f["photo"]))
+        entries.append((fid, f["name"], find_html(f, refs), line, len(verses), spans))
+        if f["photo"]:
+            photos[fid] = f["photo"]
     entries.sort(key=lambda a: a[1].lower())
-    order = {a[0]: n for n, a in enumerate(entries)}
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    tmp = OUT.with_suffix(".tmp")
-    tmp.unlink(missing_ok=True)
-    db = sqlite3.connect(tmp)
-    db.executescript("""
-        PRAGMA page_size = 4096;
-        CREATE TABLE articles (id TEXT PRIMARY KEY, title TEXT, html TEXT, line TEXT, verses INTEGER) WITHOUT ROWID;
-        CREATE TABLE lemmas (strong TEXT PRIMARY KEY, ids TEXT, subject TEXT) WITHOUT ROWID;
-        CREATE TABLE refs (book INTEGER, start INTEGER, "end" INTEGER, id TEXT,
-                           PRIMARY KEY (book, start, "end", id)) WITHOUT ROWID;
-        CREATE TABLE photos (id TEXT PRIMARY KEY, src TEXT, credit TEXT) WITHOUT ROWID;
-    """)
-    db.executemany("INSERT INTO articles VALUES (?,?,?,?,?)", [a[:5] for a in entries])
-    db.executemany("INSERT INTO lemmas VALUES (?,?,'')",
-                   [(s, " ".join(sorted(set(ids), key=order.get))) for s, ids in sorted(lemmas.items())])
-    db.executemany("INSERT OR IGNORE INTO refs VALUES (?,?,?,?)", [(b, st, e, a[0]) for a in entries for b, st, e in a[5]])
-    db.executemany("INSERT INTO photos VALUES (?,?,?)", [(a[0], *a[6]) for a in entries if a[6]])
-    db.commit()
-    db.execute("VACUUM")
-    db.close()
-    tmp.replace(OUT)
-    data = OUT.read_bytes()
-    main_db.execute("INSERT OR REPLACE INTO note_sources (id, kind, name, testaments, credit, file, version, bytes) "
-                    "VALUES (?,?,?,?,?,?,?,?)", (*SOURCE, "data/notes/finds.db", hashlib.sha256(data).hexdigest()[:12], len(data)))
+    data = write(OUT, entries, lemmas, SOURCE, photos)
+    register(main_db, SOURCE, "data/notes/finds.db", data)
     linked = len(tyndale_dict.verses_in([sp for a in entries for sp in a[5]]))
-    photos = sum(1 for a in entries if a[6])
-    print(f"finds: {len(entries)} finds, {linked} verses linked, {photos} photos, {len(lemmas)} lemmas, "
+    print(f"finds: {len(entries)} finds, {linked} verses linked, {len(photos)} photos, {len(lemmas)} lemmas, "
           f"{len(data) / 1e6:.2f} MB")
-    return len(entries), linked, photos, len(lemmas)
+    return len(entries), linked, len(photos), len(lemmas)
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ Tables:
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table; also the dictionary (kind 'dictionary',
             public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py; finds.db: the
-            Archaeology finds, made by finds.py) and the atlas (kind 'atlas', public/data/notes/atlas.db and its base
+            Archaeology finds, made by finds.py; isbe.db: the ISBE's archaeology and site articles, made by isbe.py) and the atlas (kind 'atlas', public/data/notes/atlas.db and its base
             maps' files, made by atlas.py)
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
             public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
@@ -67,6 +67,7 @@ import source_books  # noqa: E402
 import sefaria_lex  # noqa: E402
 import atlas  # noqa: E402
 import finds  # noqa: E402
+import isbe  # noqa: E402
 import tyndale_dict  # noqa: E402
 import ubs_lex  # noqa: E402
 
@@ -289,6 +290,7 @@ def build():
     tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The Dictionary: its own file, a note_sources row - after the lexicon and ubs_lex, which it matches)
     atlas.build(db)     # (The Atlas: its files, a note_sources row - after tyndale_dict, whose TIPNR it reads)
     finds.build(db)     # (The Archaeology finds: its file, a note_sources row - after tyndale_dict, whose TIPNR and verse spans it uses)
+    isbe.build(db)     # (The ISBE's archaeology and site articles: its file, a note_sources row - after finds, whose helpers it uses)
     source_books.add(db)     # (Each source's books, for the notes' picker: after every source is listed)
     db.executescript("""
         CREATE VIEW words_full AS

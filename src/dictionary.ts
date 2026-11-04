@@ -2,7 +2,8 @@
 // both ways and searchable - and every other source of its kind ('dictionary' in note_sources), read the same way from
 // a file of the same tables, each function taking the source's id (src, "tobd" by default): the Archaeology finds
 // (pipeline/finds.py: Wikipedia's inscribed finds, its word panel's button "Finds"), whose file also holds a photo
-// per find (photos: shown at an entry's right and over its text, credited under it).
+// per find (photos: shown at an entry's right and over its text, credited under it), and the ISBE's articles on
+// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE").
 // - BY WORD: the word's panel's "Dictionary" (panel.ts) - the articles on the tapped word's root, opened over the
 //   word's info as the Verb chart is (grammar.ts' showOther: titled, its ✕ back to the word). The articles matching
 //   the word itself first (a person, a place, a thing or a term: its gloss or name), then those of its subject (the
@@ -23,7 +24,8 @@
 import { openNotesDb, type Db, type Row } from "./db";
 
 // A source's name under an article's title (the note_sources name where it isn't here)
-const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia" };
+const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia",
+                                        isbe: "International Standard Bible Encyclopedia" };
 interface Opened { db: Db; name: string; credit: string; photos: boolean; }     // (photos: its file has a photos table)
 const files = new Map<string, Promise<Opened | null>> ();     // (Each source's file, once opened; null: none in this database)
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};

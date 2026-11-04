@@ -170,6 +170,13 @@ Archaeology finds (the word panel's Finds, the notes' and search's Archaeology f
     and license credited under it; reduced to 300 px JPEGs.
   - Names matched through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
 
+ISBE, archaeology and sites (the word panel's ISBE, the notes' and search's ISBE - public/data/notes/isbe.db,
+  pipeline/isbe.py):
+  - The International Standard Bible Encyclopedia (1915), James Orr, general editor - public domain; its text from
+    CrossWire's SWORD module ISBE 2.2 (crosswire.org, DistributionLicense=Public Domain). Its articles on places,
+    archaeology and inscriptions only, reduced to paragraphs, bold and italics; scripture references made links to
+    their verse (and indexed by verse); matched through STEPBible's TIPNR (CC BY 4.0) to the places and persons named.
+
 Atlas (the word panel's Map, the notes' Atlas - public/data/notes/atlas.db and atlas_<map>.db, pipeline/atlas.py):
   - Places: OpenBible.info's Bible Geocoding Data (Stephen Smith, 2021), licensed CC BY 4.0
     (https://creativecommons.org/licenses/by/4.0/; github.com/openbibleinfo/Bible-Geocoding-Data). Changes: each

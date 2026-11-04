@@ -18,6 +18,8 @@ a non-commercial license are marked so in NOTICE.
   - [x] **Archaeology finds** (Wikipedia's list of inscribed finds, CC BY-SA; photos from Wikimedia Commons): 68 finds,
         each its date, find spot, museum, writing, what it bears on, its article's lead and a photo (45); by passage
         (notes' Archaeology finds), by word (a word panel's Finds) and searchable.
+  - [x] **ISBE, archaeology and sites** (1915, public domain; CrossWire's clean TEI): 904 articles - 813 places, 91 on
+        archaeology and inscriptions - by passage (notes' ISBE), by word (a word panel's ISBE) and searchable.
   - [ ] ~~Barton, Archaeology and the Bible (1916)~~ - skipped: only scans and raw OCR (archive.org); no clean text.
 - [ ] Before the public beta: slim the resources down (the user's pick).
 
