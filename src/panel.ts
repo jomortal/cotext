@@ -94,9 +94,10 @@ function makePanel (sheet: HTMLElement) {
   const sheetScroll = document.createElement ("div");
   sheetScroll.className = "panelScroll";
   { const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
-  // Two columns where there's room: once the panel is at least twice as wide as the word's info (everything but the
-  // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
-  // style.css). Measured at the info's natural width whenever the panel resizes or shows another word.
+  // Two columns where there's room: once the panel is at least twice the word's side's fixed width (style.css'
+  // --wordCol), the lexicon - its picker, entry and credit - moves to a column of its own at the left (.twoCol), the
+  // word's info at the right, at that width for every word - its parsing wrapping where it's longer. Checked whenever
+  // the panel resizes.
   const heads = q ("heads");
   const info = document.createElement ("div");
   {      // (The word's info in one box, the lexicon's parts in another: the two columns)
@@ -109,36 +110,9 @@ function makePanel (sheet: HTMLElement) {
     box.append (q ("lexRow"), defEl, q ("lexCredit")); }
   const columns = () => {
     if (sheet.hidden) return;
-    sheet.classList.remove ("twoCol");
-    info.style.width = "";
-    heads.style.width = "max-content";
-    const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
-    // (The parsing may wrap at its commas, its +s and before a bracket: its widest part counts, not its whole line; the
-    // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
-    // - each measured on its own, taken out of the grid: Safari sizes a grid at max-content from a spanning item's whole
-    // line, whatever its own width says)
-    const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formTranslit, .formGloss, .vocabGloss")];
-    for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
-    const rest = heads.getBoundingClientRect ().width;     // (The lines that don't wrap: the words, buttons)
-    const need = Math.max (rest, ...wraps.map (e => e.getBoundingClientRect ().width));
-    // (The word's side, two columns: as wide as its lines unwrapped when that's at most half the panel; wider, its lines
-    // wrapped to fit half - and then only as wide as their longest wrapped line, so nothing's narrower than it must be)
-    const pad = getComputedStyle (sheetScroll);
-    const half = (sheetScroll.clientWidth - parseFloat (pad.paddingLeft) - parseFloat (pad.paddingRight)) / 2;
-    let width = natural;
-    if (natural > half) {
-      width = rest;
-      for (const e of wraps) {
-        e.style.width = `${half}px`;
-        const left = e.getBoundingClientRect ().left, r = document.createRange ();
-        r.selectNodeContents (e);
-        for (const line of r.getClientRects ()) width = Math.max (width, line.right - left);
-      }
-    }
-    heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
-    const two = sheetScroll.clientWidth >= 2 * need;
-    sheet.classList.toggle ("twoCol", two);
-    if (two) info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
+    // (style.css' --wordCol: the word's side's one width, whatever the word - so the split never moves from word to word)
+    const word = parseFloat (getComputedStyle (sheet).getPropertyValue ("--wordCol")) || 320;
+    sheet.classList.toggle ("twoCol", sheetScroll.clientWidth >= 2 * word);
   };
   new ResizeObserver (columns).observe (sheet);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
