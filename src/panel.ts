@@ -17,7 +17,7 @@ const chartBtn = document.createElement ("button");
 chartBtn.className = "pill"; chartBtn.textContent = "Verb chart"; chartBtn.hidden = true;
 document.getElementById ("speakRoot")!.after (chartBtn);
 let chartFor: [string, string] | null = null;
-chartBtn.addEventListener ("click", () => { if (chartFor) { hidePanel (); openChartFor (...chartFor); } });
+chartBtn.addEventListener ("click", () => { if (chartFor) openChartFor (...chartFor); });     // (The panel stays open under the chart: its ✕ back to the word)
 
 const sheet = document.getElementById ("sheet")!;
 const lemmaEl = document.getElementById ("lemma")!;
