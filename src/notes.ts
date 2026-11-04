@@ -106,9 +106,11 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
           ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"), ...group ("version", "Ancient versions")];
 }
 
-/** The sources the search pane searches (search.ts): the picker's for the chapter shown that are text in a file of
- *  their own - not the Hebrew OT (the main database's interlinear) nor the sentence diagrams (trees, not text). */
-export const textSources = () => mine ().filter ((s) => s.file && s.kind !== "syntax");
+/** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
+ *  (ot: the Hebrew Bible's, or beside the Septuagint as the picker offers them there) and the New - that are text in a
+ *  file of their own: not the Hebrew OT (the main database's interlinear) nor the sentence diagrams (trees, not text). */
+export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax"
+  && (offers (s, "NT") || (ot === "OT" ? offers (s, "OT") : offers (s, "LXX") || (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)))));
 
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
  *  search's own handle on it, so searching never closes the notes' open source. */

@@ -78,7 +78,7 @@ function makePanel (sheet: HTMLElement) {
   const searchBtn = document.createElement ("button");
   searchBtn.className = "pill"; searchBtn.textContent = "Search";
   q ("speakRoot").after (chartBtn, searchBtn);
-  let searchFor: [string, string, string] | null = null;     // (Strong's, dictionary form, testament)
+  let searchFor: [string, string] | null = null;     // (Strong's, dictionary form)
   searchBtn.addEventListener ("click", () => { if (searchFor) searchRoot (...searchFor); });
   let chartFor: [string, string] | null = null;
   chartBtn.addEventListener ("click", () => { const f = chartFor; if (f) grammar.showOther ("Verb chart", (body) => chartInto (body, ...f)); });     // (Over the word's info, as a grammar section: its ✕ back to the word)
@@ -287,7 +287,7 @@ function makePanel (sheet: HTMLElement) {
     mainDb = db;
     lemmaEl.textContent = String (lex?.lemma ?? w.text);
     // (The word's testament by its book: 1-39 the Hebrew OT, 40-66 the NT, 67 on the Septuagint - build_db.py)
-    searchFor = [w.strong, lemmaEl.textContent, hebrew ? "OT" : w.book >= 67 ? "LXX" : "NT"];
+    searchFor = [w.strong, lemmaEl.textContent ?? ""];
     lemmaEl.dir = hebrew ? "rtl" : "ltr";
     formEl.textContent = w.text;
     formEl.dir = lemmaEl.dir;

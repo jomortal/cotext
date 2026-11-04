@@ -4,32 +4,35 @@
 // notes when they're open, else its full height (layout.ts).
 // - The picker (a <select class="choose">, as the notes'): ROOT WORD, INTERLINEAR (ENGLISH) - the default - and the
 //   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, translations, ancient versions - not
-//   the diagrams), grouped and named as the notes' picker has them, only those for the testament shown. The choice is
-//   kept per testament on the device (cotext.search); a word's panel's Search sets it to ROOT WORD (not kept).
+//   the diagrams), grouped and named as the notes' picker has them, those for the whole Bible. The choice is kept per
+//   Old Testament (Hebrew, Septuagint) on the device (cotext.search); a word's panel's Search sets it to ROOT WORD (not kept).
+// - Every kind searches the whole Bible: the Old Testament read (the Hebrew Bible, or the Septuagint's books the list
+//   shows - HEBREW / GREEK) and the New; a New Testament result tapped opens the Greek NT there.
 // - What's typed is searched on Enter (the phone keyboard's search key), not on every key; picking another kind
 //   searches the bar's text again. Every kind lists its results alike: counted, each a row - its reference over its
 //   text, what matched in the accent - drawn CHUNK at a time as the list scrolls to its end; a row tapped goes to that
 //   verse in the text (main.ts) - a source's too: the notes are left as they are (opening them on it is the reader's
 //   choice, the user's call).
-// - ROOT WORD: every verse of the testament (the Hebrew OT, the NT, or the Septuagint's books the list shows) with a
+// - ROOT WORD: every verse of the Bible with a
 //   word of the root (the same Strong's number), its original text, the root's words marked. From a word's panel's
 //   "Search" (panel.ts) the root is the word's and the bar shows its dictionary form; typed, the dictionary forms
-//   (lexicon.lemma, of the testament's language) equal to the typed word - accents, breathings and vowel points
+//   (lexicon.lemma, Hebrew or Greek) equal to the typed word - accents, breathings and vowel points
 //   ignored, a lemma's comma-separated forms each matched - are searched together (homonyms: all of them).
-// - INTERLINEAR (ENGLISH): the verses of the testament shown whose words' interlinear English (words.gloss) has every
+// - INTERLINEAR (ENGLISH): the verses whose words' interlinear English (words.gloss) has every
 //   typed word, as a whole word, any case - each only its interlinear English, word by word in the text's order
 //   ("in [the] beginning | he created | ..."), the matching words' marked.
-// - A source: its entries (notes.body and its quote, the tags taken off) of the testament shown containing the typed
+// - A source: its entries (notes.body and its quote, the tags taken off) containing the typed
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the
-//   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the testament (LIKE, then
+//   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the Bible read (LIKE, then
 //   a whole-word check here); a source every entry (LIKE).
 
 import type { Db, Row } from "./db";
 import type { Book } from "./reader";
 import { paneFrame } from "./layout";
 import { textSources, sourceGroups, openSource, type Source } from "./notes";
+import { currentLanguage } from "./study";
 
 const pane = document.getElementById ("search")!;
 const btn = document.getElementById ("searchBtn")!;
@@ -42,11 +45,12 @@ const scroll = paneFrame (pane, document.getElementById ("searchClose")!);
 let db: Db | null = null;
 let books = new Map<number, Book> ();
 let goVerse: (book: Book, chapter: number, verse: number) => Promise<void> = async () => {};
-let testament = "";                                   // The chapter shown's: 'OT', 'NT' or 'LXX'
+/** The Old Testament searched with the New - the whole Bible: the Hebrew Bible, or the Septuagint (HEBREW / GREEK). */
+const ot = (): "OT" | "LXX" => currentLanguage () === "G" ? "LXX" : "OT";
 let rootFor: string[] | null = null;                  // A word panel's root (its Strong's number), while the bar holds its dictionary form
 
 const KEY = "cotext.search";
-const kept: Record<string, string> = {};             // testament -> the picker's choice
+const kept: Record<string, string> = {};             // the Old Testament searched (OT, LXX) -> the picker's choice
 try { Object.assign (kept, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 
 /** main.ts, once the books are read: the database, the books, and how to go to a verse. */
@@ -54,23 +58,22 @@ export function initSearch (d: Db, bs: Book[], go: (book: Book, chapter: number,
   db = d; books = new Map (bs.map ((b) => [b.id, b])); goVerse = go;
 }
 
-/** The chapter shown (main.ts, after the notes': their sources follow it): the picker's list remade when its sources
- *  change, its kept choice for the testament picked (else INTERLINEAR) - unless a root from a word's panel is shown. */
+/** The chapter shown (main.ts): the picker's list remade when its sources change - with HEBREW / GREEK -, its kept
+ *  choice picked (else INTERLINEAR) - unless a root from a word's panel is shown. */
 let listed = "";
-export function setSearchPassage (b: Book) {
-  testament = b.testament;
-  const srcs = textSources ();
-  const ids = testament + ":" + srcs.map ((s) => s.id).join (",");
+export function setSearchPassage (_b: Book) {
+  const srcs = textSources (ot ());
+  const ids = ot () + ":" + srcs.map ((s) => s.id).join (",");
   if (ids === listed) return;
   listed = ids;
   const was = pick.value;
   pick.replaceChildren (new Option ("Root word", "root"), new Option ("Interlinear (English)", "english"), ...sourceGroups (srcs));
-  const want = was === "root" && rootFor ? "root" : kept[testament] ?? "english";
+  const want = was === "root" && rootFor ? "root" : kept[ot ()] ?? "english";
   pick.value = [...pick.options].some ((o) => o.value === want) ? want : "english";
 }
 
 pick.addEventListener ("change", () => {
-  kept[testament] = pick.value;
+  kept[ot ()] = pick.value;
   try { localStorage.setItem (KEY, JSON.stringify (kept)); } catch { /* private mode: not kept */ }
   if (bar.value.trim ()) search ();
 });
@@ -90,14 +93,14 @@ function setOpen (open: boolean) {
 btn.addEventListener ("click", () => setOpen (pane.hidden));
 document.getElementById ("searchClose")!.addEventListener ("click", () => setOpen (false));
 
-/** A word's panel's Search (panel.ts): the pane opened on ROOT WORD, lemma in the bar, the verses of testament ('OT',
- *  'NT' or 'LXX': the word's) with a word of the root strong listed. */
-export function searchRoot (strong: string, lemma: string, testament: string) {
+/** A word's panel's Search (panel.ts): the pane opened on ROOT WORD, lemma in the bar, the Bible's verses with a word
+ *  of the root strong listed (a Greek root's in the Septuagint too, when it's the Old Testament read). */
+export function searchRoot (strong: string, lemma: string) {
   setOpen (true);
   pick.value = "root";
   bar.value = lemma;
   rootFor = [strong];
-  searchRoots ([strong], testament, start ());
+  searchRoots ([strong], start ());
 }
 
 /** What the bar holds searched as the picker says. */
@@ -109,9 +112,9 @@ async function search () {
     const strongs = rootFor ?? await lemmaRoots (text);
     if (n !== searching) return;
     if (! strongs.length) { countEl.textContent = `No dictionary form “${text}” found.`; return; }
-    searchRoots (strongs, testament, n);
+    searchRoots (strongs, n);
   } else if (pick.value === "english") searchEnglish (text, n);
-  else { const src = textSources ().find ((s) => s.id === pick.value); if (src) searchSource (src, text, n); }
+  else { const src = textSources (ot ()).find ((s) => s.id === pick.value); if (src) searchSource (src, text, n); }
 }
 
 // (Each search numbered: one still arriving when another starts isn't shown)
@@ -125,18 +128,18 @@ function start () {
 }
 
 //==== ROOT WORD ====
-// The verses with a word of the roots: in the testament's books they occur in (freq; the Septuagint's only those the
-// book list shows - books.heb), in the book list's order.
+// The verses with a word of the roots: in the Bible's books they occur in (freq) - the Old Testament read and the New;
+// the Septuagint's only those the book list shows (books.heb) -, in the book list's order.
 const hitsOf = (count: number) => `SELECT DISTINCT w.book, w.chapter, w.verse FROM freq f JOIN books b ON b.id = f.book
                 JOIN words w ON w.book = b.id AND w.strong = f.strong
-              WHERE f.strong IN (${Array (count).fill ("?").join (",")}) AND b.testament = ? AND (b.testament <> 'LXX' OR b.heb > 0)
+              WHERE f.strong IN (${Array (count).fill ("?").join (",")}) AND b.testament IN (?, 'NT') AND (b.testament <> 'LXX' OR b.heb > 0)
               ORDER BY CASE WHEN b.testament = 'LXX' THEN b.heb ELSE b.id END, b.id, w.chapter, w.verse`;
 /** A result: its verse (end: a note's last verse, chapter * 1000 + verse, when it covers several) and a source's text. */
 interface Hit { book: number; chapter: number; verse: number; end?: number; text?: string; }
 
-async function searchRoots (strongs: string[], testament: string, n: number) {
+async function searchRoots (strongs: string[], n: number) {
   if (! db) return;
-  const hits = await db.all (hitsOf (strongs.length), [...strongs, testament]) as unknown as Hit[];
+  const hits = await db.all (hitsOf (strongs.length), [...strongs, ot ()]) as unknown as Hit[];
   if (n !== searching) return;
   counted (hits.length, "verse");
   const set = new Set (strongs);
@@ -146,12 +149,11 @@ async function searchRoots (strongs: string[], testament: string, n: number) {
 /** A lemma as matched: no accents, breathings or vowel points (every combining mark), lower case, final sigma as σ. */
 const bare = (s: string) => s.normalize ("NFD").replace (/\p{M}/gu, "").toLowerCase ().replace (/ς/g, "σ").trim ();
 let lemmas: Promise<Row[]> | null = null;     // (The lexicon's dictionary forms, read once)
-/** The Strong's numbers of the testament's language (H for the OT, G otherwise) whose dictionary form is typed. */
+/** The Strong's numbers whose dictionary form is typed - Hebrew or Greek (each found only where it's read). */
 async function lemmaRoots (typed: string): Promise<string[]> {
   lemmas ??= db!.all ("SELECT strong, lemma FROM lexicon");
-  const want = bare (typed), lang = testament === "OT" ? "H" : "G";
-  return (await lemmas).filter ((r) => String (r.strong).startsWith (lang)
-    && [String (r.lemma), ...String (r.lemma).split (",")].some ((l) => bare (l) === want)).map ((r) => String (r.strong));
+  const want = bare (typed);
+  return (await lemmas).filter ((r) => [String (r.lemma), ...String (r.lemma).split (",")].some ((l) => bare (l) === want)).map ((r) => String (r.strong));
 }
 
 //==== INTERLINEAR (ENGLISH) ====
@@ -162,13 +164,13 @@ async function searchEnglish (typed: string, n: number) {
   if (! db) return;
   const terms = [...new Set (typed.toLowerCase ().split (/\s+/).filter (Boolean))];
   const res = terms.map ((t) => new RegExp (`(^|[^\\p{L}\\p{N}])${escRe (t)}($|[^\\p{L}\\p{N}])`, "iu"));
-  // (Every word of the testament whose English has any term somewhere - LIKE - then each checked here as a whole word)
+  // (Every word of the Bible read whose English has any term somewhere - LIKE - then each checked here as a whole word)
   const t0 = performance.now ();
   const rows = await db.all (`SELECT w.book, w.chapter, w.verse, w.word, w.gloss FROM books b JOIN words w ON w.book = b.id
-                              WHERE b.testament = ? AND (b.testament <> 'LXX' OR b.heb > 0)
+                              WHERE b.testament IN (?, 'NT') AND (b.testament <> 'LXX' OR b.heb > 0)
                                 AND (${terms.map (() => "w.gloss LIKE ? ESCAPE '\\'").join (" OR ")})
                               ORDER BY CASE WHEN b.testament = 'LXX' THEN b.heb ELSE b.id END, b.id, w.chapter, w.verse, w.word`,
-                             [testament, ...terms.map (likeOf)]);
+                             [ot (), ...terms.map (likeOf)]);
   if (n !== searching) return;
   // Each verse's matching words, kept where every term matched one of them
   const verses = new Map<string, { hit: Hit; words: Row[]; found: Set<number> }> ();
@@ -181,7 +183,7 @@ async function searchEnglish (typed: string, n: number) {
     for (const i of which) v.found.add (i);
   }
   const all = [...verses.values ()].filter ((v) => v.found.size === terms.length);
-  console.info (`Search: "${typed}" in the ${testament}'s English, ${Math.round (performance.now () - t0)} ms`);
+  console.info (`Search: "${typed}" in the ${ot ()} and NT's English, ${Math.round (performance.now () - t0)} ms`);
   counted (all.length, "verse");
   const marked = new Set (all.flatMap ((v) => v.words.map ((w) => `${w.book}.${w.chapter}.${w.verse}.${w.word}`)));
   draw (all.map ((v) => v.hit), n, original ((w) => marked.has (`${w.book}.${w.chapter}.${w.verse}.${w.word}`), true));
@@ -209,8 +211,9 @@ async function searchSource (src: Source, typed: string, n: number) {
   }
   if (n !== searching) return;
   countEl.textContent = "Searching…";
-  // (Its entries of the testament shown: a Hebrew-keyed source beside the Septuagint, the Hebrew books')
-  const where = testament === "LXX" && ! src.testaments.split (" ").includes ("LXX") ? "OT" : testament;
+  // (Its entries of the Bible read - the NT's, and the Old Testament's: a Hebrew-keyed source beside the Septuagint, the
+  // Hebrew books')
+  const where = ot () === "LXX" && ! src.testaments.split (" ").includes ("LXX") ? "OT" : ot ();
   const rows = await d.all (`SELECT book, start, "end", quote, body FROM notes WHERE body LIKE ?1 ESCAPE '\\' OR quote LIKE ?1 ESCAPE '\\'
                              ORDER BY book, start, ord`, [likeOf (typed)]);
   if (n !== searching) return;
@@ -219,7 +222,7 @@ async function searchSource (src: Source, typed: string, n: number) {
   const hits: Hit[] = [];
   for (const r of rows) {
     const b = books.get (Number (r.book));
-    if (b?.testament !== where) continue;
+    if (! b || (b.testament !== where && b.testament !== "NT")) continue;
     const text = plain ([r.quote, r.body].filter (Boolean).join (" "));
     if (! re.test (text)) continue;     // (Matched only inside a tag)
     const s = Number (r.start), e = Number (r.end);
