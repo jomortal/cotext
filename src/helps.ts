@@ -1,7 +1,7 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
 // - the frequency slider, in steps of 20 words up to 1,000 (as My vocab's frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss and the parsing
 //   of the N most common words, by the root word (the lemma, its extended Strong's key: every form together), as the
-//   printed reader's editions do - except a hard form's parsing, always shown: a verb whose form is hard to recognize
+//   printed reader's editions do - except a hard form's parsing and gloss, always shown: a verb whose form is hard to recognize
 //   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT or the book shown
 //   (FREQUENCY);
 // - a word's panel flips one word by hand: "+ Known words" hides its gloss everywhere (its parsing still by the
@@ -137,7 +137,9 @@ export function currentBook (): Book { return book; }
  *  hides or fades them). */
 export function applyHelps () {
   for (const el of document.querySelectorAll<HTMLElement> ("#chapter .w")) {
-    el.classList.toggle ("known", isHidden (el.dataset.strong!));
+    // (A hard form's gloss shows as its parsing does, however common the word - unless it's known by hand)
+    const strong = el.dataset.strong!, byHand = s.mine && s.modes[strong] === "hide";
+    el.classList.toggle ("known", isHidden (strong) && (byHand || ! hardForm (lemmaOf (strong), el.dataset.code ?? "", strong.startsWith ("H"))));
     el.classList.toggle ("knownForm", isFormHidden (el.dataset.strong!, el.dataset.code ?? ""));
   }
   document.body.classList.toggle ("noGloss", s.gloss === false);
