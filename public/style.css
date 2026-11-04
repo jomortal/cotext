@@ -98,6 +98,10 @@ body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
 .parse { font-size: var(--fs-xs); font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
 /* Helps hidden (helps.ts: the slider or "+ Known words"). */
 .w.known .gloss, .w.knownForm .parse { visibility: hidden; }     /* (helps.ts: the gloss by the word, the parsing by its form) */
+/* A word with both hidden takes no room for them, so a line of such words closes up (one with only one hidden keeps its
+   room, its line's glosses and parsings still lined up); a line with any word still helped stays as tall. */
+.w.known.knownForm .gloss, .w.known.knownForm .parse { display: none; }
+body.noParse .w.known .gloss, body.noGloss .w.knownForm .parse { display: none; }
 /* VERB COLORS (reader.ts's verbForm; off: body.noVerbColors): Hebrew by form, Greek by tense. */
 .vf-wayyiqtol .parse, .vf-aorist .parse { color: var(--piel); }
 .vf-qatal .parse, .vf-present .parse { color: var(--qal); }
