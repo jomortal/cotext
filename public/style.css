@@ -219,9 +219,9 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden])):has(#besideSheet:not([h
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */
 #drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed; tapping it still closes the drawer) */
-#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: min(280px, 80vw); background: var(--bg);
+#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: 80vw; background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
                border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
-               padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) var(--pad) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
+               padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(3 * var(--pad)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
 #langPick .pill { font-size: var(--fs-l); display: inline-flex; align-items: center; gap: 8px; }     /* (HEBREW / GREEK: the book list's heading, in place of "Books") */
 #langPick .langSym { font-size: 1.25em; line-height: 1; }     /* (Alef-tav and alpha-omega, the first and last letters, before each name) */
