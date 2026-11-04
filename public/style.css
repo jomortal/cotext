@@ -49,7 +49,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
-       display: grid; grid-template-columns: minmax(0, 760px); justify-content: center; align-content: start; gap: 14px; }
+       display: grid; grid-template-columns: minmax(0, 8in); justify-content: center; align-content: start; gap: 14px; }     /* (The text at most 8 inches wide - 768px -, centered: margins either side beyond that) */
 h1 { font-size: var(--fs-l); margin: 0; }
 p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 .credit { margin-top: 24px; font-size: var(--fs-xs); }
@@ -439,8 +439,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #notesSplit::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
   body:has(#notes[hidden]) #notesSplit { display: none; }
   /* Each column's content its column's full width, inside the --pad margins - none of the narrow layout's 760 px caps:
-     the text, the heading and the ⋯ menu, the panels' contents. */
-  main { grid-template-columns: minmax(0, 1fr); }
+     the heading and the ⋯ menu, the panels' contents; the text still at most 8 inches (main, above). */
   .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
   #screenMenu { left: max(var(--pad), env(safe-area-inset-left, 0px)); } #screenClose { right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (With the heading's: no centering on wide screens) */
   :where(.sheet, #notes) > .panelScroll > * { max-width: none; }
