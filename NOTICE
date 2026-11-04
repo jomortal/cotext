@@ -145,6 +145,19 @@ Lexicons (a Greek word's fuller entries, public/data/notes/<lexicon>.db - pipeli
   and nested senses; the Middle Liddell's Beta Code is converted to Unicode Greek; references are kept as their text;
   page breaks and occurrence counts are dropped; entries are keyed by STEPBible's extended Strong's.
 
+Bible dictionary (the word panel's Dictionary, public/data/notes/tobd.db - pipeline/tyndale_dict.py):
+  - Tyndale Open Bible Dictionary (release 1.6), (c) 2023 Tyndale House Publishers, licensed CC BY-SA 4.0
+    (https://creativecommons.org/licenses/by-sa/4.0/). Adapted from Tyndale Open Bible Dictionary; the original work
+    by Tyndale House Publishers is available for free at http://www.tyndaleopenresources.com. This adaptation is
+    shared under the same licence.
+  - Names matched to its articles through STEPBible's TIPNR (Translators Individualised Proper Names with all
+    References), STEPBible Data, Tyndale House, Cambridge, CC BY 4.0 (the commit above).
+  Changes made by COTEXT: the articles are reformatted into a database, their markup reduced to paragraphs,
+  subheadings, bold, italics, Hebrew and Greek spans and tables; small capitals written as capitals; scripture
+  references kept as their text; cross-references made links to the article named; text boxes and charts set where
+  they're included; maps, pictures and the introduction left out; each article matched to the Strong's numbers of
+  the words it's about.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as

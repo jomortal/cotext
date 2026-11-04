@@ -72,9 +72,9 @@ let blocks: [number, HTMLElement][] = [];          // Wide: each verse shown and
 
 export async function initNotes (db: Db) {
   textDb = db;
-  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources"),
+  const [s, b] = await Promise.all ([db.all ("SELECT id, kind, name, testaments, credit, file, version FROM note_sources WHERE kind != 'dictionary'"),
                                      db.all ("SELECT id, code, name, testament, chapters, heb, notes FROM books")]);
-  sources = s as unknown as Source[];
+  sources = s as unknown as Source[];     // (Not the dictionary, also listed there: the word's panel's - dictionary.ts)
   books = b as unknown as Book[];
   btn.hidden = ! sources.length;
 }

@@ -23,7 +23,8 @@ Tables:
   grammars, grammar_sections, grammar_terms, and parsings.terms - the grammars a parsing's terms link to
             (Gesenius, Smyth, Machen, unfoldingWord's Hebrew and Greek): made by grammar.py, whose docstring describes them
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
-            made by notes.py, whose docstring describes them and their table
+            made by notes.py, whose docstring describes them and their table; also the word panel's dictionary (kind
+            'dictionary', public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py)
   bdb, bdb_file  the Hebrew words' full Brown-Driver-Briggs entries (src/panel.ts' BDB), their own file
             public/data/notes/bdb.db: made by bdb.py, whose docstring describes them
   greek_lex, greek_lex_file  the Greek words' full lexicons (Abbott-Smith, Thayer, Middle Liddell, Dodson: src/panel.ts'
@@ -59,6 +60,7 @@ import lxx  # noqa: E402
 import morph  # noqa: E402
 import notes  # noqa: E402
 import sefaria_lex  # noqa: E402
+import tyndale_dict  # noqa: E402
 import ubs_lex  # noqa: E402
 
 ROOT = pathlib.Path(__file__).parent.parent
@@ -272,6 +274,7 @@ def build():
     db.execute("INSERT INTO note_sources VALUES (?,?,?,?,?,?,?,?)", (*lxx.BRENTON_SOURCE, "data/notes/brenton_lxx.db",
                hashlib.sha256(data).hexdigest()[:12], len(data)))
     note_counts["brenton_lxx"] = (n, len(data))
+    tobd_articles, tobd_lemmas, tobd_bytes = tyndale_dict.build(db)     # (The word panel's Dictionary: its own file, a note_sources row - after the lexicon, which it matches)
     lxx_heb.build(db)     # (Each LXX verse's Hebrew verse(s): the notes beside the LXX)
     bdb_keys, bdb_entries, bdb_bytes = bdb.build(db)
     greek_counts = greek_lex.build(db)
@@ -292,7 +295,8 @@ def build():
           + ", ".join(f"{g} {n}" for g, n in grammar_counts.items()) + "; notes "
           + ", ".join(f"{k} {n} ({b / 1e6:.1f} MB)" for k, (n, b) in note_counts.items())
           + f"; BDB {bdb_entries} entries for {bdb_keys} Strong's keys ({bdb_bytes / 1e6:.1f} MB); "
-          + ", ".join(f"{k} {e} entries for {n} keys ({b / 1e6:.1f} MB)" for k, (n, e, b) in greek_counts.items()))
+          + ", ".join(f"{k} {e} entries for {n} keys ({b / 1e6:.1f} MB)" for k, (n, e, b) in greek_counts.items())
+          + f"; Tyndale Open Bible Dictionary {tobd_articles} articles for {tobd_lemmas} keys ({tobd_bytes / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":

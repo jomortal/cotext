@@ -282,6 +282,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gInline .src { margin-top: 2px; }
 .gBody { font-size: var(--fs-m); line-height: 1.55; margin-top: 8px; }
 .giOther { margin-top: 8px; display: grid; gap: 10px; }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
+.giOther > .choices { flex-direction: column; align-items: start; }     /* (The dictionary's articles on a word - dictionary.ts - one a line) */
 .gBody p { color: var(--fg); font-size: inherit; margin: 0 0 8px; }
 .gHead { font-weight: 600; margin: 14px 0 6px; }
 .gNum { margin-inline-end: 6px; }

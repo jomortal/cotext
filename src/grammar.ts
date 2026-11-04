@@ -160,13 +160,14 @@ export function grammarIn (sheet: HTMLElement) {
     scroll.scrollTop = 0;     // (The section scrolls on its own, under GRAMMAR: style.css)
   }
 
-  /** Something else in the same box, over the word's info as a section is (the word's Verb chart: chart.ts' chartInto) -
-   *  its title, no GRAMMAR, `fill` writing its body (its own box, not the section's); the same ✕ back to the word. */
-  function showOther (title: string, fill: (body: HTMLElement) => void) {
+  /** Something else in the same box, over the word's info as a section is (the word's Verb chart: chart.ts' chartInto;
+   *  a dictionary article: dictionary.ts) - its title, `sub` under it where given (as a section's grammar and §: the
+   *  dictionary's name), no GRAMMAR, `fill` writing its body (its own box, not the section's); the same ✕ back to the word. */
+  function showOther (title: string, fill: (body: HTMLElement) => void, sub = "") {
     openKey = "";
     for (const t of sheet.querySelectorAll (".term.on")) t.classList.remove ("on");
     titleEl.textContent = title;
-    secEl.textContent = "";
+    secEl.textContent = sub;
     bodyEl.hidden = true; otherEl.hidden = false; otherEl.replaceChildren ();
     pick.closest ("label")!.hidden = true;
     fill (otherEl);
