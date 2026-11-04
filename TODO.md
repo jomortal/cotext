@@ -105,6 +105,7 @@ To prepare first (trust as much as polish):
 - [ ] **CATSS LXX morphology** (Rahlfs, tagged) - CCAT / the Kraft-Tov team.
 - [ ] **NET Bible** and its translators' notes - bible.org.
 - [ ] **Analytic Septuagint** - its author and the LXXM rights holders.
+- [ ] **CSNTM** - its NT manuscript photographs, shipped or shown in COTEXT (as BibleWorks 10 and Accordance had them).
 
 ## Accounts and cloud storage
 
@@ -116,6 +117,13 @@ To prepare first (trust as much as polish):
 - [ ] Optional fallback: export / import a file, no account.
 
 ## Other open items
+
+- [ ] **Manuscripts** (further down the list): a resources choice listing the manuscripts with the verse shown (oldest
+      first, date, a page thumbnail), COTEXT's own viewer (zoom, drag, next / previous page, the verse marked where the
+      transcription knows it), the images live from their holders (online only) - the Virtual Manuscript Room (INTF:
+      which manuscripts have a verse, on which page) and the Codex Sinaiticus Project first; each holder's terms for
+      showing images in an app checked first. Later, with permission: CSNTM's photographs (as BibleWorks and Accordance
+      had), the IAA's Dead Sea Scrolls, the British Library, the Vatican (Vaticanus), the Leningrad Codex.
 
 - [ ] Search: an index on words.strong, so a common root (אָמַר, 4,339 verses: ~0.9 s) is as fast as a rare one (~50 ms) - adds
       19 MB to the database (82 -> 102 MB) and needs a full rebuild (pipeline/build_db.py, ~8 minutes). Not now.
