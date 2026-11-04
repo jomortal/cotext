@@ -94,7 +94,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
 .translit { display: none; font-size: var(--fs-xs); font-style: italic; color: var(--soft); direction: ltr; text-align: center; }
 /* The ⋯ menu's INTERLINEAR, PARSING and TRANSLITERATION (helps.ts): each word's lines shown or not. */
 body.showTranslit .w .translit { display: block; }
-body.showTranslit .sheet .formTranslit { display: block; grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); text-align: start; }     /* (The word's panel: under the word as written, over its English) */
+body.showTranslit .sheet .formTranslit { display: block; grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); text-align: start; }     /* (The word's panel: under the word as written and under its root, over their English) */
 body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
 .parse { font-size: var(--fs-xs); font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
 /* Helps hidden (helps.ts: the slider or "+ Known words"). */

@@ -9,7 +9,7 @@
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
 import { openNotesDb, type Db, type Row } from "./db";
-import { translitOf, type Word } from "./reader";
+import { latin, translitOf, type Word } from "./reader";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
 import { grammarIn } from "./grammar";
@@ -153,6 +153,9 @@ function makePanel (sheet: HTMLElement) {
   const vocabGloss = document.createElement ("div");
   vocabGloss.className = "vocabGloss";
   sheet.querySelector (".heads > .btns")!.before (vocabGloss);
+  const rootTranslit = document.createElement ("span");     // (The root in Latin letters, under it, when TRANSLITERATION is on)
+  rootTranslit.className = "translit formTranslit";
+  vocabGloss.before (rootTranslit);
 
   // LEXICON (the comment over LEXICONS): this panel's picker and the entry it shows.
   const lexCredit = q ("lexCredit");
@@ -249,7 +252,7 @@ function makePanel (sheet: HTMLElement) {
                               "SELECT lexicon, entries FROM sefaria_lex WHERE strong = ?"]
                            : ["SELECT lexicon, entries FROM greek_lex WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?"];
     const [[lex], [parsing], ...extras] = await Promise.all ([
-      db.all ("SELECT lemma, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]),
+      db.all ("SELECT lemma, translit, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]),
       db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]),
       ...tables.map ((q) => db.all (q, [w.strong]).catch (() => []))]);     // (A database built without a lexicon's tables: that lexicon not offered)
     if (picked !== wordEl) return;
@@ -273,6 +276,7 @@ function makePanel (sheet: HTMLElement) {
     formGloss.textContent = w.gloss ?? "";
     grammar.showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
     vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
+    rootTranslit.textContent = lex ? latin (hebrew, String (lex.lemma ?? ""), lex.translit as string | null) : translitOf (w);
     entry = { full: String (lex?.entry || lex?.gloss || ""),
               extra, hebrew, place: [w.book, w.chapter, w.verse, w.word] };     // (Where the word stands: the reader's text, or one beside it in the notes)
     const pick = lexChoice[hebrew ? "H" : "G"];

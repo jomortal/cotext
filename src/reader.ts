@@ -75,11 +75,13 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
   }
 }
 
-/** The word in Latin letters: Hebrew as STEPBible gives it, its syllable dots dropped and in lower case - be.re.Shit ->
- *  bereshit; Greek as modern Greek says it - translit.ts. (The interlinear's line, and the word's panel's.) */
-export function translitOf (w: Word) {
-  return w.strong.startsWith ("H") ? (w.translit ?? "").replace (/\./g, "").toLowerCase () : modernGreek (w.text);
+/** A word in Latin letters: Hebrew as STEPBible gives it (`step`), its syllable dots dropped and in lower case -
+ *  be.re.Shit -> bereshit; Greek as modern Greek says it - translit.ts. (The interlinear's line, and the word's panel's
+ *  for the word and its root.) */
+export function latin (hebrew: boolean, text: string, step: string | null | undefined) {
+  return hebrew ? (step ?? "").replace (/\./g, "").toLowerCase () : modernGreek (text);
 }
+export const translitOf = (w: Word) => latin (w.strong.startsWith ("H"), w.text, w.translit);
 
 function span (cls: string, text: string) {
   const s = document.createElement ("span");
