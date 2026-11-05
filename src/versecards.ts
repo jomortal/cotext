@@ -18,7 +18,7 @@
 //   chapterstudy.ts' translatedWords, as the printout's Greek LXX text), OT HEBREW - NT ENGLISH or
 //   OT ENGLISH - NT GREEK (while a choice leaves some cards in English only, TRANSLATION offers no None - switched to
 //   the first if None was picked); and, for the original, Interlinear, Parsing and Transliteration (drawn as the
-//   reader draws it: chapterstudy.ts' textBox; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
+//   reader draws it: chapterstudy.ts' textBox, but the parsing without the verb colors; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
 //   for a card left in English only with none picked, the first translation that has it.
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
