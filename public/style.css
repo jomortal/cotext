@@ -419,7 +419,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcDeck .cardBack .vcRef { font-size: var(--fs-l); font-weight: 600; text-align: center; }
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcNative { font-weight: 400; }
-.vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); }
+.vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
 .vcNum { font-size: var(--fs-xs); color: var(--soft); }
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }

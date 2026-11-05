@@ -21,7 +21,7 @@
 //   reader draws it: chapterstudy.ts' textBox, but the parsing without the verb colors; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
 //   for a card left in English only with none picked, the first translation that has it.
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
-//   beside it (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
+//   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
