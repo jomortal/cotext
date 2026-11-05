@@ -4,7 +4,7 @@
 //   the Bible view's heading, staying as the screen scrolls) and ⋯ at its right end, where the Bible view's is, then the deck and the credits. ⋯ shows
 //   everything else over the room above the card - pushing the deck down only as far as it would cover it (the Bible
 //   view's ⋯ menu overlays; here the card stays in view) -, ⋯ a ✕ while open, closing it, in order: DECKS, NAME (edited in place), the deck's
-//   settings (below), VERSE LIST and, last, under the bold heading NEW VERSE, the add row (below).
+//   settings (below), VERSE LIST and, last, the add row (below), the bold heading NEW VERSE at its start.
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (first in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
@@ -204,12 +204,12 @@ let menuOpen = false;     // (⋯'s options: hidden till ⋯)
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
- *  picked - BOOK's blank saying "Select Book"; + ADD CARD greyed out until FROM VERSE is). */
+ *  picked - a blank shows a dash, BOOK's "Select Book"; + ADD CARD greyed out until FROM VERSE is). */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   const p = pickAt, b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
   const vs = r.map ((x) => Number (x.verse)).filter ((v) => v > 0);
-  const BLANK: [string, string] = ["", "\u00a0"];     // (Blank: a space, so the picker keeps its height)
+  const BLANK: [string, string] = ["", "–"];     // (Blank: a dash - BOOK's says "Select Book")
   const pick = (label: string, options: [number | string, string][], value: number | string, set: (v: string) => void, off = false) => {
     const l = document.createElement ("label"); l.className = "vcPick"; l.textContent = label;
     const s = document.createElement ("select"); s.className = "choose"; s.disabled = off;
@@ -227,7 +227,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
           p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
     pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? vs.map ((v): [number, string] => [v, String (v)]) : [])],
           p.from < 0 ? "" : p.from, (v) => { p.from = +v; p.to = 0; }, ! chosen),
-    pick ("To verse", p.from > 0 ? [[0, "\u00a0"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
+    pick ("To verse", p.from > 0 ? [[0, "–"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
           p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
   addBtn.disabled = ! chosen || p.from < 0;
 }
@@ -248,8 +248,7 @@ async function draw (body: HTMLElement) {
 </div>
     <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
-    <div class="vcNewHead">New Verse</div>
-    <div class="vcAdd"><div id="vcPlace"></div><button class="pill" id="vcAddBtn">+ Add card</button></div>
+    <div class="vcAdd"><div class="vcNewHead">New Verse</div><div id="vcPlace"></div><button class="pill" id="vcAddBtn">+ Add card</button></div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;

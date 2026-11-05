@@ -436,7 +436,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen:has(.vcBar) { padding-bottom: var(--barH); }     /* (Room under the screen for the bar) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
-.vcNewHead { font-weight: 600; margin-top: 6px; margin-bottom: -4px; }     /* (NEW VERSE: the add row's bold heading, last in ⋯'s options) */
+.vcNewHead { font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); }     /* (NEW VERSE: the add row's bold heading at its start, level with the pickers) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
