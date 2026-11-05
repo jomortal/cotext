@@ -8,7 +8,7 @@
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (first in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
-// - ADDING: picked on the add row (NEW VERSE, last in ⋯'s options) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
+// - ADDING: picked on the add row (NEW VERSE, +'s drop-down) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (picked in any order -
 //   before a book, CHAPTER and the verses offer up to the most in any book or chapter, moved to the book's or chapter's
@@ -202,7 +202,7 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
-let menuOpen = false;     // (⋯'s options: hidden till ⋯)
+let menuOpen: "" | "more" | "add" = "";     // (The top row's drop-down open: ⋯'s options, +'s NEW VERSE, or neither)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
@@ -255,8 +255,8 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
   body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1 class="vcTitle">${esc (d.name)}</h1>
-      <button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen}">${menuOpen ? "✕" : "⋯"}</button></div></div>
-    <div class="vcMenu"${menuOpen ? "" : " hidden"}>
+      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button><button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen === "more"}">${menuOpen === "more" ? "✕" : "⋯"}</button></span></div></div>
+    <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
     <div class="vcHead">Decks</div>
     <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
@@ -268,19 +268,24 @@ async function draw (body: HTMLElement) {
 </div>
     <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
+    </div>
+    <div class="vcMenu" data-menu="add"${menuOpen === "add" ? "" : " hidden"}>
     <div class="vcAdd"><div class="vcNewHead">New Verse</div><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
-  // ⋯ at the top row's right: its options - the name, the settings, adding cards, the list, the decks - as the Bible
-  // view's ⋯ menu (⋯ a ✕ while open that closes it), but over the deck, pushing it down - the card still in view (kept
-  // so between drawings)
-  const more = body.querySelector<HTMLElement> ("#vcMore")!, menu = body.querySelector<HTMLElement> (".vcMenu")!;
-  more.addEventListener ("click", () => {
-    menuOpen = ! menuOpen; menu.hidden = ! menuOpen;
-    more.setAttribute ("aria-expanded", String (menuOpen)); more.textContent = menuOpen ? "✕" : "⋯";
+  // ⋯ at the top row's right: its options - the decks, the name, the settings, the list - and + before it: NEW VERSE,
+  // adding cards; each a drop-down as the Bible view's ⋯ menu (its button a ✕ while open that closes it; one open at a
+  // time), but over the deck, pushing it down - the card still in view (kept so between drawings)
+  const tops = { more: [body.querySelector<HTMLElement> ("#vcMore")!, "⋯"], add: [body.querySelector<HTMLElement> ("#vcPlus")!, "+"] } as const;
+  const menus = [...body.querySelectorAll<HTMLElement> (".vcMenu")];
+  const openMenu = (k: typeof menuOpen) => {
+    menuOpen = k;
+    for (const m of menus) m.hidden = m.dataset.menu !== k;
+    for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); btn.textContent = n === k ? "✕" : icon; }
     clearMenu ();
-  });
+  };
+  for (const [n, [btn]] of Object.entries (tops)) btn.addEventListener ("click", () => openMenu (menuOpen === n ? "" : n as typeof menuOpen));
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   // A word tapped on a card: its panel at the screen's foot, as the reader's (tapped again, it closes); the card
@@ -383,12 +388,13 @@ async function draw (body: HTMLElement) {
   // (measured again as either changes size - a card turned, the window turned, the options opened)
   const clearMenu = () => {
     deckEl.style.marginTop = "";
-    if (menu.hidden) return;
+    const menu = menus.find ((m) => ! m.hidden);
+    if (! menu) return;
     const over = menu.getBoundingClientRect ().bottom + 12 - (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top;
     if (over > 0) deckEl.style.marginTop = over + "px";
   };
   const watch = new ResizeObserver (() => clearMenu ());
-  watch.observe (deckEl); watch.observe (menu);
+  watch.observe (deckEl); menus.forEach ((m) => watch.observe (m));
   deck ();
 }
 
