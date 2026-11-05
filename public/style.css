@@ -495,7 +495,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); }
 .vcMenu:not([hidden])::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 100vw; translate: -50%; border-bottom: var(--rule); }     /* (Its line under it across the whole screen, not just the column - cut at the screen's sides) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
-.vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
+.vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
 #vcPlace, .avPlace { display: flex; gap: 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line, kept together - BOOK narrowing where it must, its name cut short) */
 #vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 0 1 auto; width: calc(11em + 38px); min-width: 0; }
