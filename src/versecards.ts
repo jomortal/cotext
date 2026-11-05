@@ -6,18 +6,16 @@
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts at the chapter read and stays as it is between cards. The add row is
-//   one line where it fits (wrapping where not): the deck's Interlinear, Parsing and Transliteration, OT, ENGLISH
-//   ONLY, TRANSLATION, then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE), then + ADD CARD.
-// - AN OT CARD'S TEXT ("OT": picked on the add row when it's added - Hebrew at first): Hebrew or
-//   Greek LXX (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
-//   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference). An NT
-//   card the Greek.
+//   one line where it fits (wrapping where not): the deck's Interlinear, Parsing and Transliteration, LANGUAGE,
+//   TRANSLATION, then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE), then + ADD CARD.
+// - A CARD'S LANGUAGE (picked on the add row when it's added - OT Hebrew at first): OT HEBREW, OT LXX GREEK (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
+//   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference) or
+//   ENGLISH ONLY (no Greek or Hebrew). An NT card the Greek with either OT choice.
 // - FOR ALL THE DECK'S CARDS (its settings): TRANSLATION - None or one of the notes' English translations (notes.ts'
 //   translationSources, each file read as the notes read it: openSource) - and, for the cards showing an original,
 //   Interlinear, Parsing and Transliteration (the original drawn as the reader draws it: chapterstudy.ts' textBox).
-//   A card shows its original unless ENGLISH ONLY is ticked on it (on the add row, for the card added -
-//   ticked, the OT picker greyed out and TRANSLATION offering no None - switched to the first if None was picked: no
-//   Greek or Hebrew, only English); the translation where one is picked (and has the card's testament) - an
+//   A card shows its original unless its LANGUAGE is ENGLISH ONLY (while that's picked, TRANSLATION offers no None -
+//   switched to the first if None was picked); the translation where one is picked (and has the card's testament) - an
 //   English-only card with none picked the first translation that has it, so it always shows something.
 // - A CARD: its front the reference; turned over, the back alone - the reference, the translation's verses (each
 //   numbered in a range), the original. Under the deck the list, in the order added: each reference and ✕ removing it (its
@@ -125,10 +123,10 @@ async function backOf (c: VerseCard, used: Map<string, string>): Promise<string>
 
 // ---- The screen ----
 
-const OT_CHOICES: [Original, string][] = [["he", "Hebrew"], ["lxx", "Greek LXX"]];
-const options = (cs: [Original, string][], v: string) => cs.map (([k, t]) => `<option value="${k}"${k === v ? " selected" : ""}>${t}</option>`).join ("");
-let newEn = false;     // (The add row's ENGLISH ONLY)
-let newOT: Original = "he";     // (The add row's OT: an OT card's Hebrew or Greek LXX; an NT card Greek whatever it says)
+/** The add row's LANGUAGE: "en" English only; else an OT card's original (an NT card Greek with either). */
+type Language = "he" | "lxx" | "en";
+const LANGUAGES: [Language, string][] = [["he", "OT Hebrew"], ["lxx", "OT LXX Greek"], ["en", "English only"]];
+let language: Language = "he";
 /** The add row's reference: book, chapter, verses (from 0: the whole chapter; to 0: the from verse alone) - null till
  *  the screen first opens (then the chapter read). */
 let pickAt: { book: Book; chapter: number; from: number; to: number } | null = null;
@@ -168,8 +166,7 @@ async function draw (body: HTMLElement) {
       <button class="pill" id="vcDelDeck">Delete deck</button></div>
     <div class="vcAdd">
       <button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button><button class="pill" data-o="translit">Transliteration</button>
-      <label class="vcPick">OT<select class="choose" id="vcNew"${newEn ? " disabled" : ""}>${options (OT_CHOICES, newOT)}</select></label>
-      <label class="vcPick">English only<input type="checkbox" id="vcEn"${newEn ? " checked" : ""}></label>
+      <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === language ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
@@ -179,7 +176,7 @@ async function draw (body: HTMLElement) {
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
-  const newPick = body.querySelector<HTMLSelectElement> ("#vcNew")!;
+  const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
   // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, DELETE DECK (asked first).
   for (const b of body.querySelectorAll<HTMLElement> ("[data-deck]")) b.addEventListener ("click", () => { at = b.dataset.deck!; save (); draw (body); });
   body.querySelector ("#vcNewDeck")!.addEventListener ("click", () => { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; save (); draw (body); });
@@ -215,19 +212,18 @@ async function draw (body: HTMLElement) {
   drawPick (placeEl);
   body.querySelector ("#vcAddBtn")!.addEventListener ("click", () => {
     if (! pickAt) return;
-    const p = pickAt, orig: Original = p.book.testament === "NT" ? "gr" : newOT;
-    d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from), orig, en: newEn });
+    const p = pickAt, orig: Original = p.book.testament === "NT" ? "gr" : language === "lxx" ? "lxx" : "he";
+    d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from), orig, en: language === "en" });
     save (); deck ();
   });
-  newPick.addEventListener ("change", () => { newOT = newPick.value as Original; });
-  // ENGLISH ONLY: the original left off - the OT picker greyed out while it's ticked
-  const enBox = body.querySelector<HTMLInputElement> ("#vcEn")!;
-  // (and TRANSLATION offering no None: an English-only card shows a translation - the first, if None was picked)
+  // ENGLISH ONLY: the original left off - TRANSLATION offering no None (an English-only card shows a translation:
+  // the first, if None was picked)
   const noNone = () => {
-    trPick.querySelector<HTMLOptionElement> ('option[value=""]')!.hidden = newEn;
-    if (newEn && ! trPick.value && trs.length) { trPick.value = settings.tr = trs[0].id; save (); deck (); }
+    const en = language === "en";
+    trPick.querySelector<HTMLOptionElement> ('option[value=""]')!.hidden = en;
+    if (en && ! trPick.value && trs.length) { trPick.value = settings.tr = trs[0].id; save (); deck (); }
   };
-  enBox.addEventListener ("change", () => { newEn = enBox.checked; newPick.disabled = newEn; noNone (); });
+  langPick.addEventListener ("change", () => { language = langPick.value as Language; noNone (); });
   noNone ();
   trPick.addEventListener ("change", () => { settings.tr = trPick.value; save (); deck (); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-o]"))
