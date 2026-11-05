@@ -15,9 +15,12 @@ first run, kept after: a rebuild reads the same revisions; delete an entry to fe
     calls): its wikitext - its lead (before the first heading; as plain text, templates, tables and references dropped),
     its infobox (the facts a bulleted find lacks: facts_from) and its scripture references.
   - Its photo: the list's own image for the row, from Wikimedia Commons when its licence is free (CC0, public domain,
-    CC BY, CC BY-SA - not NC or ND; a file only on Wikipedia itself is non-free: none), fetched as Commons' 330 px
-    thumbnail and re-encoded by macOS's sips to a JPEG 300 px wide at quality 55 (about 10-25 kB; without sips the
-    thumbnail as it comes), credited under it with its author and licence.
+    CC BY, CC BY-SA - not NC or ND; a file only on Wikipedia itself is non-free: none), fetched as Commons' 1280 px
+    thumbnail (pinned by its SHA-256) and made by macOS's sips into two JPEGs (pictures()): the full picture, 1200 px
+    on its long side at quality 60 (about 100-250 kB), its own file public/data/images/finds/<id>.jpg - online only:
+    served, never in the downloaded .db nor kept by the service worker (sw.js) -, and a thumbnail 160 px on its long
+    side at quality 55 (about 5-10 kB) inside the .db, so the lists show it offline; credited under it with its author
+    and licence. Without sips both are the thumbnail as it comes.
 Scripture references: "2 Kings 20:20", "2 Chronicles 32:2-4", "Exodus 1:11; 12:37" (a book's full English name, I / II
   or 1 / 2 / First / Second before it, then chapter:verse, a range or a comma's verses; "ch. v" after a ";" in the
   same book; "20, 20:" before a quotation as 20:20), in the row's significance and the article's text, its
@@ -36,7 +39,8 @@ Output: public/data/notes/finds.db - tyndale_dict's tables, so dictionary.ts rea
             bears on, plain, about 200 characters), verses (how many verses it cites)
   lemmas    strong -> ids (finds naming it, space-separated, in title order), subject ('': none here)
   refs      book, start, end (chapter * 1000 + verse), id
-  photos    id -> src (a data: URI, image/jpeg), credit (author, licence, "Wikimedia Commons")
+  photos    id -> src (the thumbnail: a data: URI, image/jpeg), credit (author, licence, "Wikimedia Commons"), full
+            (the full picture's path under public/ - data/images/finds/<file>.jpg -, fetched only online)
 and its row in the main database's note_sources (id 'finds', kind 'dictionary', testaments 'OT NT').
 
 Run on its own: python3 pipeline/finds.py (the main database already built: its words read, its note_sources row
@@ -64,6 +68,7 @@ import tyndale_dict  # noqa: E402
 DL = HERE / "downloads" / "notes" / "finds"
 PINS = HERE / "finds_pins.json"
 OUT = HERE.parent / "public" / "data" / "notes" / "finds.db"
+IMAGES = HERE.parent / "public" / "data" / "images"     # (<source id>/<file>.jpg: the full pictures, online only)
 LIST = "List of inscriptions in biblical archaeology"
 API = "https://en.wikipedia.org/w/api.php"
 COMMONS = "https://commons.wikimedia.org/w/api.php"
@@ -293,16 +298,37 @@ def references(text):
 # ---- Photos ----
 
 FREE = re.compile(r"^(cc0|public domain|pd\b|cc[ -]by(-sa)?[ -]\d|cc[ -]by(-sa)?$|attribution)", re.I)
+WIDTH = 1280     # (The Commons thumbnail fetched: a standard size, cut to FULL px by sips)
+FULL, THUMB = 1200, 160     # (The full picture's and the thumbnail's long side, px)
 
 
-def photo(name, pins):
-    """A row's image as (data URI, credit), or None (no image, not on Commons, or not freely licensed)."""
+def commons(names):
+    """Commons' records of image files (names, without "File:"), 50 a call, each kept in DL as img-<hash>.json
+    (only those not kept yet are fetched): its WIDTH px thumbnail's URL, licence and author."""
+    new = sorted({n for n in names if n and not (DL / ("img-" + safe(n) + ".json")).exists()})
+    for i in range(0, len(new), 50):
+        q = get(COMMONS, {"action": "query", "titles": "|".join("File:" + n for n in new[i:i + 50]),
+                          "prop": "imageinfo", "iiprop": "url|extmetadata|sha1", "iiurlwidth": WIDTH})["query"]
+        to = {r["from"]: r["to"] for r in q.get("normalized", [])}
+        pages = {p["title"]: p for p in q["pages"]}
+        for n in new[i:i + 50]:
+            page = pages.get(to.get("File:" + n, "File:" + n), {"missing": True})
+            (DL / ("img-" + safe(n) + ".json")).write_text(json.dumps({"query": {"pages": [page]}}))
+
+
+def file_name(eid):
+    """An entry's id as its picture's file name (letters, digits, _ . - kept; anything else _)."""
+    return re.sub(r"[^A-Za-z0-9_.-]", "_", eid) + ".jpg"
+
+
+def pictures(name, pins, src, eid):
+    """An image file's (name, on Commons: commons() fetched its record) picture for an entry (eid) of a source (src):
+    (its thumbnail as a data URI, its credit, its full picture's path under public/) - the full picture written to
+    IMAGES/src/; or None (no image, not on Commons, or not freely licensed). Its download pinned in
+    pins["images"][name] (SHA-256). Also used by ane.py."""
     if not name:
         return None
-    info = cached("photo-" + safe(name) + ".json", lambda: get(COMMONS, {
-        "action": "query", "titles": "File:" + name, "prop": "imageinfo", "iiprop": "url|extmetadata|sha1",
-        "iiurlwidth": 330}))
-    page = info["query"]["pages"][0]
+    page = json.loads((DL / ("img-" + safe(name) + ".json")).read_text())["query"]["pages"][0]
     if page.get("missing") or not page.get("imageinfo"):
         return None
     ii = page["imageinfo"][0]
@@ -311,28 +337,32 @@ def photo(name, pins):
     if not FREE.match(lic) or re.search(r"\b(nc|nd)\b", lic, re.I):
         return None
     artist = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", meta.get("Artist", {}).get("value", "")))).strip()
-    jpg = DL / ("photo-" + safe(name) + ".jpg")
-    if not jpg.exists():
-        raw = DL / ("photo-" + safe(name) + ".raw")
-        raw.write_bytes(fetched(urllib.request.Request(ii["thumburl"], headers=UA)))
-        if shutil.which("sips"):
-            subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", "55", "--resampleWidth", "300",
-                            str(raw), "--out", str(jpg)], check=True, capture_output=True)
-            raw.unlink()
-        else:
-            raw.rename(jpg)
-    data = jpg.read_bytes()
-    sha = hashlib.sha256(data).hexdigest()
-    if pins.setdefault("photos", {}).setdefault(name, sha) != sha:
-        raise SystemExit(f"{jpg}: not the pinned photo (SHA-256 differs)")
+    raw = DL / ("img-" + safe(name) + ".raw")
+    if not raw.exists():
+        raw.write_bytes(fetched(urllib.request.Request(ii.get("thumburl") or ii["url"], headers=UA)))
+    sha = hashlib.sha256(raw.read_bytes()).hexdigest()
+    if pins.setdefault("images", {}).setdefault(name, sha) != sha:
+        raise SystemExit(f"{raw}: not the pinned image (SHA-256 differs)")
+    full = IMAGES / src / file_name(eid)
+    full.parent.mkdir(parents=True, exist_ok=True)
+    thumb = DL / ("img-" + safe(name) + ".t.jpg")
+    if shutil.which("sips"):
+        for out, size, quality in ((full, FULL, 60), (thumb, THUMB, 55)):
+            subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", str(quality), "-Z", str(size),
+                            str(raw), "--out", str(out)], check=True, capture_output=True)
+    else:
+        shutil.copyfile(raw, full)
+        shutil.copyfile(raw, thumb)
     credit = f"Photo: {artist[:120] or 'unknown'}, {lic}, Wikimedia Commons"
-    return "data:image/jpeg;base64," + base64.b64encode(data).decode(), credit
+    return ("data:image/jpeg;base64," + base64.b64encode(thumb.read_bytes()).decode(), credit,
+            f"data/images/{src}/{file_name(eid)}")
 
 
 # ---- The finds ----
 
 def fetch_all():
-    """The list's rows, each with its article (lead paragraphs, wikitext, title) and photo; pins kept or written."""
+    """The list's rows, each with its article (lead paragraphs, wikitext, title), and the pins (kept, or added to:
+    build() writes them once the pictures are pinned too); the photos' Commons records fetched (commons())."""
     DL.mkdir(parents=True, exist_ok=True)
     pins = json.loads(PINS.read_text()) if PINS.exists() else {}
     if "list" not in pins:
@@ -367,19 +397,8 @@ def fetch_all():
             wt = json.loads((DL / f"art-{rev}.json").read_text())["wikitext"]
             f["article"] = {"title": title, "wikitext": wt, "lead": lead(wt)}
             facts_from(infobox(wt), f)
-    names = sorted({f["image"] for f in finds if f["image"] and not (DL / ("photo-" + safe(f["image"]) + ".json")).exists()})
-    for i in range(0, len(names), 50):     # (The photos' Commons records, 50 a call, each kept as photo() reads it)
-        q = get(COMMONS, {"action": "query", "titles": "|".join("File:" + n for n in names[i:i + 50]),
-                          "prop": "imageinfo", "iiprop": "url|extmetadata|sha1", "iiurlwidth": 330})["query"]
-        to = {r["from"]: r["to"] for r in q.get("normalized", [])}
-        pages = {p["title"]: p for p in q["pages"]}
-        for n in names[i:i + 50]:
-            page = pages.get(to.get("File:" + n, "File:" + n), {"missing": True})
-            (DL / ("photo-" + safe(n) + ".json")).write_text(json.dumps({"query": {"pages": [page]}}))
-    for f in finds:
-        f["photo"] = photo(f["image"], pins)
-    PINS.write_text(json.dumps(pins, indent=1, ensure_ascii=False) + "\n")
-    return finds
+    commons(f["image"] for f in finds)
+    return finds, pins
 
 
 def find_html(f, refs):
@@ -444,7 +463,7 @@ def namer(main_db, kinds=("person", "place")):
 
 def write(out, entries, lemmas, source, photos=None):
     """A dictionary-kind file (tyndale_dict's tables, and photos when given) and its note_sources row (replaced). entries:
-    [(id, title, html, line, verses, spans)] in title order; lemmas: strong -> [ids]; photos: id -> (data URI, credit).
+    [(id, title, html, line, verses, spans)] in title order; lemmas: strong -> [ids]; photos: id -> (thumbnail data URI, credit, full picture's path).
     Returns its bytes. Also used by isbe.py."""
     order = {a[0]: n for n, a in enumerate(entries)}
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -463,8 +482,8 @@ def write(out, entries, lemmas, source, photos=None):
                    [(s, " ".join(sorted(set(ids), key=order.get))) for s, ids in sorted(lemmas.items())])
     db.executemany("INSERT OR IGNORE INTO refs VALUES (?,?,?,?)", [(b, st, e, a[0]) for a in entries for b, st, e in a[5]])
     if photos is not None:
-        db.execute("CREATE TABLE photos (id TEXT PRIMARY KEY, src TEXT, credit TEXT) WITHOUT ROWID")
-        db.executemany("INSERT INTO photos VALUES (?,?,?)", [(i, *p) for i, p in sorted(photos.items())])
+        db.execute("CREATE TABLE photos (id TEXT PRIMARY KEY, src TEXT, credit TEXT, full TEXT) WITHOUT ROWID")
+        db.executemany("INSERT INTO photos VALUES (?,?,?,?)", [(i, *p) for i, p in sorted(photos.items())])
     db.commit()
     db.execute("VACUUM")
     db.close()
@@ -481,8 +500,10 @@ def register(main_db, source, file, data):
 def build(main_db):
     """Builds finds.db and its note_sources row (replaced). Returns (finds, verses linked, photos, lemmas)."""
     last_verses(main_db)
-    finds = fetch_all()
+    finds, pins = fetch_all()
     keys = namer(main_db)
+    pins.pop("photos", None)     # (The 300 px photos pinned before the full pictures: replaced by "images")
+    shutil.rmtree(IMAGES / "finds", ignore_errors=True)     # (Written anew: no picture of a find gone left behind)
     entries, lemmas, photos, seen = [], {}, {}, set()
     for f in finds:
         fid = (f["article"]["title"] if f["article"] else f["name"]).replace(" ", "_")     # (As in its URL: lemmas' ids are space-separated)
@@ -501,9 +522,11 @@ def build(main_db):
                 lemmas.setdefault(k, []).append(fid)
         line = (f["bears"] or (f["article"]["lead"][0] if f["article"] and f["article"]["lead"] else ""))[:200]
         entries.append((fid, f["name"], find_html(f, refs), line, len(verses), spans))
-        if f["photo"]:
-            photos[fid] = f["photo"]
+        pic = pictures(f["image"], pins, "finds", fid)
+        if pic:
+            photos[fid] = pic
     entries.sort(key=lambda a: a[1].lower())
+    PINS.write_text(json.dumps(pins, indent=1, ensure_ascii=False) + "\n")
     data = write(OUT, entries, lemmas, SOURCE, photos)
     register(main_db, SOURCE, "data/notes/finds.db", data)
     linked = len(tyndale_dict.verses_in([sp for a in entries for sp in a[5]]))

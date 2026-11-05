@@ -2,7 +2,9 @@
 // both ways and searchable - and every other source of its kind ('dictionary' in note_sources), read the same way from
 // a file of the same tables, each function taking the source's id (src, "tobd" by default): the Archaeology finds
 // (pipeline/finds.py: Wikipedia's inscribed finds, its word panel's button "Finds"), whose file also holds a photo
-// per find (photos: shown at an entry's right and over its text, credited under it), and the ISBE's articles on
+// per find (photos: its thumbnail in the file, shown at an entry's right even offline; its full picture a file of its
+// own on the server, data/images/<source>/<id>.jpg, online only - shown over the opened text, credited under it;
+// offline, the thumbnail there and "Full picture online only"), and the ISBE's articles on
 // archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE").
 // - BY WORD: the word's panel's "Dictionary" (panel.ts) - the articles on the tapped word's root, opened over the
 //   word's info as the Verb chart is (grammar.ts' showOther: titled, its ✕ back to the word). The articles matching
@@ -55,14 +57,17 @@ function opened (main: Db, src: string, onProgress: (fraction: number) => void =
 export const dictionary = (main: Db, onProgress: (fraction: number) => void = () => {}, src = "tobd"): Promise<Db | null> =>
   opened (main, src, onProgress).then ((o) => o?.db ?? null);
 
-/** Articles' photos (the sources with a photos table): id -> [its image (a data: URI), its credit]. */
-async function photosOf (o: Opened | null, ids: string[]): Promise<Map<string, [string, string]>> {
-  const out = new Map<string, [string, string]> ();
+/** A photo: its thumbnail (a data: URI, in the file), its credit, its full picture's URL (under data/images/: online only;
+ *  '' none). */
+type Photo = [thumb: string, credit: string, full: string];
+/** Articles' photos (the sources with a photos table): id -> its Photo. */
+async function photosOf (o: Opened | null, ids: string[]): Promise<Map<string, Photo>> {
+  const out = new Map<string, Photo> ();
   if (! o?.photos) return out;
   for (let i = 0; i < ids.length; i += 500) {     // (500 values a query: SQLite's limit)
     const part = ids.slice (i, i + 500);
-    for (const r of await o.db.all (`SELECT id, src, credit FROM photos WHERE id IN (${part.map (() => "?").join (",")})`, part))
-      out.set (String (r.id), [String (r.src), String (r.credit)]);
+    for (const r of await o.db.all (`SELECT id, src, credit, full FROM photos WHERE id IN (${part.map (() => "?").join (",")})`, part))
+      out.set (String (r.id), [String (r.src), String (r.credit), String (r.full ?? "")]);
   }
   return out;
 }
@@ -130,20 +135,26 @@ async function openArticle (main: Db, id: string, show: ShowOther, src = "tobd")
   show (plain (String (r.title)), (body) => body.append (...articleBody (r, o, (other) => openArticle (main, other, show, src), photo)), o.name);
 }
 
-/** An article's photo (where its source has one: a figure, its credit under it), text (the pipeline's light HTML,
+/** An article's photo (where its source has one: a figure, its credit under it - the full picture, fetched from the
+ *  server as it scrolls into view; offline or failing, its thumbnail instead with "Full picture online only"), text (the pipeline's light HTML,
  *  styled as a grammar section: .gBody) and its source's credit: each scripture reference going to its verse, each
  *  cross-reference opening its article (open). */
-function articleBody (r: Row, o: Opened, open: (id: string) => void, photo?: [string, string]): HTMLElement[] {
+function articleBody (r: Row, o: Opened, open: (id: string) => void, photo?: Photo): HTMLElement[] {
   const figure: HTMLElement[] = [];
   if (photo) {
     const f = document.createElement ("figure");
     f.className = "dictPhoto";
     const img = document.createElement ("img");
-    img.src = photo[0];
     img.alt = plain (String (r.title));
     const cap = document.createElement ("figcaption");
     cap.className = "credit";
     cap.textContent = photo[1];
+    const thumbOnly = () => {     // (Offline, or the full picture failed: the thumbnail, said to be one)
+      img.onerror = null;
+      img.src = photo[0];
+      cap.textContent = `Full picture online only. ${photo[1]}`;
+    };
+    if (photo[2]) { img.loading = "lazy"; img.onerror = thumbOnly; img.src = photo[2]; } else img.src = photo[0];
     f.append (img, cap);
     figure.push (f);
   }
