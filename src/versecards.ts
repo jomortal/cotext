@@ -80,9 +80,9 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify ({ decks, a
 let db: Db;
 let books: Book[] = [];
 let reading: () => Book;     // (The Bible's book read: a verse number tapped there opens the add-verse box)
-/** main.ts: the database and every book (the Hebrew Bible's and the NT's are the ones picked). */
-let allBooks: Book[] = [];
-const cardWords = new Map<string, Word> ();     // (The cards' words by "book.chapter.word": a tapped word's panel)     // (The Septuagint's too: a Greek LXX card's own book)
+let allBooks: Book[] = [];     // (The Septuagint's too: a Greek LXX card's own book)
+const cardWords = new Map<string, Word> ();     // (The cards' words by "book.chapter.verse.word" - word counting within its verse: a tapped word's panel)
+/** main.ts: the database, every book (the Hebrew Bible's and the NT's are the ones picked) and the book read. */
 export function initVerseCards (theDb: Db, all: Book[], book: () => Book) {
   db = theDb; allBooks = all; books = all.filter ((b) => b.testament !== "LXX"); reading = book;
 }
@@ -168,7 +168,7 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     // (Each word keyed to its Word, for its panel when tapped - the card's HTML drawn as text, so kept here)
     box.querySelectorAll<HTMLElement> (".w").forEach ((el, i) => {
       const w = ws[i]; if (! w) return;
-      const k = `${w.book}.${w.chapter}.${w.word}`; cardWords.set (k, w); el.dataset.wk = k;
+      const k = `${w.book}.${w.chapter}.${w.verse}.${w.word}`; cardWords.set (k, w); el.dataset.wk = k;
     });
     for (const v of box.querySelectorAll<HTMLElement> (".vnum")) {
       const n = Number (v.textContent), he = !! v.closest (".vrow.he");
