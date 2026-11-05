@@ -5,7 +5,7 @@
 // text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the book shown (those with notes
 //   for it: note_sources.books, pipeline/source_books.py - Rashi only in the Torah), grouped
-//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, DICTIONARY, MAPS, APPARATUS, COMMENTARIES, ANCIENT
+//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, BIBLE BACKGROUND (the dictionaries and the atlas), APPARATUS, COMMENTARIES, ANCIENT
 //   VERSIONS and TRANSLATIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device, and stays through every book it covers.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
@@ -106,16 +106,17 @@ export function setNotesPassage (b: Book, c: number) {
   if (! panel.hidden) show ();
 }
 
-/** Sources as a picker's choices (the notes' picker, the search's resources - search.ts): grouped by kind (optgroups),
- *  in the user's order, each by its name; a kind with none left out. */
+/** Sources as a picker's choices (the notes' picker, the search's resources - search.ts): grouped by kind (optgroups;
+ *  the dictionaries and the atlas together as BIBLE BACKGROUND), in the user's order, each by its name; a group with
+ *  none left out. */
 export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
-  const group = (kind: string, label: string) => {
+  const group = (kinds: string, label: string) => {
     const g = document.createElement ("optgroup");
     g.label = label;
-    g.append (...list.filter ((s) => s.kind === kind).map ((s) => new Option (s.name, s.id)));
+    g.append (...list.filter ((s) => kinds.split (" ").includes (s.kind)).map ((s) => new Option (s.name, s.id)));
     return g.children.length ? [g] : [];
   };
-  return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary", "Dictionary"), ...group ("atlas", "Maps"),
+  return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary atlas", "Bible Background"),
           ...group ("apparatus", "Apparatus"), ...group ("commentary", "Commentaries"), ...group ("version", "Ancient versions"),
           ...group ("translation", "Translations")];
 }
