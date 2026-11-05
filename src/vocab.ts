@@ -6,12 +6,14 @@
 // moves up, so 1-20 is always the 20 most frequent still to learn), MY VOCAB and KNOWN WORDS (a Greek word's the same in the NT and LXX) - the one picked (OT / NT / LXX frequency at first) shown
 // as flashcards, then - with SHOW LIST, off at first so the answers stay hidden while quizzing - its words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for Book frequency). A card's
 // front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) - or, with ENGLISH TO HEBREW / GREEK, the other way round; REMOVE FROM LIST takes it off that list
-// (in the frequency lists, + KNOWN WORDS: made known, into Known words). Kept on the device.
+// (in the frequency lists, + KNOWN WORDS: made known, into Known words). Then the first things to learn, as cards the
+// same way: ALPHABET, NUMBERS (the number words, then the letters used as numbers) and BOOK NAMES (basics.ts). Kept on the device.
 
 import type { Db } from "./db";
 import { onScreen, currentTestament } from "./study";
 import { showDeck, type Card } from "./cards";
 import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook, setLearning, applyHelps } from "./helps";
+import { basics } from "./basics";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -71,6 +73,15 @@ async function cardsFor (strongs: string[]): Promise<WordCard[]> {
   });
 }
 
+/** A card of ALPHABET, NUMBERS or BOOK NAMES (basics.ts), drawn as a word's: the word with its speaker (where it's
+ *  said), its English - ENGLISH TO HEBREW / GREEK the other way round. */
+function basicCard (x: { word: string; say: string; meaning: string }): Card {
+  const hebrew = currentTestament () === "OT";
+  const say = x.say ? `<button class="pill icon" data-say="${esc (x.say)}" aria-label="Say the word">${SPEAKER}</button>` : "";
+  const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (x.word)}</span>${say}</span>`, meaning = `<div class="meaning">${esc (x.meaning)}</div>`;
+  return reversed ? { front: meaning, back: word } : { front: word, back: meaning };
+}
+
 /** The testament's words (Strong's keys, by its H / G prefix) not yet known, most frequent first - in the whole
  *  testament, or in the book (its id): the frequency lists. */
 async function toLearn (prefix: string, known: string[], bookId = 0): Promise<string[]> {
@@ -80,7 +91,8 @@ async function toLearn (prefix: string, known: string[], bookId = 0): Promise<st
 }
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
-let picked = "freq";                   // (The list shown: freq - OT / NT / LXX FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, or known)
+let picked = "freq";                   // (The list shown: freq - OT / NT / LXX FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, known, or the first things to learn: alpha - ALPHABET -, nums - NUMBERS -, names - BOOK NAMES - basics.ts)
+const isBasic = () => ["alpha", "nums", "names"].includes (picked);
 const byFreq = () => picked === "freq" || picked === "book";
 const pickedBook: Record<string, number> = {};     // (BOOK FREQUENCY's book, by testament: the book shown until one is picked)
 const theBook = () => pickedBook[currentTestament ()] ?? currentBook ().id;
@@ -104,7 +116,8 @@ async function lists () {
 async function draw (body: HTMLElement) {
   const t = currentTestament ();
   body.innerHTML = `<div class="bar"><button class="pill" data-list="freq">${t} frequency</button><button class="pill" data-list="book">Book frequency</button>
-      <button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button></div>
+      <button class="pill" data-list="learn">My vocab</button><button class="pill" data-list="known">Known words</button>
+      <button class="pill" data-list="alpha">Alphabet</button><button class="pill" data-list="nums">Numbers</button><button class="pill" data-list="names">Book names</button></div>
     <div class="chartPick" id="freqRow"><label id="bookRow"><select class="choose" id="bookPick" aria-label="Book"></select></label><label><select class="choose" id="freqPick" aria-label="Words by frequency"></select></label></div>
     <div class="deck"></div>
     <div class="bar"><button class="pill" id="reverse">English to ${t === "OT" ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
@@ -136,6 +149,12 @@ async function draw (body: HTMLElement) {
     listBtn.setAttribute ("aria-pressed", String (listShown));
     body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
     listEl.hidden = ! listShown;
+    if (isBasic ()) {     // (ALPHABET, NUMBERS, BOOK NAMES: each word and its English)
+      const bs = await basics (db, picked, t);
+      if (n !== refreshing) return;
+      listEl.innerHTML = bs.map ((x) => `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (x.word)}</span><span>${esc (x.meaning)}</span><span class="n"></span></div>`).join ("");
+      return;
+    }
     listEl.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
       const w = d.get (k)!;
       return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
@@ -151,6 +170,11 @@ async function draw (body: HTMLElement) {
       refresh ();
     };
     const n = ++opening;
+    if (isBasic ()) {     // (ALPHABET, NUMBERS, BOOK NAMES: their cards as the words', nothing to take off)
+      const cs = (await basics (db, picked, currentTestament ())).map ((x) => basicCard (x));
+      if (n === opening) showDeck (deckEl, cs, undefined, undefined, true);
+      return;
+    }
     const cards = await cardsFor (words (await lists ()));
     if (n !== opening) return;
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }

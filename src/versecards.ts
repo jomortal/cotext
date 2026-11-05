@@ -43,6 +43,7 @@ import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
 import { nativeName } from "./booknames";
+import { hebrewNumber, greekNumber } from "./numerals";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -115,16 +116,6 @@ function translationOf (b: Book): Source | null {
 }
 
 /** A card's back: the reference, the translation's verses (numbered in a range), the original(s). */
-// (Numbers in letters: Hebrew - 15 and 16 טו, טז, not the Name's letters; Greek - with a keraia, 6 ϛ, 90 ϟ)
-function hebrewNumber (n: number) {
-  const H = ["", "ק", "ר", "ש", "ת"], T = ["", "י", "כ", "ל", "מ", "נ", "ס", "ע", "פ", "צ"], O = ["", "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט"];
-  const h = Math.floor (n / 100), rest = n % 100;
-  return (H[h] ?? "") + (rest === 15 ? "טו" : rest === 16 ? "טז" : T[Math.floor (rest / 10)] + O[rest % 10]);
-}
-function greekNumber (n: number) {
-  const H = ["", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "ϡ"], T = ["", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ϟ"], O = ["", "α", "β", "γ", "δ", "ε", "ϛ", "ζ", "η", "θ"];
-  return H[Math.floor (n / 100) % 10] + T[Math.floor (n / 10) % 10] + O[n % 10] + "ʹ";
-}
 /** A reference in the original's own language, beside the English: the book's Hebrew or Greek name (booknames.ts) and
  *  its chapter and verses in letters - "תְּהִלִּים כג:א", "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ" (the Septuagint's own book and
  *  numbering: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"). */
