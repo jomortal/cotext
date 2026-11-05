@@ -40,6 +40,13 @@ a non-commercial license are marked so in NOTICE.
       pinched or wheeled from the whole Bible to one reign; the chapter read marked ("you are here") and opened on;
       each item tapped going to its verses; a person's dates in the word panel (96 persons) with a Timeline button.
       Data: Theographic Bible Metadata (CC BY-SA 4.0), Floyd Nolen Jones's chronology (after Ussher).
+- [ ] **Apocrypha, linked** (later): a resource following the text (as the Archaeology finds) linking the Apocrypha
+      wherever it correlates with the Bible, the NT above all (Hebrews 11:35 / 2 Maccabees 7, Matthew 27:43 / Wisdom
+      2:18, Romans 1 / Wisdom 13-15, James 1:19 / Sirach 5:11, John 10:22 / 1 Maccabees 4...), and the OT's parallels
+      (1 Esdras / 2 Chronicles 35-Nehemiah, Esther's and Daniel's additions, Baruch, Sirach / Proverbs, Wisdom /
+      Psalms, 1 Maccabees / Daniel 8, 11): each the passage in Greek with Brenton's English and a line on the link;
+      roughly 300-500 links, gathered by hand (the 1611 KJV's margin, Wikipedia's lists, the texts compared - NA28's
+      index is copyrighted), each checked against both passages.
 - [ ] Before the public beta: slim the resources down (the user's pick).
 
 ## In progress
