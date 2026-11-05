@@ -24,11 +24,14 @@
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
-//   - those references, the translation's verses (each numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
+//   - those references, the translation's verses (each numbered in a range), the original. A tap on its front turns it
+//   over; only HIDE turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
+//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
-import { chapterWords, type Book } from "./reader";
+import { chapterWords, type Book, type Word } from "./reader";
+import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
 import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
@@ -72,7 +75,8 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify ({ decks, a
 let db: Db;
 let books: Book[] = [];
 /** main.ts: the database and every book (the Hebrew Bible's and the NT's are the ones picked). */
-let allBooks: Book[] = [];     // (The Septuagint's too: a Greek LXX card's own book)
+let allBooks: Book[] = [];
+const cardWords = new Map<string, Word> ();     // (The cards' words by "book.chapter.word": a tapped word's panel)     // (The Septuagint's too: a Greek LXX card's own book)
 export function initVerseCards (theDb: Db, all: Book[]) { db = theDb; allBooks = all; books = all.filter ((b) => b.testament !== "LXX"); }
 
 const esc = (s: string) => s.replace (/[&<>"]/g, (c) => `&#${c.charCodeAt (0)};`);
@@ -153,6 +157,11 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     const box = textBox (lxx ? { ...b, testament: "LXX" } : b, ws[0]?.chapter ?? c.chapter, ws, deckNow ().settings);
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
     // (Each verse number in the text's own letters, as a word - its number under it with INTERLINEAR, as a gloss)
+    // (Each word keyed to its Word, for its panel when tapped - the card's HTML drawn as text, so kept here)
+    box.querySelectorAll<HTMLElement> (".w").forEach ((el, i) => {
+      const w = ws[i]; if (! w) return;
+      const k = `${w.book}.${w.chapter}.${w.word}`; cardWords.set (k, w); el.dataset.wk = k;
+    });
     for (const v of box.querySelectorAll<HTMLElement> (".vnum")) {
       const n = Number (v.textContent), he = !! v.closest (".vrow.he");
       v.classList.add ("vcVnum");
@@ -224,6 +233,15 @@ async function draw (body: HTMLElement) {
     <div class="src vcCredits"></div>`;
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
+  // A word tapped on a card: its panel at the screen's foot, as the reader's (tapped again, it closes); the card
+  // changed (BACK, SHOW, NEXT...) closes it.
+  hideCardPanel ();
+  deckEl.addEventListener ("click", (e) => {
+    const t = e.target as HTMLElement, wordEl = t.closest<HTMLElement> (".w[data-wk]");
+    const w = wordEl && cardWords.get (wordEl.dataset.wk!);
+    if (w && wordEl) showCardPanel (db, w, wordEl);
+    else if (t.closest ("[data-k]")) hideCardPanel ();
+  });
   const showList = body.querySelector<HTMLElement> ("#vcShowList")!;
   const showing = () => { listEl.hidden = ! listShown; showList.textContent = listShown ? "Hide list" : "Show list"; };
   showList.addEventListener ("click", () => { listShown = ! listShown; showing (); });
@@ -271,7 +289,7 @@ async function draw (body: HTMLElement) {
     if (n !== drawing) return;
     const ids = d.cards.map ((c) => c.id).join ();
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
-    else { shown = showDeck (deckEl, made, undefined, undefined, true); shownIds = ids; }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
+    else { shown = showDeck (deckEl, made, undefined, undefined, true, false); shownIds = ids; }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
     credits.textContent = [...used.values ()].filter (Boolean).join (" ");
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;

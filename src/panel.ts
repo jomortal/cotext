@@ -3,9 +3,10 @@
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
 // (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ (or tapping the word again) hides it.
-// Two of them, each its own: #sheet for a word of the text read, above the notes panel, and a second (cloned from
+// Three of them, each its own: #sheet for a word of the text read, above the notes panel, a second (cloned from
 // #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
-// (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
+// (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once - and a third (cloned too) for
+// a word on a verse card, over the Verse cards screen at its foot. makePanel builds one on its
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
 import { openNotesDb, type Db, type Row } from "./db";
@@ -65,6 +66,10 @@ const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
 document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes: at the foot of the panes' column when wide, layout.ts)
 addDock (besideSheet);     // (Narrow, it shares the room with the other panels: layout.ts)
+// The third: a word of a verse card's text (versecards.ts) - over the study screen, at its foot.
+const cardSheet = textSheet.cloneNode (true) as HTMLElement;
+cardSheet.id = "cardSheet";
+document.getElementById ("screen")!.append (cardSheet);
 
 /** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
 function makePanel (sheet: HTMLElement) {
@@ -370,8 +375,10 @@ function makePanel (sheet: HTMLElement) {
 }
 const progress: ((id: string, p: number) => void)[] = [];     // (Every panel's: a lexicon file's loading progress)
 
-const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet);
+const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet), cardPanel = makePanel (cardSheet);
 /** A word of the text read tapped (main.ts): the first panel, above the notes. */
 export const showPanel = textPanel.show, hidePanel = textPanel.hide;
 /** A word of the notes panel's Hebrew OT tapped (interlinear.ts): the second panel, under the notes. */
 export const showBesidePanel = besidePanel.show, hideBesidePanel = besidePanel.hide;
+/** A word of a verse card's text tapped (versecards.ts): the third panel, over the Verse cards screen at its foot. */
+export const showCardPanel = cardPanel.show, hideCardPanel = cardPanel.hide;

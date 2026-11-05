@@ -586,7 +586,10 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen[data-screen="Verse cards"] #screenTitle { display: none; }     /* (Verse cards: no title - VERSE CARD DECK names the deck at its top) */
+#screen[data-screen="Verse cards"] #screenTitle { display: none; }
+#cardSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }     /* (A verse card's word's panel: over the screen at its foot, as the reader's - panel.ts) */
+#screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }     /* (Only on the Verse cards screen) */
+#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--pad)); }     /* (Room to scroll the card and its buttons above the panel) */     /* (Verse cards: no title - VERSE CARD DECK names the deck at its top) */
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
             height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
@@ -655,7 +658,8 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .csText .w.csNoGloss .gloss, .csText .w.csNoParse .parse { display: none; }     /* (A common word's helps, by the text item's frequency: chapterstudy.ts) */
 body.noVerbColors .csText .w .parse { color: inherit; }
 .vcDeck .csText .w .parse { color: inherit; }     /* (Verse cards: the parsing without the verb colors) */
-.vcDeck .vnum.vcVnum { padding-top: 0; font-weight: 400; color: var(--fg); }     /* (Verse cards: the verse number in the text's letters, as a word) */
+.vcDeck .vnum.vcVnum { display: grid; justify-items: center; align-content: start; gap: 2px; padding: 2px 0; font-size: inherit; font-weight: 400; color: var(--fg); }     /* (Verse cards: the verse number in the text's letters, laid out as a word - .w's - its number spaced as a gloss) */
+.vcDeck .csText .w { cursor: pointer; }     /* (A card's words tapped for their panel) */
 .vcDeck .csText:not(.csGloss) .vcVnum .gloss { display: none; }
 .csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: 2px solid var(--edge); font-size: var(--fs-s); margin-top: 6px; }
 .csBeside > .src { margin: 0 0 2px; }
