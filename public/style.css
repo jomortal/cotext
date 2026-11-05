@@ -805,13 +805,13 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    (--barH) none. Their buttons top to bottom as left to right: search, ▶, notes; Shuffle, Flip, Start over. */
 :root { --sideBar: 0px; }
 @media (orientation: landscape) and (max-height: 500px) {
-  :root { --barH: 0px; --sideBar: calc(56px + env(safe-area-inset-right, 0px)); }     /* (Narrow: no swipe area to keep clear at the side - just the icons, and the Verse cards' words at --fs-s) */
+  :root { --barH: 0px; --sideBar: calc(var(--fs-icon) + 20px + env(safe-area-inset-right, 0px)); }     /* (Narrow: no swipe area to keep clear at the side - just the icons, and the Verse cards' words at --fs-xs) */
   body { right: var(--sideBar); }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
   :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0; border-top: 0 !important; border-left: var(--rule); }
-  .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; } .vcBar .pill { font-size: var(--fs-s); }
+  .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; } .vcBar .pill { font-size: var(--fs-xs); }
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #notesBtn { grid-column: 1; grid-row: 3; }
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
