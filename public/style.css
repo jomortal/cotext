@@ -132,6 +132,7 @@ body.noVerbColors .w .parse { color: inherit; }
 /* A bottom bar - the play bar, the verse cards' -: one height, its buttons' room under them clear of the iPad's and
    iPhone's swipe-up edge. */
 :root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--fs-icon) * 1.1 + 19px + var(--barFoot)); }
+@media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
 #playBar { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: var(--bg); box-sizing: border-box; height: var(--barH);
            padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--barFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
 #playBar { gap: 8px; }     /* (▶ centered, the notes' icon and the search's side by side at the right edge) */
