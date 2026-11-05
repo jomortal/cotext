@@ -19,13 +19,13 @@ function enhance (sel: HTMLSelectElement) {
   wrap.className = "chooseWrap";
   wrap.append (btn, list);
   sel.after (wrap);
-  const label = () => { btn.textContent = LABEL (sel); };
+  const label = () => { btn.textContent = LABEL (sel); btn.disabled = sel.disabled; };     // (A select disabled: its button greyed out, not opening)
   // (Set from code: the button follows. The prototype's own setter still sets the select.)
   for (const prop of ["value", "selectedIndex"] as const) {
     const d = Object.getOwnPropertyDescriptor (HTMLSelectElement.prototype, prop)!;
     Object.defineProperty (sel, prop, { get () { return d.get!.call (sel); }, set (v) { d.set!.call (sel, v); label (); }, configurable: true });
   }
-  new MutationObserver (label).observe (sel, { childList: true, subtree: true });     // (Options filled in later: GRAMMAR)
+  new MutationObserver (label).observe (sel, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });     // (Options filled in later: GRAMMAR)
   sel.addEventListener ("change", label);
   // Open, the list is moved to the end of the page, so it's over everything (no panel's layer under another's: the
   // notes panel's under the play bar, a sticky ✕); closed, it goes back beside its button.
