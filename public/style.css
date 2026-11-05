@@ -786,6 +786,23 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 /* Printing (Study printout's Print / Save as PDF): the preview alone, in the light colors, the page flowing (not the
    app's fixed screen), each verse, note, word and picture kept whole where it fits, page numbers where the browser
    draws @page's boxes. */
+/* SIDE BAR - a phone held sideways (bars.ts' SIDE_BAR: keep the two the same): the bottom bars (the play bar, the
+   Verse cards' bar) a vertical bar down the right side, the screen's width less it (--sideBar) - the room at the foot
+   (--barH) none. Their buttons top to bottom as left to right: search, ▶, notes; Shuffle, Flip, Start over. */
+:root { --sideBar: 0px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --barH: 0px; --sideBar: calc(72px + env(safe-area-inset-right, 0px)); }
+  body { right: var(--sideBar); }
+  :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
+    padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0; border-top: 0 !important; border-left: var(--rule); }
+  .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }
+  #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #notesBtn { grid-column: 1; grid-row: 3; }
+  #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
+  #picker { right: var(--sideBar); }
+  #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
+}
+
 @media print {
   @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }
   html, body { position: static; overflow: visible; height: auto; display: block; background: #fff; }

@@ -45,6 +45,7 @@ import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
 import { nativeName } from "./booknames";
 import { hebrewNumber, greekNumber } from "./numerals";
+import { barRoom } from "./bars";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -402,7 +403,7 @@ async function draw (body: HTMLElement) {
     if (! row) return;
     const r = row.getBoundingClientRect (), top = topEl.getBoundingClientRect ().bottom;
     deckEl.style.setProperty ("--arrowL", r.left + "px"); deckEl.style.setProperty ("--arrowR", innerWidth - r.right + "px");
-    deckEl.style.setProperty ("--arrowY", (top + (bar ? bar.getBoundingClientRect ().top : innerHeight)) / 2 + "px");
+    deckEl.style.setProperty ("--arrowY", (top + innerHeight - barRoom (bar)) / 2 + "px");
   };
   const watch = new ResizeObserver (() => { screenEl.style.setProperty ("--vcTopH", topEl.offsetHeight + "px"); placeArrows (); });
   watch.observe (deckEl); watch.observe (topEl);

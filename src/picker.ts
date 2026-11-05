@@ -8,6 +8,7 @@
 
 import { nativeName } from "./booknames";
 import type { Book } from "./reader";
+import { barRoom } from "./bars";
 
 const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
@@ -31,7 +32,7 @@ const head = document.querySelector<HTMLElement> (".head")!, playBar = document.
 const fit = () => {
   const root0 = document.documentElement.style;
   root0.setProperty ("--headB", `${head.getBoundingClientRect ().bottom}px`);
-  root0.setProperty ("--playB", `${Math.max (0, innerHeight - playBar.getBoundingClientRect ().top)}px`);
+  root0.setProperty ("--playB", `${barRoom (playBar)}px`);
   const r = text.getBoundingClientRect (), root = document.documentElement.style, split = panesSplit.getBoundingClientRect ();
   root.setProperty ("--textL", `${Math.max (0, r.left)}px`);
   root.setProperty ("--textR", `${Math.max (0, innerWidth - r.right)}px`);

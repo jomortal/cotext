@@ -39,6 +39,7 @@
 // - The timeline (timeline.ts' timelinePane: the ☰ Timeline's drawing) is centered on the chapter's year, moving to
 //   each new chapter's as the text changes (narrow and wide alike).
 
+import { barRoom } from "./bars";
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
@@ -885,7 +886,7 @@ export function drawDiagram (s: Sentence, text: Map<string, [string, string]>, a
 // The room between the heading and the play bar (--mid, style.css): with several of the panels open (the word's,
 // the notes, the notes' Hebrew word's), they share it evenly with the text - a third each for two, a quarter for three. Measured at start and whenever the window or either bar changes size.
 const midRoom = () => document.documentElement.style.setProperty ("--mid",
-  `${innerHeight - document.querySelector<HTMLElement> (".head")!.offsetHeight - document.getElementById ("playBar")!.offsetHeight}px`);
+  `${innerHeight - document.querySelector<HTMLElement> (".head")!.offsetHeight - barRoom (document.getElementById ("playBar"))}px`);
 midRoom ();
 addEventListener ("resize", midRoom);
 new ResizeObserver (midRoom).observe (document.querySelector (".head")!);

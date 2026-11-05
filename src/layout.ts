@@ -21,6 +21,7 @@
 //   of the window, the text keeping 30 % at least) set by #sheetSplit, now a vertical divider on its left edge.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
+import { barRoom } from "./bars";
 const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: keep the two the same)
 /** Whether the page is laid out wide now. */
 export const isWide = () => WIDE.matches;
@@ -147,14 +148,14 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
       root.setProperty ("--sheetW", String (sizes.sheetW));
       return;
     }
-    const bar = document.getElementById ("playBar")!.getBoundingClientRect ().top;
+    const bar = innerHeight - barRoom (document.getElementById ("playBar"));     // (The play bar's top - the window's foot while it's down the side)
     const mid = bar - document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom;
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
   });
 // A verse card's word's panel's height: from its divider down to the deck's bar.
 drag (document.getElementById ("cardSplit")!, (_x, y) => {
-  const bar = document.querySelector<HTMLElement> (".vcBar")?.offsetHeight ?? 0;     // (The panel stands on the deck's bar)
+  const bar = barRoom (document.querySelector<HTMLElement> (".vcBar"));     // (The panel stands on the deck's bar - at the foot)
   sizes.cardH = Math.round (clamp (innerHeight - bar - y, 120, Math.max (120, innerHeight - bar - 160)));
   root.setProperty ("--cardH", sizes.cardH + "px");
 });
