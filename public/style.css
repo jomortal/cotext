@@ -277,7 +277,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: 80vw; background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
                border-right: var(--rule); display: grid; align-content: start; gap: var(--gap); overflow-y: auto;
                padding: var(--head-top) calc(3 * var(--pad)) var(--pad) var(--safe-l); }     /* (Its ✕ at the top rows' height: --head-top) */
-#drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
+#drawerPanel .top { align-items: center; justify-content: flex-end; margin-right: calc(-2 * var(--pad)); }     /* (Just its ✕, at the right - into the panel's right padding: as far from its edge as every ✕ from its edge, --pad) */
 .src .langPick { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--soft); padding: 0; margin-right: 10px; }     /* (The book list's Old Testament heading: HEBREW and GREEK LXX in its own small capitals, the one picked in the accent - .pill[aria-pressed]) */
 .src .langPick[aria-pressed="true"] { color: var(--accent); }
 #drawerPanel > .pill { display: flex; align-items: center; gap: var(--gap); text-align: left; padding: 10px 0; font-size: var(--fs-l); }
