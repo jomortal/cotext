@@ -204,7 +204,7 @@ let menuOpen = false;     // (⋯'s options: hidden till ⋯)
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
- *  picked; + ADD CARD greyed out until FROM VERSE is). */
+ *  picked - BOOK's blank saying "Select Book"; + ADD CARD greyed out until FROM VERSE is). */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   const p = pickAt, b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
@@ -221,7 +221,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   };
   const chosen = !! (b && p.chapter);
   el.replaceChildren (
-    Object.assign (pick ("Book", [...(b ? [] : [BLANK]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
+    Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
           (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }), { className: "vcPick vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
