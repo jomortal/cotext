@@ -578,7 +578,9 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .cstudy { display: grid; min-height: 0; height: 100%; gap: 12px; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "preview" "editor"; }
 @media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); grid-template-areas: "editor preview"; } }
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--edge); border-radius: 8px; padding: var(--pad); }
-.csEditor { grid-area: editor; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 8px; }
+.csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }     /* (Book, chapter, verses: one row, wrapping) */
+.csPlace .sheetPick { margin: 0; }
+.csEditor { grid-area: editor; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
 .csLine { border-bottom: 1px solid var(--edge); background: var(--bg); }
 .csLine.dragged { background: color-mix(in oklch, var(--accent) 10%, var(--bg)); }
 .csRow { display: flex; align-items: center; gap: 12px; min-height: 40px; }
@@ -591,7 +593,7 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .csEmpty { padding: 4px 0; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); margin-top: 8px; }
-.csMenu { border: 1px solid var(--edge); border-radius: 8px; padding: 4px 12px 10px; display: grid; }
+.csMenu { border: 1px solid var(--edge); border-radius: 8px; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }

@@ -189,7 +189,7 @@ async function start () {
   initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
   initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
   initTimeline (db, () => [book?.id ?? 0, chapter], (id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (The Timeline: the chapter read, an item tapped)
-  initChapterStudy (db, () => [book, chapter]);     // (☰ Chapter Study: the chapter read)
+  initChapterStudy (db, () => [book, chapter], shown);     // (☰ Chapter Study: the chapter read, its first time; the books to pick from)
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

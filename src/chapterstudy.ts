@@ -1,5 +1,8 @@
-// Chapter Study (☰ > Chapter Study): a printout made for the chapter being read - its text and any of the resources
-// that have something for it, arranged by the reader, printed or saved as a PDF through the browser's own print.
+// Chapter Study (☰ > Chapter Study): a printout made for a chapter - its text and any of the resources that have
+// something for it, arranged by the reader, printed or saved as a PDF through the browser's own print.
+// - WHAT'S STUDIED: picked at the editor's top - BOOK, CHAPTER and VERSES (All, or a range from - to) - apart from the
+//   reading (the chapter read only the first time; then the last studied, kept on the device: "cotext.study.at"). A
+//   verse range limits every item to those verses (an item's own range within it).
 // - TWO PANES: the EDITOR - a line per item added (its name; a drag handle ⠿ to move it up or down, by touch or mouse;
 //   Options, opening that item's own settings under it; ✕ removing it), "+ Add item" under the last, Print / Save as
 //   PDF - and the PREVIEW, the printout as it will print, redrawn as lines are added, moved, changed or removed (not
@@ -7,7 +10,7 @@
 //   own; wide side by side, the editor at the left (style.css' .cstudy).
 // - WHAT CAN BE ADDED ("+ Add item": a list of everything there is for this chapter):
 //   TEXT - the Hebrew or Greek, its options Interlinear (the English under each word), Parsing, Transliteration and a
-//     verse range; any number of times. With nothing added the printout is the chapter's text alone (original only).
+//     verse range; any number of times. Nothing shows until something is added - the text too.
 //   NOTES - each source the notes panel has for the book (translations, commentaries - the church fathers where there
 //     are some -, apparatus, ancient versions, the sentence diagram): the chapter's, or a verse range's, either
 //     BESIDE EACH VERSE (under each verse of the first text item, study-Bible style, the source named) or AS ITS OWN
@@ -55,7 +58,10 @@ const DICT_NAMES: Record<string, string> = { tobd: "Tyndale", isbe: "ISBE", find
 let db: Db;
 let where: () => [Book, number] = () => { throw new Error ("Chapter Study: not started"); };
 /** main.ts: the database and where the reader is (the book shown and its chapter). */
-export function initChapterStudy (theDb: Db, place: () => [Book, number]) { db = theDb; where = place; }
+let bookList: () => Book[] = () => [];
+/** main.ts: the database, where the reader is (the book shown and its chapter: the first study's place) and the books
+ *  to pick from (the Old Testament as read, Hebrew or Septuagint, and the New). */
+export function initChapterStudy (theDb: Db, place: () => [Book, number], list: () => Book[]) { db = theDb; where = place; bookList = list; }
 
 const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "") => {
   const e = document.createElement (tag);
@@ -86,8 +92,10 @@ function study (b: Book, c: number) {
 
 const sources = () => sourcesFor (book);
 const sourceOf = (id: string) => sources ().find ((s) => s.id === id);
-/** The chapter's verse numbers. */
-const verses = async () => [...new Set ((await words).map ((w) => w.verse))];
+/** The verses studied: the chapter's, within the VERSES picked (0: from its first, to its last). */
+let span = { from: 0, to: 0 };
+const allVerses = async () => [...new Set ((await words).map ((w) => w.verse))];
+const verses = async () => inRange (await allVerses (), span.from, span.to);
 /** A range's verses (0: the chapter's first or last). */
 const inRange = (vs: number[], from: number, to: number) => vs.filter ((v) => (! from || v >= from) && (! to || v <= to));
 
@@ -148,10 +156,48 @@ function nameOf (it: Item): string {
 let previewEl: HTMLElement, linesEl: HTMLElement, menuEl: HTMLElement;
 const openOpts = new Set<string> ();     // (The lines whose options are open)
 
+// (The place studied, kept: "<book code>.<chapter>.<from>.<to>")
+const AT = "cotext.study.at";
+function placeNow (): [Book, number] {
+  try {
+    const [code, c, f, t] = (localStorage.getItem (AT) ?? "").split (".");
+    const b = bookList ().find ((x) => x.code === code);
+    if (b && Number (c) >= 1 && Number (c) <= b.chapters) { span = { from: Number (f) || 0, to: Number (t) || 0 }; return [b, Number (c)]; }
+  } catch { /* none kept */ }
+  span = { from: 0, to: 0 };
+  return where ();
+}
+const keepPlace = () => { try { localStorage.setItem (AT, `${book.code}.${chapter}.${span.from}.${span.to}`); } catch { /* private mode */ } };
+
+/** The editor's top: BOOK, CHAPTER and VERSES (from - to), redrawn as the place changes. */
+let placeEl: HTMLElement;
+async function drawPlace () {
+  const pick = (label: string, options: [string, string][], value: string, set: (v: string) => void) => {
+    const l = el ("label", "sheetPick", label);
+    const s = el ("select", "choose");
+    s.append (...options.map (([v, t]) => new Option (t, v)));
+    s.value = value;
+    s.addEventListener ("change", () => set (s.value));
+    l.append (s);
+    return l;
+  };
+  const vs = await allVerses ();
+  const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, i) => String (from + i));
+  const go = (b: Book, c: number) => { study (b, c); span = { from: 0, to: 0 }; keepPlace (); load (); openOpts.clear (); drawPlace (); drawLines (); render (); };
+  placeEl.replaceChildren (
+    pick ("Book", bookList ().map ((b) => [b.code, b.name]), book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
+    pick ("Chapter", nums (1, book.chapters).map ((n) => [n, n]), String (chapter), (v) => go (book, Number (v))),
+    pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (span.from),
+          (v) => { span = { ...span, from: Number (v) }; keepPlace (); render (); }),
+    pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (span.to),
+          (v) => { span = { ...span, to: Number (v) }; keepPlace (); render (); }));
+}
+
 onScreen ("Chapter Study", async (body) => {
-  const [b, c] = where ();
+  const [b, c] = placeNow ();
   study (b, c);
   load ();
+  placeEl = el ("div", "csPlace");
   const box = el ("div", "cstudy");
   previewEl = el ("div", "csPreview");
   const editor = el ("div", "csEditor");
@@ -162,9 +208,10 @@ onScreen ("Chapter Study", async (body) => {
   const print = el ("button", "pill csPrint", "Print / Save as PDF");
   add.addEventListener ("click", () => { if (menuEl.hidden) showMenu (); else menuEl.hidden = true; });
   print.addEventListener ("click", () => { prepare (); window.print (); });
-  editor.append (linesEl, add, menuEl, print);
+  editor.append (placeEl, linesEl, add, menuEl, print);
   box.append (previewEl, editor);
   body.append (box);
+  drawPlace ();
   drawLines ();
   render ();
 });
@@ -194,7 +241,7 @@ function drawLines () {
     line.append (row, panel);
     return line;
   }));
-  if (! items.length) linesEl.append (el ("p", "csEmpty", "Nothing added yet: the printout is the chapter's text. Add the text with its options, notes, articles, the map, the timeline or a word list."));
+  if (! items.length) linesEl.append (el ("p", "csEmpty", "Nothing added yet. Add the text with its options, notes, articles, the map, the timeline or a word list."));
 }
 
 /** The items changed: kept, the lines and the preview redrawn. */
@@ -371,11 +418,12 @@ async function render () {
   const n = ++drawing;
   const doc = el ("div", "csDoc");
   doc.dir = "ltr";
-  doc.append (el ("h1", "csTitle", `${book.name} ${chapter}`), el ("div", "src csSub", "Chapter study"));
+  const part = span.from || span.to ? `:${span.from || 1}–${span.to || "end"}` : "";
+  doc.append (el ("h1", "csTitle", `${book.name} ${chapter}${part}`), el ("div", "src csSub", "Chapter study"));
   const vs = await verses ();
   const used = new Map<string, string> ();     // (Each source credited: its name -> its credit)
   const credit = (name: string, text: string) => { if (text && ! used.has (name)) used.set (name, text); };
-  const list: Item[] = items.length ? items : [{ id: "default", k: "text", gloss: false, parse: false, translit: false, from: 0, to: 0 }];
+  const list: Item[] = items;     // (Nothing added: nothing shown, not even the text)
   const firstText = list.find ((i) => i.k === "text");
   const beside = firstText ? list.filter ((i): i is Item & { k: "note" } => i.k === "note" && i.beside) : [];
   const text = new Map<string, [string, string]> ();     // (A diagram's words: "ref:n" -> [text, gloss])
