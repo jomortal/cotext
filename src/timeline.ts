@@ -6,8 +6,8 @@
 //   it; where names would overlap an item moves to the lane's next row, and one with no room left shows as a short
 //   tick at the lane's edge until zoomed in. Lane hues are the verb colors; the accent is kept for "you are here".
 // - TIME runs left to right on every screen (the years along the top). Dragged to move along it (let go while moving,
-//   it glides on), pinched or wheeled to zoom - from the whole Bible (creation to Revelation) down to a couple of years
-//   across; a sideways wheel or trackpad moves.
+//   it glides on), pinched (or Ctrl / ⌘ + wheel) to zoom - from the whole Bible (creation to Revelation) down to a couple
+//   of years across; the wheel or a trackpad's swipe, any way, moves along time.
 // - YOU ARE HERE: the chapter being read (here: its year, after Theographic's verse years, on the item with most of its
 //   verses) marked by a line across the lanes, the items with a verse in it in the accent; the view centered there
 //   (about 120 years across), else on the whole Bible.
@@ -268,9 +268,9 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
   canvas.addEventListener ("wheel", (e) => {
     e.preventDefault ();
     stop ();
-    const sideways = Math.abs (e.deltaX) > Math.abs (e.deltaY);
-    if (sideways || e.shiftKey) mid += (sideways ? e.deltaX : e.deltaY) * span / geometry ().w;     // (A trackpad's sideways swipe: moves)
-    else zoomAt (local (e)[0], Math.exp (-e.deltaY * .002));
+    // (A trackpad's pinch, or the wheel with Ctrl / ⌘: zooms; any other wheel or swipe - up, down or sideways - moves along time)
+    if (e.ctrlKey || e.metaKey) zoomAt (local (e)[0], Math.exp (-e.deltaY * .01));
+    else mid += (Math.abs (e.deltaX) > Math.abs (e.deltaY) ? e.deltaX : e.deltaY) * span / geometry ().w;
     draw ();
   }, { passive: false });
   new ResizeObserver (draw).observe (wrap);
