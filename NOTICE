@@ -152,6 +152,11 @@ Bible dictionary (the word panel's Dictionary, the notes' and search's Tyndale B
   - Names matched to its articles through STEPBible's TIPNR (Translators Individualised Proper Names with all
     References), STEPBible Data, Tyndale House, Cambridge, CC BY 4.0 (the commit above); words matched to their
     subject's articles through the UBS dictionaries' semantic domains (above, CC BY-SA 4.0).
+  - Pictures (pipeline/tobd_pictures.py; online only, public/data/images/tobd/): from Wikimedia Commons, each under its
+    own free license (CC0, public domain, CC BY or CC BY-SA), its author and license credited under it - places' photos
+    as OpenBible.info's Bible Geocoding Data (CC BY 4.0, above) picks them for each place; plants', animals' and
+    objects' through Wikidata (CC0) items' images; people's and events' Gustave Doré's Bible engravings (1866, public
+    domain). Places' maps: the Atlas (below).
   Changes made by COTEXT: the articles are reformatted into a database, their markup reduced to paragraphs,
   subheadings, bold, italics, Hebrew and Greek spans and tables; small capitals written as capitals; scripture
   references made links to their verse (and indexed by verse); cross-references made links to the article named; text boxes and charts set where

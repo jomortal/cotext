@@ -60,7 +60,8 @@ and its row in the main database's note_sources (kind 'dictionary', testaments '
 pickers list it as "Tyndale Bible Dictionary"). notes.py keeps the row on a notes-only rebuild (rows it didn't make).
 
 Run on its own: python3 pipeline/tyndale_dict.py (the main database already built: its lexicon, words and ubs_lex are
-read and its note_sources row written); build_db.py runs build() after ubs_lex.
+read and its note_sources row written), then tobd_pictures.py (tobd.db is written anew, without its pictures and
+maps); build_db.py runs build() after ubs_lex.
 """
 import hashlib
 import html

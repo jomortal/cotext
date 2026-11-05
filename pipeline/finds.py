@@ -321,11 +321,12 @@ def file_name(eid):
     return re.sub(r"[^A-Za-z0-9_.-]", "_", eid) + ".jpg"
 
 
-def pictures(name, pins, src, eid, dl=DL):
+def pictures(name, pins, src, eid, dl=DL, thumb_file=False):
     """An image file's (name, on Commons: commons() fetched its record) picture for an entry (eid) of a source (src):
     (its thumbnail as a data URI, its credit, its full picture's path under public/) - the full picture written to
     IMAGES/src/; or None (no image, not on Commons, or not freely licensed). Its download kept in dl and pinned in
-    pins["images"][name] (SHA-256). Also used by ane.py."""
+    pins["images"][name] (SHA-256). thumb_file: the thumbnail written beside the full picture too (<eid>.t.jpg, online
+    only) and its path given instead of a data URI. Also used by ane.py and tobd_pictures.py."""
     if not name:
         return None
     page = json.loads((dl / ("img-" + safe(name) + ".json")).read_text())["query"]["pages"][0]
@@ -354,6 +355,10 @@ def pictures(name, pins, src, eid, dl=DL):
         shutil.copyfile(raw, full)
         shutil.copyfile(raw, thumb)
     credit = f"Photo: {artist[:120] or 'unknown'}, {lic}, Wikimedia Commons"
+    if thumb_file:
+        small = file_name(eid)[:-4] + ".t.jpg"
+        shutil.copyfile(thumb, full.parent / small)
+        return f"data/images/{src}/{small}", credit, f"data/images/{src}/{file_name(eid)}"
     return ("data:image/jpeg;base64," + base64.b64encode(thumb.read_bytes()).decode(), credit,
             f"data/images/{src}/{file_name(eid)}")
 

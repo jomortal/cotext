@@ -9,6 +9,9 @@ a non-commercial license are marked so in NOTICE.
       semantic domains as well as the exact English (flock, lamb -> Sheep); by passage, a resources choice listing the
       articles citing the verses shown (and those its words lead to), most relevant first; searchable in the search
       dropdown, each hit linked back by word or verse.
+      Pictures (2026-11-04): places' site photos and maps, plants / animals / objects, Doré engravings for people
+      and events - online only (pipeline/tobd_pictures.py). Rough: 210 MB on the server; more artwork (other
+      engravers) and objects could be matched by hand.
 - [ ] **☰ Grammars**: pick a grammar (Gesenius, Machen, Smyth, unfoldingWord), its contents, read any section, search.
 - [ ] **☰ Bible Dictionary**: browse the Tyndale articles A-Z with a filter, each with its linked verses.
 - [x] **Atlas, by word and by passage** (built 2026-11-04 - pick a base map to keep) (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;

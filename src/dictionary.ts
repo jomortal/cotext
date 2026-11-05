@@ -4,7 +4,11 @@
 // (pipeline/finds.py: Wikipedia's inscribed finds, its word panel's button "Finds"), whose file also holds a photo
 // per find (photos: its thumbnail in the file, shown at an entry's right even offline; its full picture a file of its
 // own on the server, data/images/<source>/<id>.jpg, online only - shown over the opened text, credited under it;
-// offline, the thumbnail there and "Full picture online only"), the ISBE's articles on
+// offline, the thumbnail there and "Full picture online only"), the Tyndale dictionary itself, whose pictures
+// (pipeline/tobd_pictures.py: a place's site, a plant, animal or object, a person's or event's engraving) are online
+// only, the thumbnail too - data/images/tobd/<id>.t.jpg in a list (none shown when it can't load), the full picture
+// in an opened article ("Picture online only" when it can't) - and whose places' articles open with the atlas' map of
+// the place (its maps table: atlas.ts' wordMap, as a word's Map shows it), the ISBE's articles on
 // archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE"), and the Ancient Near East
 // parallels (pipeline/ane.py: texts like the Code of Hammurabi or Gilgamesh paired with the passages they parallel,
 // photos as the finds'; topical, so no word panel button - by passage and searchable only).
@@ -26,11 +30,12 @@
 // (db.ts' openNotesDb).
 
 import { openNotesDb, type Db, type Row } from "./db";
+import { wordMap, type Place } from "./atlas";
 
 // A source's name under an article's title (the note_sources name where it isn't here)
 const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia",
                                         isbe: "International Standard Bible Encyclopedia", ane: "Ancient Near East parallels" };
-interface Opened { db: Db; name: string; credit: string; photos: boolean; }     // (photos: its file has a photos table)
+interface Opened { db: Db; name: string; credit: string; photos: boolean; maps: boolean; }     // (photos, maps: its file has that table)
 const files = new Map<string, Promise<Opened | null>> ();     // (Each source's file, once opened; null: none in this database)
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};
 
@@ -46,8 +51,8 @@ function opened (main: Db, src: string, onProgress: (fraction: number) => void =
     file = main.all ("SELECT name, file, version, credit FROM note_sources WHERE id = ?", [src]).then (async ([r]) => {
       if (! r) return null;
       const db = await openNotesDb (src, String (r.file), String (r.version), onProgress);
-      const photos = (await db.all ("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'photos'")).length > 0;
-      return { db, name: NAMES[src] ?? String (r.name), credit: String (r.credit), photos };
+      const tables = new Set ((await db.all ("SELECT name FROM sqlite_master WHERE type = 'table'")).map ((t) => String (t.name)));
+      return { db, name: NAMES[src] ?? String (r.name), credit: String (r.credit), photos: tables.has ("photos"), maps: tables.has ("maps") };
     });
     files.set (src, file);
     file.catch (() => { files.delete (src); });
@@ -59,8 +64,8 @@ function opened (main: Db, src: string, onProgress: (fraction: number) => void =
 export const dictionary = (main: Db, onProgress: (fraction: number) => void = () => {}, src = "tobd"): Promise<Db | null> =>
   opened (main, src, onProgress).then ((o) => o?.db ?? null);
 
-/** A photo: its thumbnail (a data: URI, in the file), its credit, its full picture's URL (under data/images/: online only;
- *  '' none). */
+/** A photo: its thumbnail (a data: URI, in the file - or, the Tyndale dictionary's, a URL under data/images/: online
+ *  only), its credit, its full picture's URL (under data/images/: online only; '' none). */
 type Photo = [thumb: string, credit: string, full: string];
 /** Articles' photos (the sources with a photos table): id -> its Photo. */
 async function photosOf (o: Opened | null, ids: string[]): Promise<Map<string, Photo>> {
@@ -72,6 +77,16 @@ async function photosOf (o: Opened | null, ids: string[]): Promise<Map<string, P
       out.set (String (r.id), [String (r.src), String (r.credit), String (r.full ?? "")]);
   }
   return out;
+}
+
+/** An article's place (the source's maps table: atlas.db's places row as JSON - its alts a JSON string, '' none - for
+ *  its map), or undefined. */
+async function placeOf (o: Opened, id: string): Promise<Place | undefined> {
+  if (! o.maps) return undefined;
+  const [r] = await o.db.all ("SELECT place FROM maps WHERE id = ?", [id]);
+  if (! r) return undefined;
+  const p = JSON.parse (String (r.place));
+  return { ...p, sub: p.sub ?? "", note: p.note ?? "", alts: p.alts ? JSON.parse (p.alts) : [] };
 }
 
 /** A root's articles: those matching it exactly and those of its subject (ids, each list in the dictionary's order of
@@ -133,15 +148,17 @@ async function openArticle (main: Db, id: string, show: ShowOther, src = "tobd")
   const o = await opened (main, src);
   const [r] = o ? await o.db.all ("SELECT title, html FROM articles WHERE id = ?", [id]) : [];
   if (! o || ! r) return;
-  const photo = (await photosOf (o, [id])).get (id);
-  show (plain (String (r.title)), (body) => body.append (...articleBody (r, o, (other) => openArticle (main, other, show, src), photo)), o.name);
+  const [photo, place] = [(await photosOf (o, [id])).get (id), await placeOf (o, id)];
+  show (plain (String (r.title)), (body) => body.append (...articleBody (main, r, o, (other) => openArticle (main, other, show, src), photo, place)), o.name);
 }
 
 /** An article's photo (where its source has one: a figure, its credit under it - the full picture, fetched from the
- *  server as it scrolls into view; offline or failing, its thumbnail instead with "Full picture online only"), text (the pipeline's light HTML,
+ *  server as it scrolls into view; offline or failing, its thumbnail instead with "Full picture online only" - or,
+ *  where the thumbnail is online only too, "Picture online only" alone), its place's map (place: the atlas' map of it,
+ *  as a word's Map shows it - left out when the atlas can't load), text (the pipeline's light HTML,
  *  styled as a grammar section: .gBody) and its source's credit: each scripture reference going to its verse, each
  *  cross-reference opening its article (open). */
-function articleBody (r: Row, o: Opened, open: (id: string) => void, photo?: Photo): HTMLElement[] {
+function articleBody (main: Db, r: Row, o: Opened, open: (id: string) => void, photo?: Photo, place?: Place): HTMLElement[] {
   const figure: HTMLElement[] = [];
   if (photo) {
     const f = document.createElement ("figure");
@@ -151,14 +168,21 @@ function articleBody (r: Row, o: Opened, open: (id: string) => void, photo?: Pho
     const cap = document.createElement ("figcaption");
     cap.className = "credit";
     cap.textContent = photo[1];
-    const thumbOnly = () => {     // (Offline, or the full picture failed: the thumbnail, said to be one)
+    const thumbOnly = () => {     // (Offline, or the full picture failed: the thumbnail, said to be one - none when it's online only too)
       img.onerror = null;
+      if (! photo[0].startsWith ("data:")) { img.remove (); cap.textContent = "Picture online only."; return; }
       img.src = photo[0];
       cap.textContent = `Full picture online only. ${photo[1]}`;
     };
     if (photo[2]) { img.loading = "lazy"; img.onerror = thumbOnly; img.src = photo[2]; } else img.src = photo[0];
     f.append (img, cap);
     figure.push (f);
+  }
+  if (place) {
+    const map = document.createElement ("div");
+    map.className = "dictPhoto";     // (Spaced as a picture is)
+    wordMap (main, map, place).catch (() => map.remove ());
+    figure.push (map);
   }
   const text = document.createElement ("div");
   text.className = "gBody";
@@ -179,7 +203,7 @@ function articleBody (r: Row, o: Opened, open: (id: string) => void, photo?: Pho
  *  result's reference is (.src; why: what led to it, after the title) over its text (a line of the article, or what a
  *  search matched), its photo's thumbnail at its right where it has one (photo: a data: URI) - which, tapped, opens
  *  the article under it (and closes it again); a cross-reference in it opening that article in its place, its title
- *  over it. src: its source. */
+ *  over it. src: its source; photo: a data: URI, or an online-only URL (not shown when it can't load). */
 export function entry (main: Db, id: string, title: string, text: HTMLElement | string, why = "", src = "tobd", photo = ""): HTMLElement {
   const el = document.createElement ("div");
   const row = document.createElement ("button");
@@ -204,8 +228,10 @@ export function entry (main: Db, id: string, title: string, text: HTMLElement | 
   if (photo) {
     const img = document.createElement ("img");
     img.className = "dictThumb";
-    img.src = photo;
     img.alt = "";
+    img.loading = "lazy";
+    img.onerror = () => { img.remove (); row.classList.remove ("withThumb"); };     // (An online-only thumbnail offline: nothing, not a broken image)
+    img.src = photo;
     row.classList.add ("withThumb");
     row.append (img);
   }
@@ -222,7 +248,7 @@ export function entry (main: Db, id: string, title: string, text: HTMLElement | 
     const h = document.createElement ("div");
     h.className = "gHead";
     h.textContent = plain (String (r.title));
-    body.replaceChildren (...(art !== id ? [h] : []), ...articleBody (r, o, open, (await photosOf (o, [art])).get (art)));     // (Another article, reached by a cross-reference: its title over it)
+    body.replaceChildren (...(art !== id ? [h] : []), ...articleBody (main, r, o, open, (await photosOf (o, [art])).get (art), await placeOf (o, art)));     // (Another article, reached by a cross-reference: its title over it)
     show (true);
     if (art !== id) row.scrollIntoView ({ block: "nearest" });
   };
