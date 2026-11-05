@@ -7,19 +7,17 @@
 //   a chapter, or a whole chapter), its book by its English name, its code or SBL abbreviation (booknames.ts' ABBR),
 //   else the first book whose name starts so - the Hebrew Bible's books and the NT's (an OT card numbered as the
 //   Hebrew). A reference the text hasn't (no such book, chapter or verse) says so and adds nothing.
-// - EACH CARD'S ORIGINAL (picked when it's added - Hebrew at first for the OT, Greek for the NT - and changed on its line
-//   in the list): an OT card Hebrew, Greek LXX (the Septuagint verses translating the Hebrew reference: chapterstudy.ts'
-//   translatedWords, as the printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their
-//   own reference), both, or none (English only); an NT card Greek or none.
+// - AN OT CARD'S TEXT ("OT": picked when it's added - Hebrew at first - and changed on its line in the list): Hebrew or
+//   Greek LXX (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
+//   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference). An NT
+//   card the Greek.
 // - FOR ALL THE DECK'S CARDS (its settings): TRANSLATION - None or one of the notes' English translations (notes.ts'
 //   translationSources, each file read as the notes read it: openSource) - and, for the cards showing an original,
 //   Interlinear, Parsing and Transliteration (the original drawn as the reader draws it: chapterstudy.ts' textBox).
-//   There's no deck-wide original on / off: each card's own says it. A card always shows something: one with no
-//   original and no translation picked (or one without its testament: NJPS on an NT card) shows the first translation
-//   that has it.
+//   Every card shows its original; the translation too where one is picked (and has the card's testament).
 // - A CARD: its front the reference; turned over, the back alone - the reference, the translation's verses (each
-//   numbered in a range), the original. Under the deck the list, in the order added: each reference, its original
-//   picker (OT and NT), ✕ removing it. The credits of what the cards show under it.
+//   numbered in a range), the original. Under the deck the list, in the order added: each reference, an OT card's OT
+//   picker, ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
@@ -30,8 +28,8 @@ import { ABBR } from "./booknames";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, wordsSpan, TEXT_CREDIT } from "./chapterstudy";
 
-/** A card's original: Hebrew, Greek LXX or both (OT), Greek (NT), or none - English only. */
-type Original = "he" | "lxx" | "both" | "gr" | "none";
+/** A card's original: Hebrew or Greek LXX (OT), Greek (NT). */
+type Original = "he" | "lxx" | "gr";
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter), its original. */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; orig: Original; }
 /** The deck's settings: the translation's source id ("" none), the original's lines. */
@@ -48,6 +46,8 @@ let at = "";     // (The deck open: its id)
 try {
   const kept = JSON.parse (localStorage.getItem (KEY) ?? "null");
   if (kept?.decks) { decks = kept.decks; at = kept.at ?? ""; }
+  // (Cards kept from before the OT picker was Hebrew / Greek LXX only: "both" read as Hebrew, English only as the original)
+  for (const d of decks) for (const c of d.cards) if ((c.orig as string) === "both" || (c.orig as string) === "none") c.orig = "he";
 } catch { /* none kept, or private mode */ }
 if (! decks.length) decks = [newDeck ("My verses")];
 /** The deck open (the first if the one kept is gone). */
@@ -94,13 +94,10 @@ function fileOf (s: Source) {
   if (! f) { f = openSource (s, () => {}); files.set (s.id, f); f.catch (() => files.delete (s.id)); }
   return f;
 }
-/** The translation a card shows: the one picked, if it has the card's testament; else, for an English-only card, the
- *  first that has it (a card always shows something); else none. */
-function translationOf (c: VerseCard, b: Book): Source | null {
-  const all = translationSources (), has = (s: Source) => s.testaments.split (" ").includes (b.testament);
-  const picked = all.find ((s) => s.id === deckNow ().settings.tr);
-  if (picked && has (picked)) return picked;
-  return c.orig === "none" ? all.find (has) ?? null : null;
+/** The translation a card shows: the one picked, if it has the card's testament; else none. */
+function translationOf (b: Book): Source | null {
+  const picked = translationSources ().find ((s) => s.id === deckNow ().settings.tr);
+  return picked && picked.testaments.split (" ").includes (b.testament) ? picked : null;
 }
 
 /** A card's back: the reference, the translation's verses (numbered in a range), the original(s). */
@@ -109,7 +106,7 @@ async function backOf (c: VerseCard, used: Map<string, string>): Promise<string>
   if (! b) return `<div class="vcRef">${esc (refText (c))}</div>`;
   const [lo, hi] = c.from ? [c.from, c.to] : [0, 999];
   let html = `<div class="vcRef">${esc (refText (c))}</div>`;
-  const tr = translationOf (c, b);
+  const tr = translationOf (b);
   if (tr) {
     used.set (tr.name, tr.credit);
     const ns = await (await fileOf (tr)).all (`SELECT start, body FROM notes WHERE book = ? AND start >= ? AND start <= ? ORDER BY start, ord`,
@@ -128,17 +125,15 @@ async function backOf (c: VerseCard, used: Map<string, string>): Promise<string>
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
     return `<div class="vcOrig"><div class="src">${head}</div>${box.outerHTML}</div>`;
   };
-  if (c.orig === "he" || c.orig === "both" || c.orig === "gr") html += await original (false);
-  if (c.orig === "lxx" || c.orig === "both") html += await original (true);
+  html += await original (c.orig === "lxx");
   return html;
 }
 
 // ---- The screen ----
 
-const OT_CHOICES: [Original, string][] = [["he", "Hebrew"], ["lxx", "Greek LXX"], ["both", "Hebrew and Greek LXX"], ["none", "English only"]];
-const NT_CHOICES: [Original, string][] = [["gr", "Greek"], ["none", "English only"]];
+const OT_CHOICES: [Original, string][] = [["he", "Hebrew"], ["lxx", "Greek LXX"]];
 const options = (cs: [Original, string][], v: string) => cs.map (([k, t]) => `<option value="${k}"${k === v ? " selected" : ""}>${t}</option>`).join ("");
-let newOT: Original = "he";     // (The add row's ORIGINAL, as an OT card's; an NT card Greek - any of Hebrew, Greek LXX or both - unless English only)
+let newOT: Original = "he";     // (The add row's OT: an OT card's Hebrew or Greek LXX; an NT card Greek whatever it says)
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
@@ -150,7 +145,7 @@ async function draw (body: HTMLElement) {
       <label>Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label></div>
     <div class="bar" id="vcLines"><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button><button class="pill" data-o="translit">Transliteration</button></div>
     <div class="vcAdd"><input class="choose" id="vcRef" type="text" enterkeyhint="done" placeholder="John 3:16" aria-label="Reference" autocomplete="off" spellcheck="false">
-      <label class="vcPick">Original<select class="choose" id="vcNew">${options (OT_CHOICES, newOT)}</select></label>
+      <label class="vcPick">OT<select class="choose" id="vcNew">${options (OT_CHOICES, newOT)}</select></label>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <p class="src" id="vcMsg" hidden></p>
     <div class="deck vcDeck"></div>
@@ -183,7 +178,7 @@ async function draw (body: HTMLElement) {
     const n = ++drawing;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-o]")) b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"]));
     listEl.innerHTML = d.cards.map ((c) => `<div class="vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span>
-        <select class="choose" aria-label="Original">${options (bookOf (c)?.testament === "NT" ? NT_CHOICES : OT_CHOICES, c.orig)}</select>
+        ${bookOf (c)?.testament === "NT" ? "" : `<select class="choose" aria-label="OT">${options (OT_CHOICES, c.orig)}</select>`}
         <button class="pill icon" aria-label="Remove">✕</button></div>`).join ("");
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - type a reference above.</p>"; credits.textContent = ""; return; }
     const used = new Map<string, string> ();
@@ -197,7 +192,7 @@ async function draw (body: HTMLElement) {
     const r = await parse (refIn.value);
     msg.hidden = typeof r !== "string";
     if (typeof r === "string") { msg.textContent = r; return; }
-    const orig: Original = r.book.testament === "NT" ? (newOT === "none" ? "none" : "gr") : newOT;
+    const orig: Original = r.book.testament === "NT" ? "gr" : newOT;
     d.cards.push ({ id: newId (), code: r.code, chapter: r.chapter, from: r.from, to: r.to, orig });
     refIn.value = ""; save (); deck ();
   };
