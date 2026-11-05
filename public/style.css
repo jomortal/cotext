@@ -457,14 +457,16 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
-.vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
+.vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); }
+.vcMenu:not([hidden])::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 100vw; translate: -50%; border-bottom: 1px solid var(--edge); }     /* (Its line under it across the whole screen, not just the column - cut at the screen's sides) */
+#screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBook .chooseBtn { min-width: 11em; }     /* (BOOK as wide as a long name even while blank) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
 .vcDeck .card.single .cardFront { font-size: 32px; }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
 .vcDeck .card.single .cardBack[hidden] { display: none; }
-.vcDeck .cardBack .vcRef { font-size: var(--fs-l); font-weight: 600; text-align: center; }
+.vcDeck .cardBack .vcRef { font-size: 20px; font-weight: 600; text-align: center; }
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcNative { font-weight: 400; }
 .vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
