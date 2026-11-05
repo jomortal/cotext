@@ -9,15 +9,13 @@
 //   - from the whole Bible (creation to Revelation) down to a couple of years across; a sideways wheel or trackpad moves.
 // - YOU ARE HERE: the chapter being read (here: its year, after Theographic's verse years, on the item with most of its
 //   verses) marked by a line across the lanes, the items with a verse in it in the accent; opening the timeline
-//   starts there (about 120 years across), else on the whole Bible. Opened from a word's panel (showTimelineAt), it
-//   starts on that person's item instead, the item picked out.
+//   starts there (about 120 years across), else on the whole Bible.
 // - An item tapped goes to its first verse in the text (the screen closes); an empire to its first chapter.
 // - Dates follow Theographic (Floyd Nolen Jones's chronology, after Ussher), said in one line over the timeline: before
-//   the kings approximate and disputed. Every date is shown "c." (span: the word panel's line, written by the pipeline).
-// - BY WORD (panel.ts): personOf gives a word's person line ("Hezekiah: king of Judah, c. 726-697 BC") and item.
+//   the kings approximate and disputed. Every date is shown "c.".
 
 import { openNotesDb, type Db } from "./db";
-import { onScreen, openScreen, closeScreen } from "./study";
+import { onScreen, closeScreen } from "./study";
 
 interface Item { id: number; lane: number; label: string; title: string; start: number; end: number;
                  book: number; chapter: number; verse: number; }
@@ -35,7 +33,6 @@ let main: Db | null = null;
 let file: Promise<Data | null> | null = null;
 let placeNow: () => [number, number] = () => [0, 0];
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};
-let focus = -1;               // (An item to open on - a word panel's person; -1 the chapter read)
 
 /** main.ts: the database, where the reader is (book id, chapter) and how a tapped item goes to its verse. */
 export function initTimeline (db: Db, where: () => [number, number], go: (book: number, chapter: number, verse: number) => void) {
@@ -60,20 +57,6 @@ function data (): Promise<Data | null> {
   return file;
 }
 
-/** The person a word names (its book, chapter, verse and number in the verse), as the word panel shows it: the line
- *  ("Hezekiah: king of Judah, c. 726-697 BC") and the item the Timeline button opens on; null for none (or offline the
- *  first time). */
-export async function personOf (where: number[]): Promise<{ item: number; line: string } | null> {
-  try {
-    const d = await data ();
-    const [r] = d ? await d.db.all (`SELECT i.id, i.person FROM words w JOIN items i ON i.id = w.item
-                                     WHERE w.book = ? AND w.chapter = ? AND w.verse = ? AND w.word = ?`, where) : [];
-    return r && r.person ? { item: Number (r.id), line: String (r.person) } : null;
-  } catch {
-    return null;
-  }
-}
-
 /** A chapter's place in time (Study printout's timeline: chapterstudy.ts): its year (ISO astronomical; null none), its
  *  items' ids, and the timeline's lanes, items and credit; null when the timeline can't be read. */
 export async function chapterTime (book: number, chapter: number) {
@@ -82,12 +65,6 @@ export async function chapterTime (book: number, chapter: number) {
   const [h] = await d.db.all ("SELECT year, items FROM here WHERE book = ? AND chapter = ?", [book, chapter]);
   return { year: h && h.year !== null ? Number (h.year) : null, here: new Set (h ? String (h.items).split (" ").filter (Boolean).map (Number) : []),
            lanes: d.lanes, items: d.items, credit: d.credit };
-}
-
-/** The timeline opened on an item (a word panel's Timeline). */
-export function showTimelineAt (item: number) {
-  focus = item;
-  openScreen ("Timeline");
 }
 
 const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "") => {
@@ -102,8 +79,6 @@ const yearText = (y: number) => (y < 0 ? `${-y} BC` : `AD ${y}`);
 
 //==== THE SCREEN ====
 onScreen ("Timeline", async (body) => {
-  const opened = focus;
-  focus = -1;
   body.append (el ("p", "timelineNote", "Dates follow Floyd Nolen Jones's chronology (after Ussher); before the kings they are approximate and disputed."));
   const wrap = el ("div", "timeline");
   const canvas = el ("canvas");
@@ -123,12 +98,10 @@ onScreen ("Timeline", async (body) => {
   const [h] = await D.db.all ("SELECT year, items FROM here WHERE book = ? AND chapter = ?", [book, chapter]);
   const hereYear = h && h.year !== null ? Number (h.year) : null;
   const hereItems = new Set (h ? String (h.items).split (" ").filter (Boolean).map (Number) : []);
-  const picked = D.items.find ((i) => i.id === opened) ?? null;
 
   // The view: its middle year and how many years it spans across the time axis
   let mid = (FIRST + LAST) / 2, span = LAST - FIRST;
-  if (picked) { span = Math.max (40, (picked.end - picked.start) * 2.2); mid = (picked.start + picked.end) / 2; }
-  else if (hereYear !== null) { span = HERE_SPAN; mid = hereYear; }
+  if (hereYear !== null) { span = HERE_SPAN; mid = hereYear; }
 
   const ctx = canvas.getContext ("2d")!;
   let hits: { x: number; y: number; w: number; h: number; item: Item }[] = [];
@@ -191,18 +164,18 @@ onScreen ("Timeline", async (body) => {
       lines.slice (0, 3).forEach ((t, i) => ctx.fillText (t, c + 2, 2 + i * 11));
     });
 
-    // ---- The items: packed into each lane's rows - most telling first (the picked one, the chapter's, the longest) ----
+    // ---- The items: packed into each lane's rows - most telling first (the chapter's, the longest) ----
     const rowSize = g.vertical ? Math.max (g.lane, 1) : 30;
     const top = g.vertical ? 0 : 18;     // (Wide: the lane's name over its rows)
     const rows = Math.max (1, Math.floor ((g.lane - top) / rowSize));
     const used: [number, number][][][] = D.lanes.map (() => Array.from ({ length: rows }, () => []));
     const order = [...D.items].sort ((a, b) => rankOf (b) - rankOf (a) || a.start - b.start);
-    function rankOf (i: Item) { return (i.id === picked?.id ? 1e6 : 0) + (hereItems.has (i.id) ? 1e5 : 0) + (i.end - i.start); }
+    function rankOf (i: Item) { return (hereItems.has (i.id) ? 1e5 : 0) + (i.end - i.start); }
     hits = [];
     ctx.save ();     // (Drawn within the time axis' own part: not over the lanes' names or the years)
     { const r = rect (g.off, g.len, g.cross0, g.lane * D.lanes.length); ctx.beginPath (); ctx.rect (r.x, r.y, r.w, r.h); ctx.clip (); }
     for (const it of order) {
-      const lit = it.id === picked?.id || hereItems.has (it.id);
+      const lit = hereItems.has (it.id);
       const font = `${lit ? "600 " : ""}{}px ${ui}`;
       // (Narrow: the name wrapped beside its bar, 11 px or down to 9 to fit the column; wide: on one line under it)
       const lines = g.vertical ? fitText (it.label, rowSize - 10, font, 11, 9) : [it.label];

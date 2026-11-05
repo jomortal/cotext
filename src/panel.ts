@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). A word naming a person the Timeline dates gets a line under the root word's buttons - "Hezekiah: king of Judah, c. 726-697 BC" - with "Timeline", opening the timeline at that person (timeline.ts). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ (or tapping the word again) hides it.
 // Two of them, each its own: #sheet for a word of the text read, above the notes panel, and a second (cloned from
 // #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once. makePanel builds one on its
@@ -19,7 +19,6 @@ import { vocabButton } from "./vocab";
 import { chartStemOf, chartInto } from "./chart";
 import { articlesFor, openArticles, type Found } from "./dictionary";
 import { placeOf, wordMap, type Place } from "./atlas";
-import { personOf, showTimelineAt } from "./timeline";
 
 // The entry, as LEXICON picks it (a picker as GRAMMAR's, over the entry): the STEPBible brief lexicon, or a fuller
 // lexicon that has the word - (Hebrew)
@@ -105,17 +104,6 @@ function makePanel (sheet: HTMLElement) {
     return x;
   });
   q ("speakRoot").after (chartBtn, searchBtn, dictBtn, mapBtn, ...others.map ((x) => x.btn));
-  // The person's dates (timeline.ts' personOf), a line under the root word's buttons, and "Timeline" opening the
-  // timeline at that person - shown only when the word names a person the Timeline dates.
-  const personLine = document.createElement ("div");
-  personLine.className = "personLine"; personLine.hidden = true;
-  const personText = document.createElement ("span");
-  const timelineBtn = document.createElement ("button");
-  timelineBtn.className = "pill"; timelineBtn.textContent = "Timeline";
-  personLine.append (personText, timelineBtn);
-  q ("heads").append (personLine);
-  let personItem = -1;
-  timelineBtn.addEventListener ("click", () => { if (personItem >= 0) showTimelineAt (personItem); });
   let dictFound: Found = { exact: [], subject: [] };
   dictBtn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, dictFound, grammar.showOther); });
   let searchFor: [string, string] | null = null;     // (Strong's, dictionary form)
@@ -333,12 +321,6 @@ function makePanel (sheet: HTMLElement) {
         columns ();
       });
     }
-    personLine.hidden = true; personItem = -1;
-    personOf ([w.book, w.chapter, w.verse, w.word]).then ((p) => {     // (The timeline's file read - downloaded on the first word)
-      if (picked !== wordEl || ! p) return;
-      personItem = p.item; personText.textContent = p.line; personLine.hidden = false;
-      columns ();
-    });
     mapBtn.hidden = true; mapPlace = null;
     placeOf (db, [w.book, w.chapter, w.verse, w.word]).then ((p) => {     // (The atlas' file read - downloaded on the first word)
       if (picked !== wordEl) return;

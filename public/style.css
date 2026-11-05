@@ -568,8 +568,6 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .timelineStatus { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: var(--fs-s); color: var(--soft); pointer-events: none; }
 .timelineStatus:empty { display: none; }
 .timeline + .credit { margin-top: 4px; }
-.sheet .heads > .personLine { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; font-size: var(--fs-s); }     /* (A person's dates and its Timeline button: a line under the root word's buttons) */
-.personLine[hidden] { display: none; }
 
 /* Study printout (chapterstudy.ts): the screen's whole width and height - the editor (its lines, + Add item, Print)
    and the preview (the printout as it prints), each scrolling on its own: narrow the preview the top half, the editor
