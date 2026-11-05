@@ -17,11 +17,11 @@
 //   its height (--cardH, px; 120 px to the window's height less 160).
 // - The word beside the text (wide, with 1200 px or more for the text and its word once the panes' column is taken
 //   off, while either pane is open: placeWord, body.sideWord in style.css): the text's word's panel a column of its
-//   own between the text and the panes - text | word | panes -, its width (--sheetW, a percentage, unitless: 15-40 %
-//   of the window, the text keeping 30 % at least) set by #sheetSplit, now a vertical divider on its left edge.
+//   own between the text and the panes - text | word | panes -, its width (--sheetW, a percentage, unitless: 15 % up -
+//   as wide as the text keeping 30 % of the window allows) set by #sheetSplit, now a vertical divider on its left edge.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
-import { barRoom } from "./bars";
+import { barRoom, SIDE_BAR } from "./bars";
 const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: keep the two the same)
 /** Whether the page is laid out wide now. */
 export const isWide = () => WIDE.matches;
@@ -83,7 +83,8 @@ drag (document.getElementById ("paneSplit")!, (_x, y) => {
   root.setProperty ("--searchH", String (sizes.searchH));
 });
 // The word beside the text (body.sideWord: style.css): while wide, whenever the text and its word have at least
-// SIDE px between them - the window less the panes' column and its divider, while either pane is open.
+// SIDE px between them - the window less the panes' column and its divider, while either pane is open - and on a phone
+// held sideways (bars.ts' SIDE_BAR) while no pane is open, in the panes' place.
 // Kept so as the window resizes, a pane opens or closes and a divider is dragged; the text's word's divider with it,
 // vertical beside the text (style.css draws a divider by its aria-orientation), else horizontal.
 const SIDE = 1200;
@@ -93,7 +94,7 @@ let side = false;
 export const isSideWord = () => side;
 function placeWord () {
   const w = panesShare (), panes = w ? innerWidth * w / 100 + 14 : 0;
-  const now = WIDE.matches && innerWidth - panes >= SIDE;
+  const now = WIDE.matches && (innerWidth - panes >= SIDE || (SIDE_BAR.matches && ! panes));     // (A phone held sideways, no pane open: beside the text, where the panes would be)
   if (now === side) return;
   side = now;
   document.body.classList.toggle ("sideWord", side);
@@ -140,8 +141,8 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
 for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] as const)
   drag (document.getElementById (id)!, (x, y) => {
     if (id === "sheetSplit" && side) {
-      const r = notesSplit.getBoundingClientRect (), right = r.width ? r.left : innerWidth, left = document.querySelector ("main")!.getBoundingClientRect ().left;
-      sizes.sheetW = Math.round (clamp ((right - x) / innerWidth * 100, 15, Math.max (15, Math.min (40, (right - left) / innerWidth * 100 - 30))) * 10) / 10;
+      const r = notesSplit.getBoundingClientRect (), right = r.width ? r.left : document.body.getBoundingClientRect ().right, left = document.querySelector ("main")!.getBoundingClientRect ().left;
+      sizes.sheetW = Math.round (clamp ((right - x) / innerWidth * 100, 15, Math.max (15, (right - left) / innerWidth * 100 - 30)) * 10) / 10;     // (As wide as the text's 30 % allows - the window's edge less a side bar)
       root.setProperty ("--sheetW", String (sizes.sheetW));
       return;
     }

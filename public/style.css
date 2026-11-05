@@ -320,7 +320,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
-.sheet .root, .card .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
+.sheet .root, .card .root { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
 /* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
@@ -328,7 +328,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    (dictionary form) with + Known words - each with its speaker; the buttons in a column at the right. */
 .sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 .sheet .heads > .pill { justify-self: end; }
-.sheet .heads > .btns { grid-column: 1 / -1; justify-self: start; justify-content: flex-start; }     /* (+ My vocab and + Known words: a line under the root word) */
+.sheet .heads > .btns { grid-column: 1 / -1; justify-self: stretch; justify-content: flex-start; contain: inline-size; }     /* (+ My vocab and + Known words: a line under the root word) */
 .sheet .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
 .sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
 .full .seg { white-space: nowrap; }     /* (The spelled-out parsing wraps only after a comma: grammar.ts) */
