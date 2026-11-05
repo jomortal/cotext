@@ -263,8 +263,25 @@ onScreen ("Timeline", async (body) => {
   }
 
   // ---- Moving it: drag along time, pinch or wheel to zoom, tap an item to go to its verses ----
+  // A drag let go while moving glides on (momentum): its speed along time (px a ms, smoothed over the last moves) kept
+  // and eased off - 0.95 of it each 16 ms frame, so a fast flick carries on about a second - until it's under 0.02 px a
+  // ms or the timeline's end is reached; a touch stops it.
   const down = new Map<number, [number, number]> ();
   let moved = 0;
+  let speed = 0, lastT = 0, glide = 0;
+  const stopGlide = () => { if (glide) cancelAnimationFrame (glide); glide = 0; };
+  function glideOn (t0: number) {
+    let prev = t0;
+    const step = (t: number) => {
+      const dt = Math.min (50, t - prev); prev = t;
+      const g = geometry (), was = mid;
+      mid -= speed * dt * span / g.len; clamp ();
+      speed *= Math.pow (.95, dt / 16);
+      draw ();
+      glide = Math.abs (speed) < .02 || mid === was ? 0 : requestAnimationFrame (step);
+    };
+    glide = requestAnimationFrame (step);
+  }
   const local = (e: PointerEvent | WheelEvent): [number, number] => { const r = canvas.getBoundingClientRect (); return [e.clientX - r.left, e.clientY - r.top]; };
   const along = (p: [number, number]) => (geometry ().vertical ? p[1] : p[0]);
   /** Zoomed by f about a point along the time axis, so the year under it stays. */
@@ -274,13 +291,18 @@ onScreen ("Timeline", async (body) => {
     span /= f; clamp ();
     mid = year - (p - g.off - g.len / 2) * span / g.len; clamp ();
   }
-  canvas.addEventListener ("pointerdown", (e) => { canvas.setPointerCapture (e.pointerId); down.set (e.pointerId, local (e)); if (down.size === 1) moved = 0; });
+  canvas.addEventListener ("pointerdown", (e) => { stopGlide (); canvas.setPointerCapture (e.pointerId); down.set (e.pointerId, local (e)); if (down.size === 1) { moved = 0; speed = 0; lastT = e.timeStamp; } });
   canvas.addEventListener ("pointermove", (e) => {
     const was = down.get (e.pointerId);
     if (! was) return;
     const now = local (e), g = geometry ();
-    if (down.size === 1) mid -= (along (now) - along (was)) * span / g.len;
+    if (down.size === 1) {
+      const d = along (now) - along (was), dt = Math.max (1, e.timeStamp - lastT);
+      mid -= d * span / g.len;
+      speed = .8 * (d / dt) + .2 * speed; lastT = e.timeStamp;
+    }
     else {
+      speed = 0;     // (A pinch: no glide after it)
       const other = [...down.entries ()].find (([id]) => id !== e.pointerId)![1];
       const d0 = Math.abs (along (was) - along (other)), d1 = Math.abs (along (now) - along (other));
       if (d0 > 8 && d1 > 8) zoomAt ((along (now) + along (other)) / 2, d1 / d0);
@@ -290,7 +312,9 @@ onScreen ("Timeline", async (body) => {
     draw ();
   });
   const up = (e: PointerEvent) => {
-    if (! down.delete (e.pointerId) || down.size || moved > 6 || e.type !== "pointerup") return;
+    if (! down.delete (e.pointerId) || down.size) return;
+    if (moved > 6) { if (e.timeStamp - lastT < 80 && Math.abs (speed) > .05) glideOn (e.timeStamp); return; }     // (Still moving when let go: glides)
+    if (e.type !== "pointerup") return;
     const [x, y] = local (e);
     const hit = hits.filter ((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h).sort ((a, b) => a.w * a.h - b.w * b.h)[0];
     if (hit) { closeScreen (); goVerse (hit.item.book, hit.item.chapter, hit.item.verse); }
@@ -299,6 +323,7 @@ onScreen ("Timeline", async (body) => {
   canvas.addEventListener ("pointercancel", up);
   canvas.addEventListener ("wheel", (e) => {
     e.preventDefault ();
+    stopGlide ();
     const g = geometry ();
     const sideways = Math.abs (e.deltaX) > Math.abs (e.deltaY);
     if (sideways || e.shiftKey) mid += (sideways ? e.deltaX : e.deltaY) * span / g.len;     // (A trackpad's sideways swipe: moves)
