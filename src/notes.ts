@@ -358,7 +358,7 @@ async function drawArticles (id: string, per: { v: number; where: number[][] }[]
 // The Archaeology finds (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
 // there, in the order of the first: drawn once a book, then following the text one way - the text scrolled, the list
 // goes to the find of the verse read (the first find at it, else the next after it) unless that find is in view
-// already; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
+// already, and every find's link to that verse is marked; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
 // dictionary's.
 const BY_BOOK = new Set (["finds"]);
 let bookShown = "";     // (The book drawn: "<source> <book id>")
@@ -397,6 +397,9 @@ function followBook () {
   const v = chapter * 1000 + (row ? Number (row.dataset.verse ?? 1) : versesNow ()[0]);
   if (v === bookAt) return;
   bookAt = v;
+  // Every find's link to the verse read marked (or its "+ more", when the verse is among those it hides)
+  for (const a of bodyEl.querySelectorAll<HTMLElement> (".bookVerses a"))
+    a.classList.toggle ("here", a.dataset.at === String (v) || (a.dataset.rest ?? "").split (" ").includes (String (v)));
   const target = (bookRows.find (([vs]) => vs.includes (v)) ?? bookRows.find (([vs]) => vs.some ((x) => x >= v)) ?? bookRows[bookRows.length - 1])[1];
   const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
   if (t.top >= nt.top && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)

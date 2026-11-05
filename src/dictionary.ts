@@ -315,14 +315,16 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
 }
 
 /** A book's verses (chapter * 1000 + verse) as a line of references, each going to its verse in the text: the first
- *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). */
+ *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). Each link carries its
+ *  verse (data-at), "+ more" those it hides (data-rest), for the verse read to be marked (notes.ts' followBook). */
 const FEW = 12;
 export function verseLinks (book: number, verses: number[]): HTMLElement {
   const line = document.createElement ("div");
-  line.className = "src";
+  line.className = "src bookVerses";
   const link = (x: number, i: number) => {
     const a = document.createElement ("a");
     a.className = "term";
+    a.dataset.at = String (x);
     a.textContent = `${Math.floor (x / 1000)}:${x % 1000}`;
     a.addEventListener ("click", () => goVerse (book, Math.floor (x / 1000), x % 1000));
     return [...(i ? [", "] : []), a];
@@ -332,6 +334,7 @@ export function verseLinks (book: number, verses: number[]): HTMLElement {
     const more = document.createElement ("a");
     more.className = "term";
     more.textContent = `+ ${verses.length - FEW} more`;
+    more.dataset.rest = verses.slice (FEW).join (" ");
     more.addEventListener ("click", () => { more.replaceWith (...verses.slice (FEW).flatMap ((x, i) => link (x, i + FEW))); });
     line.append (" ", more);
   }
