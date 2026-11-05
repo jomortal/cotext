@@ -76,6 +76,15 @@ The user often works from the iPad or iPhone via Remote Control; the Mac is the 
 - **Git:** commit each finished change with a short message; push only when asked.
 - **Old versions:** when something is replaced, delete the old version - try things out and move on.
 
+## Rules for the page (public/style.css, src/*.ts)
+
+- **One way per kind of thing.** Each kind of visual thing - a pill, an icon pill, a caption, a note, a field's label, a picker, a box, an overlay, a plain button, a list's row, a title, a bottom bar, a panel - is drawn by one rule set in style.css (its kind named in its comment). A new case of a kind goes through that rule; if it can't take the case, change the rule so it can, for every case - never a separate rule beside it for one situation. Before styling, ask "is this like anything else?"; if it is, it's drawn the same way.
+- **One template, reused:** a near-duplicate is merged into its kind's rule; changing a template changes everything that uses it.
+- **Tokens, never literals:** colors, text sizes, spacing, corners, lines, shadows and tints are `:root` tokens (the palette first; canvas drawings read them with getComputedStyle), used by name; an asked-for color is picked from the palette.
+- **Styles in style.css, not the code:** TypeScript sets classes and the `hidden` attribute (the one way to hide anything); it writes a style only for what's measured or dynamic (a measured width, a CSS variable set from a measurement, a position).
+- **One highlight:** what's picked is in the accent (`.pill[aria-pressed="true"]`, a picker's choice); what's tapped or read aloud is the accent's tint (`--tint`, `--tint-strong`).
+- **Work once, use often:** what's needed per frame, scroll, tap or keystroke is worked out when what it depends on changes (a value cached, a list sorted once, a measurement kept until a resize) and read after.
+
 ## Writing
 
 Comments, this file and reports: clear and concise yet comprehensive - as much as is needed, in the clearest and fewest words. Comments say what code is for and why; a change updates the comments it affects.
