@@ -29,7 +29,7 @@
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
-  --ref-scale: .875; --ref-en: .8em;     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
+  --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
@@ -332,7 +332,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen .panelScroll > :not(.gInline), .sheet.grammarOpen > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
-.gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
+.gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }
+.head .place .refPair { font-size: calc(var(--fs-m) / var(--ref-en-k)); gap: 4px 12px; }     /* (The heading's passage: its English the title's size, its original's beside it - refs.ts) */     /* (A title: a grammar section's, the deck's name, the heading's passage) */
 .gInline .src { margin-top: 2px; }
 .gBody { font-size: var(--fs-m); line-height: var(--lh); margin-top: 8px; }
 .giOther { margin-top: 8px; display: grid; gap: var(--gap); }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
@@ -504,12 +505,15 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
-.vcDeck .vcRef { font-size: calc(var(--ref-scale) * 1em); font-weight: 600; } .vcDeck .cardBack .vcRef { font-size: calc(var(--fs-2xl) * var(--ref-scale)); text-align: center; }     /* (A card's references, bold: a little smaller than the side's text - the front's, the back's verses - --ref-scale) */
-.vcRef > :not(.vcNative) { text-transform: uppercase; font-size: var(--ref-en); }     /* (The English reference in capitals, as the Greek's - smaller than the original's beside it, front and back) */
+/* A reference pair (refs.ts - the verse cards', the heading's passage): the English and the original's side by side, bold,
+   wrapping where narrow - the Hebrew on top -; the English, and the Greek, in the page's sans serif capitals at --ref-en
+   of the pair's size, the Hebrew in its own font at the full size; the Greek first, the Hebrew (read from the right) already first. */
+.refPair { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; font-weight: 600; }
+.refPair:has(.refNative.he) { flex-wrap: wrap-reverse; }
+.refPair > :not(.refNative), .refNative.gr { font-family: var(--ui); text-transform: uppercase; font-size: var(--ref-en); }
+.refNative.he { font-family: var(--heb); } .refNative.gr { order: -1; }
+.vcDeck .vcRefRow { font-size: calc(var(--ref-scale) * 1em); text-align: center; } .vcDeck .cardBack .vcRefRow { font-size: calc(var(--fs-2xl) * var(--ref-scale)); }     /* (A card's references a little smaller than the side's text - the front's, the back's verses - --ref-scale) */
 .vcDeck .vcTr > :not(.src) { font-family: var(--serif); }     /* (The cards' English verse in the serif, the Greek's Gentium - its reference in the page's sans serif) */
-.vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
-.vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
-.vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--ui); font-size: var(--ref-en); order: -1; }     /* (The Greek reference as the English beside it: the page's sans serif, capitals, its size) */     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
 .vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }

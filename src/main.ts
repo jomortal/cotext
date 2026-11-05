@@ -7,7 +7,8 @@ import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker, togglePicker } from "./picker";
-import { ABBR } from "./booknames";
+import { ABBR, nativeName } from "./booknames";
+import { nativeRef, refPair } from "./refs";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
 import { setAudioTestament } from "./audio";
@@ -37,13 +38,21 @@ let books: Book[] = [];
 let book: Book;
 let chapter = 1;
 
-// The heading's place: the book's name and chapter on one line, or - when that would wrap (a narrow screen, a long
-// name) - its SBL abbreviation (booknames.ts' ABBR) with a full stop: 1 Thessalonians 1 -> 1 Thess. 1. Checked again when the window resizes.
+// The heading's place, a reference pair (refs.ts: bold capitals): the book's name and chapter in English and in its
+// own language - "GENESIS 1 בְּרֵאשִׁית א" - on one line; where that would wrap (a narrow screen, a long name) the
+// English alone; where that would too, its SBL abbreviation (booknames.ts' ABBR) with a full stop: 1 THESS. 1.
+// Checked again when the window resizes.
 function showPlace () {
   if (! book) return;
-  placeBtn.textContent = `${book.name} ${chapter}`;
-  const line = parseFloat (getComputedStyle (placeBtn).lineHeight) || 20;
-  if (placeBtn.scrollHeight > line * 1.6 + 16 && ABBR[book.name]) placeBtn.textContent = `${ABBR[book.name]}. ${chapter}`;
+  const lang = nativeName (book.code)?.[1], en = () => placeBtn.querySelector<HTMLElement> (".refPair > :first-child")!.getBoundingClientRect ();
+  const wraps = () => en ().height > parseFloat (getComputedStyle (placeBtn.querySelector (".refPair > :first-child")!).fontSize) * 1.6;     // (The English on two lines)
+  if (lang) {     // (Both: kept where the original's sits on the English's line, and neither wraps)
+    placeBtn.innerHTML = refPair (`${book.name} ${chapter}`, nativeRef (book.code, lang, chapter));
+    const n = placeBtn.querySelector (".refNative")!.getBoundingClientRect (), e = en ();
+    if (! wraps () && Math.abs ((n.top + n.bottom) - (e.top + e.bottom)) / 2 < e.height * .6) return;
+  }
+  placeBtn.innerHTML = refPair (`${book.name} ${chapter}`);
+  if (wraps () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`);
 }
 window.addEventListener ("resize", showPlace);
 

@@ -45,6 +45,7 @@ import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
 import { nativeName } from "./booknames";
 import { hebrewNumber, greekNumber } from "./numerals";
+import { nativeRef, refPair } from "./refs";
 import { barRoom } from "./bars";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
@@ -118,24 +119,11 @@ function translationOf (b: Book): Source | null {
 }
 
 /** A card's back: the reference, the translation's verses (numbered in a range), the original(s). */
-/** A reference in the original's own language, beside the English: the book's Hebrew or Greek name (booknames.ts) and
- *  its chapter and verses in letters - "תְּהִלִּים כג:א", "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ" (the Septuagint's own book and
- *  numbering: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"). */
-function nativeRef (code: string, lang: "he" | "gr", c1: number, v1: number, c2: number, v2: number) {
-  const name = nativeName (code)?.[0];
-  if (! name) return "";
-  const num = lang === "he" ? hebrewNumber : greekNumber;
-  const span = ! v1 ? num (c1) : `${num (c1)}:${num (v1)}` + (c2 !== c1 ? `–${num (c2)}:${num (v2)}` : v2 > v1 ? `–${num (v2)}` : "");
-  // (Greek in capitals, as inscriptions and the oldest manuscripts: no accents or breathings - ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ)
-  const text = lang === "he" ? `${name} ${span}` : `${name} ${span}`.normalize ("NFD").replace (/[\u0300-\u036f]/g, "").toUpperCase ();
-  return `<span class="vcNative ${lang}" dir="${lang === "he" ? "rtl" : "ltr"}" lang="${lang === "he" ? "he" : "grc"}">${esc (text)}</span>`;
-}
-
 /** A card's two sides: the front its reference (and, with an original, the reference in its language under it); the
  *  back those, the translation's verses (numbered in a range), the original. */
 async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ front: string; back: string }> {
   const b = bookOf (c);
-  const ref = (native = "") => `<div class="vcRef"><span>${esc (refText (c))}</span>${native}</div>`;     // (The English and, beside it, the original's)
+  const ref = (native = "") => `<div class="vcRefRow">${refPair (refText (c), native)}</div>`;     // (The English and, beside it, the original's)
   if (! b) return { front: ref (), back: ref () };
   const [lo, hi] = c.from ? [c.from, c.to] : [0, 999];
   let html = "";
