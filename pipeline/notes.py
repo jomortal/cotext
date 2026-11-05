@@ -25,6 +25,9 @@ Commentaries:
            the introductions and dissertations, the Greek text and its readings left out.
   rashi, ibnezra, ramban  Rashi (public domain / CC BY), Ibn Ezra (CC BY-NC) and Ramban (CC BY) in English, from
            Sefaria: notes_sefaria.py.
+  catena, fathers  The church fathers: Aquinas' Catena Aurea on the Gospels (the Oxford translation, 1841-45; public
+           domain) and the Historical Christian Faith Commentaries Database, its quotes from public-domain
+           translations only: notes_fathers.py.
 Apparatus:
   stepbible  STEPBible's TAGNT and TAHOT (CC BY 4.0; already in downloads/ for the text): NT - TAGNT's variant notes,
            its words not in every edition (NA28, NA27, Tyndale House, SBL, Westcott-Hort, Tregelles, TR, Byzantine) and
@@ -176,6 +179,16 @@ SOURCES = [
     ("ramban", "commentary", "Ramban on the Torah", "OT",
      "Ramban (Nachmanides), Commentary on the Torah, tr. and annotated by Charles B. Chavel (Shilo, 1971-76); "
      "Sefaria, CC BY."),
+    ("catena", "commentary", "Catena Aurea (Aquinas, 1841)", "NT",
+     "Thomas Aquinas, Catena Aurea: Commentary on the Four Gospels, Collected out of the Works of the Fathers, the "
+     "Oxford translation (J. H. Parker, 1841-45; ed. J. H. Newman): public domain. Text from the Historical Christian "
+     "Faith Writings-Database (public-domain dedication), Matthew 15 from CCEL. Each quote led by its father and, "
+     "where the translators found it, the work (non occ.: not found)."),
+    ("fathers", "commentary", "Church fathers (Historical Christian Faith)", "OT NT",
+     "Historical Christian Faith Commentaries Database (github.com/HistoricalChristianFaith/Commentaries-Database, "
+     "public-domain dedication): only the quotes from public-domain translations - the Ante-Nicene and Nicene and "
+     "Post-Nicene Fathers, other translations before 1929, and new translations released into the public domain, "
+     "some machine-made (so marked); fathers and medieval writers to 1500, earliest first."),
     ("stepbible", "apparatus", "Editions and variants (STEPBible)", "OT NT",
      "STEPBible Data (TAGNT, TAHOT), Tyndale House, Cambridge, CC BY 4.0."),
     ("sblgnt", "apparatus", "SBLGNT apparatus", "NT",
@@ -1022,6 +1035,8 @@ def build(main_db, book_codes, only=None):
     import diagram
     makers["diagram_ot"] = lambda: diagram.rows(main_db, set(range(1, 40)))
     makers["diagram_nt"] = lambda: diagram.rows(main_db, set(range(40, 67)))
+    import notes_fathers
+    makers.update({"catena": notes_fathers.catena_rows, "fathers": notes_fathers.fathers_rows})
     makers.update({"hottp": notes_mss.hottp_rows, "dss": notes_mss.dss_rows, "sinaiticus": notes_mss.sinaiticus_rows,
                    "igntp": notes_mss.igntp_rows, "bezae": notes_mss.bezae_rows})
     counts, listed = {}, []
@@ -1039,7 +1054,7 @@ def build(main_db, book_codes, only=None):
     # module added that aren't in SOURCES - lxx.py's brenton_lxx - are kept, so a notes-only rebuild doesn't drop them.)
     ours = {row[0] for row in listed}
     try:
-        listed += [tuple (r) for r in main_db.execute ("SELECT * FROM note_sources") if r[0] not in ours]
+        listed += [tuple (r)[:8] for r in main_db.execute ("SELECT * FROM note_sources") if r[0] not in ours]     # (books: source_books.py)
     except sqlite3.OperationalError:
         pass     # (No table yet: a fresh build)
     main_db.execute("DROP TABLE IF EXISTS note_sources")

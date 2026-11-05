@@ -67,6 +67,15 @@ NT commentaries added 2026-11-03 (the notes panel):
     (CrossWire's SWORD module Lightfoot 1.0, from philologos.org).
   J. B. Lightfoot, St Paul's Epistles to the Colossians and to Philemon (Macmillan, 1875): public domain (Project
     Gutenberg's transcription, eBook 50857; its notes only, the Greek text and readings left out).
+  Thomas Aquinas, Catena Aurea: Commentary on the Four Gospels, Collected out of the Works of the Fathers (Oxford: J. H.
+    Parker, 1841-45; ed. J. H. Newman): public domain. Text from the Historical Christian Faith Writings-Database
+    (github.com/HistoricalChristianFaith/Writings-Database, commit 938841f3; public-domain dedication); Matthew 15
+    from the Christian Classics Ethereal Library (ccel.org, catena1.xml; used for non-profit purposes, as its terms allow).
+  Historical Christian Faith Commentaries Database (github.com/HistoricalChristianFaith/Commentaries-Database, commit
+    9da765b0): its compilation and its excerpts from public-domain sources dedicated to the public domain. Only
+    quotes from public-domain translations are used (the Ante-Nicene and Nicene and Post-Nicene Fathers, other
+    translations before 1929, new translations released into the public domain - some machine translations of Migne,
+    so marked); its fair-use excerpts of works still in copyright are left out (pipeline/notes_fathers.py).
 
 Notes panel sources added 2026-11-03 (each its own file in public/data/notes/; credits also shown under its notes;
 non-commercial ones marked NC - usable because COTEXT is free and never sold):

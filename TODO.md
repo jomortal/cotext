@@ -40,6 +40,13 @@ a non-commercial license are marked so in NOTICE.
       pinched or wheeled from the whole Bible to one reign; the chapter read marked ("you are here") and opened on;
       each item tapped going to its verses; a person's dates in the word panel (96 persons) with a Timeline button.
       Data: Theographic Bible Metadata (CC BY-SA 4.0), Floyd Nolen Jones's chronology (after Ussher).
+- [x] **Church fathers** (trial, 2026-11-04): two commentaries, each quote led by its father and work.
+      Catena Aurea (Aquinas; the Oxford translation, 1841-45, public domain): the four Gospels, 12,554 quotes, each
+      put on the verse it quotes. Historical Christian Faith Commentaries Database (public-domain dedication; its
+      copyrighted fair-use excerpts unmarked, so only quotes from public-domain translations kept - ANF / NPNF, other
+      translations before 1929, new ones released into the public domain, ChatGPT ones marked "machine
+      translation"): 44,586 quotes from 76 fathers to AD 1500, the whole Bible, 76 MB. No filter by father yet.
+      Chrysostom's full homilies (NPNF) later.
 - [ ] **Apocrypha, linked** (later): a resource following the text (as the Archaeology finds) linking the Apocrypha
       wherever it correlates with the Bible, the NT above all (Hebrews 11:35 / 2 Maccabees 7, Matthew 27:43 / Wisdom
       2:18, Romans 1 / Wisdom 13-15, James 1:19 / Sirach 5:11, John 10:22 / 1 Maccabees 4...), and the OT's parallels
