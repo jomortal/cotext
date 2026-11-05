@@ -351,7 +351,7 @@ async function draw (body: HTMLElement) {
       // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE and START OVER in its corners)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
-      // (BACK and NEXT as arrows inside the card's edges, as the Bible view's chapter arrows)
+      // (BACK and NEXT as arrows inside the card's edges, as the Bible view's chapter arrows - fixed at the screen's middle: placeArrows)
       const row = document.createElement ("div"); row.className = "vcCardRow";
       const arrows = [["back", "‹", "Back"], ["next", "›", "Next"]].map (([k, arrow, label]) => {
         const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
@@ -401,7 +401,16 @@ async function draw (body: HTMLElement) {
     const over = menu.getBoundingClientRect ().bottom + 12 - (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top;
     if (over > 0) deckEl.style.marginTop = over + "px";
   };
-  const watch = new ResizeObserver (() => clearMenu ());
+  // BACK and NEXT fixed at the screen's middle (between the top row and the bar), not moving with the card: at the
+  // card's edges, measured again as the deck or the window changes size
+  const placeArrows = () => {
+    const row = deckEl.querySelector<HTMLElement> (".vcCardRow"), bar = deckEl.querySelector<HTMLElement> (".vcBar");
+    if (! row) return;
+    const r = row.getBoundingClientRect (), top = body.querySelector (".vcTop")!.getBoundingClientRect ().bottom;
+    deckEl.style.setProperty ("--arrowL", r.left + "px"); deckEl.style.setProperty ("--arrowR", innerWidth - r.right + "px");
+    deckEl.style.setProperty ("--arrowY", (top + (bar ? bar.getBoundingClientRect ().top : innerHeight)) / 2 + "px");
+  };
+  const watch = new ResizeObserver (() => { clearMenu (); placeArrows (); });
   watch.observe (deckEl); menus.forEach ((m) => watch.observe (m));
   deck ();
 }
