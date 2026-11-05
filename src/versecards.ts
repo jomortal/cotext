@@ -1,5 +1,5 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
-// flip, BACK / SHOW / NEXT, SHUFFLE, START OVER and REMOVE CARD).
+// flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - a row of buttons at
 //   the top, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   then + NEW DECK; the open deck's NAME edited in place, DELETE DECK (asked first) taking it and its cards away.
@@ -208,7 +208,7 @@ async function draw (body: HTMLElement) {
     const made: (Card & { id: string })[] = [];
     for (const c of d.cards) made.push ({ id: c.id, front: `<div class="vcRef">${esc (refText (c))}</div>`, back: await backOf (c, used) });
     if (n !== drawing) return;
-    showDeck (deckEl, made, (c) => { d.cards = d.cards.filter ((x) => x.id !== c.id); save (); deck (); }, "Remove card", true);     // (Turned over: the back alone, the reference on it)
+    showDeck (deckEl, made, undefined, undefined, true);     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
     credits.textContent = [...used.values ()].filter (Boolean).join (" ");
   };
   drawPick (placeEl);
