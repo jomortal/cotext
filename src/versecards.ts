@@ -10,8 +10,9 @@
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, last in ⋯'s options) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
-//   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (each picker blank until
-//   the one before it is picked, + ADD VERSE greyed out until FROM VERSE is; TO VERSE optional,
+//   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (picked in any order -
+//   before a book, CHAPTER and the verses offer up to the most in any book or chapter, moved to the book's or chapter's
+//   last where it's shorter -, + ADD VERSE greyed out until BOOK, CHAPTER and FROM VERSE are; TO VERSE optional,
 //   blank for the one verse). The deck's settings one line, wrapping where it doesn't fit: LANGUAGE, TRANSLATION,
 //   Transliteration, Interlinear and Parsing.
 // - FOR ALL THE DECK'S CARDS (its settings, each change showing at once on the card shown): TRANSLATION - None or one
@@ -206,15 +207,29 @@ let menuOpen = false;     // (⋯'s options: hidden till ⋯)
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
 
-/** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
- *  picked - a blank shows a dash, BOOK's "Select Book"; + ADD VERSE greyed out until FROM VERSE is). */
+/** The most chapters in any book and the most verses in any chapter (Psalm 119's 176 - a fact of the text, not read: a
+ *  scan of every word for it took most of a second): CHAPTER's and the verses' choices before a book (or chapter) is picked. */
+const mostVerses = 176;
+const mostChapters = () => Math.max (...books.map ((x) => x.chapters));
+
+/** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes, picked in any order: before a book,
+ *  CHAPTER offers up to the most chapters in any book, and before a book and chapter the verses up to the most verses in
+ *  any chapter; a book (or chapter) picked that doesn't go that far moves the chapter (or verses) to its last. A blank
+ *  shows a dash, BOOK's "Select Book"; TO VERSE waits for FROM VERSE, + ADD VERSE for BOOK, CHAPTER and FROM VERSE. */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt) {     // (p: the screen's add row's, or the Bible's add-verse box's)
   const b = p.book;
+  if (b && p.chapter > b.chapters) p.chapter = b.chapters;     // (The book shorter: its last chapter)
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
-  const vs = r.map ((x) => Number (x.verse)).filter ((v) => v > 0);
+  const chosen = !! (b && p.chapter);
+  const vs = chosen ? r.map ((x) => Number (x.verse)).filter ((v) => v > 0) : Array.from ({ length: mostVerses }, (_, i) => i + 1);
+  const last = vs[vs.length - 1] ?? 0;
+  if (p.from > last) p.from = last;     // (The chapter shorter: its last verse)
+  if (p.to > last) p.to = last;
+  if (p.to <= p.from) p.to = 0;
   const BLANK: [string, string] = ["", "–"];     // (Blank: a dash - BOOK's says "Select Book")
   const pick = (label: string, options: [number | string, string][], value: number | string, set: (v: string) => void, off = false) => {
-    const l = document.createElement ("label"); l.className = "vcPick"; l.textContent = label;
+    const l = document.createElement ("label"); l.className = "vcPick";
+    l.append (Object.assign (document.createElement ("span"), { className: "vcPickName", textContent: label }));     // (Its name: no wider than the box - running on over the gap)
     const s = document.createElement ("select"); s.className = "choose"; s.disabled = off;
     s.append (...options.map (([v, t]) => new Option (t, String (v))));
     s.value = String (value);
@@ -222,20 +237,19 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
     l.append (s);
     return l;
   };
-  const chosen = !! (b && p.chapter);
   const sep = (t: string) => Object.assign (document.createElement ("span"), { className: "vcSep", textContent: t });     // (As a reference reads: 3:16-18)
   el.replaceChildren (
     Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
-          (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }), { className: "vcPick vcBook" }),
-    pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
-          p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
+          (v) => { p.book = books.find ((x) => x.code === v) ?? null; }), { className: "vcPick vcBook" }),
+    pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? mostChapters () }, (_, i): [number, string] => [i + 1, String (i + 1)])],
+          p.chapter || "", (v) => { p.chapter = +v; }),
     sep (":"),
-    pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? vs.map ((v): [number, string] => [v, String (v)]) : [])],
-          p.from < 0 ? "" : p.from, (v) => { p.from = +v; p.to = 0; }, ! chosen),
+    pick ("From verse", [...(p.from > 0 ? [] : [BLANK]), ...vs.map ((v): [number, string] => [v, String (v)])],
+          p.from > 0 ? p.from : "", (v) => { p.from = +v; }),
     sep ("-"),
     pick ("To verse", p.from > 0 ? [[0, "–"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
           p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
-  addBtn.disabled = ! chosen || p.from < 0;
+  addBtn.disabled = ! chosen || p.from <= 0;
 }
 
 async function draw (body: HTMLElement) {
@@ -343,7 +357,7 @@ async function draw (body: HTMLElement) {
   stackWhenWrapped (placeEl);
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
-    if (! p.book || ! p.chapter || p.from < 0) return;
+    if (! p.book || ! p.chapter || p.from <= 0) return;
     d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
     pickAt = { book: null, chapter: 0, from: -1, to: 0 };     // (Blank for the next card)
     drawPick (placeEl, addBtn);
@@ -412,11 +426,10 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
       `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
     <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
-  place.style.display = "contents";
   drawPick (place, add, p); stackWhenWrapped (place);
   add.addEventListener ("click", () => {
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
-    if (! d || ! p.book || ! p.chapter || p.from < 0) return;
+    if (! d || ! p.book || ! p.chapter || p.from <= 0) return;
     d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
     save (); verseSheet.hidden = true;
   });

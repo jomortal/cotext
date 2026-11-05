@@ -411,7 +411,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
    start of the line - then the list, a line per card (reference, original picker, ✕). */
-.vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; }
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
@@ -445,6 +445,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcHead[hidden] { display: none; }
 .vcSep { align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
 #vcPlace .vcPick .chooseWrap, .avPlace .vcPick .chooseWrap { display: block; } #vcPlace .vcPick .chooseBtn, .avPlace .vcPick .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
+.vcPickName { white-space: nowrap; width: 0; overflow: visible; }     /* (A picker's name not widening it: FROM VERSE's box as narrow as its numbers, the name running on over the gap) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
 #verseSheet { border-top: 1px solid var(--edge) !important; }
 .avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: 52px; }     /* (Clear of the ✕) */
@@ -462,8 +463,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcMenu:not([hidden])::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 100vw; translate: -50%; border-bottom: 1px solid var(--edge); }     /* (Its line under it across the whole screen, not just the column - cut at the screen's sides) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
-.vcBook .chooseBtn { min-width: 11em; }     /* (BOOK as wide as a long name even while blank) */
-#vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
+.vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
+#vcPlace, .avPlace { display: flex; gap: 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line, kept together - BOOK narrowing where it must, its name cut short) */
+#vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 0 1 auto; width: calc(11em + 38px); min-width: 0; }
+.vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: 32px; }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
 .vcDeck .card.single .cardBack[hidden] { display: none; }
@@ -488,7 +491,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }
 .chooseBtn:disabled { opacity: .4; cursor: default; }     /* (As a pill not there to pick) */
-#vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's Chapter and verses: not greyed out before their book or chapter is picked, only not yet opening) */
+#vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's To verse: not greyed out before From verse is picked, only not yet opening) */
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
