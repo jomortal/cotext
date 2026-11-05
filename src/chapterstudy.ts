@@ -353,19 +353,19 @@ function showMenu () {
   const push = (it: Item) => { items.push (it); menuEl.hidden = true; changed (); };
   menuEl.append (head ("Original text"), choice (`${hebrew () ? "Hebrew" : "Greek"} text of ${book.name} ${chapter}`,
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0 })));
-  const kinds: [string, string][] = [["translation", "Translations"], ["commentary", "Commentaries"], ["apparatus", "Apparatus"],
-                                     ["version", "Ancient versions"], ["syntax", "Syntax"]];
-  for (const [kind, label] of kinds) {
-    const list = sources ().filter ((s) => s.kind === kind);
-    if (! list.length) continue;
-    menuEl.append (head (label), ...list.map ((s) => choice (s.name,
-      () => push ({ id: newId (), k: "note", src: s.id, beside: kind !== "syntax", from: 0, to: 0 }))));
-  }
-  const dicts = sources ().filter ((s) => s.kind === "dictionary");
-  if (dicts.length) menuEl.append (head ("Dictionaries"), ...dicts.map ((s) => choice (s.name + " ›", () => showArticles (s), "Pick from its entries")));
-  menuEl.append (head ("Maps and time"));
-  if (sources ().some ((s) => s.kind === "atlas")) menuEl.append (choice ("Atlas map", () => push ({ id: newId (), k: "map", from: 0, to: 0 }), "The chapter's places"));
-  if (book.testament !== "LXX") menuEl.append (choice ("Timeline", () => push ({ id: newId (), k: "time" }), "The chapter's place in time"));
+  // (The resources in the resources pane's order - notes.ts' sourceGroups: Syntax, Bible Background, Textual Studies,
+  // Commentaries, Translations - then the timeline and the word list)
+  const notes = (kinds: string[]) => sources ().filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name,
+    () => push ({ id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from: 0, to: 0 })));
+  const group = (label: string, els: HTMLElement[]) => { if (els.length) menuEl.append (head (label), ...els); };
+  group ("Syntax", notes (["syntax"]));
+  group ("Bible Background", [
+    ...sources ().filter ((s) => s.kind === "dictionary").map ((s) => choice (s.name + " ›", () => showArticles (s), "Pick from its entries")),
+    ...(sources ().some ((s) => s.kind === "atlas") ? [choice ("Atlas map", () => push ({ id: newId (), k: "map", from: 0, to: 0 }), "The chapter's places")] : [])]);
+  group ("Textual Studies", notes (["apparatus", "version"]));
+  group ("Commentaries", notes (["commentary"]));
+  group ("Translations", notes (["translation"]));
+  if (book.testament !== "LXX") group ("Time", [choice ("Timeline", () => push ({ id: newId (), k: "time" }), "The chapter's place in time")]);
   menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
   menuEl.scrollIntoView ({ block: "nearest" });
