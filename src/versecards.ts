@@ -6,10 +6,11 @@
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts at the chapter read and stays as it is between cards. The add row is
-//   one line where it fits (wrapping where not): the deck's Interlinear, Parsing and Transliteration, LANGUAGE,
-//   TRANSLATION, then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE), then + ADD CARD.
+//   two lines, each wrapping where it doesn't fit: the deck's Interlinear, Parsing and Transliteration, LANGUAGE,
+//   TRANSLATION; then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE) and + ADD CARD.
 // - A CARD'S LANGUAGE (picked on the add row when it's added - OT Hebrew at first): OT HEBREW, OT LXX GREEK (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
-//   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference) or
+//   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference, "LXX 22:1–2";
+//   otherwise the original has no heading) or
 //   ENGLISH ONLY (no Greek or Hebrew). An NT card the Greek with either OT choice.
 // - FOR ALL THE DECK'S CARDS (its settings): TRANSLATION - None or one of the notes' English translations (notes.ts'
 //   translationSources, each file read as the notes read it: openSource) - and, for the cards showing an original,
@@ -112,10 +113,11 @@ async function backOf (c: VerseCard, used: Map<string, string>): Promise<string>
     used.set ("text", TEXT_CREDIT);
     const ws = lxx ? await translatedWords (db, b, c.chapter, lo, hi)
                    : (await chapterWords (db, b.id, c.chapter)).filter ((w) => w.verse >= lo && w.verse <= hi);
-    const head = lxx ? `Greek LXX${ws.length ? ` (${wordsSpan (ws)})` : ""}` : b.testament === "OT" ? "Hebrew" : "Greek";
+    // (No heading - the text shows its language - but the Septuagint's own reference where it numbers otherwise)
+    const own = lxx && ws.length && (ws[0].chapter !== c.chapter || (c.from && ws[0].verse !== c.from));
     const box = textBox (lxx ? { ...b, testament: "LXX" } : b, ws[0]?.chapter ?? c.chapter, ws, deckNow ().settings);
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
-    return `<div class="vcOrig"><div class="src">${head}</div>${box.outerHTML}</div>`;
+    return `<div class="vcOrig">${own ? `<div class="src">LXX ${wordsSpan (ws)}</div>` : ""}${box.outerHTML}</div>`;
   };
   if (! c.en) html += await original (c.orig === "lxx");
   return html;
@@ -168,7 +170,7 @@ async function draw (body: HTMLElement) {
       <button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button><button class="pill" data-o="translit">Transliteration</button>
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === language ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
-      <div id="vcPlace"></div>
+      <div class="vcBreak"></div><div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
     <div class="vcList"></div>

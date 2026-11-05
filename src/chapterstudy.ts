@@ -735,6 +735,7 @@ export function textBox (b: Book, chapter: number, ws: Word[], o: { gloss: boole
 
 /** Where words stand, as a heading's reference: 22:1–3, 21:1–22:2 (the other text numbering its own). */
 export const wordsSpan = (ws: Word[]) => { const [a, z] = [ws[0], ws[ws.length - 1]];
+  if (a.chapter === z.chapter && a.verse === z.verse) return `${a.chapter}:${a.verse}`;     // (One verse: 22:1, not 22:1–1)
   return `${a.chapter}:${a.verse}–${z.chapter === a.chapter ? "" : `${z.chapter}:`}${z.verse}`; };
 
 /** The other text's words for verses lo-hi of a chapter of b: beside a Hebrew book the Septuagint verses translating

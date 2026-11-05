@@ -409,6 +409,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
+.vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
 .vcDeck .card.single .cardFront { font-size: 32px; }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
