@@ -4,9 +4,10 @@
 //   the top, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the open deck's NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
-//   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
-//   chapter) - then + ADD CARD. The pick starts at the chapter read; after each card is added it's blank (each picker blank until
-//   the one before it is picked, + ADD CARD greyed out until FROM VERSE is: Whole chapter or a verse). The add row is
+//   CHAPTER, FROM VERSE (a verse) and TO VERSE (blank: that verse alone, or one after it: a range within the
+//   chapter) - then + ADD CARD. The pick starts blank, and is blank again after each card is added (each picker blank until
+//   the one before it is picked, + ADD CARD greyed out until FROM VERSE is; TO VERSE optional,
+//   blank for the one verse). The add row is
 //   two lines, each wrapping where it doesn't fit: TRANSLATION, LANGUAGE, the deck's Interlinear, Parsing and
 //   Transliteration; then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE) and + ADD CARD.
 // - A CARD'S LANGUAGE (picked on the add row when it's added - OT Hebrew at first): OT HEBREW, OT LXX GREEK (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
@@ -62,11 +63,8 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify ({ decks, a
 
 let db: Db;
 let books: Book[] = [];
-let reading: () => [Book, number];
-/** main.ts: the database, every book (the Hebrew Bible's and the NT's are the ones picked) and the chapter read. */
-export function initVerseCards (theDb: Db, all: Book[], place: () => [Book, number]) {
-  db = theDb; books = all.filter ((b) => b.testament !== "LXX"); reading = place;
-}
+/** main.ts: the database and every book (the Hebrew Bible's and the NT's are the ones picked). */
+export function initVerseCards (theDb: Db, all: Book[]) { db = theDb; books = all.filter ((b) => b.testament !== "LXX"); }
 
 const esc = (s: string) => s.replace (/[&<>"]/g, (c) => `&#${c.charCodeAt (0)};`);
 const bookOf = (c: VerseCard) => books.find ((b) => b.code === c.code);
@@ -131,19 +129,13 @@ type Language = "he" | "lxx" | "en";
 const LANGUAGES: [Language, string][] = [["he", "OT Hebrew"], ["lxx", "OT LXX Greek"], ["en", "English only"]];
 let language: Language = "he";
 let listShown = false;     // (The deck's list of cards: hidden till SHOW LIST)
-/** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked, 0: the whole
- *  chapter; to 0: the from verse alone) - null till the screen first opens (then the chapter read); blank again after each card
- *  is added. */
-let pickAt: { book: Book | null; chapter: number; from: number; to: number } | null = null;
+/** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
+ *  the from verse alone) - blank at first and again after each card is added. */
+let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
  *  picked; + ADD CARD greyed out until FROM VERSE is). */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
-  if (! pickAt) {
-    const [b, c] = reading ();
-    const book = books.find ((x) => x.code === b.code) ?? null;
-    pickAt = { book, chapter: book ? c : 0, from: -1, to: 0 };
-  }
   const p = pickAt, b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
   const vs = r.map ((x) => Number (x.verse)).filter ((v) => v > 0);
@@ -163,9 +155,9 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
           (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
-    pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? [[0, "Whole chapter"], ...vs.map ((v): [number, string] => [v, String (v)])] as [number, string][] : [])],
+    pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? vs.map ((v): [number, string] => [v, String (v)]) : [])],
           p.from < 0 ? "" : p.from, (v) => { p.from = +v; p.to = 0; }, ! chosen),
-    pick ("To verse", p.from > 0 ? [[0, String (p.from)], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
+    pick ("To verse", p.from > 0 ? [[0, "\u00a0"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
           p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
   addBtn.disabled = ! chosen || p.from < 0;
 }
@@ -231,7 +223,7 @@ async function draw (body: HTMLElement) {
   drawPick (placeEl, addBtn);
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
-    if (! p?.book || ! p.chapter || p.from < 0) return;
+    if (! p.book || ! p.chapter || p.from < 0) return;
     const orig: Original = p.book.testament === "NT" ? "gr" : language === "lxx" ? "lxx" : "he";
     d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from), orig, en: language === "en" });
     pickAt = { book: null, chapter: 0, from: -1, to: 0 };     // (Blank for the next card)
