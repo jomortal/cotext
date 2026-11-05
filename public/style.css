@@ -567,3 +567,99 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .timeline + .credit { margin-top: 4px; }
 .sheet .heads > .personLine { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; font-size: var(--fs-s); }     /* (A person's dates and its Timeline button: a line under the root word's buttons) */
 .personLine[hidden] { display: none; }
+
+/* Chapter Study (chapterstudy.ts): the screen's whole width and height - the editor (its lines, + Add item, Print)
+   and the preview (the printout as it prints), each scrolling on its own: narrow the preview the top half, the editor
+   the bottom half; wide side by side, the editor at the left. */
+#studyBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M6 3h9l4 4v14H6z'/%3E%3Cpath d='M9 10h7M9 13.5h7M9 17h4'/%3E%3Cpath d='M9 7h3' stroke-linecap='round'/%3E%3C/svg%3E"); }     /* (A page of text) */
+#screen[data-screen="Chapter Study"] { overflow: hidden; padding-bottom: max(var(--pad), env(safe-area-inset-bottom, 0px)); }
+#screen[data-screen="Chapter Study"] .pickerCard { max-width: none; height: 100%; grid-template-rows: auto minmax(0, 1fr); }
+#screen[data-screen="Chapter Study"] #screenBody { min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.cstudy { display: grid; min-height: 0; height: 100%; gap: 12px; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "preview" "editor"; }
+@media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); grid-template-areas: "editor preview"; } }
+.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--edge); border-radius: 8px; padding: var(--pad); }
+.csEditor { grid-area: editor; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 8px; }
+.csLine { border-bottom: 1px solid var(--edge); background: var(--bg); }
+.csLine.dragged { background: color-mix(in oklch, var(--accent) 10%, var(--bg)); }
+.csRow { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+.csHandle { cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
+.csName { flex: 1; min-width: 0; font-size: var(--fs-s); }
+.csOptsBtn { font-size: var(--fs-xs); color: var(--soft); }
+.csOptsBtn[aria-expanded="true"] { color: var(--accent); }
+.csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
+.csOpts[hidden], .csMenu[hidden] { display: none; }
+.csEmpty { padding: 4px 0; }
+.csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
+.csPrint { color: var(--accent); margin-top: 8px; }
+.csMenu { border: 1px solid var(--edge); border-radius: 8px; padding: 4px 12px 10px; display: grid; }
+.csChoice { padding: 6px 0; }
+.csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
+.csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
+.csChoiceName { font-size: var(--fs-s); color: var(--fg); }
+.csPickList { display: flex; flex-wrap: wrap; gap: 6px 16px; max-height: 40vh; overflow-y: auto; }
+.csPickWord { font-size: var(--fs-s); }
+.csPickWord[aria-pressed="true"] .csPickGloss { color: var(--accent); }
+.csPickGloss { color: var(--soft); }
+/* The printout itself: the app's own text, notes and entries (.vrow, .note, .gBody, .atlasMap...), the chapter its
+   title, each block headed; the text's lines shown by its own options, whatever the ⋯ menu says for the reader. */
+.csDoc { max-width: var(--page); margin: 0 auto; }
+.csTitle { font-size: 24px; }
+.csSub { margin-top: 2px; }
+.csBlock { margin-top: 22px; }
+.csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: 1px solid var(--edge); padding-bottom: 4px; }
+.csSource { margin: 0 0 6px; }
+.csDoc .csText .w { cursor: default; }
+.csDoc .csText .w .gloss, .csDoc .csText .w .parse, .csDoc .csText .w .translit { display: none; }
+.csDoc .csText.csGloss .w .gloss, .csDoc .csText.csParse .w .parse, .csDoc .csText.csTranslit .w .translit { display: block; }
+body.noVerbColors .csDoc .csText .w .parse { color: inherit; }
+.csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: 2px solid var(--edge); font-size: var(--fs-s); margin-top: 6px; }
+.csBeside > .src { margin: 0 0 2px; }
+.csDoc .note { margin-top: 6px; }
+.csDoc .note .src { margin: 0 0 4px; }
+.csDoc .nQuote { font-weight: 600; }
+.csVerse + .csVerse { margin-top: 10px; }
+.csDoc .verseHead { margin-top: 0; }
+.csSnap { display: none; }
+.csDoc .sheetPick, .csDoc .chooseWrap { display: none; }     /* (An article's map's BASE MAP: not in the printout - an Atlas item's pickers are on its line) */
+.csWords { display: grid; }
+.csWord { padding: 6px 0; border-bottom: 1px solid var(--edge); }
+.csWordHead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.csTr { font-style: italic; color: var(--soft); font-size: var(--fs-s); }
+.csCount { margin-left: auto; color: var(--soft); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.csDef { font-size: var(--fs-s); line-height: 1.5; }
+.csYear { color: var(--fg); font-weight: 600; font-size: var(--fs-m); }
+.csAxis { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--soft); margin-top: 10px; border-bottom: 1px solid var(--edge); }
+.csLane { position: relative; padding-bottom: 6px; }
+.csLane > .src { margin-top: 8px; }
+.csBarRow { position: relative; height: 26px; }
+.csBar { position: absolute; top: 2px; height: 6px; border-radius: 3px; background: var(--soft); }
+.csBar.here { background: var(--accent); }
+.csBarLabel { position: absolute; top: 10px; left: 0; font-size: var(--fs-xs); white-space: nowrap; color: var(--fg); }
+.csBarLabel.here { color: var(--accent); font-weight: 600; }
+.csHere { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--accent); }
+
+/* Printing (Chapter Study's Print / Save as PDF): the preview alone, in the light colors, the page flowing (not the
+   app's fixed screen), each verse, note, word and picture kept whole where it fits, page numbers where the browser
+   draws @page's boxes. */
+@media print {
+  @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }
+  html, body { position: static; overflow: visible; height: auto; display: block; background: #fff; }
+  body::before { display: none; }
+  body > :not(#screen) { display: none !important; }
+  #screen { position: static; overflow: visible !important; padding: 0 !important; }
+  #screenMenu, #screenClose, #screenTitle, .csEditor, .chooseList { display: none !important; }
+  #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
+  .csPreview { overflow: visible; border: 0; padding: 0; }
+  .csDoc { max-width: none; background: #fff; color: #1d1c1a;
+           --bg: #fff; --fg: #1d1c1a; --soft: #6b6862; --edge: #dedad2; --accent: oklch(0.56 0.13 250);
+           --qal: oklch(0.56 0.13 25); --niphal: oklch(0.56 0.13 205); --piel: oklch(0.56 0.13 70); --pual: oklch(0.56 0.13 115);
+           --hithpael: oklch(0.56 0.13 295); --hiphil: oklch(0.56 0.13 160); --other: oklch(0.56 0.13 340);
+           -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .csDoc canvas { display: none; }
+  .csSnap { display: block; width: 100%; }
+  .csDoc .atlasMap { aspect-ratio: auto; max-height: none; }
+  .csDoc .vrow, .csBeside, .csDoc .note, .csWord, .csDoc .atlasMap, .csDoc .dictPhoto, .csDoc .atlasRow, .csBarRow, .csDoc .dg { break-inside: avoid; }
+  .csHead, .csDoc .verseHead { break-after: avoid; }
+  .csDoc .dictPhoto img { max-height: 9cm; width: auto; }
+  .csDoc { --word-he: 24px; --word-gr: 22px; }
+}

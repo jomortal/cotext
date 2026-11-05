@@ -152,6 +152,16 @@ async function openArticle (main: Db, id: string, show: ShowOther, src = "tobd")
   show (plain (String (r.title)), (body) => body.append (...articleBody (main, r, o, (other) => openArticle (main, other, show, src), photo, place)), o.name);
 }
 
+/** An article as Chapter Study prints it (chapterstudy.ts): its title, its source's name and credit, and its body as an
+ *  opened article shows it (photo, place's map, text, credit; a cross-reference not followed); null when it's gone. */
+export async function articleBlock (main: Db, id: string, src = "tobd"): Promise<{ title: string; name: string; credit: string; body: HTMLElement[] } | null> {
+  const o = await opened (main, src);
+  const [r] = o ? await o.db.all ("SELECT title, html FROM articles WHERE id = ?", [id]) : [];
+  if (! o || ! r) return null;
+  const [photo, place] = [(await photosOf (o, [id])).get (id), await placeOf (o, id)];
+  return { title: plain (String (r.title)), name: o.name, credit: o.credit, body: articleBody (main, r, o, () => {}, photo, place) };
+}
+
 /** An article's photo (where its source has one: a figure, its credit under it - the full picture, fetched from the
  *  server as it scrolls into view; offline or failing, its thumbnail instead with "Full picture online only" - or,
  *  where the thumbnail is online only too, "Picture online only" alone), its place's map (place: the atlas' map of it,

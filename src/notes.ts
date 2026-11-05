@@ -51,7 +51,7 @@ const HEBREW_OT: Source = { id: "hebrew_ot", kind: "original", name: "Hebrew OT"
 const HEBREW_TEXT = new Set (["diagram_ot", "hottp", "stepbible", "dss", "tn"]);     // (tn: the Translation Notes, each on the Hebrew words it quotes)
 const NOT_BESIDE_LXX = new Set ([...HEBREW_TEXT, "brenton"]);     // (Brenton: brenton_lxx instead, in the LXX's own numbers)
 const LXX_ONLY = "<p>This verse is in the Septuagint only - not in the Hebrew Bible.</p>";
-interface Note { id: number; start: number; end: number; quote: string; body: string; }
+export interface Note { id: number; start: number; end: number; quote: string; body: string; }
 
 const KEY = "cotext.notes";
 const picked: Record<string, string> = {};     // testament -> source id
@@ -314,14 +314,7 @@ async function drawNotes () {
       for (const n of g.notes) box.append (drawDiagram (JSON.parse (n.body) as Sentence, text, at));
       continue;
     }
-    for (const n of g.notes) {
-      const el = document.createElement ("div");
-      el.className = "note";
-      // (The body is the pipeline's own HTML: a few tags only - notes.py's docstring lists them)
-      el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
-                   + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
-      box.append (el);
-    }
+    for (const n of g.notes) box.append (noteElement (n));
   }
   if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
   placed ();
@@ -436,6 +429,20 @@ function refs (where: number[][]): string {
   }
   return out.join ("; ");
 }
+
+/** A note as the panel draws it (Chapter Study's too: chapterstudy.ts): its range when it spans verses, the words it's
+ *  on, its body - the pipeline's own HTML, a few tags only (notes.py's docstring lists them). */
+export function noteElement (n: Note): HTMLElement {
+  const el = document.createElement ("div");
+  el.className = "note";
+  el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
+               + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
+  return el;
+}
+
+/** The sources with notes for a book in its own testament (Chapter Study's list: chapterstudy.ts) - beside the
+ *  Septuagint only its own (not the Hebrew's, as the picker offers them). */
+export const sourcesFor = (b: Book) => sources.filter ((s) => offers (s, b.testament) && covers (s, b));
 
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */
 function range (start: number, end: number): string {
@@ -562,7 +569,7 @@ function loose () {
 type DWord = [number, number] | [string, string, number];     // [ref, word number]: the text's word; [text, gloss, ref]: MACULA's own
 interface DClause { j?: DWord[]; t?: string; p: DPhrase[]; }
 interface DPhrase { r: string; w: (DWord | DClause)[]; }
-interface Sentence { l: "he" | "grc"; c: DClause[]; }
+export interface Sentence { l: "he" | "grc"; c: DClause[]; }
 
 const ROLES: Record<string, string> = { s: "subject", v: "verb", vc: "verb (linking)", o: "object", o2: "second object",
   io: "indirect object", p: "predicate", adv: "adverbial", aux: "particle", "": "" };
@@ -571,7 +578,7 @@ const KINDS: Record<string, string> = { relative: "relative clause", participle:
 
 /** A sentence's diagram; text: the text's words of its verses ("ref:n" -> [text, gloss], read by update); at: the verse
  *  shown (ref), the others' words dimmed. */
-function drawDiagram (s: Sentence, text: Map<string, [string, string]>, at: number): HTMLElement {
+export function drawDiagram (s: Sentence, text: Map<string, [string, string]>, at: number): HTMLElement {
   const he = s.l === "he";
   const el = (tag: string, cls: string, txt?: string) => {
     const e = document.createElement (tag);

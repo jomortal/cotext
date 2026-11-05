@@ -74,6 +74,16 @@ export async function personOf (where: number[]): Promise<{ item: number; line: 
   }
 }
 
+/** A chapter's place in time (Chapter Study's timeline: chapterstudy.ts): its year (ISO astronomical; null none), its
+ *  items' ids, and the timeline's lanes, items and credit; null when the timeline can't be read. */
+export async function chapterTime (book: number, chapter: number) {
+  const d = await data ();
+  if (! d) return null;
+  const [h] = await d.db.all ("SELECT year, items FROM here WHERE book = ? AND chapter = ?", [book, chapter]);
+  return { year: h && h.year !== null ? Number (h.year) : null, here: new Set (h ? String (h.items).split (" ").filter (Boolean).map (Number) : []),
+           lanes: d.lanes, items: d.items, credit: d.credit };
+}
+
 /** The timeline opened on an item (a word panel's Timeline). */
 export function showTimelineAt (item: number) {
   focus = item;
