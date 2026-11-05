@@ -321,7 +321,7 @@ async function draw (body: HTMLElement) {
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
     else {
       shown = showDeck (deckEl, made, undefined, undefined, true, ".w", "Flip"); shownIds = ids;
-      // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar)
+      // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE and START OVER in its corners)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
       // (BACK and NEXT as arrows either side of the card, as the Bible view's chapter arrows)

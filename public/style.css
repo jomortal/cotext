@@ -427,10 +427,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
 .vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--pad));
   display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 24px; background: var(--bg); border-top: 1px solid var(--edge);
+.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; background: var(--bg); border-top: 1px solid var(--edge);
   box-sizing: border-box; height: var(--barH); align-content: start;
   padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--barFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
-.vcBar .pill { padding: 6px 0; font-size: var(--fs-l); line-height: 1; } .vcBar { align-items: center; gap: 4px 28px; }     /* (Its words larger than a pill's) */
+.vcBar .pill { padding: 6px 0; font-size: var(--fs-l); line-height: 1; } .vcBar { align-items: center; }     /* (Its words larger than a pill's) */
+.vcBar > :first-child { justify-self: start; } .vcBar > :last-child { justify-self: end; }     /* (SHUFFLE and START OVER in the corners, FLIP centered - as the play bar's ▶) */
 /* BACK and NEXT: arrows either side of the card, at its middle. */
 .vcCardRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .vcCardRow > .pill.icon { font-size: calc(var(--fs-icon) * 1.4); padding: 12px 4px; }
