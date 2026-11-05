@@ -5,7 +5,7 @@
 //   the identification is (OpenBible's score: the share of current scholarship behind the site) and the others with
 //   theirs (wordMap).
 // - BY PASSAGE: "Atlas" in the notes' picker (notes.ts, its own MAPS group): every place the book names, small and
-//   faint, and over them the places named in the verses the notes show (narrow the verse, wide the chapter), each a
+//   faint, and over them the places the chapter names (on every screen), each a
 //   full point with its name, the map fitted to them; those listed under the map with the verses naming them - a place
 //   tapped (on the map or in the list) picked out on both, a verse tapped going there (passageMap).
 // - BASE MAPS: Natural Earth, Ancient World (AWMC) and Roman Empire (DARE), picked under the map (BASE MAP, kept on

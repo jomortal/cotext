@@ -25,7 +25,7 @@
 //   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow one verse,
 //   wide the chapter in step with the text; an article listed once, at the first verse shown it's for) - except the
 //   Archaeology finds, the Ancient Parallels and the Ancient Historians, listed by book (BY BOOK, below).
-// - The atlas (MAPS: atlas.ts) is one map of the places the verses shown name (narrow the verse, wide the chapter),
+// - The atlas (MAPS: atlas.ts) is one map of the places the chapter names (narrow and wide alike),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 
 import { openNotesDb, type Db } from "./db";
@@ -213,7 +213,9 @@ async function drawNotes () {
   if (panel.hidden || ! book || ! src || ! textDb || (src.file && ! ownFile (src) && open?.id !== src.id)) return;
   if (BY_BOOK.has (src.id) && book.testament !== "LXX") { drawBookFinds (src.id); return; }
   bookShown = "";     // (Anything else drawn: the book's list gone)
-  const vs = versesNow ();
+  // (The atlas always the whole chapter's places, narrow too: its list is the chapter's)
+  const rowsAll = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")].map ((r) => Number (r.dataset.verse ?? 1));
+  const vs = src.kind === "atlas" && rowsAll.length ? rowsAll : versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;
   shownVerse = key;
@@ -230,7 +232,7 @@ async function drawNotes () {
     : [[b.id, chapter, v]] })));
   if (! still ()) return;
   blocks = []; anchors = null;
-  refEl.textContent = wide ? `${b.name} ${chapter}` : `${b.name} ${chapter}:${vs[0]}`;
+  refEl.textContent = many ? `${b.name} ${chapter}` : `${b.name} ${chapter}:${vs[0]}`;
   const all = per.flatMap ((p) => p.where);
   // (The interlinear out of .gBody: its .he would restyle the reader's rows as inline Hebrew text)
   bodyEl.classList.toggle ("gBody", src.kind !== "original");
