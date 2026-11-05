@@ -29,8 +29,8 @@
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
-//   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on its front turns it
-//   over; only FLIP turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
+//   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on it turns it over
+//   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
 //   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in ⋯'s options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
@@ -270,7 +270,7 @@ async function draw (body: HTMLElement) {
     const t = e.target as HTMLElement, wordEl = t.closest<HTMLElement> (".w[data-wk]");
     const w = wordEl && cardWords.get (wordEl.dataset.wk!);
     if (w && wordEl) showCardPanel (db, w, wordEl).then (fitPanel);
-    else if (t.closest ("[data-k]")) hideCardPanel ();
+    else if (t.closest ("[data-k], .card")) hideCardPanel ();     // (The card turned or changed: its word's panel closed)
   });
   const listHead = body.querySelector<HTMLElement> ("#vcListHead")!;
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
@@ -314,7 +314,7 @@ async function draw (body: HTMLElement) {
     const ids = d.cards.map ((c) => c.id).join ();
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
     else {
-      shown = showDeck (deckEl, made, undefined, undefined, true, false, "Flip"); shownIds = ids;
+      shown = showDeck (deckEl, made, undefined, undefined, true, ".w", "Flip"); shownIds = ids;
       // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));

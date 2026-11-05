@@ -15,11 +15,11 @@ import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, h
 export interface Card { front: string; back: string; /* HTML */ }
 
 /** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
- *  without it the deck has no such button. tapTurns false: a tap turns the card over but not back (HIDE does). flipWord: SHOW / HIDE's one name both ways
+ *  without it the deck has no such button. noTurn: a selector - a tap on what it matches doesn't turn the card. flipWord: SHOW / HIDE's one name both ways
  *  (the Verse cards' FLIP).
  *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English; a verse card: the verse with its reference); otherwise under it. */
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false,
-                                          tapTurns = true, flipWord = ""): DeckShown<C> {
+                                          noTurn = "", flipWord = ""): DeckShown<C> {
   const first = [...cards];
   let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
@@ -38,14 +38,12 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   // Turned over (a tap on the card, or SHOW - HIDE while turned - between BACK and NEXT); again, turned back.
   const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; flip.textContent = flipWord || (back.hidden ? "Show" : "Hide"); } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
-  // (tapTurns false: a tap turns it over, not back - the Verse cards, whose back's words are tapped for their panel;
-  // HIDE turns it back)
-  const tapped = () => { if (tapTurns || back.hidden) turn (); };
+  // (noTurn: what a tap on doesn't turn it - the Verse cards' words, tapped for their panel)
   card.addEventListener ("click", (e) => {
-    const say = (e.target as HTMLElement).closest<HTMLElement> ("[data-say]");
-    if (say) sayText (say.dataset.say!); else tapped ();
+    const t = e.target as HTMLElement, say = t.closest<HTMLElement> ("[data-say]");
+    if (say) sayText (say.dataset.say!); else if (! (noTurn && t.closest (noTurn))) turn ();
   });
-  card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault (); tapped (); } });
+  card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault (); turn (); } });
   const on = (k: string, f: () => void) => el.querySelector (`[data-k=${k}]`)!.addEventListener ("click", () => { f (); show (); });
   flip.addEventListener ("click", turn);
   on ("back", () => { at--; });
