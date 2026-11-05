@@ -167,7 +167,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
    .gBody), the source's credit. Under them the play bar, last, with the home indicator's room. */
 .pane { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: calc(var(--mid, 100dvh) / 2); }     /* (Narrow, alone: at most half the room between the bars - --mid, as the word's panel) */
 .pane[hidden] { display: none; }
-.pane .top { align-items: center; margin-bottom: 10px; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest) */
+.pane .top { align-items: center; margin-bottom: 10px; position: relative; z-index: 3; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest; over the pinned heading's shadow - #notesRef.stick - so its picker's border shows) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
 .pane .chooseBtn { width: 100%; box-sizing: border-box; }
