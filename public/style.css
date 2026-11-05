@@ -185,7 +185,7 @@ body.noVerbColors .w .parse { color: inherit; }
 /* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol and #paneCol - index.html) */
 body:has(#sheet:not([hidden])) #search:not([hidden]), body:has(#sheet:not([hidden]), #search:not([hidden])) #notes:not([hidden]),
 body:has(#sheet:not([hidden]), #search:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: var(--rule); }
-body:has(.dock:not([hidden])) #playBar { border-top: var(--rule); }
+body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(--rule); }     /* (Its line over it with a panel open under the text, or the book menu over it) */
 /* Narrow (layout.ts), several panels open (body.docks; --docks their number - layout.ts counts them): they share the
    room between the heading and the play bar (--mid: notes.ts measures it) evenly with the text - two a third each,
    three a quarter each, four a fifth -, the text keeping its share at least; each panel no taller than its content. */
