@@ -332,7 +332,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen .panelScroll > :not(.gInline), .sheet.grammarOpen > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
-.gTitle, .vcTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
+.gTitle, .vcTopRow .vcTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
 .gInline .src { margin-top: 2px; }
 .gBody { font-size: var(--fs-m); line-height: var(--lh); margin-top: 8px; }
 .giOther { margin-top: 8px; display: grid; gap: var(--gap); }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
@@ -447,13 +447,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }
-.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 100px var(--head-y); }     /* (As tall as ☰ and ⋯, the name centered on them, clear of + and ⋯) */
-.vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (⋯ where the Bible view's is: the top row's right end - + before it) */
+.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
+.vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (+ where the Bible view's ⋯ is: the top row's right end) */
 #vcPlus { font-size: calc(var(--fs-icon) * 1.15); line-height: 1; }
 #screen[data-screen="Verse cards"] #screenClose { display: none; }     /* (No ✕: back to the Bible by ☰, ⋯ in its place) */     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
 .vcTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
-@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: ⋯ at the column's edge, as the Bible view's heading's) */
-.vcTop:has([aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ or + open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
+@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: + at the column's edge, as the Bible view's ⋯) */
+.vcTop:has([aria-expanded="true"]) { border-bottom-color: transparent; }     /* (The title's options or + open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */

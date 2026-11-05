@@ -1,11 +1,12 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / NEXT (arrows), FLIP, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
-//   the Bible view's heading, staying as the screen scrolls) and ⋯ at its right end, where the Bible view's is, then the deck and the credits. ⋯ shows
-//   everything else over the room above the card - pushing the deck down only as far as it would cover it (the Bible
-//   view's ⋯ menu overlays; here the card stays in view) -, ⋯ a ✕ while open, closing it, in order: DECKS, NAME (edited in place), the deck's
-//   settings (below), VERSE LIST and, last, the add row (below), the bold heading NEW VERSE at its start.
-// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; first in ⋯'s options
+//   the Bible view's heading, staying as the screen scrolls) and + at its right end, where the Bible view's ⋯ is, then
+//   the deck and the credits. The name tapped shows the deck's options over the room above the card - pushing the deck
+//   down only as far as they would cover it (the Bible view's ⋯ menu overlays; here the card stays in view) -, tapped
+//   again closing them, in order: SELECT DECK, NAME (edited in place), the deck's settings (below), VERSE LIST; + shows
+//   the add row the same way (below), the bold heading NEW VERSE at its start, + a ✕ while open. One open at a time.
+// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; first in the name's options
 //   the one open (the last one used when the screen opens; "My verses" at first) -
 //   SELECT DECK a drop-down of them, its first choice + NEW DECK, DELETE DECK beside it deleting the open one and its cards (asked first); the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, +'s drop-down) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
@@ -32,7 +33,7 @@
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
 //   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on it turns it over
 //   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
-//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in ⋯'s options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
+//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in the name's options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
@@ -193,7 +194,7 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
-let menuOpen: "" | "more" | "add" = "";     // (The top row's drop-down open: ⋯'s options, +'s NEW VERSE, or neither)
+let menuOpen: "" | "more" | "add" = "";     // (The top row's drop-down open: the name's options, +'s NEW VERSE, or neither)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
@@ -253,8 +254,8 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1 class="vcTitle">${esc (d.name)}</h1>
-      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button><button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen === "more"}">${menuOpen === "more" ? "✕" : "⋯"}</button></span></div></div>
+  body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1><button class="pill icon vcTitle" id="vcMore" aria-label="${esc (d.name)}: deck options" aria-expanded="${menuOpen === "more"}">${esc (d.name)}</button></h1>
+      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button></span></div></div>
     <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
     <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick"><option value="new">+ New Deck</option>${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
       <button class="pill" id="vcDelDeck">Delete deck</button></div>
@@ -272,15 +273,16 @@ async function draw (body: HTMLElement) {
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
-  // ⋯ at the top row's right: its options - the decks, the name, the settings, the list - and + before it: NEW VERSE,
-  // adding cards; each a drop-down as the Bible view's ⋯ menu (its button a ✕ while open that closes it; one open at a
-  // time), but over the deck, pushing it down - the card still in view (kept so between drawings)
-  const tops = { more: [body.querySelector<HTMLElement> ("#vcMore")!, "⋯"], add: [body.querySelector<HTMLElement> ("#vcPlus")!, "+"] } as const;
+  // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + at the top
+  // row's right: NEW VERSE, adding cards; each a drop-down as the Bible view's ⋯ menu (+ a ✕ while open that closes
+  // it; the title tapped again closes its own; one open at a time), but over the deck, pushing it down - the card still
+  // in view (kept so between drawings)
+  const tops = { more: [body.querySelector<HTMLElement> ("#vcMore")!, ""], add: [body.querySelector<HTMLElement> ("#vcPlus")!, "+"] } as const;
   const menus = [...body.querySelectorAll<HTMLElement> (".vcMenu")];
   const openMenu = (k: typeof menuOpen) => {
     menuOpen = k;
     for (const m of menus) m.hidden = m.dataset.menu !== k;
-    for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); btn.textContent = n === k ? "✕" : icon; }
+    for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); if (icon) btn.textContent = n === k ? "✕" : icon; }     // (The title keeps its name)
     clearMenu ();
   };
   for (const [n, [btn]] of Object.entries (tops)) btn.addEventListener ("click", () => openMenu (menuOpen === n ? "" : n as typeof menuOpen));
@@ -387,7 +389,7 @@ async function draw (body: HTMLElement) {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
   });
-  // ⋯'s options lie over the room above the centered card: the deck pushed down only as far as they'd cover it
+  // The name's (or +'s) options lie over the room above the centered card: the deck pushed down only as far as they'd cover it
   // (measured again as either changes size - a card turned, the window turned, the options opened)
   const clearMenu = () => {
     deckEl.style.marginTop = "";
