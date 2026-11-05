@@ -175,7 +175,7 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
-/** SHUFFLE's, FLIP's and START OVER's icons - shown in the side bar (a phone held sideways) in place of their words. */
+/** SHUFFLE's, FLIP's and START OVER's icons - the deck's bar shows them in place of their words (kept for a screen reader). */
 const svg = (d: string) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
 const BAR_ICONS: Record<string, string> = {
   shuffle: svg ("M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.6M13.1 9.6C14.2 8 15.4 7 17 7h4M18 4l3 3-3 3M18 14l3 3-3 3"),     // (Two paths crossing)
@@ -340,7 +340,7 @@ async function draw (body: HTMLElement) {
       bar.append (...["shuffle", "flip", "over"].map ((k) => {
         const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
         x.setAttribute ("aria-label", x.textContent!);
-        x.innerHTML = `<span class="vcWord">${x.textContent}</span>${BAR_ICONS[k]}`;     // (Its word, or - in the side bar - its icon: style.css)
+        x.innerHTML = `<span class="vcWord">${x.textContent}</span>${BAR_ICONS[k]}`;     // (Its icon shown, its word kept hidden: style.css)
         return x;
       }));
       // (BACK and NEXT as arrows inside the card's edges, as the Bible view's chapter arrows - fixed at the screen's middle: placeArrows)
