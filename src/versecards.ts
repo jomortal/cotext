@@ -340,6 +340,16 @@ async function draw (body: HTMLElement) {
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;
   drawPick (placeEl, addBtn);
+  // The NEW VERSE row on one line where it all fits; where not, stacked: NEW VERSE on its own line, the pickers, then
+  // + ADD VERSE on its own line (.vcStacked) - checked laid out unstacked, on every resize and every redraw of the pickers.
+  const addRow = placeEl.parentElement!;
+  const fitRow = () => {
+    addRow.classList.remove ("vcStacked");
+    const tops = [...addRow.querySelectorAll<HTMLElement> (":scope > .vcNewHead, #vcPlace > *, :scope > .addVerse")].map ((x) => x.getBoundingClientRect ().bottom);
+    addRow.classList.toggle ("vcStacked", tops.some ((t) => Math.abs (t - tops[0]) > 2));
+  };
+  new ResizeObserver (fitRow).observe (addRow.parentElement!);
+  new MutationObserver (fitRow).observe (placeEl, { childList: true });
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
     if (! p.book || ! p.chapter || p.from < 0) return;

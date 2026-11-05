@@ -454,6 +454,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #verseSheet .vcSep, #verseSheet .pill.addVerse { line-height: calc(var(--fs-m) * 1.2 + 14px); }
 .pill.addVerse { font-size: var(--fs-l); font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); padding: 0; }     /* (+ ADD VERSE, the Verse cards' and the Bible's: larger, level with the pickers) */
 .vcNewHead { font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); }     /* (NEW VERSE: the add row's bold heading at its start, level with the pickers) */
+.vcAdd.vcStacked > .vcNewHead, .vcAdd.vcStacked > .addVerse { flex-basis: 100%; line-height: normal; text-align: start; }     /* (The row not fitting on one line: NEW VERSE and + ADD VERSE each on a line of their own) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
