@@ -1,12 +1,16 @@
-"""Ancient Near East parallels: texts and finds from the Bible's world - law codes, flood and creation stories, wisdom,
-hymns, treaties, letters - each paired by hand with the passages it parallels, a line saying what the parallel is, and,
-where a public-domain English translation exists as clean text, the parallel passage itself. Read by src/dictionary.ts
-as the Archaeology finds are (the same file layout, kind 'dictionary'): by passage, "Ancient Near East parallels" in the
-notes' picker (its DICTIONARY group) - the whole book's entries at once, each with its verses (notes.ts' BY_BOOK); and
-searchable in the search pane. No word panel button: the parallels are topical, not tied to words.
+"""Ancient Parallels: texts from the Bible's world - law codes, flood and creation stories, king lists, laments, wisdom,
+love songs, hymns, treaties, letters - each paired by hand with the passages it parallels, a line saying what the
+parallel is, and, where a public-domain English translation exists as clean text, the parallel passage itself. Topical
+and literary parallels only: a find that attests the Bible's own events or people (the Mesha Stele, Sennacherib's
+annals, the Cyrus Cylinder) is in the Archaeology finds (finds.py, which shows the excerpts of their texts kept here -
+quoted()), and the ancient historians (Josephus, Philo, the Maccabees...) are their own resource (historians.py).
+Read by src/dictionary.ts as the Archaeology finds are (the same file layout, kind 'dictionary'): by passage, "Ancient
+Parallels" in the notes' picker (BIBLE BACKGROUND) - the whole book's entries at once, each with its verses (notes.ts'
+BY_BOOK); and searchable in the search pane. No word panel button: the parallels are topical, not tied to words.
 
-The entries (ENTRIES, below) are COTEXT's own choice and wording: the title, what it is (place, date, what it holds),
-a line for the lists, and its parallels - each a passage (English references, as finds.references() reads them), what
+The entries (ENTRIES, below) are COTEXT's own choice and wording: the title, its kind (KINDS: Mesopotamian, Egyptian,
+Hittite, Canaanite, Aramaic, Jewish - shown first in its line and text), what it is (place, date, what it holds), a
+line for the lists, and its parallels - each a passage (English references, as finds.references() reads them), what
 the parallel is, and the excerpts that show it (EXCERPTS: a stretch of a translation between two marker strings,
 checked to be there - a changed source stops the build).
 
@@ -25,7 +29,9 @@ Sources (each pinned in ane_pins.json - written on the first run, kept after; de
   Old Testament (1912: scans and raw OCR only), L. W. King's Seven Tablets of Creation (Wikisource: scans only),
   Amenemope (Griffith 1926, Budge 1924: scans only); the Laws of Ur-Nammu and Eshnunna, Atrahasis, the Eridu Genesis,
   the Baal Cycle, Aqhat, Esarhaddon's and the Hittite treaties, the Babylonian Theodicy, the Middle Assyrian laws, the
-  Mari prophecies (published or translated after 1929: no public-domain English).
+  Mari prophecies, the Lament for Ur, the Dialogue of Pessimism, Siduri's Old Babylonian tablet, the Prayer of Nabonidus
+  (published or translated after 1929: no public-domain English); the Assyrian King List, the Harper's Songs and the
+  Egyptian love songs (older translations as scans only).
 
 Output: public/data/notes/ane.db - finds.write()'s tables (tyndale_dict's articles, lemmas - empty here -, refs, and
 photos) - and its row in the main database's note_sources (id 'ane', kind 'dictionary', testaments 'OT NT'):
@@ -56,11 +62,11 @@ DL = HERE / "downloads" / "notes" / "ane"
 PINS = HERE / "ane_pins.json"
 OUT = HERE.parent / "public" / "data" / "notes" / "ane.db"
 WIKISOURCE = "https://en.wikisource.org/w/api.php"
-SOURCE = ("ane", "dictionary", "Ancient Near East parallels", "OT NT",
-          "Ancient Near Eastern texts paired by hand with the passages they parallel (COTEXT). Descriptions from "
+SOURCE = ("ane", "dictionary", "Ancient Parallels", "OT NT",
+          "Texts from the Bible's world paired by hand with the passages they parallel (COTEXT). Descriptions from "
           "Wikipedia (CC BY-SA 4.0; the revisions pinned in the build); photos from Wikimedia Commons, each credited "
           "under it. Translations public domain: L. W. King (Hammurabi); E. A. Wallis Budge (the Flood, Creation, the "
-          "Aten hymn); T. G. Pinches (Amarna letters, Cyrus, Ludlul); George Smith (Sargon); Egyptian Literature "
+          "Aten hymn); T. G. Pinches (Amarna letters, Ludlul); George Smith (Sargon); Egyptian Literature "
           "(1901); The Forgotten Books of Eden (1926) - from Wikisource and Project Gutenberg.")
 
 # ---- The translations ----
@@ -115,6 +121,15 @@ EXCERPTS = {
     "ahRod": ("ahikar", "61 O my son! let the wise man beat thee with a rod", "anoint thee with sweet salve.", "prose", "Saying 61"),
     "ahDog": ("ahikar", "51 O my son! a living dog", "better than a dead poor man.", "prose", "Saying 51"),
     "ahPig": ("ahikar", "27 O my son! thou hast been to me like the pig", "went down and wallowed in it.", "prose", "Ahikar to Nadan"),
+    # (These Pinches excerpts are the Archaeology finds' - finds.py shows them through quoted(), below.)
+    "tpMenahem": ("pinches", "“Kuštašpu of the city of the Comagenians;", "Zabibê, queen of the land of Arabia.", "prose", "Tiglath-pileser III's annals: the kings who paid tribute"),
+    "tpPekah": ("pinches", "“They overthrew Paqaḫa (Pekah), their king,", "(brought) them (to the land of Assyria).”", "prose", "Tiglath-pileser III's summary inscription"),
+    "sennach": ("pinches", "And (as for) Hazaqiau (Hezekiah) of the land of the Yaudâa", "sent his messenger to present the gift and pay homage.”", "prose", "Sennacherib's annals (the Taylor Prism)"),
+    "jehu": ("pinches", "“The tribute of Yaua, son of Ḫumrî:", "sceptres, I received.”", "prose", "The Black Obelisk: the epigraph over Jehu's tribute"),
+    "qarqar": ("pinches", "“From Arganâ I departed, to Qarqara I drew near:", "they advanced against me.", "prose", "The Kurkh Monolith: the battle of Qarqar (853 BC)"),
+    "sargon": ("pinches", "I besieged and captured Samerina (Samaria):", "imposed upon them the tribute of the former king.", "prose", "Sargon II's display inscription"),
+    "nabPrayer": ("pinches", "“As for me, Nabonidus, king of Babylon,", "life.”", "run", "Nabonidus' cylinder from Ur"),
+    "nabChron": ("pinches", "In the month Tammuz", "Cyrus promised peace to Babylon, all of it.", "prose", "The Nabonidus Chronicle"),
     "ludlul": ("pinches", "“The time for the worship of the gods was my heart’s delight,", "profit and riches,”", "prose", "Ludlul bēl nēmeqi, Tablet II"),
 }
 
@@ -178,7 +193,8 @@ ENTRIES = [
      "Sumerian, about 2000 BC (the Weld-Blundell prism, about 1800 BC): the kings of Sumer since \"kingship descended from heaven\", with reigns of thousands of years before the Flood.",
      "Kings ruling thousands of years before the Flood, far shorter reigns after - as Genesis' ages before and after Noah.",
      [("Genesis 5:1-32", "A line of long-lived rulers before the Flood (eight to ten), as Genesis' ten generations from Adam to Noah.", []),
-      ("Genesis 11:10-32", "After the Flood, lifespans much shorter.", [])]),
+      ("Genesis 11:10-32", "After the Flood, lifespans much shorter.", []),
+      ("1 Chronicles 1:1-4", "Chronicles opens the same way: a bare line of names from the first man to the Flood and after.", [])]),
     ("Sargon of Akkad", "Legend of Sargon's birth", None,
      "A Neo-Assyrian tablet (7th century BC) telling the birth of Sargon of Akkad (about 2300 BC), founder of the first empire.",
      "A baby set in a basket of rushes sealed with bitumen, put on the river, drawn out and raised by another - as Moses.",
@@ -237,7 +253,9 @@ ENTRIES = [
       ("Psalm 68:4", "\"Rider on the clouds\" - Baal's title.", []),
       ("Isaiah 27:1", "Leviathan the fleeing, twisting serpent - the same words as of Lotan in the Baal Cycle.", []),
       ("Psalm 74:13-14", "The sea and its many-headed dragon crushed.", []),
-      ("1 Kings 18:20-40", "Baal at Carmel: Elijah mocks the god who sleeps or travels, who should answer with fire and rain.", [])]),
+      ("1 Kings 18:20-40", "Baal at Carmel: Elijah mocks the god who sleeps or travels, who should answer with fire and rain.", []),
+      ("Hosea 2:8, 13, 16-17", "Grain, wine and oil credited to Baal, the giver of rain - Hosea answers that the LORD gave them.", []),
+      ("Habakkuk 3:8-15", "The divine warrior against River and Sea, with bow, arrows and thunder - Baal's battle with Yam told of the LORD.", [])]),
     ("Amarna letters", "Amarna letters", None,
      "Akhetaten (Amarna), Egypt, about 1360-1332 BC: letters in Akkadian to Pharaoh from Canaan's city kings - Jerusalem's Abdi-Heba among them - complaining of one another and of the Habiru.",
      "Canaan before Israel: city-states under Egypt, Jerusalem's king writing to Pharaoh, the Habiru taking the land.",
@@ -263,12 +281,44 @@ ENTRIES = [
       ("Psalm 141:5; Proverbs 27:6", "Better a wise man's blows than a fool's anointing.", ["ahRod"]),
       ("Ecclesiastes 9:4", "A living dog is better than a dead lion.", ["ahDog"]),
       ("2 Peter 2:22", "The pig washed, back to wallow in the mire.", ["ahPig"])]),
-    ("Cyrus Cylinder", "Cyrus Cylinder", None,
-     "Babylon, after 539 BC: Cyrus' account of taking Babylon by Marduk's choice, returning the gods and peoples deported there to their homes.",
-     "Cyrus chosen and led by a god, taking Babylon, sending exiles and their gods home - as in Isaiah 44-45 and Ezra 1.",
-     [("Isaiah 45:1-4", "The god takes Cyrus by the hand and calls him by name.", ["cyName"]),
-      ("Daniel 5:30-31", "Babylon taken without a battle.", ["cyBattle"]),
-      ("Isaiah 44:28; Ezra 1:1-4; 2 Chronicles 36:22-23", "Peoples and their gods sent home, their shrines rebuilt - Cyrus' decree to rebuild the temple.", ["cyReturn"])]),
+    ("List of Assyrian kings", "Assyrian King List", None,
+     "Assyria, copies of the 8th century BC (the Khorsabad and SDAS lists): the kings of Assyria from the \"kings who lived in tents\" on, each with his father and his years.",
+     "A king list of names, fathers and years from the first ancestors on - the form of 1 Chronicles 1-9 and Genesis' genealogies.",
+     [("1 Chronicles 1:1-9:44", "Generations traced name by name from the first ancestors, a few with a note on what they did - the Chronicler's genealogies.", []),
+      ("Genesis 5:1-32; 11:10-26", "The line from Adam to Noah and from Shem to Abram, each with his years.", [])]),
+    ("Lament for Ur", "Lament for Ur", None,
+     "Sumerian, about 2000 BC: a city lament for Ur, destroyed by the Elamites (about 2004 BC) - its goddess Ningal weeping over the ruined city and temple.",
+     "A city's fall mourned as a weeping woman, the god's anger behind it - the form of Lamentations.",
+     [("Lamentations 1:1-22", "The city a weeping widow, none to comfort her.", []),
+      ("Lamentations 2:1-22", "The Lord's anger destroying his own city and sanctuary.", []),
+      ("Lamentations 4:1-22; 5:1-22", "Famine, the dead in the streets, a plea for restoration.", [])]),
+    ("Dialogue of Pessimism", "Dialogue of Pessimism", None,
+     "Akkadian, about 1000 BC: a master proposes plan after plan to his slave, who praises each and then its opposite - nothing is worth doing.",
+     "Every pursuit weighed and found empty - Ecclesiastes' \"vanity of vanities\".",
+     [("Ecclesiastes 1:2-11; 2:1-11", "Pleasure, works and wealth tried and found vanity.", []),
+      ("Ecclesiastes 2:12-23", "Wisdom and folly, toil and death alike.", [])]),
+    ("Harper's Songs", "Harper's Songs", None,
+     "Egypt, from the Middle Kingdom on (the song from the tomb of King Intef, copied in Papyrus Harris 500): songs at banquets and on tomb walls - none returns from death, so follow your heart and make holiday.",
+     "Eat, drink, wear fine linen and anoint your head while you live - as Ecclesiastes counsels.",
+     [("Ecclesiastes 9:7-10", "Eat your bread with joy, let your garments be always white and your head lack no oil.", []),
+      ("Ecclesiastes 2:24; 3:12-13, 19-22; 11:9-10", "Enjoy your labor; who knows what comes after death.", []),
+      ("Isaiah 22:13; 1 Corinthians 15:32", "\"Let us eat and drink; for to morrow we die.\"", [])]),
+    ("Siduri", "Gilgamesh: Siduri's counsel", None,
+     "The Old Babylonian Epic of Gilgamesh (about 1800 BC): the ale-wife Siduri tells Gilgamesh, seeking life without death, to enjoy food, clean clothes, wife and child.",
+     "\"Fill your belly... let your clothes be clean... let your wife delight in your embrace\" - nearly Ecclesiastes 9:7-9.",
+     [("Ecclesiastes 9:7-9", "Eat, drink, white garments, oil on the head, live joyfully with the wife you love.", []),
+      ("Ecclesiastes 4:9-12", "Two are better than one; a threefold cord is not quickly broken - a saying Gilgamesh has too.", [])]),
+    ("Papyrus Harris 500", "Egyptian love songs", None,
+     "Egypt, New Kingdom (about 1300-1100 BC; Papyrus Harris 500, the Chester Beatty and Turin papyri): songs of lovers who call each other \"brother\" and \"sister\" - gardens, flowers, longing.",
+     "Lovers as \"my sister\" and \"my brother\", gardens and spices, the beloved sought by night - the Song of Songs' world.",
+     [("Song of Songs 4:9-5:1", "\"My sister, my spouse\"; the garden enclosed, its spices and fruit.", []),
+      ("Song of Songs 2:8-17; 3:1-5", "The beloved at the window; sought by night in the streets.", []),
+      ("Song of Songs 8:1-7", "Longing for the beloved as for a brother; love strong as death.", [])]),
+    ("Prayer of Nabonidus", "Prayer of Nabonidus", None,
+     "Qumran Cave 4 (4Q242), about 75-50 BC: Nabonidus, last king of Babylon, struck with an evil disease for seven years at Teima, until a Jewish diviner bids him give glory to God.",
+     "A Babylonian king afflicted seven years until he honors the Most High - Daniel 4, told of Nabonidus rather than Nebuchadnezzar.",
+     [("Daniel 4:1-37", "Nebuchadnezzar driven out for seven times until he knows that the Most High rules, then restored, praising God.", []),
+      ("Daniel 5:11-12", "A Jewish exile who interprets for the king.", [])]),
     ("Enmerkar and the Lord of Aratta", "Enmerkar and the Lord of Aratta", None,
      "Sumerian epic, about 2000 BC: Enmerkar of Uruk's contest with Aratta; in it the \"spell of Nudimmud\" looks back to when all mankind spoke one tongue, until the god Enki changed their speech.",
      "Once all people spoke one language, until a god confused it - the Tower of Babel.",
@@ -293,18 +343,33 @@ ENTRIES = [
       ("Genesis 18:1-15", "A childless man promised a son; divine guests fed.", [])]),
 ]
 
+# What kind of source each entry is, shown first in its line and text.
+MESOPOTAMIAN, EGYPTIAN, CANAANITE = "Mesopotamian", "Egyptian", "Canaanite"
+KINDS = {"Code of Hammurabi": MESOPOTAMIAN, "Code of Ur-Nammu": MESOPOTAMIAN, "Laws of Eshnunna": MESOPOTAMIAN,
+         "Gilgamesh flood myth": MESOPOTAMIAN, "Atra-Hasis": MESOPOTAMIAN, "Eridu Genesis": MESOPOTAMIAN,
+         "Enūma Eliš": MESOPOTAMIAN, "Adapa": MESOPOTAMIAN, "Sumerian King List": MESOPOTAMIAN,
+         "Sargon of Akkad": MESOPOTAMIAN, "Instruction of Amenemope": EGYPTIAN, "Great Hymn to the Aten": EGYPTIAN,
+         "Egyptian–Hittite peace treaty": "Hittite", "Esarhaddon's Treaty with Ba'al of Tyre": MESOPOTAMIAN,
+         "Ludlul bēl nēmeqi": MESOPOTAMIAN, "Babylonian Theodicy": MESOPOTAMIAN, "Baal Cycle": CANAANITE,
+         "Amarna letters": EGYPTIAN, "Gezer calendar": CANAANITE, "Tale of Two Brothers": EGYPTIAN,
+         "Story of Ahikar": "Aramaic", "Enmerkar and the Lord of Aratta": MESOPOTAMIAN,
+         "List of Assyrian kings": MESOPOTAMIAN, "Lament for Ur": MESOPOTAMIAN, "Dialogue of Pessimism": MESOPOTAMIAN,
+         "Siduri": MESOPOTAMIAN, "Harper's Songs": EGYPTIAN, "Papyrus Harris 500": EGYPTIAN, "Prayer of Nabonidus": "Jewish",
+         "Mari texts": MESOPOTAMIAN, "Assyrian law": MESOPOTAMIAN, "Tale of Aqhat": CANAANITE}
+
 
 # ---- Fetching ----
 
-def wikisource(title, pins):
+def wikisource(title, pins, dl=None):
     """A Wikisource page's text (paragraphs separated by blank lines), its revision pinned (pins["wikisource"][title]:
-    [revid, SHA-256 of its rendered HTML]); the rendering kept in DL."""
+    [revid, SHA-256 of its rendered HTML]); the rendering kept in dl (DL by default). Also used by historians.py."""
+    dl = dl or DL
     ws = pins.setdefault("wikisource", {})
     if title not in ws:
         page = finds.get(WIKISOURCE, {"action": "query", "titles": title, "prop": "revisions", "rvprop": "ids"})["query"]["pages"][0]
         ws[title] = [page["revisions"][0]["revid"], None]
     rev = ws[title][0]
-    path = DL / f"ws-{rev}.html"
+    path = dl / f"ws-{rev}.html"
     if not path.exists():
         path.write_text(finds.get(WIKISOURCE, {"action": "parse", "oldid": rev, "prop": "text"})["parse"]["text"], encoding="utf-8")
     h = path.read_text(encoding="utf-8")
@@ -318,9 +383,10 @@ def wikisource(title, pins):
     return html.unescape(re.sub(r"<[^>]+>", "", h))
 
 
-def gutenberg(n, pins):
-    """A Project Gutenberg book's plain text, pinned by SHA-256 (pins["gutenberg"][n]); kept in DL."""
-    path = DL / f"pg{n}.txt"
+def gutenberg(n, pins, dl=None):
+    """A Project Gutenberg book's plain text, pinned by SHA-256 (pins["gutenberg"][n]); kept in dl (DL by default).
+    Also used by historians.py."""
+    path = (dl or DL) / f"pg{n}.txt"
     if not path.exists():
         path.write_bytes(finds.fetched(urllib.request.Request(f"https://www.gutenberg.org/cache/epub/{n}/pg{n}.txt", headers=finds.UA)))
     data = path.read_bytes()
@@ -397,12 +463,37 @@ def excerpt(text, first, last, how):
     return "".join(f"<p>{e(x)}</p>" for x in paras)
 
 
+def quoted(keys):
+    """Excerpts (EXCERPTS' keys) as the blockquotes the entries show them in - the translations read with ane_pins.json's
+    pins (none written). Used by finds.py for its finds' own texts."""
+    pins = json.loads(PINS.read_text()) if PINS.exists() else {}
+    DL.mkdir(parents=True, exist_ok=True)
+    out = []
+    for k in keys:
+        src, first, last, how, label = EXCERPTS[k]
+        kind, where, credit = TRANSLATIONS[src]
+        text = wikisource(where, pins) if kind == "ws" else gutenberg(where, pins)
+        out.append(f"<blockquote>{excerpt(text, first, last, how)}"
+                   f"<p><small>{html.escape(label + ' - ' if label else '')}{html.escape(credit)}</small></p></blockquote>")
+    return out
+
+
 # ---- The file ----
 
 def link(osis, shown):
     """A passage as a link to its first verse (the dictionary's data-ref)."""
     b, ch, v = re.match(r"([1-3]?[A-Za-z]+)\.(\d+)\.(\d+)", osis).groups()
     return f'<a data-ref="{tyndale_dict.BOOKS[b]}.{ch}.{v}">{html.escape(shown)}</a>'
+
+
+def parallel(title, passages):
+    """A parallel's passages ("Exodus 21:23-25; Leviticus 24:19-20", each as finds.references() reads it) as (a heading
+    of links to them, their verse spans). Also used by historians.py."""
+    refs = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", passages) for r in finds.references(part)]     # (A book at a time: "Judges 1:21; 2 Samuel 5:6" read whole would take "; 2" for a verse)
+    if not refs:
+        raise SystemExit(f"{title}: no passage read in {passages!r}")
+    spans = [sp for _, osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
+    return '<div class="gHead">' + "; ".join(link(osis, shown) for _, osis, shown in refs) + "</div>", spans
 
 
 def build(main_db):
@@ -421,15 +512,12 @@ def build(main_db):
     for art, title, _, what, line, parallels in ENTRIES:
         wtitle, wikitext, _ = arts[art]
         eid = wtitle.replace(" ", "_")
-        out = [f"<p>{e(what)}</p>"]
+        out = [f"<p><b>{e(KINDS[art])}</b> · {e(what)}</p>"]
         spans, used = [], set()
         for passages, why, keys in parallels:
-            refs = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", passages) for r in finds.references(part)]     # (A book at a time: "Judges 1:21; 2 Samuel 5:6" read whole would take "; 2" for a verse)
-            if not refs:
-                raise SystemExit(f"{title}: no passage read in {passages!r}")
-            spans += [sp for _, osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
-            out.append('<div class="gHead">' + "; ".join(link(osis, shown) for _, osis, shown in refs) + "</div>")
-            out.append(f"<p>{e(why)}</p>")
+            h, sp = parallel(title, passages)
+            spans += sp
+            out += [h, f"<p>{e(why)}</p>"]
             for k in keys:
                 src, first, last, how, label = EXCERPTS[k]
                 used.add(src)
@@ -444,7 +532,7 @@ def build(main_db):
         pic = finds.pictures(images[art], pins, "ane", eid, DL)
         if pic:
             photos[eid] = pic
-        entries.append((eid, title, "".join(out), line[:200], len(tyndale_dict.verses_in(spans)), spans))
+        entries.append((eid, title, "".join(out), f"{KINDS[art]} · {line}"[:200], len(tyndale_dict.verses_in(spans)), spans))
     entries.sort(key=lambda a: a[1].lower())
     PINS.write_text(json.dumps(pins, indent=1, ensure_ascii=False) + "\n")
     data = finds.write(OUT, entries, {}, SOURCE, photos)
