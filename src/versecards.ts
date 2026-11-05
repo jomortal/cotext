@@ -7,19 +7,19 @@
 //   a chapter, or a whole chapter), its book by its English name, its code or SBL abbreviation (booknames.ts' ABBR),
 //   else the first book whose name starts so - the Hebrew Bible's books and the NT's (an OT card numbered as the
 //   Hebrew). A reference the text hasn't (no such book, chapter or verse) says so and adds nothing.
-// - AN OT CARD'S TEXT ("OT": picked when it's added - Hebrew at first - and changed on its line in the list): Hebrew or
+// - AN OT CARD'S TEXT ("OT": picked on the add row when it's added - Hebrew at first): Hebrew or
 //   Greek LXX (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
 //   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference). An NT
 //   card the Greek.
 // - FOR ALL THE DECK'S CARDS (its settings): TRANSLATION - None or one of the notes' English translations (notes.ts'
 //   translationSources, each file read as the notes read it: openSource) - and, for the cards showing an original,
 //   Interlinear, Parsing and Transliteration (the original drawn as the reader draws it: chapterstudy.ts' textBox).
-//   A card shows its original unless ENGLISH ONLY is ticked on it (on its line, and on the add row for the next card -
+//   A card shows its original unless ENGLISH ONLY is ticked on it (on the add row, for the card added -
 //   ticked, the OT picker greyed out); the translation where one is picked (and has the card's testament) - an
 //   English-only card with none picked the first translation that has it, so it always shows something.
 // - A CARD: its front the reference; turned over, the back alone - the reference, the translation's verses (each
-//   numbered in a range), the original. Under the deck the list, in the order added: each reference, ENGLISH ONLY, an OT
-//   card's OT picker, ✕ removing it. The credits of what the cards show under it.
+//   numbered in a range), the original. Under the deck the list, in the order added: each reference and ✕ removing it (its
+//   text set as it was added). The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
@@ -188,8 +188,6 @@ async function draw (body: HTMLElement) {
     const n = ++drawing;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-o]")) b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"]));
     listEl.innerHTML = d.cards.map ((c) => `<div class="vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span>
-        <label class="vcPick"><input type="checkbox" data-en${c.en ? " checked" : ""}> English only</label>
-        ${bookOf (c)?.testament === "NT" ? "" : `<select class="choose" aria-label="OT"${c.en ? " disabled" : ""}>${options (OT_CHOICES, c.orig)}</select>`}
         <button class="pill icon" aria-label="Remove">✕</button></div>`).join ("");
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - type a reference above.</p>"; credits.textContent = ""; return; }
     const used = new Map<string, string> ();
@@ -216,14 +214,6 @@ async function draw (body: HTMLElement) {
   trPick.addEventListener ("change", () => { settings.tr = trPick.value; save (); deck (); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-o]"))
     b.addEventListener ("click", () => { const k = b.dataset.o as "gloss" | "parse" | "translit"; settings[k] = ! settings[k]; save (); deck (); });
-  // A card's line: English only ticked or not (its OT picker greyed out while ticked), its OT text changed, or ✕ removing it.
-  listEl.addEventListener ("change", (e) => {
-    const t = e.target as HTMLInputElement | HTMLSelectElement;
-    const row = t.closest<HTMLElement> (".vcRow"), c = d.cards.find ((x) => x.id === row?.dataset.id);
-    if (! c) return;
-    if (t instanceof HTMLInputElement) c.en = t.checked; else c.orig = t.value as Original;
-    save (); deck ();
-  });
   listEl.addEventListener ("click", (e) => {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
