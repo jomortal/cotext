@@ -131,10 +131,7 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
   scroll.className = "panelScroll";
   const x = document.createElement ("div"); x.className = "xRow"; x.append (close);
   scroll.append (...pane.children); pane.append (x, scroll);
-  const top = scroll.querySelector<HTMLElement> (":scope > .top")!;
-  const place = () => { if (WIDE.matches) scroll.before (top); else scroll.prepend (top); };
-  place ();
-  onWideChange (place);
+  scroll.before (scroll.querySelector<HTMLElement> (":scope > .top")!);     // (Its top row frozen over the scroller, every width)
   return scroll;
 }
 // A word's panel's height: from its divider down to the play bar; beside the text the text's word's panel's width
