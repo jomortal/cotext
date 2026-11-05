@@ -327,8 +327,8 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
 
 /** A book's verses (chapter * 1000 + verse) as a line of references, each going to its verse in the text: the first
  *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). Each reference carries
- *  its verse (data-at) and, past the first FEW, data-more: hidden until "+ more" is tapped, except the verse read
- *  (notes.ts' markVerse shows and marks it). */
+ *  its verse (data-at) and its place in the book's order (data-i); past the first FEW, data-more: hidden until
+ *  "+ more" is tapped. The verse read is brought to the front and marked (markVerse), shown even among the hidden. */
 const FEW = 12;
 export function verseLinks (book: number, verses: number[]): HTMLElement {
   const line = document.createElement ("div");
@@ -336,34 +336,53 @@ export function verseLinks (book: number, verses: number[]): HTMLElement {
   line.append (...verses.map ((x, i) => {
     const s = document.createElement ("span");
     s.dataset.at = String (x);
+    s.dataset.i = String (i);
     if (i >= FEW) { s.dataset.more = ""; s.hidden = true; }
+    const sep = document.createElement ("span");
+    sep.className = "sep";
     const a = document.createElement ("a");
     a.className = "term";
     a.textContent = `${Math.floor (x / 1000)}:${x % 1000}`;
     a.addEventListener ("click", () => goVerse (book, Math.floor (x / 1000), x % 1000));
-    s.append (...(i ? [", "] : []), a);
+    s.append (sep, a);
     return s;
   }));
   if (verses.length > FEW) {
     const more = document.createElement ("a");
     more.className = "term bookMore";
     more.textContent = `+ ${verses.length - FEW} more`;
-    more.addEventListener ("click", () => { line.dataset.open = ""; for (const s of line.querySelectorAll<HTMLElement> ("[data-more]")) s.hidden = false; more.remove (); });
+    more.addEventListener ("click", () => { line.dataset.open = ""; for (const s of line.querySelectorAll<HTMLElement> ("[data-more]")) s.hidden = false; more.remove (); commas (line); });
     line.append (" ", more);
   }
+  commas (line);
   return line;
 }
 
-/** The verse read (chapter * 1000 + verse) marked in every book list of verses under el (verseLinks), shown there
- *  even among the hidden ones. */
+/** The commas between a line's shown references (none before the first). */
+function commas (line: HTMLElement) {
+  let first = true;
+  for (const s of line.querySelectorAll<HTMLElement> ("span[data-at]")) {
+    if (s.hidden) continue;
+    s.querySelector (".sep")!.textContent = first ? "" : ", ";
+    first = false;
+  }
+}
+
+/** The verse read (chapter * 1000 + verse) brought to the front of every book list of verses under el (verseLinks)
+ *  and marked - shown there even when it's among the hidden; the others back in the book's order. */
 export function markVerse (el: HTMLElement, v: number) {
   for (const line of el.querySelectorAll<HTMLElement> (".bookVerses")) {
     const open = "open" in line.dataset;
-    for (const s of line.querySelectorAll<HTMLElement> ("span[data-at]")) {
-      const here = s.dataset.at === String (v);
-      s.querySelector ("a")!.classList.toggle ("here", here);
-      if (! open && "more" in s.dataset) s.hidden = ! here;
+    const spans = [...line.querySelectorAll<HTMLElement> ("span[data-at]")].sort ((a, b) => Number (a.dataset.i) - Number (b.dataset.i));
+    const here = spans.find ((s) => s.dataset.at === String (v));
+    for (const s of spans) {
+      s.querySelector ("a")!.classList.toggle ("here", s === here);
+      if (! open && "more" in s.dataset) s.hidden = s !== here;
     }
+    const tail = line.querySelector (".bookMore");
+    const order = here ? [here, ...spans.filter ((s) => s !== here)] : spans;
+    for (const s of order) line.insertBefore (s, tail ? tail.previousSibling : null);
+    commas (line);
   }
 }
 
