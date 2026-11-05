@@ -464,14 +464,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
 .vcBar .pill { padding: var(--head-y) 0; font-size: var(--fs-l); line-height: 1; }     /* (Its words larger than a pill's) */
 .vcBar > :first-child { justify-self: start; } .vcBar > :last-child { justify-self: end; }     /* (SHUFFLE and START OVER in the corners, FLIP centered - as the play bar's ▶) */
-/* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (6px), its text kept
+/* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (12px), its text kept
    clear of the arrows. */
-.vcCardRow { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; margin-inline: calc(6px - var(--pad)); }
+.vcCardRow { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; margin-inline: calc(12px - var(--pad)); }
 .vcCardRow > * { grid-area: 1 / 1; }
 .vcCardRow > .card { padding-inline: 36px; }
 .vcCardRow > .pill.icon { font-size: calc(var(--fs-icon) * 1.4); padding: 12px 10px; z-index: 1; }
 .vcCardRow > .pill.icon { position: fixed; top: var(--arrowY, 50%); translate: 0 -50%; }     /* (Fixed at the screen's middle, not moving with the card: versecards.ts' placeArrows measures where) */
-.vcCardRow > .pill.icon:first-child { left: var(--arrowL, 6px); } .vcCardRow > .pill.icon:last-child { right: var(--arrowR, 6px); }
+.vcCardRow > .pill.icon:first-child { left: var(--arrowL, 12px); } .vcCardRow > .pill.icon:last-child { right: var(--arrowR, 12px); }
 @media (min-width: 700px) { .vcBar { left: var(--textL, 0px); right: var(--studyR, 0px); } }
 #screen:has(.vcBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
 .vcHead { margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
