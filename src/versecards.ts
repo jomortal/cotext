@@ -10,8 +10,8 @@
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, last in ⋯'s options) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
-//   chapter) - then + ADD CARD. The pick starts blank, and is blank again after each card is added (each picker blank until
-//   the one before it is picked, + ADD CARD greyed out until FROM VERSE is; TO VERSE optional,
+//   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (each picker blank until
+//   the one before it is picked, + ADD VERSE greyed out until FROM VERSE is; TO VERSE optional,
 //   blank for the one verse). The deck's settings one line, wrapping where it doesn't fit: LANGUAGE, TRANSLATION,
 //   Transliteration, Interlinear and Parsing.
 // - FOR ALL THE DECK'S CARDS (its settings, each change showing at once on the card shown): TRANSLATION - None or one
@@ -207,7 +207,7 @@ let menuOpen = false;     // (⋯'s options: hidden till ⋯)
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
- *  picked - a blank shows a dash, BOOK's "Select Book"; + ADD CARD greyed out until FROM VERSE is). */
+ *  picked - a blank shows a dash, BOOK's "Select Book"; + ADD VERSE greyed out until FROM VERSE is). */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt) {     // (p: the screen's add row's, or the Bible's add-verse box's)
   const b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
@@ -254,7 +254,7 @@ async function draw (body: HTMLElement) {
 </div>
     <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
-    <div class="vcAdd"><div class="vcNewHead">New Verse</div><div id="vcPlace"></div><button class="pill" id="vcAddBtn">+ Add card</button></div>
+    <div class="vcAdd"><div class="vcNewHead">New Verse</div><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
@@ -380,7 +380,7 @@ async function draw (body: HTMLElement) {
 //==== ADD VERSE (the Bible's) ====
 // A verse number tapped in the Bible: a box from the bottom, the word's panel's width (#verseSheet, under it in the
 // text's column - index.html), headed ADD TO VERSE CARDS, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
-// BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD CARD (adding it there, and
+// BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD VERSE (adding it there, and
 // closing the box); its ✕ closes it. A Septuagint book's verse (not a book the cards take): the book left blank.
 const verseSheet = document.getElementById ("verseSheet")!;
 verseSheet.querySelector (".close")!.addEventListener ("click", () => { verseSheet.hidden = true; });
@@ -394,7 +394,7 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
   body.innerHTML = `<h2 class="avHead">Add to Verse Cards</h2><div class="vcAdd"><label class="vcPick">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
       `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
-    <div class="avPlace"></div><button class="pill" id="avAdd">+ Add card</button></div>`;
+    <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
   place.style.display = "contents";
   drawPick (place, add, p);
