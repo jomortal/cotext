@@ -122,7 +122,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* An icon pill (.icon: ☰ ✕ ⋯ ‹ › ▶, the speakers', the play bar's, the heading's): the icon's size, the heading's
    height. */
 .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: var(--head-y) 0; }
-.pill.icon.x { font-size: calc(var(--fs-icon) * 1.15); }     /* (Every ✕ - and the Verse cards' +, a ✕ while open: one size, the glyph drawn small for its font so a little larger than the other icons) */
+.pill.icon.x { font-size: calc(var(--fs-icon) * 1.15); padding-block: calc(var(--head-y) - var(--fs-icon) * .075); }     /* (Every ✕ - and the Verse cards' +, a ✕ while open: one size, the glyph drawn small for its font so a little larger than the other icons - its box their height, so a ⋯ turning ✕ moves nothing in its row) */
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 /* A caption (.ref a verse's reference, .src a source's or list's heading): small capitals, muted. */
