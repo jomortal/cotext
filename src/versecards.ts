@@ -340,16 +340,7 @@ async function draw (body: HTMLElement) {
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;
   drawPick (placeEl, addBtn);
-  // The NEW VERSE row on one line where it all fits; where not, stacked: NEW VERSE on its own line, the pickers, then
-  // + ADD VERSE on its own line (.vcStacked) - checked laid out unstacked, on every resize and every redraw of the pickers.
-  const addRow = placeEl.parentElement!;
-  const fitRow = () => {
-    addRow.classList.remove ("vcStacked");
-    const tops = [...addRow.querySelectorAll<HTMLElement> (":scope > .vcNewHead, #vcPlace > *, :scope > .addVerse")].map ((x) => x.getBoundingClientRect ().bottom);
-    addRow.classList.toggle ("vcStacked", tops.some ((t) => Math.abs (t - tops[0]) > 2));
-  };
-  new ResizeObserver (fitRow).observe (addRow.parentElement!);
-  new MutationObserver (fitRow).observe (placeEl, { childList: true });
+  stackWhenWrapped (placeEl);
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
     if (! p.book || ! p.chapter || p.from < 0) return;
@@ -387,6 +378,21 @@ async function draw (body: HTMLElement) {
   deck ();
 }
 
+/** An add row (the Verse cards' NEW VERSE row, the Bible's ADD TO VERSE CARDS) on one line where it all fits; where
+ *  not, stacked: its first item (NEW VERSE, or DECK) on its own line, the pickers, then + ADD VERSE on its own line
+ *  (.vcStacked) - checked laid out unstacked, on every resize and every redraw of the pickers (place: the row's
+ *  drawPick element, its items the row's). */
+function stackWhenWrapped (place: HTMLElement) {
+  const row = place.parentElement!;
+  const fit = () => {
+    row.classList.remove ("vcStacked");
+    const ends = [row.firstElementChild!, ...place.children, row.querySelector (":scope > .addVerse")!].map ((x) => x.getBoundingClientRect ().bottom);
+    row.classList.toggle ("vcStacked", ends.some ((t) => Math.abs (t - ends[0]) > 2));
+  };
+  new ResizeObserver (fit).observe (row);
+  new MutationObserver (fit).observe (place, { childList: true });
+}
+
 //==== ADD VERSE (the Bible's) ====
 // A verse number tapped in the Bible: a box from the bottom, the word's panel's width (#verseSheet, under it in the
 // text's column - index.html), headed ADD TO VERSE CARDS, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
@@ -407,7 +413,7 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
     <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
   place.style.display = "contents";
-  drawPick (place, add, p);
+  drawPick (place, add, p); stackWhenWrapped (place);
   add.addEventListener ("click", () => {
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
     if (! d || ! p.book || ! p.chapter || p.from < 0) return;
