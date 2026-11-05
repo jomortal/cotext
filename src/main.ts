@@ -63,7 +63,10 @@ function showPlace () {
   pair (book, chapter, pairsFit);
   if (enWraps () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`);
 }
-window.addEventListener ("resize", () => { pairsFit = null; showPlace (); });
+// (Worked out again whenever the heading's width changes - measured once laid out, so a phone turned upright from
+// sideways is measured at its new width, not mid-turn as the window's resize can be)
+let headW = 0;
+new ResizeObserver (([e]) => { const w = Math.round (e.contentRect.width); if (w === headW) return; headW = w; pairsFit = null; showPlace (); }).observe (document.querySelector (".head")!);
 
 // (Each go numbered: a chapter still arriving from the database when another is picked isn't shown)
 let going = 0;
