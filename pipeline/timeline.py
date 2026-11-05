@@ -33,8 +33,8 @@ a key several persons claim (Jeroboam I and II) the one whose verses list the wo
 most of its verses (a reign, a prophet's ministry: so the marker sits on it), that item's start when the chapter has
 no yearNum - and the items with a verse in it (picked out). A Septuagint book takes its Hebrew counterpart's.
 
-Output: public/data/notes/timeline.db (its note_sources row, kind 'timeline', testaments '' - never offered in the
-notes or the search):
+Output: public/data/notes/timeline.db (its note_sources row, kind 'timeline', testaments 'OT NT LXX' - offered in the
+notes' picker, BIBLE BACKGROUND, in every book; not in the search):
   lanes  id, name
   items  id, lane, label (as the bar is named), title (in full), start, end (years, ISO astronomical, fractional;
          end = start for a day), book, chapter, verse (where a tap goes: its first verse), person (the word panel's
@@ -69,7 +69,7 @@ FILES = {
     "people.json": "12dc359f0892d1a706a9d0b597c82d6cb8e7bde2137d729459804b8fd33ce450",
     "verses.json": "b6be3dbcab9f6a6c5fffbfd67dc3092b754d500616d6c36618e5c586d7d97942",
 }
-SOURCE = ("timeline", "timeline", "Timeline", "",
+SOURCE = ("timeline", "timeline", "Timeline", "OT NT LXX",
           "Dates, events and people: Theographic Bible Metadata, Robert Rouse (CC BY-SA 4.0), after Floyd Nolen "
           "Jones's chronology; names matched through STEPBible's TIPNR (CC BY 4.0). Empires: the Atlas' eras.")
 LANES = ["Patriarchs and judges", "Kings of Israel", "Kings of Judah", "Prophets", "Empires", "Jesus and the apostles"]

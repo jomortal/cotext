@@ -559,7 +559,9 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .atlasCredit { margin-top: 8px; }
 
 /* The Timeline (timeline.ts): the screen's whole width (not --page), its canvas filling the screen's height under the
-   title and the line on its dates; dragged and pinched on the canvas alone. */
+   title and the line on its dates; dragged and pinched on the canvas alone. In the notes (.timelinePane) the panel's
+   width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
+   notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
@@ -568,6 +570,9 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .timelineStatus { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: var(--fs-s); color: var(--soft); pointer-events: none; }
 .timelineStatus:empty { display: none; }
 .timeline + .credit { margin-top: 4px; }
+.timeline.timelinePane { height: max(270px, 40vh); height: max(270px, 40dvh); min-height: 0; margin-top: 6px; }
+.timelinePane + .timelineNote { margin-top: 4px; } .timelineNote:empty { display: none; }
+@media (min-width: 700px) { .timeline.timelinePane { height: max(300px, 60vh); height: max(300px, 60dvh); } }
 
 /* Study printout (chapterstudy.ts): the screen's whole width and height - the editor (its lines, + Add item, Print)
    and the preview (the printout as it prints), each scrolling on its own: narrow the preview the top half, the editor

@@ -5,8 +5,8 @@
 // text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the book shown (those with notes
 //   for it: note_sources.books, pipeline/source_books.py - Rashi only in the Torah), grouped
-//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, BIBLE BACKGROUND (the dictionaries and the
-//   atlas), TEXTUAL STUDIES (the apparatus and the Targums), COMMENTARIES and TRANSLATIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
+//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, BIBLE BACKGROUND (the dictionaries, the
+//   atlas and the timeline), TEXTUAL STUDIES (the apparatus and the Targums), COMMENTARIES and TRANSLATIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device, and stays through every book it covers.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -36,6 +36,8 @@
 //   Archaeology finds, the Ancient Parallels and the Ancient Historians, listed by book (BY BOOK, below).
 // - The atlas (MAPS: atlas.ts) is one map of the places the chapter names (narrow and wide alike),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
+// - The timeline (timeline.ts' timelinePane: the ☰ Timeline's drawing) is centered on the chapter's year, moving to
+//   each new chapter's as the text changes (narrow and wide alike).
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
@@ -43,8 +45,9 @@ import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
 import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./dictionary";
 import { passageMap } from "./atlas";
+import { timelinePane } from "./timeline";
 
-export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas"; name: string; testaments: string; credit: string;
+export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas" | "timeline"; name: string; testaments: string; credit: string;
                    file: string; version: string; books?: string; }     // (books: the book ids it has notes for, space-separated - pipeline/source_books.py; '' or none: every book of its testaments)
 
 //==== BESIDE THE SEPTUAGINT ====
@@ -101,11 +104,16 @@ export async function initNotes (db: Db) {
 
 /** The chapter shown (main.ts): the picker's sources follow its book (those with notes for it); the notes its verses.
  *  The source picked stays picked wherever it has notes; in a book it has none for, the first offered shows meanwhile,
- *  and the picked one comes back in the next book it covers. */
+ *  and the picked one comes back in the next book it covers. The timeline picked stays picked in the other testaments
+ *  too. */
 export function setNotesPassage (b: Book, c: number) {
-  const was = book?.id;
+  const was = book?.id, onTimeline = current ()?.kind === "timeline";
   book = b; chapter = c;
   heb = b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
+  if (onTimeline && picked[scope ()] !== "timeline") {     // (The timeline, covering every book, stays picked into another testament: it follows the text)
+    picked[scope ()] = "timeline";
+    try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
+  }
   clearInterlinear ();
   if (b.id !== was) {
     pick.replaceChildren (...sourceGroups (mine ()));
@@ -116,25 +124,27 @@ export function setNotesPassage (b: Book, c: number) {
 }
 
 /** Sources as a picker's choices (the notes' picker, the search's resources - search.ts): grouped by kind (optgroups;
- *  the dictionaries and the atlas together as BIBLE BACKGROUND, the apparatus and the ancient versions as TEXTUAL
- *  STUDIES), in the user's order, each by its name; a group with
- *  none left out. */
+ *  the dictionaries, the atlas and the timeline together as BIBLE BACKGROUND, the apparatus and the ancient versions as TEXTUAL
+ *  STUDIES), in the user's order (the timeline right after the atlas), each by its name; a group with none left out. */
 export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
   const group = (kinds: string, label: string) => {
     const g = document.createElement ("optgroup");
     g.label = label;
-    g.append (...list.filter ((s) => kinds.split (" ").includes (s.kind)).map ((s) => new Option (s.name, s.id)));
+    const these = list.filter ((s) => kinds.split (" ").includes (s.kind));
+    const tl = these.findIndex ((s) => s.kind === "timeline"), at = these.findIndex ((s) => s.kind === "atlas");
+    if (tl >= 0 && at >= 0) these.splice (at + (tl > at ? 1 : 0), 0, ...these.splice (tl, 1));     // (The timeline right after the atlas)
+    g.append (...these.map ((s) => new Option (s.name, s.id)));
     return g.children.length ? [g] : [];
   };
-  return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary atlas", "Bible Background"),
+  return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary atlas timeline", "Bible Background"),
           ...group ("apparatus version", "Textual Studies"), ...group ("commentary", "Commentaries"), ...group ("translation", "Translations")];
 }
 
 /** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
  *  (ot: the Hebrew Bible's, or beside the Septuagint as the picker offers them there) and the New - that are text in a
  *  file of their own: not the Hebrew OT (the main database's interlinear), the sentence diagrams (trees, not text) nor
- *  the atlas (places on a map). */
-export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax" && s.kind !== "atlas"
+ *  the atlas (places on a map) nor the timeline. */
+export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax" && s.kind !== "atlas" && s.kind !== "timeline"
   && (offers (s, "NT") || (ot === "OT" ? offers (s, "OT") : offers (s, "LXX") || (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)))));
 
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
@@ -214,8 +224,9 @@ async function show () {
  *  verses as one interlinear; the diagram, each sentence once. Drawn once they're read from the database - a later
  *  update (the text scrolled on, another source) winning over one still arriving (updating). */
 let updating = 0;
-/** A source whose file another module opens itself: the dictionary's (dictionary.ts), the atlas' (atlas.ts). */
-const ownFile = (s: Source) => s.kind === "dictionary" || s.kind === "atlas";
+/** A source whose file another module opens itself: the dictionary's (dictionary.ts), the atlas' (atlas.ts), the
+ *  timeline's (timeline.ts). */
+const ownFile = (s: Source) => s.kind === "dictionary" || s.kind === "atlas" || s.kind === "timeline";
 // (A query of a source closed meanwhile - another picked - fails: that update was already superseded)
 const update = () => { drawNotes ().catch ((e) => console.warn ("Notes:", e)); };
 async function drawNotes () {
@@ -226,6 +237,7 @@ async function drawNotes () {
   if (await spotty (src, b)) { if (current () === src && book === b) drawBookNotes (src); return; }
   if (current () !== src || book !== b) return;     // (Another source or book meanwhile: its own update draws it)
   bookShown = "";     // (Anything else drawn: the book's list gone)
+  if (src.kind === "timeline") { drawTimeline (b); return; }
   const wide = isWide ();
   // (Narrow, any source not read in step - but the atlas - is the chapter's, followed one way: ONE-WAY FOLLOWING)
   const oneWay = ! wide && ! IN_STEP.has (src.kind) && src.kind !== "atlas";
@@ -571,6 +583,37 @@ async function drawAtlas (per: { v: number; where: number[][] }[], n: number, ma
   await atlasView.update (book!.id, chapter, per, many ? "No places named in this chapter." : "No places named in this verse.");
   if (n === updating) placed ();
 }
+
+/** The timeline for the chapter (timeline.ts' timelinePane: one view, eased from chapter to chapter). */
+async function drawTimeline (b: Book) {
+  const ids = `timeline ${b.id}:${chapter}`;
+  if (ids === shownIds) return;
+  shownIds = ids; shownVerse = "";
+  const n = ++updating;
+  oneWayFrom ("");
+  blocks = []; anchors = null;
+  refEl.textContent = `${b.name} ${chapter}`;
+  bodyEl.classList.remove ("gBody");     // (Its line in its own small type, not the notes')
+  const got = await timelinePane (b.id, chapter, b.name);
+  if (n !== updating) return;
+  if (typeof got === "string") { clearInterlinear (); bodyEl.innerHTML = `<p>${got}</p>`; return; }
+  if (got.parentElement !== bodyEl) { clearInterlinear (); bodyEl.replaceChildren (got); }
+  placed ();
+  fitTimeline ();
+}
+
+/** Narrow, the timeline as tall as the panel's room under its top (its canvas takes every drag, so the panel can't be
+ *  scrolled by it: none of it may lie below the panel's edge) - 200 px at least; wide, its CSS height. Again whenever
+ *  the panel's size changes. */
+function fitTimeline () {
+  const t = bodyEl.querySelector<HTMLElement> (".timelinePane");
+  if (! t) return;
+  if (isWide ()) { t.style.height = ""; return; }
+  const pad = parseFloat (getComputedStyle (notesScroll).paddingBottom) || 0;
+  const room = notesScroll.getBoundingClientRect ().bottom - pad - (t.getBoundingClientRect ().top + notesScroll.scrollTop);
+  t.style.height = `${Math.max (200, Math.floor (room))}px`;
+}
+new ResizeObserver (() => fitTimeline ()).observe (notesScroll);
 
 /** The notes just drawn placed: narrow, from their top; wide, at the text's place (TWO-WAY SCROLLING). */
 function placed () {
