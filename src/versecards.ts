@@ -79,10 +79,13 @@ const save = () => { try { localStorage.setItem (KEY, JSON.stringify ({ decks, a
 
 let db: Db;
 let books: Book[] = [];
+let reading: () => Book;     // (The Bible's book read: a verse number tapped there opens the add-verse box)
 /** main.ts: the database and every book (the Hebrew Bible's and the NT's are the ones picked). */
 let allBooks: Book[] = [];
 const cardWords = new Map<string, Word> ();     // (The cards' words by "book.chapter.word": a tapped word's panel)     // (The Septuagint's too: a Greek LXX card's own book)
-export function initVerseCards (theDb: Db, all: Book[]) { db = theDb; allBooks = all; books = all.filter ((b) => b.testament !== "LXX"); }
+export function initVerseCards (theDb: Db, all: Book[], book: () => Book) {
+  db = theDb; allBooks = all; books = all.filter ((b) => b.testament !== "LXX"); reading = book;
+}
 
 const esc = (s: string) => s.replace (/[&<>"]/g, (c) => `&#${c.charCodeAt (0)};`);
 const bookOf = (c: VerseCard) => books.find ((b) => b.code === c.code);
@@ -205,8 +208,8 @@ let pickAt: { book: Book | null; chapter: number; from: number; to: number } = {
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
  *  picked - a blank shows a dash, BOOK's "Select Book"; + ADD CARD greyed out until FROM VERSE is). */
-async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
-  const p = pickAt, b = p.book;
+async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt) {     // (p: the screen's add row's, or the Bible's add-verse box's)
+  const b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
   const vs = r.map ((x) => Number (x.verse)).filter ((v) => v > 0);
   const BLANK: [string, string] = ["", "–"];     // (Blank: a dash - BOOK's says "Select Book")
@@ -215,7 +218,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
     const s = document.createElement ("select"); s.className = "choose"; s.disabled = off;
     s.append (...options.map (([v, t]) => new Option (t, String (v))));
     s.value = String (value);
-    s.addEventListener ("change", () => { set (s.value); drawPick (el, addBtn); });
+    s.addEventListener ("change", () => { set (s.value); drawPick (el, addBtn, p); });
     l.append (s);
     return l;
   };
@@ -372,6 +375,36 @@ async function draw (body: HTMLElement) {
   const watch = new ResizeObserver (() => clearMenu ());
   watch.observe (deckEl); watch.observe (menu);
   deck ();
+}
+
+//==== ADD VERSE (the Bible's) ====
+// A verse number tapped in the Bible: a box from the bottom, the word's panel's width (#verseSheet, under it in the
+// text's column - index.html), headed ADD TO VERSE CARDS, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
+// BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD CARD (adding it there, and
+// closing the box); its ✕ closes it. A Septuagint book's verse (not a book the cards take): the book left blank.
+const verseSheet = document.getElementById ("verseSheet")!;
+verseSheet.querySelector (".close")!.addEventListener ("click", () => { verseSheet.hidden = true; });
+document.getElementById ("chapter")!.addEventListener ("click", (e) => {
+  const num = (e.target as HTMLElement).closest<HTMLElement> (".vnum"), row = num?.closest<HTMLElement> (".vrow");
+  if (! num || ! row) return;
+  const book = books.find ((b) => b.code === reading ().code) ?? null;
+  addVerse ({ book, chapter: book ? Number (row.dataset.chapter) : 0, from: book ? Number (row.dataset.verse) : -1, to: 0 });
+});
+function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }) {
+  const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
+  body.innerHTML = `<h2 class="avHead">Add to Verse Cards</h2><div class="vcAdd"><label class="vcPick">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
+      `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
+    <div class="avPlace"></div><button class="pill" id="avAdd">+ Add card</button></div>`;
+  const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
+  place.style.display = "contents";
+  drawPick (place, add, p);
+  add.addEventListener ("click", () => {
+    const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
+    if (! d || ! p.book || ! p.chapter || p.from < 0) return;
+    d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
+    save (); verseSheet.hidden = true;
+  });
+  verseSheet.hidden = false;
 }
 
 onScreen ("Verse cards", draw);

@@ -14,8 +14,7 @@
 //   WORDS (0 - 1 s; 0 reads normally, a verse at a time - any space reads a word at a time with that pause) in the ⋯
 //   menu, kept on the device.
 // - VOICE (⋯, the OT only): the device's voice, or Abraham Shmuelof's recorded reading (ebible.org/multimedia/hbo,
-//   CC BY-NC-ND 4.0: credited while it plays, non-commercial, played as published). Picked, ▶ and the verse numbers
-//   play the chapter's recording (pipeline/shmuelof.py: its MP3s and their timings, data/audio/shmuelof/) - fluent,
+//   CC BY-NC-ND 4.0: credited while it plays, non-commercial, played as published). Picked, ▶ plays the chapter's recording (pipeline/shmuelof.py: its MP3s and their timings, data/audio/shmuelof/) - fluent,
 //   or slowed by 20% for a READING SPEED under 0.9x (the nearer of 1x and 0.8x) - each verse lit as it's read, and
 //   within it the part being read: the recordings are timed by half-verse, the words up to the atnach (the verse's
 //   main pause) then the rest. The word's panel's speakers keep the device's voice (the recordings have no word
@@ -128,7 +127,7 @@ function utterance (text: string): SpeechSynthesisUtterance {
 }
 
 // Reading: a session (its number, so a cancelled session's late events are ignored), the verses still to read and
-// what started it (the ▶ button, or a verse number) - tapping that again stops.
+// what started it (the ▶ button) - tapping that again stops.
 let session = 0;
 let control: HTMLElement | null = null;
 let queue: HTMLElement[] = [];                     // .vrow elements still to read
@@ -363,7 +362,7 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   const m = location.hash.match (/^#(\w+)\.(\d+)$/);     // (The chapter shown: main.ts keeps it in the address)
   const v = version (), all = m ? (await bookTimings (`${v}/${m[1]}`))?.[m[2]] : undefined;
   if (id !== recSession) return;
-  // The rows' verses, each its row: ▶ from the verse at the top of the view to the end, a verse number that verse.
+  // The rows' verses, each its row: ▶ from the verse at the top of the view to the end.
   const byVerse = new Map (rows.map ((r) => [Number (r.querySelector (".vnum")!.textContent), r] as const));
   const clips = (all ?? []).filter ((c) => byVerse.has (c[0]));
   if (! clips.length) {
@@ -414,16 +413,13 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   requestAnimationFrame (tick);
 }
 
-// ▶: the chapter from the first verse whose line shows at the top of the view; a verse number: that verse.
+// ▶: the chapter from the first verse whose line shows at the top of the view. (A verse number tapped opens the
+// add-verse box instead: versecards.ts.)
 playBtn.addEventListener ("click", () => {
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
   const top = document.querySelector ("main")!.getBoundingClientRect ().top;
   const first = Math.max (0, rows.findIndex ((r) => r.getBoundingClientRect ().bottom > top + 8));
   start (playBtn, rows.slice (first));
-});
-document.getElementById ("chapter")!.addEventListener ("click", (e) => {
-  const num = (e.target as HTMLElement).closest<HTMLElement> (".vnum");
-  if (num) start (num, [num.parentElement!]);
 });
 
 
