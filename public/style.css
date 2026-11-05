@@ -42,7 +42,8 @@
   --col-l: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2));
   --col-r: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2));
   --x-room: 52px;
-  --x-w: calc(var(--fs-icon) * .84);     /* (A ✕ button's width: its glyph's, at --fs-icon) */
+  --x-w: calc(var(--fs-icon) * .84);
+  --split-w: 14px;     /* (A divider's width: its line in the middle, the rest room to drag it) */     /* (A ✕ button's width: its glyph's, at --fs-icon) */
   --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
   /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
      columns; -l between buttons with no padding. */
@@ -604,8 +605,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   /* Drawn by its orientation (aria-orientation): vertical - the panes' column's and, beside the text, the word's
      panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height, the search's against the notes' -
      sets a height. */
-  .split[aria-orientation="vertical"] { width: 14px; cursor: col-resize; }
-  .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: 6.5px; width: 1px; }
+  .split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }
+  .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
+  body:has(#notes:not([hidden]), #search:not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the panes' divider: no gap where they meet) */
   .split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
   body:has(#notes[hidden]):has(#search[hidden]) #notesSplit, body:is(:has(#notes[hidden]), :has(#search[hidden])) #paneSplit { display: none; }     /* (The column's divider while either pane is open, the panes' only while both are) */
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
