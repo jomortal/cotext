@@ -412,6 +412,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .vcTop { display: flex; align-items: center; gap: 12px; }     /* (The deck's name and ⋯ beside it) */
 .vcTitle { min-width: 0; overflow-wrap: anywhere; }
+.vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
+.vcHead[hidden] { display: none; }
 .vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }     /* (⋯'s options, as the screen's rows, set off from the deck) */
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */

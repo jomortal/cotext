@@ -1,10 +1,10 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own): the open deck's name at the top and ⋯ beside it, then the deck and the credits.
-//   ⋯ shows (or hides) everything else, in order: NAME (edited in place), the add row (below), SHOW LIST and SHOW
-//   DECKS (below).
-// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; SHOW DECKS at the bottom (under SHOW LIST and its list, hidden at first) shows a row of buttons, as My vocab's
-//   lists, the one open lit (the last one used when the screen opens; "My verses" at first),
+//   ⋯ shows (or hides) everything else, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
+//   (below).
+// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (last in
+//   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (a verse) and TO VERSE (blank: that verse alone, or one after it: a range within the
@@ -28,7 +28,7 @@
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range), the original. A tap on its front turns it
 //   over; only HIDE turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
-//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
+//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in ⋯'s options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
@@ -195,9 +195,7 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
-let listShown = false;     // (The deck's list of cards: hidden till SHOW LIST)
-let decksShown = false;
-let menuOpen = false;     // (⋯'s options: hidden till ⋯)     // (The decks and + NEW DECK: hidden till SHOW DECKS)
+let menuOpen = false;     // (⋯'s options: hidden till ⋯)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
@@ -243,9 +241,9 @@ async function draw (body: HTMLElement) {
       <button class="pill" data-o="translit">Transliteration</button><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button>
       <div class="vcBreak"></div><div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
-    <div class="bar"><button class="pill" id="vcShowList"></button></div>
+    <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
-    <div class="bar"><button class="pill" id="vcShowDecks"></button></div>
+    <div class="vcHead">Decks</div>
     <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
     </div>
@@ -266,14 +264,7 @@ async function draw (body: HTMLElement) {
     if (w && wordEl) showCardPanel (db, w, wordEl).then (fitPanel);
     else if (t.closest ("[data-k]")) hideCardPanel ();
   });
-  const showList = body.querySelector<HTMLElement> ("#vcShowList")!;
-  const showing = () => { listEl.hidden = ! listShown; showList.textContent = listShown ? "Hide list" : "Show list"; };
-  showList.addEventListener ("click", () => { listShown = ! listShown; showing (); });
-  // SHOW DECKS / HIDE DECKS: the decks (each to open or delete) and + NEW DECK, under the list
-  const showDecks = body.querySelector<HTMLElement> ("#vcShowDecks")!, decksEl = body.querySelector<HTMLElement> (".vcDecks")!;
-  const decksShowing = () => { decksEl.hidden = ! decksShown; showDecks.textContent = decksShown ? "Hide decks" : "Show decks"; };
-  showDecks.addEventListener ("click", () => { decksShown = ! decksShown; decksShowing (); });
-  decksShowing ();
+  const listHead = body.querySelector<HTMLElement> ("#vcListHead")!;
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
   // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, its ✕ deleting it (asked first).
@@ -306,7 +297,7 @@ async function draw (body: HTMLElement) {
       b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"])); b.disabled = settings.lang === "en";
     }
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
-    showList.parentElement!.hidden = ! d.cards.length; showing ();
+    listHead.hidden = listEl.hidden = ! d.cards.length;     // (VERSE LIST only with cards)
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; shown = null; return; }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
