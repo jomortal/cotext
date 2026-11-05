@@ -175,6 +175,13 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
+/** SHUFFLE's, FLIP's and START OVER's icons - shown in the side bar (a phone held sideways) in place of their words. */
+const svg = (d: string) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+const BAR_ICONS: Record<string, string> = {
+  shuffle: svg ("M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.6M13.1 9.6C14.2 8 15.4 7 17 7h4M18 4l3 3-3 3M18 14l3 3-3 3"),     // (Two paths crossing)
+  flip: svg ("M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"),     // (Turned over: two arrows round)
+  over: svg ("M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"),     // (Back to the start: an arrow round to its beginning)
+};
 let goTo = "";     // (A card just added - here or from the Bible's verse numbers -: shown first when its deck is next drawn)
 let menuOpen: "" | "more" | "add" = "";     // (The top row's drop-down open: the name's options, +'s NEW VERSE, or neither)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
@@ -330,7 +337,12 @@ async function draw (body: HTMLElement) {
       if (goTo) { shown.go ((c) => c.id === goTo); goTo = ""; }
       // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE and START OVER in its corners)
       const bar = document.createElement ("div"); bar.className = "vcBar";
-      bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
+      bar.append (...["shuffle", "flip", "over"].map ((k) => {
+        const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
+        x.setAttribute ("aria-label", x.textContent!);
+        x.innerHTML = `<span class="vcWord">${x.textContent}</span>${BAR_ICONS[k]}`;     // (Its word, or - in the side bar - its icon: style.css)
+        return x;
+      }));
       // (BACK and NEXT as arrows inside the card's edges, as the Bible view's chapter arrows - fixed at the screen's middle: placeArrows)
       const row = document.createElement ("div"); row.className = "vcCardRow";
       const arrows = [["back", "‹", "Back"], ["next", "›", "Next"]].map (([k, arrow, label]) => {

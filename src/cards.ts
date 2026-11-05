@@ -29,14 +29,15 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!;
   const count = el.querySelector<HTMLElement> (".cardCount")!, flip = el.querySelector<HTMLElement> ("[data-k=flip]")!;
+  if (flipWord) flip.textContent = flipWord;     // (A fixed word - the Verse cards' FLIP: set once, so what's added to the button stays)
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; flip.textContent = flipWord || "Show";
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; if (! flipWord) flip.textContent = "Show";
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
   // Turned over (a tap on the card, or SHOW - HIDE while turned - between BACK and NEXT); again, turned back.
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; flip.textContent = flipWord || (back.hidden ? "Show" : "Hide"); } };     // (Tapped again: turned back)
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; if (! flipWord) flip.textContent = back.hidden ? "Show" : "Hide"; } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
   // (noTurn: what a tap on doesn't turn it - the Verse cards' words, tapped for their panel)
   card.addEventListener ("click", (e) => {
