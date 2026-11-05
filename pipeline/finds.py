@@ -21,6 +21,12 @@ first run, kept after: a rebuild reads the same revisions; delete an entry to fe
     served, never in the downloaded .db nor kept by the service worker (sw.js) -, and a thumbnail 160 px on its long
     side at quality 55 (about 5-10 kB) inside the .db, so the lists show it offline; credited under it with its author
     and licence. Without sips both are the thumbnail as it comes.
+COTEXT's additions (NEW, MORE): finds the list lacks (the annals of Tiglath-pileser III, the Behistun inscription), as
+  its bulleted rows are; and for a find attesting the Bible's events or people, every passage on them (Wikipedia seldom
+  cites verses: the Mesha Stele gets 2 Kings 3, 1 Chronicles 5:8-10, Isaiah 15-16 and Jeremiah 48), and its own text in
+  T. G. Pinches' translation where his book has it (the Taylor Prism, the Black Obelisk, the Kurkh Monolith, Sargon II,
+  Tiglath-pileser III, the Cyrus Cylinder, Nabonidus: ane.py's EXCERPTS and pins, through ane.quoted()), under "Its
+  text".
 Scripture references: "2 Kings 20:20", "2 Chronicles 32:2-4", "Exodus 1:11; 12:37" (a book's full English name, I / II
   or 1 / 2 / First / Second before it, then chapter:verse, a range or a comma's verses; "ch. v" after a ";" in the
   same book; "20, 20:" before a quotation as 20:20), in the row's significance and the article's text, its
@@ -75,8 +81,63 @@ COMMONS = "https://commons.wikimedia.org/w/api.php"
 UA = {"User-Agent": "COTEXT-pipeline/0.1 (https://github.com/jomortal/cotext; Bible study app build, one-off fetch)"}
 SOURCE = ("finds", "dictionary", "Archaeology finds", "OT NT",
           "From Wikipedia's \"List of inscriptions in biblical archaeology\" and each find's own article (CC BY-SA 4.0; "
-          "the revisions pinned in the build). Photos from Wikimedia Commons, each credited under it. Names matched "
-          "through STEPBible's TIPNR (CC BY 4.0).")
+          "the revisions pinned in the build), with finds and passages added by COTEXT. Photos from Wikimedia Commons, "
+          "each credited under it. Inscriptions' texts tr. T. G. Pinches (1908; public domain; Project Gutenberg). "
+          "Names matched through STEPBible's TIPNR (CC BY 4.0).")
+
+# ---- COTEXT's additions ----
+# Finds the list lacks, as its bulleted rows are (facts from their articles' infoboxes): what they bear on, its links
+# (names TIPNR may know: the words that offer the find).
+NEW = [{"name": "Annals of Tiglath-pileser III", "link": "Tiglath-Pileser III", "image": "", "now": "British Museum (slabs from his palace at Nimrud)", "found": "Nimrud, 1840s",
+        "date": "745-727 BC (his reign)", "writing": "Akkadian cuneiform",
+        "bears": "Tiglath-pileser III (Pul) of Assyria, 745-727 BC: Menahem of Samaria's tribute, Pekah overthrown and "
+                 "Hoshea set on Israel's throne, Ahaz's tribute, the deportations from Galilee and Transjordan.",
+        "links": [("Menahem", "Menahem"), ("Pekah", "Pekah"), ("Hoshea", "Hoshea"), ("Ahaz", "Ahaz"),
+                  ("Tiglath-pileser", "Tiglath-Pileser III")]},
+       {"name": "Behistun Inscription", "link": "Behistun inscription", "image": "", "now": "", "found": "", "date": "",
+        "writing": "", "bears": "Darius I of Persia, 522-486 BC, tells how he won the throne and put down the revolts - "
+                               "the Darius under whom the temple was rebuilt (Ezra 4-6, Haggai, Zechariah).",
+        "links": [("Darius", "Darius I")]}]
+# A find's passages beyond those its article cites (Wikipedia seldom gives verses) - every passage on the events or
+# people it attests -, and the excerpts of its text in a public-domain translation (ane.py's EXCERPTS: Pinches, 1908).
+MORE = {
+    "Mesha_Stele": ("2 Kings 3:4-27; 1 Chronicles 5:8-10; Numbers 21:29; 1 Kings 11:7; Isaiah 15:1-16:14; Jeremiah 48:1-47", []),
+    "Bubastite_Portal": ("1 Kings 14:25-26; 2 Chronicles 12:2-9", []),
+    "Sennacherib's_Annals": ("2 Kings 18:13-19:37; Isaiah 36:1-37:38; 2 Chronicles 32:1-23", ["sennach"]),
+    "Black_Obelisk_of_Shalmaneser_III": ("2 Kings 9:1-10:36", ["jehu"]),
+    "Kurkh_Monoliths": ("1 Kings 16:29-30; 20:1-34; 22:1-4", ["qarqar"]),
+    "Tiglath-Pileser_III": ("2 Kings 15:19-20, 29-30; 16:7-10; 1 Chronicles 5:6, 26; 2 Chronicles 28:20-21", ["tpMenahem", "tpPekah"]),
+    "Nimrud_Tablet_K.3751": ("2 Kings 16:7-10; 2 Chronicles 28:16-21", []),
+    "Sargon_II's_Prisms": ("2 Kings 17:3-6, 24; 18:9-11; Isaiah 20:1", ["sargon"]),
+    "Nebuchadnezzar_Chronicle": ("2 Kings 24:1-17; 2 Chronicles 36:5-10; Jeremiah 24:1; 46:2", []),
+    "Babylonian_Chronicles": ("2 Kings 23:29; 24:10-17; Jeremiah 46:2; Nahum 2:1-3:19; Zephaniah 2:13-15", []),     # (The fall of Nineveh, 612 BC, among them)
+    "Jehoiachin's_Rations_Tablets": ("2 Kings 25:27-30; Jeremiah 52:31-34", []),
+    "Lachish_letters": ("Jeremiah 34:7; 38:4", []),
+    "Lachish_reliefs": ("2 Kings 18:14, 17; 19:8; 2 Chronicles 32:9; Isaiah 36:2; 37:8; Micah 1:13", []),
+    "Elephantine_papyri_and_ostraca": ("Ezra 6:3-12; Nehemiah 2:10, 19; 4:1-8; 6:1-14; 12:22; 13:28", []),
+    "Deir_Alla_inscription": ("Numbers 22:1-24:25; Joshua 13:22; Micah 6:5; 2 Peter 2:15-16", []),
+    "Nabonidus_Chronicle": ("Daniel 5:1-31; Isaiah 45:1-2", ["nabChron"]),
+    "Cylinders_of_Nabonidus": ("Daniel 5:1-31; 7:1; 8:1", ["nabPrayer"]),
+    "Cyrus_Cylinder": ("Ezra 1:1-4; 6:3-5; 2 Chronicles 36:22-23; Isaiah 44:28-45:4; Daniel 5:30-31", ["cyName", "cyBattle", "cyReturn"]),
+    "Merneptah_Stele": ("Joshua 10:33; 16:10; Judges 1:18-36", []),
+    "Tel_Dan_stele": ("2 Kings 8:28-29; 9:14-29; 2 Chronicles 22:5-9", []),
+    "Melqart_stele": ("1 Kings 15:18-20; 20:1", []),
+    "Stele_of_Zakkur": ("2 Kings 13:3, 24-25", []),
+    "Tell_al-Rimah_stela": ("2 Kings 13:10-13", []),
+    "Behistun_inscription": ("Ezra 4:5, 24; 5:1-6:15; Haggai 1:1, 15; 2:10; Zechariah 1:1, 7; 7:1", []),
+    "Victory_stele_of_Esarhaddon": ("2 Kings 19:37; Isaiah 37:38; Ezra 4:2", []),
+    "Siloam_inscription": ("2 Kings 20:20; 2 Chronicles 32:2-4, 30", []),
+    "Ketef_Hinnom_scrolls": ("Numbers 6:24-26", []),
+    "Yavne-Yam_ostracon": ("Exodus 22:26-27; Deuteronomy 24:12-13", []),
+    "Nebo-Sarsekim_Tablet": ("Jeremiah 39:3, 13", []),
+    "Tell_es-Safi_inscription": ("1 Samuel 17:4", []),
+    "Heliodorus_stele": ("Daniel 11:20", []),
+    "Pilate_stone": ("Luke 3:1; Matthew 27:2, 11-26; Mark 15:1-15; Luke 23:1-25; John 18:28-19:16; Acts 4:27; 1 Timothy 6:13", []),
+    "Delphi_Inscription": ("Acts 18:12-17", []),
+    "Temple_Warning_inscription": ("Acts 21:26-30; Ephesians 2:14", []),
+    "Arch_of_Titus": ("Matthew 24:1-2; Luke 19:41-44; 21:20-24", []),
+    "Judaea_Capta_coinage": ("Luke 21:20-24", []),
+}
 
 
 def fetched(req):
@@ -374,7 +435,7 @@ def fetch_all():
         pins["list"] = get(API, {"action": "query", "titles": LIST, "prop": "revisions", "rvprop": "ids"})[
             "query"]["pages"][0]["revisions"][0]["revid"]
     lst = cached(f"list-{pins['list']}.json", lambda: get(API, {"action": "parse", "oldid": pins["list"], "prop": "wikitext"}))
-    finds = rows(lst["parse"]["wikitext"])
+    finds = rows(lst["parse"]["wikitext"]) + [dict(f) for f in NEW]     # (COTEXT's additions after the list's)
     arts = pins.setdefault("articles", {})     # link -> [title, revid] (null: no article)
     new = sorted({f["link"] for f in finds if f["link"] and f["link"] not in arts})
     for i in range(0, len(new), 50):     # (Each new link's current revision, redirects followed)
@@ -406,14 +467,18 @@ def fetch_all():
     return finds, pins
 
 
-def find_html(f, refs):
-    """A find as the dictionary's light HTML: its facts, what it bears on, its article's lead, its Bible references (each a
-    link to its first verse), the credit for its text."""
+def find_html(f, refs, quotes=()):
+    """A find as the dictionary's light HTML: its facts, what it bears on, its own text in a public-domain translation
+    (quotes: blockquotes, under "Its text"), its article's lead, its Bible references (each a link to its first verse),
+    the credit for its text."""
     e = html.escape
     facts = [("Date", f["date"]), ("Found", f["found"]), ("Now", f["now"]), ("Writing", f["writing"])]
     out = ["<p>" + "<br>".join(f"<b>{k}</b> {e(v)}" for k, v in facts if v) + "</p>"]
     if f["bears"]:
         out.append(f"<p><b>Bears on</b> {e(f['bears'])}</p>")
+    if quotes:
+        out.append('<div class="gHead">Its text</div>')
+        out += list(quotes)
     if f["article"] and f["article"]["lead"]:
         out.append('<div class="gHead">From Wikipedia</div>')
         out += [f"<p>{e(t)}</p>" for t in f["article"]["lead"]]
@@ -504,8 +569,12 @@ def register(main_db, source, file, data):
 
 def build(main_db):
     """Builds finds.db and its note_sources row (replaced). Returns (finds, verses linked, photos, lemmas)."""
+    import ane     # (Its translations' excerpts - here, not at the top: ane.py imports this module)
     last_verses(main_db)
     finds, pins = fetch_all()
+    missing = set(MORE) - {(f["article"]["title"] if f["article"] else f["name"]).replace(" ", "_") for f in finds}
+    if missing:
+        raise SystemExit(f"finds.MORE names finds not built: {sorted(missing)}")
     keys = namer(main_db)
     pins.pop("photos", None)     # (The 300 px photos pinned before the full pictures: replaced by "images")
     shutil.rmtree(IMAGES / "finds", ignore_errors=True)     # (Written anew: no picture of a find gone left behind)
@@ -516,7 +585,9 @@ def build(main_db):
             continue
         seen.add(fid)
         text = f["bears"] + "\n" + (plain(f["article"]["wikitext"], refs=True) if f["article"] else "")
-        refs = list(dict.fromkeys((osis, shown) for _, osis, shown in references(text)))
+        more, keys_ = MORE.get(fid, ("", []))
+        more = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", more) for r in references(part)] if more else []     # (A book at a time, as ane.py's)
+        refs = list(dict.fromkeys((osis, shown) for _, osis, shown in references(text) + more))
         spans = [sp for osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
         verses = tyndale_dict.verses_in(spans)
         cands = {w for w in re.findall(r"[A-Z][a-z]+", f["name"])}
@@ -526,7 +597,7 @@ def build(main_db):
             for k in keys(n, verses):
                 lemmas.setdefault(k, []).append(fid)
         line = (f["bears"] or (f["article"]["lead"][0] if f["article"] and f["article"]["lead"] else ""))[:200]
-        entries.append((fid, f["name"], find_html(f, refs), line, len(verses), spans))
+        entries.append((fid, f["name"], find_html(f, refs, ane.quoted(keys_) if keys_ else ()), line, len(verses), spans))
         pic = pictures(f["image"], pins, "finds", fid)
         if pic:
             photos[fid] = pic
