@@ -439,7 +439,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcSep { align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
 #verseSheet { border-top: 1px solid var(--edge) !important; }
-.avHead { font-size: var(--fs-m); font-weight: 600; margin: 0 0 10px; padding-right: 52px; }     /* (Clear of the ✕) */
+.avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: 52px; }     /* (Clear of the ✕) */
+/* Its text the word's panel's sizes: the labels as its parsing line (--fs-s), the choices and marks as its entry (--fs-m). */
+#verseSheet .vcPick { font-size: var(--fs-s); }
+#verseSheet .choose, #verseSheet .vcSep { font-size: var(--fs-m); }
+#verseSheet .vcSep, #verseSheet .pill.addVerse { line-height: calc(var(--fs-m) * 1.2 + 14px); }
 .pill.addVerse { font-size: var(--fs-l); font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); padding: 0; }     /* (+ ADD VERSE, the Verse cards' and the Bible's: larger, level with the pickers) */
 .vcNewHead { font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); }     /* (NEW VERSE: the add row's bold heading at its start, level with the pickers) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
