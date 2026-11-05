@@ -29,6 +29,7 @@
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
+  --ref-scale: .875; --ref-en: .8em;     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
@@ -503,13 +504,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
-.vcDeck .cardBack .vcRef { font-size: var(--fs-2xl); text-align: center; }
-.vcRef > :not(.vcNative) { text-transform: uppercase; font-weight: 400; }     /* (The English reference in capitals, as the Greek's - not bold - front and back) */
+.vcDeck .vcRef { font-size: calc(var(--ref-scale) * 1em); font-weight: 600; } .vcDeck .cardBack .vcRef { font-size: calc(var(--fs-2xl) * var(--ref-scale)); text-align: center; }     /* (A card's references, bold: a little smaller than the side's text - the front's, the back's verses - --ref-scale) */
+.vcRef > :not(.vcNative) { text-transform: uppercase; font-size: var(--ref-en); }     /* (The English reference in capitals, as the Greek's - smaller than the original's beside it, front and back) */
 .vcDeck .vcTr > :not(.src) { font-family: var(--serif); }     /* (The cards' English verse in the serif, the Greek's Gentium - its reference in the page's sans serif) */
-.vcDeck .cardFront .vcRef > :not(.vcNative) { font-size: var(--fs-2xl); } .vcDeck .cardBack .vcRef > :not(.vcNative) { font-size: var(--fs-xl); }     /* (The English reference smaller than the original's: the front's a size down, the back's the English verse's) */
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
-.vcNative { font-weight: 400; }
 .vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
 .vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
