@@ -202,7 +202,10 @@ Ancient Parallels (the notes' and search's Ancient Parallels - public/data/notes
     The Forgotten Books of Eden (1926) - from Wikisource (en.wikisource.org); E. A. Wallis Budge, The Babylonian Story
     of the Deluge (1920) and The Babylonian Legends of the Creation (1921); T. G. Pinches, The Old Testament in the
     Light of the Historical Records and Legends of Assyria and Babylonia (3rd ed., 1908) - from Project Gutenberg
-    (gutenberg.org). Excerpts only, footnote marks left out.
+    (gutenberg.org); R. W. Rogers, Cuneiform Parallels to the Old Testament (1912) and A. T. Clay, A Hebrew Deluge
+    Story in Cuneiform (1922) - the Internet Archive's scans (archive.org: cu31924026822175, cu31924026803001; their
+    text pinned in pipeline/ane_pins.json), the text recognized and checked against the page images, generated for
+    COTEXT. Excerpts only, footnote marks left out.
 
 Ancient Historians (the word panel's Historians, the notes' and search's Ancient Historians -
   public/data/notes/historians.db, pipeline/historians.py):

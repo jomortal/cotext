@@ -24,10 +24,13 @@ Sources (each pinned in ane_pins.json - written on the first run, kept after; de
     (The Chaldean Account of Genesis, 1876), the Tale of Two Brothers (Egyptian Literature, 1901), the Story of Ahikar
     (The Forgotten Books of Eden, 1926); and Project Gutenberg's plain texts (pinned by SHA-256) - Budge's Babylonian
     Story of the Deluge (1920) and Babylonian Legends of the Creation (1921), T. G. Pinches' The Old Testament in the
-    Light of the Historical Records and Legends of Assyria and Babylonia (3rd ed., 1908).
-  Not found as clean public-domain text (so those entries have no excerpt): R. W. Rogers' Cuneiform Parallels to the
-  Old Testament (1912: scans and raw OCR only), L. W. King's Seven Tablets of Creation (Wikisource: scans only),
-  Amenemope (Griffith 1926, Budge 1924: scans only); the Laws of Ur-Nammu and Eshnunna, Atrahasis, the Eridu Genesis,
+    Light of the Historical Records and Legends of Assyria and Babylonia (3rd ed., 1908); and two scanned books, their
+    Internet Archive text recognition (OCR, pinned by SHA-256) checked against the page images line by line, its
+    errors set right in CORRECTIONS - R. W. Rogers' Cuneiform Parallels to the Old Testament (1912: Atrahasis' flood
+    and creation of man, Adapa) and A. T. Clay's A Hebrew Deluge Story in Cuneiform (1922: Atrahasis' Old Babylonian
+    tablet).
+  Not found as clean public-domain text (so those entries have no excerpt): L. W. King's Seven Tablets of Creation
+  (Wikisource: scans only), Amenemope (Griffith 1926, Budge 1924: scans only); the Laws of Ur-Nammu and Eshnunna, the Eridu Genesis,
   the Baal Cycle, Aqhat, Esarhaddon's and the Hittite treaties, the Babylonian Theodicy, the Middle Assyrian laws, the
   Mari prophecies, the Lament for Ur, the Dialogue of Pessimism, Siduri's Old Babylonian tablet, the Prayer of Nabonidus
   (published or translated after 1929: no public-domain English); the Assyrian King List, the Harper's Songs and the
@@ -67,10 +70,13 @@ SOURCE = ("ane", "dictionary", "Ancient Parallels", "OT NT",
           "Wikipedia (CC BY-SA 4.0; the revisions pinned in the build); photos from Wikimedia Commons, each credited "
           "under it. Translations public domain: L. W. King (Hammurabi); E. A. Wallis Budge (the Flood, Creation, the "
           "Aten hymn); T. G. Pinches (Amarna letters, Ludlul); George Smith (Sargon); Egyptian Literature "
-          "(1901); The Forgotten Books of Eden (1926) - from Wikisource and Project Gutenberg.")
+          "(1901); The Forgotten Books of Eden (1926) - from Wikisource and Project Gutenberg; R. W. Rogers (1912: "
+          "Atrahasis, Adapa) and A. T. Clay (1922: Atrahasis) - their scans' text recognized and checked, generated for "
+          "COTEXT, from the Internet Archive.")
 
 # ---- The translations ----
-# key -> (kind, where, credit shown under its excerpts): kind "ws" a Wikisource page, "pg" a Project Gutenberg number.
+# key -> (kind, where, credit shown under its excerpts): kind "ws" a Wikisource page, "pg" a Project Gutenberg number,
+# "ia" an Internet Archive scan (its identifier: the OCR text read, set right by CORRECTIONS).
 TRANSLATIONS = {
     "king": ("ws", "Codex Hammurabi (King translation)", "Tr. L. W. King, The Code of Hammurabi (public domain; Wikisource)"),
     "aten": ("ws", "Great Hymn to Aten", "Tr. E. A. Wallis Budge, Tutankhamen: Amenism, Atenism and Egyptian Monotheism (1923; public domain; Wikisource)"),
@@ -80,11 +86,35 @@ TRANSLATIONS = {
     "deluge": ("pg", 7096, "Tr. E. A. Wallis Budge, The Babylonian Story of the Deluge (1920; public domain; Project Gutenberg)"),
     "creation": ("pg", 9914, "Tr. E. A. Wallis Budge, The Babylonian Legends of the Creation (1921; public domain; Project Gutenberg)"),
     "pinches": ("pg", 38732, "Tr. T. G. Pinches, The Old Testament in the Light of the Historical Records and Legends of Assyria and Babylonia (1908; public domain; Project Gutenberg)"),
+    "rogers": ("ia", "cu31924026822175", "Tr. R. W. Rogers, Cuneiform Parallels to the Old Testament (1912; public domain; the Internet Archive's scan, its text recognized and checked against the page images, generated for COTEXT)"),
+    "clay": ("ia", "cu31924026803001", "Tr. A. T. Clay, A Hebrew Deluge Story in Cuneiform (1922; public domain; the Internet Archive's scan, its text recognized and checked against the page images, generated for COTEXT)"),
 }
 
-# The excerpts: key -> (translation, first words, last words (kept; "<..." words it stops before), how it's set, label). How it's set: "lines" (verse: a
-# line a numbered line or paragraph), "prose" (a paragraph each), "run" (one paragraph: a source that breaks
-# paragraphs mid-sentence). The label says which part it is.
+# The scans' text recognition (OCR) set right: translation -> [(as recognized, as printed)], each pair checked against
+# the page image and applied once (the recognized text, its spaces collapsed, must hold it - else the build stops).
+# Only the excerpts' lines are checked and set right; the rest of the text is left as recognized.
+CORRECTIONS = {
+    "rogers": [
+        ('keep thy door."1', 'keep thy door."'),                                       # p. 104 (the footnote mark)
+        ("[ ] draw upon the earth", "[. . . . . .] draw upon the earth"),
+        ('[ as thou hast commanded [. . .] "', '[. . . . . . as thou hast commanded [. . .]"'),
+        ("has anade him", "has made him"),                                              # p. 75
+        ("[ ] says Ea,1", "[. . . . . . . . .] says Ea,"),                              # p. 120
+        ("[ ] the nostrils", "[. . . . . . . . .] the nostrils"),                       # p. 121
+    ],
+    "clay": [
+        ("I will bring (?) their clamor (?)", "I will bring(?) their clamor(?) . . . . . . ."),   # p. 58
+        ("ri-gi-im-si-in heard their clamor.", "ri-gi-im-si-in . . . . . . heard their clamor."),
+        ("the great gods( ?),", "the great gods(?),"),
+    ],
+}
+
+# The excerpts: key -> (translation, first words, last words (kept; "<..." words it stops before), how it's set, label);
+# first may instead be a list of (first, last) stretches, joined line after line (last then None) - a scan whose
+# translation is interleaved with its transliteration or notes. How it's set: "lines" (verse: a line a numbered line
+# or paragraph), "verse" (a scan's printed lines: each its own line - a number as printed starts it, every fifth -, a
+# line starting lowercase the wrapped end of the one before), "prose" (a paragraph each), "run" (one paragraph: a
+# source that breaks paragraphs mid-sentence). The label says which part it is.
 EXCERPTS = {
     "cH196": ("king", "196. If a man put out the eye", "his teeth shall be knocked out.", "prose", "Laws 196-200"),
     "cH117": ("king", "117. If any one fail to meet a claim for debt", "in the fourth year they shall be set free.", "prose", "Law 117"),
@@ -130,6 +160,17 @@ EXCERPTS = {
     "sargon": ("pinches", "I besieged and captured Samerina (Samaria):", "imposed upon them the tribute of the former king.", "prose", "Sargon II's display inscription"),
     "nabPrayer": ("pinches", "“As for me, Nabonidus, king of Babylon,", "life.”", "run", "Nabonidus' cylinder from Ur"),
     "nabChron": ("pinches", "In the month Tammuz", "Cyrus promised peace to Babylon, all of it.", "prose", "The Nabonidus Chronicle"),
+    "atClamor": ("clay", [("I will bring(?) their clamor(?)", ". . . . . . ."), ("The land had become great; the people", "had multiplied."),
+                          ("The land like a bull had become satiated.", "satiated."), ("[In] their assemblage God was absent.", "absent."),
+                          (". . . . . . heard their clamor.", "clamor."), ("He said to the great gods(?),", "gods(?),"),
+                          ("Those observing the clamor of men,", "men,")], None, "verse",
+                 "Old Babylonian tablet (copied in Ammi-saduqa's 11th year), Column I, lines 1-7, p. 58 - an early reading of the tablet; some lines are read differently today"),
+    "atShip": ("rogers", "5 [Behold] the time I will announce to thee.", '[. . . . . . as thou hast commanded [. . .]"', "verse",
+               "Assyrian fragment, lines 5-17, p. 104 - an early reading of the tablet; some lines are read differently today"),
+    "atClay": ("rogers", [("[. . . . . . . . .] says Ea,", "placed on the right;"), ("Seven pieces she placed on the left,", "The figures of men Mami formed.")],
+               None, "verse", "Ashurbanipal's library, Column IV, lines 1-14, pp. 120-121 - an early reading of the tablet; some lines are read differently today"),
+    "adLife": ("rogers", [('"Why has Ea revealed to impure mankind', "Food of life"), ('Bring him, that we may eat."', "bring him back to his earth.")],
+               None, "verse", "Lines 57-70, pp. 75-76 - an early reading of the tablet; some lines are read differently today"),
     "ludlul": ("pinches", "“The time for the worship of the gods was my heart’s delight,", "profit and riches,”", "prose", "Ludlul bēl nēmeqi, Tablet II"),
 }
 
@@ -169,8 +210,9 @@ ENTRIES = [
     ("Atra-Hasis", "Atrahasis", "Bm-epic-g.jpg",
      "Old Babylonian epic, about 1700 BC: mankind made of clay and a slain god's blood to bear the gods' toil; the gods' attempts to curb its noise, ending in the Flood that Atrahasis survives in a boat.",
      "Man made from clay, then a flood that one man survives in a boat - Genesis 2 and 6-9 in one story.",
-     [("Genesis 2:7", "Man formed from clay mixed with a god's flesh and blood - in Genesis, from dust and God's breath.", []),
-      ("Genesis 6:5-8:22", "A flood sent to destroy mankind; one man warned, a boat built, a sacrifice after.", []),
+     [("Genesis 2:7", "Man formed from clay mixed with a god's flesh and blood - in Genesis, from dust and God's breath.", ["atClay"]),
+      ("Genesis 6:1-7", "Mankind multiplied and its noise troubling the gods, who resolve to destroy it.", ["atClamor"]),
+      ("Genesis 6:5-8:22", "A flood sent to destroy mankind; one man warned, a boat built, a sacrifice after.", ["atShip"]),
       ("Genesis 9:1", "After the flood the gods limit mankind's numbers; in Genesis God blesses it: be fruitful and multiply.", [])]),
     ("Eridu Genesis", "Eridu Genesis", None,
      "Sumerian, about 1600 BC: the creation of man, the first cities and the Flood, survived by King Ziusudra in a great boat.",
@@ -188,7 +230,7 @@ ENTRIES = [
     ("Adapa", "Adapa", "",
      "Babylonian myth (a copy among the Amarna letters, 14th century BC): Adapa, the wise man of Eridu, refuses the food and water of life Anu offers him, and so loses immortality.",
      "The food of life offered and refused: man losing immortality, as at the tree of life.",
-     [("Genesis 3:22-24", "Life for ever within reach and lost: the tree of life barred.", [])]),
+     [("Genesis 3:22-24", "Life for ever within reach and lost: the tree of life barred.", ["adLife"])]),
     ("Sumerian King List", "Sumerian King List", None,
      "Sumerian, about 2000 BC (the Weld-Blundell prism, about 1800 BC): the kings of Sumer since \"kingship descended from heaven\", with reigns of thousands of years before the Flood.",
      "Kings ruling thousands of years before the Flood, far shorter reigns after - as Genesis' ages before and after Noah.",
@@ -396,6 +438,30 @@ def gutenberg(n, pins, dl=None):
     return data.decode("utf-8").replace("\r\n", "\n")
 
 
+def archive(ident, pins, src):
+    """An Internet Archive scan's text recognition (its _djvu.txt), pinned by SHA-256 (pins["archive"][ident]); kept in
+    DL. Spaces collapsed, then CORRECTIONS[src] applied - each must be found, else the build stops."""
+    path = DL / f"ia-{ident}.txt"
+    if not path.exists():
+        path.write_bytes(finds.fetched(urllib.request.Request(f"https://archive.org/download/{ident}/{ident}_djvu.txt", headers=finds.UA)))
+    data = path.read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if pins.setdefault("archive", {}).setdefault(ident, sha) != sha:
+        raise SystemExit(f"{path}: not the pinned text (SHA-256 differs)")
+    text = re.sub(r"[ \t]+", " ", data.decode("utf-8").replace("\r\n", "\n"))
+    for wrong, right in CORRECTIONS.get(src, ()):
+        if wrong not in text:
+            raise SystemExit(f"{ident}: correction not found: {wrong!r}")
+        text = text.replace(wrong, right, 1)
+    return text
+
+
+def translation(src, pins):
+    """A translation's text (TRANSLATIONS[src]), read as its kind says."""
+    kind, where, _ = TRANSLATIONS[src]
+    return wikisource(where, pins) if kind == "ws" else gutenberg(where, pins) if kind == "pg" else archive(where, pins, src)
+
+
 def articles(titles, pins):
     """The Wikipedia articles: title -> (its title after redirects, wikitext, page image), pinned by revision
     (pins["articles"][title]: [title, revid])."""
@@ -431,20 +497,35 @@ def articles(titles, pins):
 
 def excerpt(text, first, last, how):
     """The stretch of a translation from first to last (both kept - last "<words": up to them; first's first
-    occurrence) as HTML: footnotes,
-    illustrations and note marks dropped, _italics_ marks dropped; set as how says (EXCERPTS)."""
-    i = text.find(first)
-    j = text.find(last.lstrip("<"), i)
-    if i < 0 or j < 0:
-        raise SystemExit(f"Excerpt not found: {first!r} ... {last!r}")
-    chunk = text[i:j if last.startswith("<") else j + len(last)].replace("​", "")
+    occurrence; first a list of (first, last) stretches: each found after the one before, joined line after line) as
+    HTML: footnotes, illustrations and note marks dropped, _italics_ marks dropped; set as how says (EXCERPTS)."""
+    parts, at = [], 0
+    for f, l in (first if isinstance(first, list) else [(first, last)]):
+        i = text.find(f, at)
+        j = text.find(l.lstrip("<"), i)
+        if i < 0 or j < 0:
+            raise SystemExit(f"Excerpt not found: {f!r} ... {l!r}")
+        at = j if l.startswith("<") else j + len(l)
+        parts.append(text[i:at])
+    chunk = "\n".join(parts).replace("​", "")
+    if how == "verse":     # (A scan's text has a blank line between printed lines: one paragraph, a line each)
+        chunk = re.sub(r"\n\s*\n", "\n", chunk)
     paras = []
     for p in re.split(r"\n\s*\n", chunk):
         p = p.strip()
         if not p or p.startswith(("[Footnote", "[Illustration")) or re.fullmatch(r"\d+", p):
             continue
         p = re.sub(r"\[\d+\]|\((?:\d+)\)", "", p).replace("_", "")
-        if how == "lines":     # (A numbered line starts a new line; a wrapped one joins the line before)
+        if how == "verse":     # (A printed line each; one starting lowercase is the wrapped end of the one before)
+            lines = []
+            for ln in p.split("\n"):
+                ln = ln.strip()
+                if lines and ln[:1].islower():
+                    lines[-1] += " " + ln
+                elif ln:
+                    lines.append(ln)
+            paras += lines
+        elif how == "lines":     # (A numbered line starts a new line; a wrapped one joins the line before)
             lines = []
             for ln in p.split("\n"):
                 ln = ln.strip()
@@ -458,6 +539,8 @@ def excerpt(text, first, last, how):
     e = html.escape
     if how == "lines":
         return "<p>" + "<br>".join(f"<i>{e(x)}</i>" if x.startswith("[") else e(x) for x in paras) + "</p>"
+    if how == "verse":
+        return "<p>" + "<br>".join(e(x) for x in paras) + "</p>"
     if how == "run":
         return f"<p>{e(' '.join(paras))}</p>"
     return "".join(f"<p>{e(x)}</p>" for x in paras)
@@ -471,8 +554,8 @@ def quoted(keys):
     out = []
     for k in keys:
         src, first, last, how, label = EXCERPTS[k]
-        kind, where, credit = TRANSLATIONS[src]
-        text = wikisource(where, pins) if kind == "ws" else gutenberg(where, pins)
+        credit = TRANSLATIONS[src][2]
+        text = translation(src, pins)
         out.append(f"<blockquote>{excerpt(text, first, last, how)}"
                    f"<p><small>{html.escape(label + ' - ' if label else '')}{html.escape(credit)}</small></p></blockquote>")
     return out
@@ -503,7 +586,7 @@ def build(main_db):
     DL.mkdir(parents=True, exist_ok=True)
     finds.last_verses(main_db)
     pins = json.loads(PINS.read_text()) if PINS.exists() else {}
-    texts = {k: (wikisource(w, pins) if kind == "ws" else gutenberg(w, pins)) for k, (kind, w, _) in TRANSLATIONS.items()}
+    texts = {k: translation(k, pins) for k in TRANSLATIONS}
     arts = articles([a[0] for a in ENTRIES], pins)
     images = {a[0]: (a[2] if a[2] is not None else arts[a[0]][2]) for a in ENTRIES}
     finds.commons(images.values(), DL)
