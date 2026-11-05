@@ -6,7 +6,7 @@
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts at the chapter read; after each card is added it's blank (each picker blank until
-//   the one before it is picked, + ADD CARD greyed out until a chapter is). The add row is
+//   the one before it is picked, + ADD CARD greyed out until FROM VERSE is: Whole chapter or a verse). The add row is
 //   two lines, each wrapping where it doesn't fit: TRANSLATION, LANGUAGE, the deck's Interlinear, Parsing and
 //   Transliteration; then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE) and + ADD CARD.
 // - A CARD'S LANGUAGE (picked on the add row when it's added - OT Hebrew at first): OT HEBREW, OT LXX GREEK (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
@@ -20,7 +20,7 @@
 //   switched to the first if None was picked); the translation where one is picked (and has the card's testament) - an
 //   English-only card with none picked the first translation that has it, so it always shows something.
 // - A CARD: its front the reference; turned over, the back alone - the reference, the translation's verses (each
-//   numbered in a range), the original. Under the deck the list, in the order added: each reference and ✕ removing it (its
+//   numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added: each reference and ✕ removing it (its
 //   text set as it was added). The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
@@ -130,18 +130,19 @@ async function backOf (c: VerseCard, used: Map<string, string>): Promise<string>
 type Language = "he" | "lxx" | "en";
 const LANGUAGES: [Language, string][] = [["he", "OT Hebrew"], ["lxx", "OT LXX Greek"], ["en", "English only"]];
 let language: Language = "he";
-/** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from 0: the whole chapter;
- *  to 0: the from verse alone) - null till the screen first opens (then the chapter read); blank again after each card
+let listShown = false;     // (The deck's list of cards: hidden till SHOW LIST)
+/** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked, 0: the whole
+ *  chapter; to 0: the from verse alone) - null till the screen first opens (then the chapter read); blank again after each card
  *  is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } | null = null;
 
 /** The add row's BOOK, CHAPTER, FROM VERSE and TO VERSE, redrawn as one changes (each blank until the one before it is
- *  picked; + ADD CARD greyed out until a chapter is). */
+ *  picked; + ADD CARD greyed out until FROM VERSE is). */
 async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   if (! pickAt) {
     const [b, c] = reading ();
     const book = books.find ((x) => x.code === b.code) ?? null;
-    pickAt = { book, chapter: book ? c : 0, from: 0, to: 0 };
+    pickAt = { book, chapter: book ? c : 0, from: -1, to: 0 };
   }
   const p = pickAt, b = p.book;
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
@@ -159,14 +160,14 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   const chosen = !! (b && p.chapter);
   el.replaceChildren (
     pick ("Book", [...(b ? [] : [BLANK]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
-          (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = p.to = 0; }),
+          (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
-          p.chapter || "", (v) => { p.chapter = +v; p.from = p.to = 0; }, ! b),
-    pick ("From verse", chosen ? [[0, "Whole chapter"], ...vs.map ((v): [number, string] => [v, String (v)])] : [BLANK], chosen ? p.from : "",
-          (v) => { p.from = +v; p.to = 0; }, ! chosen),
-    pick ("To verse", p.from ? [[0, String (p.from)], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
-          p.from ? p.to : "", (v) => { p.to = +v; }, ! p.from));
-  addBtn.disabled = ! chosen;
+          p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
+    pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? [[0, "Whole chapter"], ...vs.map ((v): [number, string] => [v, String (v)])] as [number, string][] : [])],
+          p.from < 0 ? "" : p.from, (v) => { p.from = +v; p.to = 0; }, ! chosen),
+    pick ("To verse", p.from > 0 ? [[0, String (p.from)], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
+          p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
+  addBtn.disabled = ! chosen || p.from < 0;
 }
 
 async function draw (body: HTMLElement) {
@@ -181,10 +182,14 @@ async function draw (body: HTMLElement) {
       <div class="vcBreak"></div><div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
+    <button class="pill" id="vcShowList"></button>
     <div class="vcList"></div>
     <div class="src vcCredits"></div>`;
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
+  const showList = body.querySelector<HTMLElement> ("#vcShowList")!;
+  const showing = () => { listEl.hidden = ! listShown; showList.textContent = listShown ? "Hide list" : "Show list"; };
+  showList.addEventListener ("click", () => { listShown = ! listShown; showing (); });
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
   // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, its ✕ deleting it (asked first).
@@ -213,6 +218,7 @@ async function draw (body: HTMLElement) {
     for (const b of body.querySelectorAll<HTMLElement> ("[data-o]")) b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"]));
     listEl.innerHTML = d.cards.map ((c) => `<div class="vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span>
         <button class="pill icon" aria-label="Remove">✕</button></div>`).join ("");
+    showList.hidden = ! d.cards.length; showing ();
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; return; }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
@@ -225,10 +231,10 @@ async function draw (body: HTMLElement) {
   drawPick (placeEl, addBtn);
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
-    if (! p?.book || ! p.chapter) return;
+    if (! p?.book || ! p.chapter || p.from < 0) return;
     const orig: Original = p.book.testament === "NT" ? "gr" : language === "lxx" ? "lxx" : "he";
     d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from), orig, en: language === "en" });
-    pickAt = { book: null, chapter: 0, from: 0, to: 0 };     // (Blank for the next card)
+    pickAt = { book: null, chapter: 0, from: -1, to: 0 };     // (Blank for the next card)
     drawPick (placeEl, addBtn);
     save (); deck ();
   });
