@@ -26,6 +26,8 @@
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
   --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
   --fs-icon: 22px;     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
+  --x-glyph: calc(var(--fs-icon) * 1.15);     /* (Every ✕: its glyph drawn small for its font, so a little larger to match the other icons) */
+  --icon-h: calc(var(--fs-icon) + 2 * var(--head-y));     /* (An icon button's box: its height, whatever its glyph - .pill.icon's padding) */
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
@@ -122,7 +124,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* An icon pill (.icon: ☰ ✕ ⋯ ‹ › ▶, the speakers', the play bar's, the heading's): the icon's size, the heading's
    height. */
 .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: var(--head-y) 0; }
-.pill.icon.x { font-size: calc(var(--fs-icon) * 1.15); padding-block: calc(var(--head-y) - var(--fs-icon) * .075); }     /* (Every ✕ - and the Verse cards' +, a ✕ while open: one size, the glyph drawn small for its font so a little larger than the other icons - its box their height, so a ⋯ turning ✕ moves nothing in its row) */
+.pill.icon.x { font-size: var(--x-glyph); padding-block: calc((var(--icon-h) - var(--x-glyph)) / 2); }     /* (Every ✕ - and the Verse cards' +, a ✕ while open: one size, --x-glyph, in the icons' box, --icon-h - so a ⋯ turning ✕ moves nothing in its row) */
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 /* A caption (.ref a verse's reference, .src a source's or list's heading): small capitals, muted. */
