@@ -74,7 +74,7 @@ export async function personOf (where: number[]): Promise<{ item: number; line: 
   }
 }
 
-/** A chapter's place in time (Chapter Study's timeline: chapterstudy.ts): its year (ISO astronomical; null none), its
+/** A chapter's place in time (Study printout's timeline: chapterstudy.ts): its year (ISO astronomical; null none), its
  *  items' ids, and the timeline's lanes, items and credit; null when the timeline can't be read. */
 export async function chapterTime (book: number, chapter: number) {
   const d = await data ();

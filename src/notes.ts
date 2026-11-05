@@ -433,7 +433,7 @@ function refs (where: number[][]): string {
   return out.join ("; ");
 }
 
-/** A note as the panel draws it (Chapter Study's too: chapterstudy.ts): its range when it spans verses, the words it's
+/** A note as the panel draws it (Study printout's too: chapterstudy.ts): its range when it spans verses, the words it's
  *  on, its body - the pipeline's own HTML, a few tags only (notes.py's docstring lists them). */
 export function noteElement (n: Note): HTMLElement {
   const el = document.createElement ("div");
@@ -448,7 +448,7 @@ export function noteElement (n: Note): HTMLElement {
  *  folds - so the reader goes from Tertullian to Hippolytus without scrolling through Tertullian. The father and work
  *  are the body's lead (<b>father <span class="life">(dates)</span></b> <small>(work)</small>), taken off the quote;
  *  the dates keep their span, out of the heading's capitals (style.css' .life). */
-const FOLDED = new Set (["catena", "fathers"]);
+export const FOLDED = new Set (["catena", "fathers"]);     // (Study printout filters them by father too)
 function foldedNote (n: Note): HTMLElement {
   const full = noteElement (n);
   const lead = full.querySelector ("p > b");
@@ -478,7 +478,7 @@ function foldedNote (n: Note): HTMLElement {
   return el;
 }
 
-/** The sources with notes for a book in its own testament (Chapter Study's list: chapterstudy.ts) - beside the
+/** The sources with notes for a book in its own testament (Study printout's list: chapterstudy.ts) - beside the
  *  Septuagint only its own (not the Hebrew's, as the picker offers them). */
 export const sourcesFor = (b: Book) => sources.filter ((s) => offers (s, b.testament) && covers (s, b));
 

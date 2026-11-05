@@ -56,7 +56,7 @@ a non-commercial license are marked so in NOTICE.
       pinched or wheeled from the whole Bible to one reign; the chapter read marked ("you are here") and opened on;
       each item tapped going to its verses; a person's dates in the word panel (96 persons) with a Timeline button.
       Data: Theographic Bible Metadata (CC BY-SA 4.0), Floyd Nolen Jones's chronology (after Ussher).
-- [x] **☰ Chapter Study** (built 2026-11-04 - to play with): a printout for the chapter, editor and preview side by
+- [x] **☰ Study printout** (built 2026-11-04 - to play with): a printout for the chapter, editor and preview side by
       side (stacked on a phone); + Add item - the text (with its options), notes beside each verse or as sections,
       dictionary articles, the Atlas map, the Timeline, a word list -, dragged into order, ✕ to remove; Print / Save
       as PDF through the browser. Kept per chapter.
