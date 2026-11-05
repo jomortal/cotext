@@ -169,7 +169,7 @@ async function draw (body: HTMLElement) {
     <div class="vcAdd">
       <button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button><button class="pill" data-o="translit">Transliteration</button>
       <label class="vcPick">OT<select class="choose" id="vcNew"${newEn ? " disabled" : ""}>${options (OT_CHOICES, newOT)}</select></label>
-      <label class="vcPick"><input type="checkbox" id="vcEn"${newEn ? " checked" : ""}> English only</label>
+      <label class="vcPick">English only<input type="checkbox" id="vcEn"${newEn ? " checked" : ""}></label>
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
