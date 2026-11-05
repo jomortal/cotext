@@ -1,7 +1,8 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
-// - THE SCREEN (no title of its own): the open deck's name at the top and ⋯ beside it, then the deck and the credits.
-//   ⋯ shows (or hides) everything else, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
+// - THE SCREEN (no title of its own): the open deck's name centered in the top row (between ☰ and ✕, as the Bible
+//   view's heading, staying as the screen scrolls) and ⋯ beside it, then the deck and the credits. ⋯ shows (or
+//   hides) everything else - a line between it and the deck -, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
 //   (below).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (last in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),

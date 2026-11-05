@@ -258,8 +258,8 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#screenMenu { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
-#screenClose { position: fixed; z-index: 31; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
+#screenMenu { position: fixed; z-index: 32; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
+#screenClose { position: fixed; z-index: 32; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
@@ -410,11 +410,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
-.vcTop { display: flex; align-items: center; gap: 12px; }     /* (The deck's name and ⋯ beside it) */
-.vcTitle { min-width: 0; overflow-wrap: anywhere; }
+.vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; display: flex; justify-content: center; align-items: center; gap: 12px;
+         padding: calc(6px + env(safe-area-inset-top, 0px)) 64px 6px; background: var(--bg); border-bottom: 1px solid var(--edge); }     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
+.vcTitle { min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-m); font-weight: 600; text-align: center; }
+@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } }
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
-.vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }     /* (⋯'s options, as the screen's rows, set off from the deck) */
+.vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--edge); }     /* (⋯'s options, as the screen's rows, set off from the deck) */
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
