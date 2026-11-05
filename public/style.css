@@ -643,10 +643,11 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 #screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }
 #screen:not(:has(#cardSheet:not([hidden]))) #cardSplit, #screen:not([data-screen="Verse cards"]) #cardSplit { display: none; }     /* (Its divider only with it) */
 #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--barH) + var(--pad)); }
-@media (min-width: 700px) {     /* (Wide: as wide as the screen; its height as dragged (#cardSplit: layout.ts' --cardH), else just the word's info - the lexicon scrolling in its column beside it: --cardFit, versecards.ts -, else 45 % of the window) */
-  #cardSheet { left: var(--textL, 0px); right: var(--studyR, 0px); height: min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)); border-top: 0 !important; }
-  #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + var(--barH)); }
-  #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + 14px + var(--barH) + var(--pad)); }
+@media (min-width: 700px) {     /* (Wide: as wide as the screen; its height as dragged (#cardSplit: layout.ts' --cardH), else just the word's info - the lexicon scrolling in its column beside it: --cardFit, versecards.ts -, else 45 % of the window; undragged, at most half the room between the top and the bar - a phone held sideways) */
+  #screen { --cardPanelH: min(var(--cardH, min(var(--cardFit, calc(100dvh * .45)), calc((100dvh - 47px - env(safe-area-inset-top, 0px) - var(--barH)) / 2))), calc(100dvh - 160px)); }
+  #cardSheet { left: var(--textL, 0px); right: var(--studyR, 0px); height: var(--cardPanelH); border-top: 0 !important; }
+  #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: calc(var(--cardPanelH) + var(--barH)); }
+  #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--cardPanelH) + 14px + var(--barH) + var(--pad)); }
 }
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
