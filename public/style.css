@@ -647,7 +647,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    its margins as the panes'. Less room - a pane opened or widened, the window narrowed - and it goes back under the
    text. */
 body.sideWord #textCol { display: contents; }     /* (Its box not there: the text, the divider and the word's panel each a column of the body's grid) */
-body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
+body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, var(--sheetW0)) * 1%); }
 body.sideWord main { grid-column: 1; grid-row: 2; }
 body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
 body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWord #verseSheet { grid-column: 1 / 4; grid-row: 3; } body.sideWord #playBar { grid-row: 4; }     /* (The add-verse box under the text and its word, the play bar under it) */
@@ -815,10 +815,10 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 /* SIDE BAR - a phone held sideways (bars.ts' SIDE_BAR: keep the two the same): the bottom bars (the play bar, the
    Verse cards' bar) a vertical bar down the right side, the screen's width less it (--sideBar) - the room at the foot
    (--barH) none. Their buttons top to bottom as left to right: search, ▶, notes; Shuffle, Flip, Start over. */
-:root { --sideBar: 0px; }
+:root { --sideBar: 0px; --sheetW0: 25; }     /* (--sheetW0: the word's panel beside the text, % of the window, until dragged) */
 .vcBar .ico { display: none; }     /* (Upright: the Verse cards' bar in words - its icons only in the side bar) */
 @media (orientation: landscape) and (max-height: 500px) {
-  :root { --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
+  :root { --sheetW0: 40; --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
   body { right: var(--sideBar); }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
   :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } body.sideWord #sheet > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the text, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
