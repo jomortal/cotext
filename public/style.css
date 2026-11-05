@@ -122,6 +122,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* An icon pill (.icon: ☰ ✕ ⋯ ‹ › ▶, the speakers', the play bar's, the heading's): the icon's size, the heading's
    height. */
 .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: var(--head-y) 0; }
+.pill.icon.x { font-size: calc(var(--fs-icon) * 1.15); }     /* (Every ✕ - and the Verse cards' +, a ✕ while open: one size, the glyph drawn small for its font so a little larger than the other icons) */
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 /* A caption (.ref a verse's reference, .src a source's or list's heading): small capitals, muted. */
@@ -255,16 +256,16 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 
 /* The passage picker: over the text - the whole screen, or a wide one's text column (picker.ts sets its right) -, books
    then chapters, at most the text's 8 inches wide. */
-#picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20;
-          padding: 0 var(--safe-r) 0 var(--safe-l); }
-/* The list scrolls in its own box (#pickerBody), its ✕ placed over the top right corner outside it - no bar of its own -
-   so the ✕ never moves, not even with the bounce at the list's ends. */
+#picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20; }
+/* The list scrolls in its own box (#pickerBody) the screen's width - its scroll bar at the screen's edge, as the Verse
+   cards' - starting under the ✕ (placed where theirs is, over the box's top, no bar of its own), so the bar never
+   meets the ✕; the list in it as far from the edge as a verse card (12px). */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; position: relative; }
-#picker .top { position: absolute; z-index: 1; top: calc(var(--pad) + env(safe-area-inset-top, 0px)); right: 0; }
-#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) 0 calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
-#pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; text-align: center; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings, centered - one line on a phone, beside the ✕) */
-#pickerBody > .src:first-child { margin-top: 6px; padding-inline: 18px; }     /* (Clear of the ✕, still centered) */
-#pickerBody::-webkit-scrollbar-track { margin-top: calc(56px + env(safe-area-inset-top, 0px)); }     /* (Its scroll bar below the ✕, never beside it) */     /* (The first level with the ✕, clear of it) */
+#picker .top { position: absolute; z-index: 1; top: var(--head-top); right: var(--col-r); }
+#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: calc(var(--head-top) + var(--fs-icon) * 1.15 + var(--head-y) * 3);
+              padding: 0 max(12px, env(safe-area-inset-right, 0px)) calc(var(--pad) + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+#pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; text-align: center; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings, centered - one line on a phone) */
+#pickerBody > .src:first-child { margin-top: 2px; }
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: var(--gap); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
@@ -275,7 +276,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed; tapping it still closes the drawer) */
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: 80vw; background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
                border-right: var(--rule); display: grid; align-content: start; gap: var(--gap); overflow-y: auto;
-               padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(3 * var(--pad)) var(--pad) var(--safe-l); }
+               padding: var(--head-top) calc(3 * var(--pad)) var(--pad) var(--safe-l); }     /* (Its ✕ at the top rows' height: --head-top) */
 #drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
 .src .langPick { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--soft); padding: 0; margin-right: 10px; }     /* (The book list's Old Testament heading: HEBREW and GREEK LXX in its own small capitals, the one picked in the accent - .pill[aria-pressed]) */
 .src .langPick[aria-pressed="true"] { color: var(--accent); }
@@ -451,7 +452,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen[data-screen="Verse cards"] { padding-top: calc(var(--vcTopH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --vcTopH, versecards.ts) */
 .vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 .vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (+ where the Bible view's ⋯ is: the top row's right end) */
-#vcPlus { font-size: calc(var(--fs-icon) * 1.15); line-height: 1; }
+
 #screen[data-screen="Verse cards"] #screenClose { display: none; }     /* (No ✕: back to the Bible by ☰, ⋯ in its place) */     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
 .vcTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
 @media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: + at the column's edge, as the Bible view's ⋯) */
