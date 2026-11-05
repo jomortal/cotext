@@ -147,6 +147,10 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
 export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file && s.kind !== "syntax" && s.kind !== "atlas" && s.kind !== "timeline"
   && (offers (s, "NT") || (ot === "OT" ? offers (s, "OT") : offers (s, "LXX") || (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id)))));
 
+/** The English translations keyed by the Hebrew Bible's and the NT's verses (not Brenton's own-numbered Septuagint),
+ *  in the notes' order: the verse cards' TRANSLATION (versecards.ts). */
+export const translationSources = () => sources.filter ((s) => s.kind === "translation" && (offers (s, "OT") || offers (s, "NT")));
+
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
  *  search's own handle on it, so searching never closes the notes' open source. */
 export const openSource = (s: Source, onProgress: (fraction: number) => void) => openNotesDb (s.id, s.file, s.version, onProgress);

@@ -7,6 +7,7 @@ import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker } from "./picker";
+import { ABBR } from "./booknames";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
 import { setAudioTestament } from "./audio";
@@ -23,6 +24,7 @@ import { initDictionary } from "./dictionary";
 import { initAtlas } from "./atlas";
 import { initTimeline } from "./timeline";
 import { initChapterStudy } from "./chapterstudy";
+import { initVerseCards } from "./versecards";
 import "./layout";     // (The wide layout's dividers)
 
 const status = document.getElementById ("status")!;
@@ -36,23 +38,7 @@ let book: Book;
 let chapter = 1;
 
 // The heading's place: the book's name and chapter on one line, or - when that would wrap (a narrow screen, a long
-// name) - its SBL abbreviation with a full stop: 1 Thessalonians 1 -> 1 Thess. 1. Checked again when the window resizes.
-const ABBR: Record<string, string> = { Genesis: "Gen", Exodus: "Exod", Leviticus: "Lev", Numbers: "Num", Deuteronomy: "Deut",
-  Joshua: "Josh", Judges: "Judg", "1 Samuel": "1 Sam", "2 Samuel": "2 Sam", "1 Kings": "1 Kgs", "2 Kings": "2 Kgs",
-  "1 Chronicles": "1 Chr", "2 Chronicles": "2 Chr", Nehemiah: "Neh", Esther: "Esth", Psalms: "Ps", Proverbs: "Prov",
-  Ecclesiastes: "Eccl", "Song of Songs": "Song", Isaiah: "Isa", Jeremiah: "Jer", Lamentations: "Lam", Ezekiel: "Ezek",
-  Daniel: "Dan", Hosea: "Hos", Obadiah: "Obad", Micah: "Mic", Nahum: "Nah", Habakkuk: "Hab", Zephaniah: "Zeph",
-  Haggai: "Hag", Zechariah: "Zech", Malachi: "Mal", Matthew: "Matt", Romans: "Rom", "1 Corinthians": "1 Cor",
-  "2 Corinthians": "2 Cor", Galatians: "Gal", Ephesians: "Eph", Philippians: "Phil", Colossians: "Col",
-  "1 Thessalonians": "1 Thess", "2 Thessalonians": "2 Thess", "1 Timothy": "1 Tim", "2 Timothy": "2 Tim",
-  Philemon: "Phlm", Hebrews: "Heb", James: "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet", Revelation: "Rev",
-  // (The Septuagint's: SBL's, its two texts of a book marked OG / Th)
-  "1 Kingdoms": "1 Kgdms", "2 Kingdoms": "2 Kgdms", "3 Kingdoms": "3 Kgdms", "4 Kingdoms": "4 Kgdms", "1 Esdras": "1 Esd",
-  "2 Esdras (Ezra)": "2 Esd", "2 Esdras (Nehemiah)": "Neh", "Wisdom of Solomon": "Wis", "Sirach (Prologue)": "Sir Prol",
-  "Tobit (Sinaiticus)": "Tob S", "Letter of Jeremiah": "Ep Jer", "Daniel (Old Greek)": "Dan OG", "Daniel (Theodotion)": "Dan Th",
-  "Susanna (Old Greek)": "Sus OG", "Susanna (Theodotion)": "Sus Th", "Bel and the Dragon (Old Greek)": "Bel OG",
-  "Bel and the Dragon (Theodotion)": "Bel Th", "1 Maccabees": "1 Macc", "2 Maccabees": "2 Macc", "3 Maccabees": "3 Macc",
-  "4 Maccabees": "4 Macc", "Psalms of Solomon": "Pss Sol" };
+// name) - its SBL abbreviation (booknames.ts' ABBR) with a full stop: 1 Thessalonians 1 -> 1 Thess. 1. Checked again when the window resizes.
 function showPlace () {
   if (! book) return;
   placeBtn.textContent = `${book.name} ${chapter}`;
@@ -189,7 +175,8 @@ async function start () {
   initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
   initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
   initTimeline (db, () => [book?.id ?? 0, chapter], (id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (The Timeline: the chapter read, an item tapped)
-  initChapterStudy (db, () => [book, chapter], shown);     // (☰ Study printout: the chapter read, its first time; the books to pick from)
+  initChapterStudy (db, () => [book, chapter], shown);
+  initVerseCards (db, books);     // (☰ Verse cards: a reference typed is looked up in the Hebrew Bible's and the NT's books)     // (☰ Study printout: the chapter read, its first time; the books to pick from)
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }

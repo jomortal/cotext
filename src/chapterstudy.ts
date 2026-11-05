@@ -64,7 +64,7 @@ type Item = { id: string } & (
   | { k: "time" }
   | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean });
 
-const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
+export const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
 const UNDER = [5, 10, 25, 50, 100, 200, 500];     // (WORD LIST's frequencies: words coming fewer times than this in the testament)
 const HELPS_UNDER = [10, 25, 50, 100, 200, 500];     // (TEXT's HELPS ONLY FOR RARER WORDS: the same, 0 off)
 
@@ -561,18 +561,16 @@ async function render () {
     try {
       if (it.k === "text") {
         credit ("text", TEXT_CREDIT);
-        const box = el ("div", "csText");
-        box.classList.toggle ("csGloss", it.gloss); box.classList.toggle ("csParse", it.parse); box.classList.toggle ("csTranslit", it.translit);
         const range = inRange (vs, it.from, it.to);
+        let box: HTMLElement;
         if (it.other) {
           const ws = await otherWords (range);
-          const [a, z] = [ws[0], ws[ws.length - 1]];
-          h (`${textName (true)} text` + (a ? ` (${a.chapter}:${a.verse}–${z.chapter === a.chapter ? "" : `${z.chapter}:`}${z.verse})` : ""));
-          showChapter (box, { ...book, testament: otherTestament () }, a?.chapter ?? chapter, ws, () => {});
+          h (`${textName (true)} text` + (ws.length ? ` (${wordsSpan (ws)})` : ""));
+          box = textBox ({ ...book, testament: otherTestament () }, ws[0]?.chapter ?? chapter, ws, it);
           if (! ws.length) box.append (el ("p", "", `No ${testamentName (otherTestament ())} verses for these verses.`));
         } else {
           h (`${textName ()} text`);
-          showChapter (box, book, chapter, (await words).filter ((w) => range.includes (w.verse)), () => {});
+          box = textBox (book, chapter, (await words).filter ((w) => range.includes (w.verse)), it);
         }
         if (it.under) {     // (A common word's helps taken off: its root coming under times or more in its testament)
           const count = it.other ? await countsOf ([...box.querySelectorAll<HTMLElement> (".w")].map ((w) => w.dataset.strong ?? ""), otherTestament () === "LXX" ? -1 : 0)
@@ -725,24 +723,41 @@ function timelineBlock (t: NonNullable<Awaited<ReturnType<typeof chapterTime>>>)
   return box;
 }
 
-/** The other text's words for the verses studied (vs): beside a Hebrew book the Septuagint verses translating them
- *  (lxx_heb; Daniel's two Greek forms: the later, Theodotion's, as the reader's language switch takes), beside a
- *  Septuagint book the Hebrew verses it translates - each verse once, in order. */
+/** Words drawn as the reader draws them (reader.ts' showChapter), their lines by the options - Interlinear (gloss),
+ *  Parsing, Transliteration - whatever the ⋯ menu says for the reader (style.css' .csText): a text item here, a verse
+ *  card's original (versecards.ts). Words not tapped (cursor default). */
+export function textBox (b: Book, chapter: number, ws: Word[], o: { gloss: boolean; parse: boolean; translit: boolean }): HTMLElement {
+  const box = el ("div", "csText");
+  box.classList.toggle ("csGloss", o.gloss); box.classList.toggle ("csParse", o.parse); box.classList.toggle ("csTranslit", o.translit);
+  showChapter (box, b, chapter, ws, () => {});
+  return box;
+}
+
+/** Where words stand, as a heading's reference: 22:1–3, 21:1–22:2 (the other text numbering its own). */
+export const wordsSpan = (ws: Word[]) => { const [a, z] = [ws[0], ws[ws.length - 1]];
+  return `${a.chapter}:${a.verse}–${z.chapter === a.chapter ? "" : `${z.chapter}:`}${z.verse}`; };
+
+/** The other text's words for verses lo-hi of a chapter of b: beside a Hebrew book the Septuagint verses translating
+ *  them (the main database's lxx_heb - Psalms and Jeremiah number differently; Daniel's two Greek forms: the later,
+ *  Theodotion's, as the reader's language switch takes), beside a Septuagint book the Hebrew verses it translates -
+ *  each verse once, in order. (The printout's other text; a verse card's Greek LXX: versecards.ts.) */
+export async function translatedWords (theDb: Db, b: Book, chapter: number, lo: number, hi: number): Promise<Word[]> {
+  let refs = (b.testament === "OT"
+    ? await theDb.all ("SELECT DISTINCT book AS b, chapter AS c, verse AS v FROM lxx_heb WHERE hbook = ? AND hchapter = ? AND hverse BETWEEN ? AND ? ORDER BY book, chapter, verse", [b.id, chapter, lo, hi])
+    : await theDb.all ("SELECT DISTINCT hbook AS b, hchapter AS c, hverse AS v FROM lxx_heb WHERE book = ? AND chapter = ? AND verse BETWEEN ? AND ? ORDER BY hchapter, hverse", [b.id, chapter, lo, hi]))
+    .map ((r) => [Number (r.b), Number (r.c), Number (r.v)]);
+  const last = Math.max (...refs.map ((r) => r[0]));
+  refs = refs.filter ((r) => r[0] === last);
+  return (await Promise.all (refs.map (([bk, c, v]) => verseWords (theDb, bk, c, v)))).flat ();
+}
+
+/** The other text's words for the verses studied (vs): translatedWords, kept per range. */
 const others = new Map<string, Promise<Word[]>> ();     // (By the verses studied: "<vs>")
 function otherWords (vs: number[]): Promise<Word[]> {
   const key = vs.join (",");
   let p = others.get (key);
   if (! p && vs.length) {
-    p = (async () => {
-      const [lo, hi] = [Math.min (...vs), Math.max (...vs)];
-      let refs = (book.testament === "OT"
-        ? await db.all ("SELECT DISTINCT book AS b, chapter AS c, verse AS v FROM lxx_heb WHERE hbook = ? AND hchapter = ? AND hverse BETWEEN ? AND ? ORDER BY book, chapter, verse", [book.id, chapter, lo, hi])
-        : await db.all ("SELECT DISTINCT hbook AS b, hchapter AS c, hverse AS v FROM lxx_heb WHERE book = ? AND chapter = ? AND verse BETWEEN ? AND ? ORDER BY hchapter, hverse", [book.id, chapter, lo, hi]))
-        .map ((r) => [Number (r.b), Number (r.c), Number (r.v)]);
-      const last = Math.max (...refs.map ((r) => r[0]));
-      refs = refs.filter ((r) => r[0] === last);
-      return (await Promise.all (refs.map (([b, c, v]) => verseWords (db, b, c, v)))).flat ();
-    }) ();
+    p = translatedWords (db, book, chapter, Math.min (...vs), Math.max (...vs));
     others.set (key, p);
     p.catch (() => others.delete (key));
   }

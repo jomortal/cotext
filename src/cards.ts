@@ -1,7 +1,7 @@
 // Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it, or alone: My vocab's), tapped again to turn it
 // back. BACK and NEXT step through the deck (SHOW between them turns the card over, as a tap on it does) (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
 // order at the first card, REMOVE FROM LIST (or the name its owner gives it; My vocab's decks only) takes the card out (and tells the deck's owner: vocab.ts takes the word off
-// that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below) and My vocab (vocab.ts).
+// that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below), My vocab (vocab.ts) and the Verse cards (versecards.ts).
 //
 // Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
 // chart shows for it, from the same templates (paradigm.ts), shuffled. FILL IN picks the cards' verb: PATTERN - the front
@@ -16,7 +16,7 @@ export interface Card { front: string; back: string; /* HTML */ }
 
 /** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
  *  without it the deck has no such button.
- *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English); otherwise under it. */
+ *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English; a verse card: the verse with its reference); otherwise under it. */
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
   const first = [...cards];
   let deck = [...cards], at = 0;

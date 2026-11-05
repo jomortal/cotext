@@ -403,6 +403,22 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cardBar .pill { font-size: var(--fs-s); padding: 7px 0; }
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", over BACK, SHOW and NEXT) */
 
+/* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
+   its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
+   start of the line - then the list, a line per card (reference, original picker, ✕). */
+.vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
+.vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 1 1 140px; min-width: 0; }
+.vcDeck .card.single .cardFront { font-size: 32px; }
+.vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
+.vcDeck .card.single .cardBack[hidden] { display: none; }
+.vcDeck .cardBack .vcRef { font-size: var(--fs-l); font-weight: 600; text-align: center; }
+.vcDeck .cardBack p { margin: 0 0 4px; }
+.vcNum { font-size: var(--fs-xs); color: var(--soft); }
+.vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }
+.vcRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 12em) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 6px; font-size: var(--fs-s); }
+.vcCredits:empty { display: none; }
+
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
 .guideRow { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 6px; font-size: var(--fs-s); }
 .guideRow .parse { font-size: var(--fs-s); overflow-wrap: anywhere; }
@@ -624,11 +640,12 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .csBlock { margin-top: 22px; }
 .csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: 1px solid var(--edge); padding-bottom: 4px; }
 .csArticle { font-size: var(--fs-m); margin: 14px 0 4px; }
-.csDoc .csText .w { cursor: default; }
-.csDoc .csText .w .gloss, .csDoc .csText .w .parse, .csDoc .csText .w .translit { display: none; }
-.csDoc .csText.csGloss .w .gloss, .csDoc .csText.csParse .w .parse, .csDoc .csText.csTranslit .w .translit { display: block; }
-.csDoc .csText .w.csNoGloss .gloss, .csDoc .csText .w.csNoParse .parse { display: none; }     /* (A common word's helps, by the text item's frequency: chapterstudy.ts) */
-body.noVerbColors .csDoc .csText .w .parse { color: inherit; }
+/* A text drawn by its own options (chapterstudy.ts' textBox: the printout's text items and the verse cards' original), whatever the ⋯ menu says for the reader. */
+.csText .w { cursor: default; }
+.csText .w .gloss, .csText .w .parse, .csText .w .translit { display: none; }
+.csText.csGloss .w .gloss, .csText.csParse .w .parse, .csText.csTranslit .w .translit { display: block; }
+.csText .w.csNoGloss .gloss, .csText .w.csNoParse .parse { display: none; }     /* (A common word's helps, by the text item's frequency: chapterstudy.ts) */
+body.noVerbColors .csText .w .parse { color: inherit; }
 .csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: 2px solid var(--edge); font-size: var(--fs-s); margin-top: 6px; }
 .csBeside > .src { margin: 0 0 2px; }
 .csDoc .note { margin-top: 6px; }
