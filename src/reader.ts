@@ -5,6 +5,7 @@
 // form carries the passage's flow: wayyiqtol the story's main line, qatal background - and by its tense in Greek
 // (its aspect): verbForm, style.css's .vf-...
 
+import { hebrewNumber, greekNumber } from "./numerals";
 import type { Db } from "./db";
 import type { Testament } from "./study";
 import { modernGreek } from "./translit";
@@ -60,7 +61,11 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
       row.dataset.chapter = String (w.chapter); row.dataset.verse = String (verse);     // (Where it stands: the notes panel finds verses by it)
       verseEl = document.createElement ("div");
       verseEl.className = "verse " + (hebrew ? "he" : "gr");
-      row.append (span ("vnum", String (verse)), verseEl);
+      // (The verse number as a word: in the text's own letters on the words' line, smaller - טז, ιϛʹ -, its number on the
+      // interlinear's line under it, shown with the glosses)
+      const num = span ("vnum", ""), orig = span ("orig", ""), n = span ("vnumN", hebrew ? hebrewNumber (verse) : greekNumber (verse));
+      orig.append (n); num.append (orig, span ("gloss", String (verse)));
+      row.append (num, verseEl);
       el.append (row);
     }
     const wordEl = document.createElement ("div");

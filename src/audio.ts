@@ -362,7 +362,7 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   const v = version (), all = m ? (await bookTimings (`${v}/${m[1]}`))?.[m[2]] : undefined;
   if (id !== recSession) return;
   // The rows' verses, each its row: ▶ from the verse at the top of the view to the end.
-  const byVerse = new Map (rows.map ((r) => [Number (r.querySelector (".vnum")!.textContent), r] as const));
+  const byVerse = new Map (rows.map ((r) => [Number (r.dataset.verse), r] as const));
   const clips = (all ?? []).filter ((c) => byVerse.has (c[0]));
   if (! clips.length) {
     stopReading ();

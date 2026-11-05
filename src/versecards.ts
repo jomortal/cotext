@@ -43,8 +43,6 @@ import { onScreen } from "./study";
 import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
-import { nativeName } from "./booknames";
-import { hebrewNumber, greekNumber } from "./numerals";
 import { nativeRef, refPair } from "./refs";
 import { barRoom } from "./bars";
 
@@ -146,17 +144,11 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
                    : (await chapterWords (db, b.id, c.chapter)).filter ((w) => w.verse >= lo && w.verse <= hi);
     const box = textBox (lxx ? { ...b, testament: "LXX" } : b, ws[0]?.chapter ?? c.chapter, ws, deckNow ().settings);
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
-    // (Each verse number in the text's own letters, as a word - its number under it with INTERLINEAR, as a gloss)
     // (Each word keyed to its Word, for its panel when tapped - the card's HTML drawn as text, so kept here)
     box.querySelectorAll<HTMLElement> (".w").forEach ((el, i) => {
       const w = ws[i]; if (! w) return;
       const k = `${w.book}.${w.chapter}.${w.verse}.${w.word}`; cardWords.set (k, w); el.dataset.wk = k;
     });
-    for (const v of box.querySelectorAll<HTMLElement> (".vnum")) {
-      const n = Number (v.textContent), he = !! v.closest (".vrow.he");
-      v.classList.add ("vcVnum");
-      v.innerHTML = `<div class="orig"><span class="vcVnumN">${he ? hebrewNumber (n) : greekNumber (n)}</span></div><div class="gloss">${n}</div>`;     // (The number smaller, in a line as tall as the words')
-    }
     html += `<div class="vcOrig">${box.outerHTML}</div>`;
     // (The Septuagint's reference its own: its book and numbering - Psalms and Jeremiah's differ)
     const lb = lxx && ws.length ? allBooks.find ((x) => x.id === ws[0].book) : undefined, z = ws[ws.length - 1];

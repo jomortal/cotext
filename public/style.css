@@ -29,6 +29,7 @@
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
+  --vnum-gap: 8px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
@@ -131,9 +132,13 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .ref { margin-top: 8px; }
 /* A note (a count, a hint, a label over a list): small and muted. */
 .vcHead, .timelineNote, .vcNum, .vocabRow .n, table.chart .count, table.chart .none, table.chart .same, .csCount { font-size: var(--fs-xs); color: var(--soft); }
-.vrow { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 0 8px; margin-top: 10px; }
+:has(> .vrow) { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--vnum-gap); }     /* (The verses' box: one margin column for all its numbers, as wide as the widest) */
+:has(> .vrow.he) { direction: rtl; } :has(> .vrow) > :not(.vrow) { grid-column: 1 / -1; direction: ltr; }
+.vrow { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; margin-top: 10px; }
 .vrow.he { direction: rtl; }
-.vnum { font-size: var(--fs-xs); font-weight: 600; color: var(--soft); padding-top: .9em; text-align: center; font-variant-numeric: tabular-nums; }     /* (The verse number in the margin) */
+.vnum { display: grid; justify-items: center; align-content: start; gap: 2px; padding: 2px 0; }     /* (The verse number in the margin, laid out as a word - .w's: in the text's letters on the words' line, its number on the interlinear's) */
+.vnumN { font-size: .75em; }     /* (Smaller than the words, not read as one of them - on their baseline, its line as tall as theirs) */
+.vnum .gloss { font-variant-numeric: tabular-nums; }
 .verse { display: flex; flex-wrap: wrap; gap: 14px 12px; min-width: 0; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
@@ -147,7 +152,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* The ⋯ menu's INTERLINEAR, PARSING and TRANSLITERATION (helps.ts): each word's lines shown or not. */
 body.showTranslit .w .translit { display: block; }
 body.showTranslit .sheet .formTranslit { display: block; grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); text-align: start; }     /* (The word's panel: under the word as written and under its root, over their English) */
-body.noGloss .w .gloss, body.noParse .w .parse { display: none; }
+body.noGloss :is(.w, .vnum) .gloss, body.noParse .w .parse { display: none; }
 .parse { font-size: var(--fs-xs); font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
 /* Helps hidden (helps.ts: the slider or "+ Known words"). */
 .w.known .gloss, .w.knownForm .parse { display: none; }     /* (helps.ts: the gloss by the word, the parsing by its form - a help hidden takes no room, so the lines close up) */
@@ -172,7 +177,11 @@ body.noVerbColors .w .parse { color: inherit; }
    iPhone's swipe-up edge. */
 :root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--fs-icon) * 1.1 + 19px + var(--barFoot)); }
 @media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }
-@media (max-width: 600px), (max-height: 500px) { main { padding-left: max(6px, env(safe-area-inset-left, 0px)); padding-right: max(6px, env(safe-area-inset-right, 0px)); } }     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways) */     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
+@media (max-width: 600px), (max-height: 500px) {     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways -, the verse number as near the text: --text-edge) */
+  :root { --text-edge: 6px; }
+  main { padding-left: max(var(--text-edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }
+  :root { --vnum-gap: var(--text-edge); }
+}     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
 :is(#playBar, .vcBar) { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, the others at its ends) */
 #playBar { flex: none; }
@@ -756,15 +765,12 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csArticle { font-size: var(--fs-m); margin: 14px 0 4px; }
 /* A text drawn by its own options (chapterstudy.ts' textBox: the printout's text items and the verse cards' original), whatever the ⋯ menu says for the reader. */
 .csText .w { cursor: default; }
-.csText .w .gloss, .csText .w .parse, .csText .w .translit { display: none; }
-.csText.csGloss .w .gloss, .csText.csParse .w .parse, .csText.csTranslit .w .translit { display: block; }
+.csText :is(.w, .vnum) .gloss, .csText .w .parse, .csText .w .translit { display: none; }
+.csText.csGloss :is(.w, .vnum) .gloss, .csText.csParse .w .parse, .csText.csTranslit .w .translit { display: block; }
 .csText .w.csNoGloss .gloss, .csText .w.csNoParse .parse { display: none; }     /* (A common word's helps, by the text item's frequency: chapterstudy.ts) */
 body.noVerbColors .csText .w .parse { color: inherit; }
 .vcDeck .csText .w .parse { color: inherit; }     /* (Verse cards: the parsing without the verb colors) */
-.vcDeck .vnum.vcVnum { display: grid; justify-items: center; align-content: start; gap: 2px; padding: 2px 0; font-size: inherit; font-weight: 400; color: var(--fg); }     /* (Verse cards: the verse number in the text's letters, laid out as a word - .w's - its number spaced as a gloss) */
 .vcDeck .csText .w { cursor: pointer; }     /* (A card's words tapped for their panel) */
-.vcDeck .csText:not(.csGloss) .vcVnum .gloss { display: none; }
-.vcDeck .vcVnumN { font-size: .75em; }     /* (The verse number smaller than the words, not read as one of them - on their baseline, its line as tall as theirs, so it and its gloss line up with them) */
 .csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: var(--rule-side); font-size: var(--fs-s); margin-top: 6px; }
 .csBeside > .src { margin: 0 0 2px; }
 .csDoc .note { margin-top: 6px; }
@@ -801,6 +807,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 @media (orientation: landscape) and (max-height: 500px) {
   :root { --barH: 0px; --sideBar: calc(72px + env(safe-area-inset-right, 0px)); }
   body { right: var(--sideBar); }
+  main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
   :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0; border-top: 0 !important; border-left: var(--rule); }
@@ -809,7 +816,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
-  .pane > .panelScroll { padding-inline: 6px; } .pane .top { padding-left: 6px; }     /* (The resources' panes - notes, search - their side margins small: more room for their text) */
+  .pane > .panelScroll { padding-inline: var(--text-edge); } .pane .top { padding-left: var(--text-edge); }     /* (The resources' panes - notes, search - their side margins small: more room for their text) */
 }
 
 @media print {
