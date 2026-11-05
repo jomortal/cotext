@@ -6,7 +6,7 @@
 // Three of them, each its own: #sheet for a word of the text read, above the notes panel, a second (cloned from
 // #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
 // (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once - and a third (cloned too) for
-// a word on a verse card, over the Verse cards screen at its foot. makePanel builds one on its
+// a word on a verse card, over the Verse cards screen at its foot (without Search and Dictionary). makePanel builds one on its
 // root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
 
 import { openNotesDb, type Db, type Row } from "./db";
@@ -71,8 +71,9 @@ const cardSheet = textSheet.cloneNode (true) as HTMLElement;
 cardSheet.id = "cardSheet";
 document.getElementById ("screen")!.append (cardSheet);
 
-/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
-function makePanel (sheet: HTMLElement) {
+/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide.
+ *  lean: without Search and Dictionary (a verse card's word's). */
+function makePanel (sheet: HTMLElement, lean = false) {
   const q = <T extends HTMLElement = HTMLElement> (c: string) => sheet.querySelector<T> ("." + c)!;
   const grammar = grammarIn (sheet);
   const setVocabWord = vocabButton (q ("addVocab"));     // (+ My vocab: vocab.ts)
@@ -108,7 +109,7 @@ function makePanel (sheet: HTMLElement) {
     btn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, x.found, grammar.showOther, src, label); });
     return x;
   });
-  q ("speakRoot").after (chartBtn, searchBtn, dictBtn, mapBtn, ...others.map ((x) => x.btn));
+  q ("speakRoot").after (chartBtn, ...(lean ? [] : [searchBtn, dictBtn]), mapBtn, ...others.map ((x) => x.btn));
   let dictFound: Found = { exact: [], subject: [] };
   dictBtn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, dictFound, grammar.showOther); });
   let searchFor: [string, string] | null = null;     // (Strong's, dictionary form)
@@ -375,7 +376,7 @@ function makePanel (sheet: HTMLElement) {
 }
 const progress: ((id: string, p: number) => void)[] = [];     // (Every panel's: a lexicon file's loading progress)
 
-const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet), cardPanel = makePanel (cardSheet);
+const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet), cardPanel = makePanel (cardSheet, true);
 /** A word of the text read tapped (main.ts): the first panel, above the notes. */
 export const showPanel = textPanel.show, hidePanel = textPanel.hide;
 /** A word of the notes panel's Hebrew OT tapped (interlinear.ts): the second panel, under the notes. */
