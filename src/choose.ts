@@ -52,6 +52,7 @@ function enhance (sel: HTMLSelectElement) {
       const opts = el instanceof HTMLOptGroupElement ? [...el.children] : [el];
       if (el instanceof HTMLOptGroupElement) { const h = document.createElement ("div"); h.className = "ref"; h.textContent = el.label; list.append (h); }
       for (const o of opts as HTMLOptionElement[]) {
+        if (o.hidden) continue;     // (A choice not offered just now: Verse cards' None while English only is ticked)
         const b = document.createElement ("button");
         b.type = "button"; b.className = "chooseItem"; b.textContent = o.textContent;
         b.setAttribute ("aria-pressed", String (o.selected));

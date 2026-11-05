@@ -176,7 +176,7 @@ async function start () {
   initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
   initTimeline (db, () => [book?.id ?? 0, chapter], (id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (The Timeline: the chapter read, an item tapped)
   initChapterStudy (db, () => [book, chapter], shown);
-  initVerseCards (db, books);     // (☰ Verse cards: a reference typed is looked up in the Hebrew Bible's and the NT's books)     // (☰ Study printout: the chapter read, its first time; the books to pick from)
+  initVerseCards (db, books, () => [book, chapter]);     // (☰ Verse cards: the Hebrew Bible's and the NT's books to pick from, the add row first at the chapter read)     // (☰ Study printout: the chapter read, its first time; the books to pick from)
   onLanguage (switchLanguage);
   let last: string | null = null;
   try { last = localStorage.getItem (LAST); } catch { /* none */ }
