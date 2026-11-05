@@ -22,7 +22,7 @@
 //   switched to the first if None was picked); the translation where one is picked (and has the card's testament) - an
 //   English-only card with none picked the first translation that has it, so it always shows something.
 // - A CARD: its front the reference; turned over, the back alone - the reference, the translation's verses (each
-//   numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added: each reference and ✕ removing it (its
+//   numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it (its
 //   text set as it was added). The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
@@ -175,7 +175,7 @@ async function draw (body: HTMLElement) {
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
     <div class="bar"><button class="pill" id="vcShowList"></button><button class="pill" id="vcShowDecks"></button></div>
-    <div class="vcList"></div>
+    <div class="bar vcList"></div>
     <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
     <div class="src vcCredits"></div>`;
@@ -215,8 +215,7 @@ async function draw (body: HTMLElement) {
   const deck = async () => {
     const n = ++drawing;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-o]")) b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"]));
-    listEl.innerHTML = d.cards.map ((c) => `<div class="vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span>
-        <button class="pill icon" aria-label="Remove">✕</button></div>`).join ("");
+    listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
     showList.hidden = ! d.cards.length; showing ();
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; return; }
     const used = new Map<string, string> ();
