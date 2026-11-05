@@ -331,7 +331,7 @@ async function draw (body: HTMLElement) {
     }
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
     listHead.hidden = listEl.hidden = ! d.cards.length;     // (VERSE LIST only with cards)
-    if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; shown = null; return; }
+    if (! d.cards.length) { deckEl.innerHTML = "<p>Click the + to add a verse.</p>"; credits.textContent = ""; shown = null; return; }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
     for (const c of d.cards) made.push ({ id: c.id, ...await sidesOf (c, used) });
