@@ -6,7 +6,7 @@
 import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
-import { openPicker } from "./picker";
+import { openPicker, togglePicker } from "./picker";
 import { ABBR } from "./booknames";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
@@ -184,7 +184,7 @@ async function start () {
   go (b, c);
   document.getElementById ("prev")!.addEventListener ("click", () => step (-1));
   document.getElementById ("next")!.addEventListener ("click", () => step (1));
-  placeBtn.addEventListener ("click", () => openPicker (groups (), go, chaptersOf));
+  placeBtn.addEventListener ("click", () => togglePicker (groups (), go, chaptersOf));     // (Tapped again: closed)
   window.addEventListener ("hashchange", () => { const r = parseRef (location.hash.slice (1)); if (r) go (...r); });
 }
 

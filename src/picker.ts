@@ -3,7 +3,8 @@
 // the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart: HEBREW / GREEK LXX in its
 // heading -, then the New Testament, always), one under another; a book tapped opens its chapters (numbers, six
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
-// closed - and picking a chapter goes there (a one-chapter book goes straight there).
+// closed - and picking a chapter goes there (a one-chapter book goes straight there). No ✕: the heading's passage
+// tapped again closes it.
 
 import { nativeName } from "./booknames";
 import type { Book } from "./reader";
@@ -11,7 +12,6 @@ import type { Book } from "./reader";
 const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
 
-document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
 // While the book list is open, the heading's ⋯ is inactive (greyed out: .pill:disabled)
 const optionsBtn = document.getElementById ("optionsBtn") as HTMLButtonElement;
 new MutationObserver (() => { optionsBtn.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
@@ -44,6 +44,11 @@ type Chapters = (book: Book) => Promise<number[]>;
 
 /** groups: [heading - its text, or what it's made of (the Old Testament's: its language buttons) -, its books]...;
  *  chaptersOf: a book's chapter numbers (from the database: a promise). */
+/** The heading's passage tapped: the book list opened - or, open, closed (it has no ✕). */
+export function togglePicker (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
+  if (! picker.hidden) picker.hidden = true; else openPicker (groups, go, chaptersOf);
+}
+
 export function openPicker (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
   fit (); picker.hidden = false;
