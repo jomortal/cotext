@@ -514,7 +514,15 @@ export function rootModel (lemma: string, hebrew: boolean): HebrewModel | GreekM
  *  takes another stem there (ἔρχομαι, ὁράω, λέγω, φέρω, ἐσθίω, τρέχω). */
 const HE_IRREGULAR = new Set (["הלך", "לקח"]);
 const GR_SUPPLETIVE = new Set (["ερχομαι", "οραω", "λεγω", "φερω", "εσθιω", "τρεχω", "εχω", "αιρεω", "πινω"]);
+// (Worked out once per word and form, then kept: helps.ts asks for every word of the chapter at each move of the slider)
+const hardKept = new Map<string, boolean> ();
 export function hardForm (lemma: string, code: string, hebrew: boolean): boolean {
+  const key = (hebrew ? "H" : "G") + lemma + "\u0000" + code;
+  let hard = hardKept.get (key);
+  if (hard === undefined) hardKept.set (key, hard = hardFormOf (lemma, code, hebrew));
+  return hard;
+}
+function hardFormOf (lemma: string, code: string, hebrew: boolean): boolean {
   const plain = lemma.normalize ("NFD").replace (/\p{M}/gu, "").normalize ("NFC");
   if (hebrew) {
     const verb = code.split ("+").find ((seg) => /^[A-Z]+-(P|WP|I|W|WI|COH|J|IMP|PTC|PTP|INA|INC)(-|$)/.test (seg));

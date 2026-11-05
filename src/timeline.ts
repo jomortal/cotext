@@ -103,6 +103,18 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
   // The view: its middle year and how many years it spans across
   let mid = (FIRST + LAST) / 2, span = LAST - FIRST;
   let hits: { x: number; y: number; w: number; h: number; item: Item }[] = [];
+  // Worked out when what they depend on changes, not each frame: the items in drawing order (sortItems, on setHere),
+  // each name's width (normal and bold - measured once), the page's style (its tokens read from it each draw, so
+  // they follow light and dark)
+  let order: Item[] = [];
+  const widths = new Map<Item, [number, number]> ();
+  const css = getComputedStyle (document.documentElement);
+  /** The items most telling first - the chapter's, then the longest -, ties by start. */
+  function sortItems () {
+    const rankOf = (i: Item) => (here.items.has (i.id) ? 1e5 : 0) + (i.end - i.start);
+    order = [...D.items].sort ((a, b) => rankOf (b) - rankOf (a) || a.start - b.start);
+  }
+  sortItems ();
 
   /** The canvas' size and layout: the years' row along the top (gutter), each lane's height. */
   function geometry () {
@@ -114,14 +126,17 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
     mid = Math.min (Math.max (mid, FIRST + span / 2), LAST - span / 2);
   }
 
+  // A move (drag, pinch, wheel) asks for a drawing; one is made a frame at most (moves come faster than frames)
+  let frame = 0;
+  const drawSoon = () => { if (! frame) frame = requestAnimationFrame (() => { frame = 0; draw (); }); };
   function draw () {
     const g = geometry ();
     if (! g.w || ! g.h) return;
     clamp ();
     const dpr = devicePixelRatio || 1;
-    canvas.width = Math.round (g.w * dpr); canvas.height = Math.round (g.h * dpr);
+    const cw = Math.round (g.w * dpr), ch = Math.round (g.h * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }     // (Resized only when its size changes: setting it reallocates the canvas)
     ctx.setTransform (dpr, 0, 0, dpr, 0, 0);
-    const css = getComputedStyle (document.documentElement);
     const token = (n: string) => css.getPropertyValue (n).trim ();
     const fg = token ("--fg"), soft = token ("--soft"), edge = token ("--edge"), accent = token ("--accent"), ui = token ("--ui");
     const hues = HUES.map (token);
@@ -153,15 +168,16 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
     const barAt = compact ? 2 : 4, nameAt = compact ? 8 : 9;          // (A row's bar, and its name under it)
     const rows = Math.max (1, Math.floor ((g.lane - top) / rowSize));
     const used: [number, number][][][] = D.lanes.map (() => Array.from ({ length: rows }, () => []));
-    const rankOf = (i: Item) => (here.items.has (i.id) ? 1e5 : 0) + (i.end - i.start);
-    const order = [...D.items].sort ((a, b) => rankOf (b) - rankOf (a) || a.start - b.start);
     hits = [];
     ctx.save ();     // (Drawn under the years' row: not over the years)
     ctx.beginPath (); ctx.rect (0, g.gutter, g.w, g.h - g.gutter); ctx.clip ();
     for (const it of order) {
       const lit = here.items.has (it.id);
       ctx.font = `${lit ? "600 " : ""}12px ${ui}`;
-      const labelLen = ctx.measureText (it.label).width + 8;
+      let w = widths.get (it);
+      if (! w) { w = [NaN, NaN]; widths.set (it, w); }
+      if (Number.isNaN (w[+lit])) w[+lit] = ctx.measureText (it.label).width;
+      const labelLen = w[+lit] + 8;
       const a = it.start * k, len = Math.max ((it.end - it.start) * k, 0);
       const extent = it.lane === BANDS ? len : Math.max (len, labelLen) + 4;     // (An empire's name kept within its span)
       const free = used[it.lane].findIndex ((r) => r.every (([x, y]) => a + extent <= x || a >= y));
@@ -254,7 +270,7 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
     }
     moved += Math.hypot (now[0] - was[0], now[1] - was[1]);
     down.set (e.pointerId, now);
-    draw ();
+    drawSoon ();
   });
   const up = (e: PointerEvent) => {
     if (! down.delete (e.pointerId) || down.size) return;
@@ -275,13 +291,14 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
     stop ();
     if (zoom) zoomAt (local (e)[0], Math.exp (-e.deltaY * .01));
     else mid += (sideways ? e.deltaX : e.deltaY) * span / geometry ().w;
-    draw ();
+    drawSoon ();
   }, { passive: false });
   new ResizeObserver (draw).observe (wrap);
 
   function setHere (h: Here, smooth = false) {
     const wasHere = here.year !== null;
     here = h;
+    sortItems ();
     const toMid = h.year ?? (FIRST + LAST) / 2;
     const toSpan = h.year === null ? LAST - FIRST : wasHere ? span : HERE_SPAN;
     stop ();

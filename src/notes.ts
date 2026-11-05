@@ -262,7 +262,7 @@ async function drawNotes () {
                          [b.id, chapter, v])).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
     : [[b.id, chapter, v]] })));
   if (! still ()) return;
-  blocks = []; anchors = null;
+  blocks = []; forget ();
   refEl.textContent = many ? `${b.name} ${chapter}` : `${b.name} ${chapter}:${vs[0]}`;
   const all = per.flatMap ((p) => p.where);
   // (The interlinear out of .gBody: its .he would restyle the reader's rows as inline Hebrew text)
@@ -511,7 +511,7 @@ async function drawBookNotes (src: Source) {
     oneWayFrom (noneWord (src.kind), "book");
     const n = ++updating;
     clearInterlinear ();
-    blocks = []; anchors = null;
+    blocks = []; forget ();
     bodyEl.classList.add ("gBody");
     refEl.textContent = b.name;
     bodyEl.innerHTML = "<p>Loading…</p>";
@@ -557,7 +557,7 @@ async function drawBookFinds (id: string) {
     oneWayFrom ("");
     const n = ++updating;
     clearInterlinear ();
-    blocks = []; anchors = null;
+    blocks = []; forget ();
     bodyEl.innerHTML = "<p>Loading…</p>";
     const list = await bookArticles (textDb!, b.id, id);
     if (n !== updating) return;
@@ -595,7 +595,7 @@ async function drawTimeline (b: Book) {
   shownIds = ids; shownVerse = "";
   const n = ++updating;
   oneWayFrom ("");
-  blocks = []; anchors = null;
+  blocks = []; forget ();
   refEl.textContent = `${b.name} ${chapter}`;
   bodyEl.classList.remove ("gBody");     // (Its line in its own small type, not the notes')
   const got = await timelinePane (b.id, chapter, b.name);
@@ -622,7 +622,7 @@ new ResizeObserver (() => fitTimeline ()).observe (notesScroll);
 /** The notes just drawn placed: narrow, from their top; wide, at the text's place (TWO-WAY SCROLLING). */
 function placed () {
   if (! isWide ()) { notesScroll.scrollTop = 0; return; }
-  leader = "text"; anchors = null; jump = true; sync ();
+  leader = "text"; forget (); jump = true; sync ();
 }
 
 /** The Hebrew verses an LXX verse translates, as the panel labels them: 23:0–1, 10:18; 11:0. */
@@ -723,10 +723,12 @@ onWideChange (() => { shownVerse = ""; shownIds = null; if (! panel.hidden) show
 // when either side's content changes size (a redraw, a width dragged, helps shown or hidden).
 let leader: "text" | "notes" = "text";
 let anchors: { t: number; r: number }[] | null = null;
+/** The measurements kept (the anchors, loose following's spans) forgotten: measured again when next needed. */
+function forget () { anchors = null; spansKept = null; }
 for (const [el, who] of [[main, "text"], [notesScroll, "notes"]] as const)
   for (const ev of ["pointerdown", "touchstart", "wheel"]) el.addEventListener (ev, () => { leader = who; }, { passive: true });
 notesScroll.addEventListener ("scroll", () => { if (leader === "notes") follow (); }, { passive: true });
-const remeasure = () => { anchors = null; follow (); };
+const remeasure = () => { forget (); follow (); };
 new ResizeObserver (remeasure).observe (document.getElementById ("chapter")!);
 new ResizeObserver (remeasure).observe (bodyEl);
 
@@ -771,22 +773,36 @@ function sync () {
 // (Loose following. jump: the notes just drawn - the panel goes to the text's first verse whatever it showed before)
 let jump = false;
 
+type Span = readonly [number, number, number];
+let spansKept: { t: Span[]; r: Span[]; pad: number } | null = null;
+/** Each side's verses as [verse, its element's top and the next's top (its end)] in order, measured within the side's
+ *  scrolled content (0 its top) - once, and again only when the anchors are (forget: a redraw, a size changed) - and
+ *  the panel's top padding. */
+function spansNow () {
+  if (spansKept && spansKept.r.length === blocks.length) return spansKept;     // (Blocks added since: measured again)
+  const measure = <T,> (box: HTMLElement, items: T[], el: (x: T) => HTMLElement, verse: (x: T) => number): Span[] => {
+    const base = box.getBoundingClientRect ().top - box.scrollTop;
+    const r = items.map ((x) => el (x).getBoundingClientRect ());
+    return items.map ((x, i) => [verse (x), r[i].top - base, (i + 1 < r.length ? r[i + 1].top : r[i].bottom) - base] as const);
+  };
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  return spansKept = { t: measure (main, rows, (r) => r, (r) => Number (r.dataset.verse ?? 1)),
+                       r: measure (notesScroll, blocks, ([, el]) => el, ([v]) => v),
+                       pad: parseFloat (getComputedStyle (notesScroll).paddingTop) };
+}
+
 /** Loose following (above): the follower jumps to the leader's first verse in view only once its own first verse has
  *  left the leader's view. A verse with no block of its own (inside a range note) is its block's - the last at or
  *  before it. */
 function loose () {
   const mt = main.getBoundingClientRect (), nt = notesScroll.getBoundingClientRect ();
-  const top = { t: mt.top + 6, r: nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop) };     // (6: as the anchors')
+  const kept = spansNow ();
+  const top = { t: mt.top + 6, r: nt.top + kept.pad };     // (6: as the anchors')
   const bottom = { t: mt.bottom, r: nt.bottom };
-  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
-  const verse = (r: HTMLElement) => Number (r.dataset.verse ?? 1);
-  // Each side's verses as [verse, its element's top and the next's top (its end)] in order; its first in view the first
-  // ending more than 2 px below its top (a block just scrolled to sits a fraction of a pixel off)
-  const textSpans = rows.map ((r, i) => [verse (r), r.getBoundingClientRect ().top,
-                                         i + 1 < rows.length ? rows[i + 1].getBoundingClientRect ().top : r.getBoundingClientRect ().bottom] as const);
-  const noteSpans = blocks.map (([v, el], i) => [v, el.getBoundingClientRect ().top,
-                                                 i + 1 < blocks.length ? blocks[i + 1][1].getBoundingClientRect ().top : el.getBoundingClientRect ().bottom] as const);
-  const spans = { t: textSpans, r: noteSpans };
+  // Each side's spans (spansNow) where they are now on the screen; its first in view the first ending more than 2 px
+  // below its top (a block just scrolled to sits a fraction of a pixel off)
+  const onScreen = (s: Span[], base: number) => s.map (([v, a, e]) => [v, a + base, e + base] as const);
+  const spans = { t: onScreen (kept.t, mt.top - main.scrollTop), r: onScreen (kept.r, nt.top - notesScroll.scrollTop) };
   const first = (side: "t" | "r") => spans[side].find (([, , e]) => e > top[side] + 2) ?? spans[side][spans[side].length - 1];
   const at = (side: "t" | "r", v: number) => spans[side].filter (([w]) => w <= v).pop () ?? spans[side][0];
   const seen = (side: "t" | "r", v: number) => { const [, a, e] = at (side, v); return e > top[side] && a < bottom[side]; };
