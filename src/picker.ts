@@ -12,9 +12,10 @@ import type { Book } from "./reader";
 const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
 
-// While the book list is open, the heading's ⋯ is inactive (greyed out: .pill:disabled)
-const optionsBtn = document.getElementById ("optionsBtn") as HTMLButtonElement;
-new MutationObserver (() => { optionsBtn.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
+// While the book list is open, the heading's ⋯ and the play bar's buttons (▶, search, notes) are inactive (greyed out:
+// .pill:disabled)
+const idle = ["optionsBtn", "playBtn", "searchBtn", "notesBtn"].map ((id) => document.getElementById (id) as HTMLButtonElement);
+new MutationObserver (() => { for (const b of idle) b.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
 
 // (On a wide screen it - and a study screen, ☰'s, but for its right edge (below) - starts and ends where the text's column does, so the panes' column
 // at the right stays in view: --textL and --textR, the text's insets from the window's edges, set on the root for
