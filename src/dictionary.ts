@@ -8,8 +8,7 @@
 // (pipeline/tobd_pictures.py: a place's site, a plant, animal or object, a person's or event's engraving) are online
 // only, the thumbnail too - data/images/tobd/<id>.t.jpg in a list (none shown when it can't load), the full picture
 // in an opened article ("Picture online only" when it can't) - and whose places' articles open with the atlas' map of
-// the place (its maps table: atlas.ts' wordMap, as a word's Map shows it), the ISBE's articles on
-// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE"), the Ancient Parallels
+// the place (its maps table: atlas.ts' wordMap, as a word's Map shows it), the Ancient Parallels
 // (pipeline/ane.py: texts like the Code of Hammurabi or Gilgamesh paired with the passages they parallel, photos as
 // the finds'; topical, so no word panel button - by passage and searchable only), and the Ancient Historians
 // (pipeline/historians.py: Josephus, Philo, the Maccabees, Eusebius, the Greek and Roman historians, each passage beside
@@ -36,7 +35,7 @@ import { wordMap, type Place } from "./atlas";
 
 // A source's name under an article's title (the note_sources name where it isn't here)
 const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia",
-                                        isbe: "International Standard Bible Encyclopedia", ane: "Ancient Parallels",
+                                        ane: "Ancient Parallels",
                                         historians: "Ancient Historians" };
 interface Opened { db: Db; name: string; credit: string; photos: boolean; maps: boolean; }     // (photos, maps: its file has that table)
 const files = new Map<string, Promise<Opened | null>> ();     // (Each source's file, once opened; null: none in this database)

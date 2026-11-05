@@ -26,7 +26,7 @@ Tables:
   note_sources  the notes panel's commentaries and apparatuses (src/notes.ts), each its own file in public/data/notes/:
             made by notes.py, whose docstring describes them and their table; also the dictionary (kind 'dictionary',
             public/data/notes/tobd.db: the Tyndale Open Bible Dictionary, made by tyndale_dict.py (its pictures and maps added by tobd_pictures.py); finds.db: the
-            Archaeology finds, made by finds.py; isbe.db: the ISBE's archaeology and site articles, made by isbe.py; ane.db: the Ancient
+            Archaeology finds, made by finds.py; ane.db: the Ancient
             Parallels, made by ane.py; historians.db: the Ancient Historians, made by historians.py), the atlas (kind 'atlas', public/data/notes/atlas.db and its base
             maps' files, made by atlas.py) and the Timeline (kind 'timeline', public/data/notes/timeline.db, made by
             timeline.py)
@@ -71,7 +71,6 @@ import atlas  # noqa: E402
 import finds  # noqa: E402
 import ane  # noqa: E402
 import historians  # noqa: E402
-import isbe  # noqa: E402
 import timeline  # noqa: E402
 import tobd_pictures  # noqa: E402
 import tyndale_dict  # noqa: E402
@@ -297,7 +296,6 @@ def build():
     atlas.build(db)     # (The Atlas: its files, a note_sources row - after tyndale_dict, whose TIPNR it reads)
     tobd_pictures.build(db)     # (The Dictionary's pictures and places' maps: added to tobd.db - after tyndale_dict and atlas, which it reads)
     finds.build(db)     # (The Archaeology finds: its file, a note_sources row - after tyndale_dict, whose TIPNR and verse spans it uses)
-    isbe.build(db)     # (The ISBE's archaeology and site articles: its file, a note_sources row - after finds, whose helpers it uses)
     ane.build(db)     # (The Ancient Parallels: its file, pictures, a note_sources row - after finds, whose helpers it uses)
     historians.build(db)     # (The Ancient Historians: its file, a note_sources row - after ane, whose fetchers it uses)
     timeline.build(db)     # (The Timeline: its file, a note_sources row - after tyndale_dict, whose TIPNR it reads)

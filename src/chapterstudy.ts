@@ -24,7 +24,7 @@
 //     options list the range's notes under their verses, each by its first words (the church fathers' and the
 //     Catena's by father and work), a checkbox each - unticked, left out of the printout; the church fathers' sources
 //     also a checkbox per father in the range (All / None), so only the fathers ticked print.
-//   ARTICLES - a dictionary (Tyndale, ISBE: the articles the verses cite or their words lead to; the Archaeology
+//   ARTICLES - a dictionary (Tyndale: the articles the verses cite or their words lead to; the Archaeology
 //     finds, the Ancient Parallels and the Ancient Historians: those bearing on the verses), one item: every entry for
 //     the chapter or its verse range, printed as the article opens in the app; its options list the entries, a
 //     checkbox each (all ticked at first) - unticked, left out.
@@ -514,7 +514,7 @@ function showMenu () {
 
 type Entry = { id: string; title: string; line: string };
 const entries = new Map<string, Promise<Entry[]>> ();     // (A dictionary's entries for a range: "<src>|<verses>")
-/** A dictionary item's entries for its verses, each once, in order: the Tyndale's and the ISBE's by verse (those citing
+/** A dictionary item's entries for its verses, each once, in order: the Tyndale's by verse (those citing
  *  each, then those its words lead to - dictionary.ts' passageArticles), the finds', parallels' and historians' those
  *  bearing on the verses (bookArticles). */
 async function entriesOf (it: Item & { k: "dict" }): Promise<Entry[]> {

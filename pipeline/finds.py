@@ -504,7 +504,7 @@ def namer(main_db, kinds=("person", "place")):
     """A function (name, verses) -> the Strong's keys TIPNR writes the name with (any case; TIPNR's capitalized names
     of the kinds given only: not its "other" names - a month, a deity, a book's "Chronicles" - nor the common words its
     records list - Abel's "stone"): per language (Hebrew, Greek), the keys with a word in the verses given ({(book,
-    chapter * 1000 + verse)}); none, the one with the most words in the text. Also used by isbe.py."""
+    chapter * 1000 + verse)}); none, the one with the most words in the text."""
     tyndale_dict.download()     # (TIPNR)
     names = {}
     for strong, (kind, ns) in tyndale_dict.tipnr().items():
@@ -534,7 +534,7 @@ def namer(main_db, kinds=("person", "place")):
 def write(out, entries, lemmas, source, photos=None):
     """A dictionary-kind file (tyndale_dict's tables, and photos when given) and its note_sources row (replaced). entries:
     [(id, title, html, line, verses, spans)] in title order; lemmas: strong -> [ids]; photos: id -> (thumbnail data URI, credit, full picture's path).
-    Returns its bytes. Also used by isbe.py."""
+    Returns its bytes."""
     order = {a[0]: n for n, a in enumerate(entries)}
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_suffix(".tmp")
