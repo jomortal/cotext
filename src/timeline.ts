@@ -7,7 +7,8 @@
 //   tick at the lane's edge until zoomed in. Lane hues are the verb colors; the accent is kept for "you are here".
 // - TIME runs left to right on every screen (the years along the top). Dragged to move along it (let go while moving,
 //   it glides on), pinched (or Ctrl / ⌘ + wheel) to zoom - from the whole Bible (creation to Revelation) down to a couple
-//   of years across; the wheel or a trackpad's swipe, any way, moves along time.
+//   of years across; a sideways swipe (or Shift + wheel) moves along time. Up and down - a finger, the wheel - scroll
+//   the page as anywhere, to what's under the timeline (touch-action: pan-y).
 // - YOU ARE HERE: the chapter being read (here: its year, after Theographic's verse years, on the item with most of its
 //   verses) marked by a line across the lanes, the items with a verse in it in the accent; the view centered there
 //   (about 120 years across), else on the whole Bible.
@@ -266,11 +267,14 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
   canvas.addEventListener ("pointerup", up);
   canvas.addEventListener ("pointercancel", up);
   canvas.addEventListener ("wheel", (e) => {
+    // (A trackpad's pinch, or the wheel with Ctrl / ⌘: zooms; a sideways swipe or Shift + wheel moves along time; the
+    // wheel up and down left to scroll the page, to what's under the timeline)
+    const zoom = e.ctrlKey || e.metaKey, sideways = Math.abs (e.deltaX) > Math.abs (e.deltaY);
+    if (! zoom && ! sideways && ! e.shiftKey) return;
     e.preventDefault ();
     stop ();
-    // (A trackpad's pinch, or the wheel with Ctrl / ⌘: zooms; any other wheel or swipe - up, down or sideways - moves along time)
-    if (e.ctrlKey || e.metaKey) zoomAt (local (e)[0], Math.exp (-e.deltaY * .01));
-    else mid += (Math.abs (e.deltaX) > Math.abs (e.deltaY) ? e.deltaX : e.deltaY) * span / geometry ().w;
+    if (zoom) zoomAt (local (e)[0], Math.exp (-e.deltaY * .01));
+    else mid += (sideways ? e.deltaX : e.deltaY) * span / geometry ().w;
     draw ();
   }, { passive: false });
   new ResizeObserver (draw).observe (wrap);
@@ -318,7 +322,7 @@ onScreen ("Timeline", async (body) => {
 // view kept while the page lives, centered on the chapter read and eased to each new chapter's year as the text
 // changes (the zoom kept); a chapter with no year (a genealogy, an undated book) says so in a line over it and shows
 // the whole Bible. The line on its dates under it; the credit is the panel's own line. An item tapped goes to its
-// verse, the pane following. Narrow, notes.ts sizes it to the panel's room (its drag can't scroll the panel).
+// verse, the pane following. Narrow, notes.ts sizes it to the panel's room (a sideways drag moves the timeline; up and down scroll the panel).
 let pane: { el: HTMLElement; say: HTMLElement; view: ReturnType<typeof timelineView> } | null = null;
 /** The pane set to a chapter (name: its book's, for the line), for notes.ts to show - or why it can't be read. */
 export async function timelinePane (book: number, chapter: number, name: string): Promise<HTMLElement | string> {

@@ -566,7 +566,7 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
             height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
-.timeline canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.timeline canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }     /* (A finger up or down scrolls the page; sideways and pinches the timeline: timeline.ts) */
 .timelineStatus { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: var(--fs-s); color: var(--soft); pointer-events: none; }
 .timelineStatus:empty { display: none; }
 .timeline + .credit { margin-top: 4px; }
