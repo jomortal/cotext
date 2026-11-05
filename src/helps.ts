@@ -223,7 +223,7 @@ optionsBtn.addEventListener ("click", () => {
   const open = options.hidden;
   options.hidden = ! open;
   optionsBtn.setAttribute ("aria-expanded", String (open));
-  optionsBtn.textContent = open ? "✕" : "⋯";     // ⋯ opens the menu; ✕ while open closes it
+  optionsBtn.textContent = open ? "✕" : "⋯"; optionsBtn.classList.toggle ("x", open);     // ⋯ opens the menu; ✕ while open closes it (every ✕ one size: style.css' .x)
 });
 // INTERLINEAR, PARSING and TRANSLITERATION: each shows or hides that line of every word (the body's noGloss, noParse,
 // showTranslit: style.css), over what the slider and the hand choices hide.
