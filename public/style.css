@@ -505,12 +505,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
 .vcDeck .cardBack .vcRef { font-size: var(--fs-2xl); text-align: center; }
 .vcRef > :not(.vcNative) { text-transform: uppercase; font-weight: 400; }     /* (The English reference in capitals, as the Greek's - not bold - front and back) */
+.vcDeck .cardFront .vcRef > :not(.vcNative) { font-size: var(--fs-2xl); } .vcDeck .cardBack .vcRef > :not(.vcNative) { font-size: var(--fs-xl); }     /* (The English reference smaller than the original's: the front's a size down, the back's the English verse's) */
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
 .vcNative { font-weight: 400; }
 .vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
-.vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-2xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
+.vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }
 .vcCredits:empty { display: none; }
 
