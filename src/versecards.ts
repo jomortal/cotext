@@ -1,8 +1,9 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
-// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - a row of buttons at
-//   the top, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
-//   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the open deck's NAME edited in place.
+// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - the open deck's NAME
+//   at the top; SHOW DECKS at the bottom (beside SHOW LIST, hidden at first) shows a row of buttons, as My vocab's
+//   lists, the one open lit (the last one used when the screen opens; "My verses" at first),
+//   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (a verse) and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts blank, and is blank again after each card is added (each picker blank until
@@ -129,6 +130,7 @@ type Language = "he" | "lxx" | "en";
 const LANGUAGES: [Language, string][] = [["he", "OT Hebrew"], ["lxx", "OT LXX Greek"], ["en", "English only"]];
 let language: Language = "he";
 let listShown = false;     // (The deck's list of cards: hidden till SHOW LIST)
+let decksShown = false;     // (The decks and + NEW DECK: hidden till SHOW DECKS)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
@@ -164,9 +166,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
-      <button class="pill" id="vcNewDeck">+ New deck</button></div>
-    <div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false"></div>
+  body.innerHTML = `<div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false"></div>
     <div class="vcAdd">
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === language ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
@@ -174,14 +174,21 @@ async function draw (body: HTMLElement) {
       <div class="vcBreak"></div><div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
-    <button class="pill" id="vcShowList"></button>
+    <div class="bar"><button class="pill" id="vcShowList"></button><button class="pill" id="vcShowDecks"></button></div>
     <div class="vcList"></div>
+    <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
+      <button class="pill" id="vcNewDeck">+ New deck</button></div>
     <div class="src vcCredits"></div>`;
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   const showList = body.querySelector<HTMLElement> ("#vcShowList")!;
   const showing = () => { listEl.hidden = ! listShown; showList.textContent = listShown ? "Hide list" : "Show list"; };
   showList.addEventListener ("click", () => { listShown = ! listShown; showing (); });
+  // SHOW DECKS / HIDE DECKS: the decks (each to open or delete) and + NEW DECK, under the list
+  const showDecks = body.querySelector<HTMLElement> ("#vcShowDecks")!, decksEl = body.querySelector<HTMLElement> (".vcDecks")!;
+  const decksShowing = () => { decksEl.hidden = ! decksShown; showDecks.textContent = decksShown ? "Hide decks" : "Show decks"; };
+  showDecks.addEventListener ("click", () => { decksShown = ! decksShown; decksShowing (); });
+  decksShowing ();
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
   // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, its ✕ deleting it (asked first).
