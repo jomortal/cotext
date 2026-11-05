@@ -30,7 +30,7 @@ a non-commercial license are marked so in NOTICE.
         Ancient Near East parallels) and searchable. Not found clean: Rogers' Cuneiform Parallels (1912), King's Seven
         Tablets, Amenemope.
 - [x] **Atlas: eras and routes** (built 2026-11-04): POLITICAL BOUNDARIES, a switch shading the borders of the era of
-      the book and chapter read (12 eras, patriarchs to Rome; drawn by hand, approximate); ROUTE, a dropdown of the
+      the book and chapter read (12 eras, patriarchs to Rome; generated, approximate); ROUTE, a dropdown of the
       book's own journeys (19: Abraham, the Exodus, Numbers 33, Deuteronomy 1-3, Joshua's campaigns, the deportations,
       the returns, Paul's journeys and the voyage to Rome), numbered with arrows, uncertain sites hollow and dashed,
       each stop linked to its verse; base maps offered only for their era (DARE only in Roman eras, AWMC's roads only

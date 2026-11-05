@@ -18,7 +18,7 @@
 // - ERAS (POLITICAL BOUNDARIES, under BASE MAP; kept on the device, every map following it): Off, or the era of the
 //   book and chapter the map is for (atlas.db's era_books - Genesis 1-11 none, the row hidden) - its states and
 //   provinces shaded on the land, each a hue of the verb colors (one polity's provinces sharing one), outlined and
-//   named; drawn over the base map's own provinces, which hide meanwhile (pipeline/atlas_eras.py: drawn by hand,
+//   named; drawn over the base map's own provinces, which hide meanwhile (pipeline/atlas_eras.py: generated,
 //   approximate - its credit added under the map while it's on).
 // - ROUTES (ROUTE, under it; hidden in a book with none): None, or one of the book's own journeys (atlas.db's routes,
 //   pipeline/atlas_routes.py), kept per book while the app runs - drawn as a line through its stops in order, an

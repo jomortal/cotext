@@ -223,7 +223,7 @@ Atlas (the word panel's Map, the notes' Atlas - public/data/notes/atlas.db and a
     CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), from its vector map (github.com/klokantech/
     roman-empire) - provinces and roads, cut and simplified; shared under the same license. Its land and lakes from
     Natural Earth (public domain).
-  - Political boundaries (pipeline/atlas_eras.py): drawn by hand for COTEXT after public-domain historical atlases
+  - Political boundaries (pipeline/atlas_eras.py): generated for COTEXT after public-domain historical atlases
     (W. R. Shepherd, Historical Atlas, 1911; G. A. Smith, Historical Atlas of the Holy Land, 1915) - approximate.
   - Routes (pipeline/atlas_routes.py): written for COTEXT from the Bible's text; their places OpenBible's (above).
 

@@ -52,7 +52,7 @@ Output:
     words   book, chapter, verse, word -> place
     maps    id, name, credit, file, version, bytes, eras (the base maps, in the picker's order: their rowid; eras
             the ones it's offered in, '' every book - MAPS)
-    eras, era_regions, era_books   POLITICAL BOUNDARIES (pipeline/atlas_eras.py, drawn by hand: its docstring) - each
+    eras, era_regions, era_books   POLITICAL BOUNDARIES (pipeline/atlas_eras.py, generated: its docstring) - each
             era (id, name, roads: the AWMC road periods drawn in it, roman, credit), its regions in drawing order
             (era, name, color, lon, lat: where the name's written, data: its rings as encode's paths) and the chapters
             it's for (book, first, last chapter, era)

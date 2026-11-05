@@ -1,5 +1,5 @@
 """The Atlas' POLITICAL BOUNDARIES (atlas.py builds them into atlas.db; src/atlas.ts draws them): the states and
-provinces of each era of the Bible's history, drawn by hand for COTEXT after public-domain historical atlases
+provinces of each era of the Bible's history, generated for COTEXT after public-domain historical atlases
 (W. R. Shepherd's Historical Atlas, 1911; G. A. Smith's Historical Atlas of the Holy Land, 1915) - approximate: a
 border is within a few tens of kilometers at best, an empire's edge in the desert a guess, as those atlases' are.
 
@@ -29,7 +29,7 @@ ERAS = [
     ("gospels", "Herod's sons under Rome (c. AD 30)", "R", True),
     ("rome", "The Roman Empire (c. AD 60)", "R", True),
 ]
-CREDIT = ("Political boundaries: drawn by hand for COTEXT after public-domain historical atlases (Shepherd, 1911; "
+CREDIT = ("Political boundaries: generated for COTEXT after public-domain historical atlases (Shepherd, 1911; "
           "G. A. Smith, 1915) - approximate.")
 
 
