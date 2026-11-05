@@ -414,6 +414,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
          padding: calc(6px + env(safe-area-inset-top, 0px)) 64px 6px; background: var(--bg); border-bottom: 1px solid var(--edge); }     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
 .vcTitle { min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-m); font-weight: 600; text-align: center; }
 @media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } }
+.vcTop:has(#vcMore[aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
 .vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--edge); }     /* (⋯'s options, as the screen's rows, set off from the deck) */
