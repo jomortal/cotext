@@ -485,6 +485,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }
 .chooseBtn:disabled { opacity: .4; cursor: default; }     /* (As a pill not there to pick) */
+#vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's Chapter and verses: not greyed out before their book or chapter is picked, only not yet opening) */
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
