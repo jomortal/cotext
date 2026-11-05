@@ -17,7 +17,7 @@ export interface Card { front: string; back: string; /* HTML */ }
 /** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
  *  without it the deck has no such button.
  *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English; a verse card: the verse with its reference); otherwise under it. */
-export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false) {
+export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false): DeckShown<C> {
   const first = [...cards];
   let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
@@ -49,7 +49,18 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
   if (onRemove) on ("remove", () => { const [c] = deck.splice (at, 1); if (c) onRemove (c); });     // (No onRemove: no REMOVE FROM LIST - the Verb paradigms)
   show ();
+  return {
+    update (next, same) {
+      const swap = (c: C) => next.find ((x) => same (x, c)) ?? c;
+      deck = deck.map (swap); first.splice (0, first.length, ...first.map (swap));
+      if (deck.length) { front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; }
+    },
+  };
 }
+
+/** A deck shown. update: the cards' contents changed (a setting - the Verse cards' translation or lines) - each card swapped
+ *  for its new version (matched by same), the order, the card shown and whether it's turned over kept. */
+export interface DeckShown<C extends Card> { update (next: C[], same: (a: C, b: C) => boolean): void; }
 
 /** A fresh order each time a deck opens. */
 const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor (Math.random () * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };

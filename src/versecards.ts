@@ -29,7 +29,7 @@
 import type { Db } from "./db";
 import { chapterWords, type Book } from "./reader";
 import { onScreen } from "./study";
-import { showDeck, type Card } from "./cards";
+import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, wordsSpan, TEXT_CREDIT } from "./chapterstudy";
 
@@ -210,19 +210,23 @@ async function draw (body: HTMLElement) {
     save (); draw (body);
   });
   trPick.value = trs.some ((s) => s.id === settings.tr) ? settings.tr : "";
-  // The deck, drawn afresh from the cards and settings as they are (a later drawing winning over one still arriving).
-  let drawing = 0;
-  const deck = async () => {
+  // The deck, drawn afresh from the cards and settings as they are (a later drawing winning over one still arriving);
+  // kept: a setting changed - the cards' backs redrawn in place, the card shown and whether it's turned over kept, so
+  // the change shows on it.
+  let drawing = 0, shown: DeckShown<Card & { id: string }> | null = null, shownIds = "";
+  const deck = async (kept = false) => {
     const n = ++drawing;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-o]")) b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"]));
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
     showList.hidden = ! d.cards.length; showing ();
-    if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; return; }
+    if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; shown = null; return; }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
     for (const c of d.cards) made.push ({ id: c.id, front: `<div class="vcRef">${esc (refText (c))}</div>`, back: await backOf (c, used) });
     if (n !== drawing) return;
-    showDeck (deckEl, made, undefined, undefined, true);     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
+    const ids = d.cards.map ((c) => c.id).join ();
+    if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
+    else { shown = showDeck (deckEl, made, undefined, undefined, true); shownIds = ids; }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
     credits.textContent = [...used.values ()].filter (Boolean).join (" ");
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;
@@ -241,13 +245,13 @@ async function draw (body: HTMLElement) {
   const noNone = () => {
     const en = language === "en";
     trPick.querySelector<HTMLOptionElement> ('option[value=""]')!.hidden = en;
-    if (en && ! trPick.value && trs.length) { trPick.value = settings.tr = trs[0].id; save (); deck (); }
+    if (en && ! trPick.value && trs.length) { trPick.value = settings.tr = trs[0].id; save (); deck (true); }
   };
   langPick.addEventListener ("change", () => { language = langPick.value as Language; noNone (); });
   noNone ();
-  trPick.addEventListener ("change", () => { settings.tr = trPick.value; save (); deck (); });
+  trPick.addEventListener ("change", () => { settings.tr = trPick.value; save (); deck (true); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-o]"))
-    b.addEventListener ("click", () => { const k = b.dataset.o as "gloss" | "parse" | "translit"; settings[k] = ! settings[k]; save (); deck (); });
+    b.addEventListener ("click", () => { const k = b.dataset.o as "gloss" | "parse" | "translit"; settings[k] = ! settings[k]; save (); deck (true); });
   listEl.addEventListener ("click", (e) => {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
