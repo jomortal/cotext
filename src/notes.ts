@@ -31,7 +31,7 @@ import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
-import { passageArticles, entry, bookArticles, verseLinks } from "./dictionary";
+import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./dictionary";
 import { passageMap } from "./atlas";
 
 export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas"; name: string; testaments: string; credit: string;
@@ -397,9 +397,7 @@ function followBook () {
   const v = chapter * 1000 + (row ? Number (row.dataset.verse ?? 1) : versesNow ()[0]);
   if (v === bookAt) return;
   bookAt = v;
-  // Every find's link to the verse read marked (or its "+ more", when the verse is among those it hides)
-  for (const a of bodyEl.querySelectorAll<HTMLElement> (".bookVerses a"))
-    a.classList.toggle ("here", a.dataset.at === String (v) || (a.dataset.rest ?? "").split (" ").includes (String (v)));
+  markVerse (bodyEl, v);     // (Every find's link to the verse read marked, shown even among those "+ more" hides)
   const target = (bookRows.find (([vs]) => vs.includes (v)) ?? bookRows.find (([vs]) => vs.some ((x) => x >= v)) ?? bookRows[bookRows.length - 1])[1];
   const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
   if (t.top >= nt.top && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)

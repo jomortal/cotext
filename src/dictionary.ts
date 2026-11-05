@@ -315,30 +315,45 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
 }
 
 /** A book's verses (chapter * 1000 + verse) as a line of references, each going to its verse in the text: the first
- *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). Each link carries its
- *  verse (data-at), "+ more" those it hides (data-rest), for the verse read to be marked (notes.ts' followBook). */
+ *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). Each reference carries
+ *  its verse (data-at) and, past the first FEW, data-more: hidden until "+ more" is tapped, except the verse read
+ *  (notes.ts' markVerse shows and marks it). */
 const FEW = 12;
 export function verseLinks (book: number, verses: number[]): HTMLElement {
   const line = document.createElement ("div");
   line.className = "src bookVerses";
-  const link = (x: number, i: number) => {
+  line.append (...verses.map ((x, i) => {
+    const s = document.createElement ("span");
+    s.dataset.at = String (x);
+    if (i >= FEW) { s.dataset.more = ""; s.hidden = true; }
     const a = document.createElement ("a");
     a.className = "term";
-    a.dataset.at = String (x);
     a.textContent = `${Math.floor (x / 1000)}:${x % 1000}`;
     a.addEventListener ("click", () => goVerse (book, Math.floor (x / 1000), x % 1000));
-    return [...(i ? [", "] : []), a];
-  };
-  line.append (...verses.slice (0, FEW).flatMap (link));
+    s.append (...(i ? [", "] : []), a);
+    return s;
+  }));
   if (verses.length > FEW) {
     const more = document.createElement ("a");
-    more.className = "term";
+    more.className = "term bookMore";
     more.textContent = `+ ${verses.length - FEW} more`;
-    more.dataset.rest = verses.slice (FEW).join (" ");
-    more.addEventListener ("click", () => { more.replaceWith (...verses.slice (FEW).flatMap ((x, i) => link (x, i + FEW))); });
+    more.addEventListener ("click", () => { line.dataset.open = ""; for (const s of line.querySelectorAll<HTMLElement> ("[data-more]")) s.hidden = false; more.remove (); });
     line.append (" ", more);
   }
   return line;
+}
+
+/** The verse read (chapter * 1000 + verse) marked in every book list of verses under el (verseLinks), shown there
+ *  even among the hidden ones. */
+export function markVerse (el: HTMLElement, v: number) {
+  for (const line of el.querySelectorAll<HTMLElement> (".bookVerses")) {
+    const open = "open" in line.dataset;
+    for (const s of line.querySelectorAll<HTMLElement> ("span[data-at]")) {
+      const here = s.dataset.at === String (v);
+      s.querySelector ("a")!.classList.toggle ("here", here);
+      if (! open && "more" in s.dataset) s.hidden = ! here;
+    }
+  }
 }
 
 //==== SEARCH ====
