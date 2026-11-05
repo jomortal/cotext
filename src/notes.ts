@@ -413,10 +413,9 @@ const oneHeb = new Map<number, string> ();       // (Beside the Septuagint: each
 const noneWord = (kind: string) => kind === "syntax" ? "diagram" : kind === "dictionary" ? "articles" : kind === "version" ? "text" : "notes";
 
 /** A drawing begun: following one way with nothing yet (say: what its entries are, as oneSay - "" for a drawing that
- *  doesn't follow one way, or keeps its heading; scope: what it holds), the heading held at the top only when it speaks. */
+ *  doesn't follow one way, or keeps its heading; scope: what it holds). */
 function oneWayFrom (say: string, scope = "chapter") {
   oneRows = []; oneAt = -1; oneSay = say; oneScope = scope; oneHeb.clear ();
-  refEl.classList.toggle ("stick", !! say);
 }
 
 /** The list just drawn placed: from its top, then at the verse read - the text leading, whatever was touched last. */
@@ -427,8 +426,8 @@ function placedOneWay () {
 }
 
 /** The list taken to the verse read (above), once that verse changes and the text leads; the heading line (oneSay)
- *  names that verse, and when it has no entry, the next one's ("Genesis 1:4 - no notes; next at 1:7"). The heading is
- *  then held at the panel's top (.stick), and an entry is placed under it. */
+ *  names that verse, and when it has no entry, the next one's ("Genesis 1:4 - no notes; next at 1:7"). The entry is
+ *  placed at the panel's top (the heading scrolls away with the rest - not held). */
 function followOneWay () {
   if (leader !== "text" || ! oneRows.length || panel.hidden || ! book) return;
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
@@ -448,8 +447,8 @@ function followOneWay () {
   }
   const target = (next ?? oneRows[oneRows.length - 1])[1];
   const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
-  // (The entry placed under the held heading: it sticks its own top - negative, style.css - into the scroller's padding)
-  const edge = nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop) + (oneSay ? parseFloat (getComputedStyle (refEl).top) + refEl.offsetHeight : 0);
+  // (The entry placed at the scroller's top, under its padding)
+  const edge = nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop);
   if (t.top >= edge - 1 && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)
   notesScroll.scrollTop += t.top - edge;
 }
