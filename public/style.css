@@ -540,7 +540,8 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 /* The atlas (atlas.ts): its map the panel's width, at most 40% of the screen tall, dragged and pinched by itself (the
    page doesn't scroll under the finger on it); its loading said over its middle; under it (in the notes) the places,
    each its name (a result's heading, tapped picking it out on the map) over its verses (links, as the parsing's terms) -
-   the one picked in the accent; BASE MAP and the credits as the panel's. */
+   the one picked in the accent - a route's stops (.atlasStops) listed the same way; BASE MAP, POLITICAL BOUNDARIES,
+   ROUTE and the credits as the panel's. */
 .atlasMap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: 40vh; max-height: 40dvh; border-radius: 8px; overflow: hidden; }
 .atlasMap canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .atlasStatus { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }

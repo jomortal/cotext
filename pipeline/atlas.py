@@ -38,7 +38,9 @@ Base maps - each its own file, data/notes/atlas_<id>.db, downloaded when first s
         draws them), inland water (lakes, marshes), roads, and the Roman provinces' borders of 200 CE.
   dare  Digital Atlas of the Roman Empire (Johan Åhlfeldt; CC BY-SA 3.0 - its atlas page, imperium.ahlfeldt.se;
         GeoJSON from its vector map, github.com/klokantech/roman-empire at DARE_COMMIT): the provinces, shaded and
-        named, and the roads; Natural Earth's land and lakes under them.
+        named, and the roads; Natural Earth's land and lakes under them. Offered only in the Roman eras.
+  AWMC's roads are kept by the Barrington Atlas' periods (its timeperiod letters: A archaic, C classical, H
+  hellenistic, R Roman, L late antique), so the page draws only the era's (atlas_eras.ERAS).
   Every layer clipped to BOX (Spain to Persia, Ethiopia to Scythia), simplified for each zoom level (Douglas-Peucker
   at LEVELS' tolerances, in degrees: the page draws the coarsest level finer than one screen pixel, so nothing is
   drawn finer than the screen shows) and stored as paths (encode: points at 1/1000 degree, delta and zigzag varints).
@@ -48,10 +50,18 @@ Output:
     places  id (OpenBible's: a112427), name, sub (the comment as text), type, lon, lat (null: not located), score
             (0-1000), alts (JSON [[name, lon, lat, score], ...]), note (why not located)
     words   book, chapter, verse, word -> place
-    maps    id, name, credit, file, version, bytes (the base maps, in the picker's order: their rowid)
+    maps    id, name, credit, file, version, bytes, eras (the base maps, in the picker's order: their rowid; eras
+            the ones it's offered in, '' every book - MAPS)
+    eras, era_regions, era_books   POLITICAL BOUNDARIES (pipeline/atlas_eras.py, drawn by hand: its docstring) - each
+            era (id, name, roads: the AWMC road periods drawn in it, roman, credit), its regions in drawing order
+            (era, name, color, lon, lat: where the name's written, data: its rings as encode's paths) and the chapters
+            it's for (book, first, last chapter, era)
+    routes, route_stops   ROUTES (pipeline/atlas_routes.py, written from the text) - each route (id, books: the
+            book ids it's offered in, name) and its stops in order (route, n, place, book, chapter, verse: the verse
+            naming it); a stop's place is in places even when no word is matched to it
   public/data/notes/atlas_<map>.db
     shapes  layer (land, lake, river, water, road, border, province), level (0 coarsest - LEVELS), name (a
-            province's), data (encode's paths)
+            province's; an AWMC road's periods, "HR" - "" undated), data (encode's paths)
     labels  layer, name, lon, lat (a province's name, where it's written)
     relief  level (0 coarse, 1 fine), west, south, east, north (degrees: the image's outer edges), png
   and the main database's note_sources row (kind 'atlas', testaments 'OT NT LXX': the notes' picker lists it as
@@ -74,6 +84,8 @@ import zlib
 HERE = pathlib.Path(__file__).parent
 sys.path.insert(0, str(HERE))
 import tyndale_dict  # noqa: E402
+import atlas_eras  # noqa: E402
+import atlas_routes  # noqa: E402
 
 DL = HERE / "downloads" / "atlas"
 OUT = HERE.parent / "public" / "data" / "notes"
@@ -115,13 +127,17 @@ FILES = {
 SOURCE = ("atlas", "atlas", "Atlas", "OT NT LXX",
           "Places: OpenBible.info's Bible Geocoding Data (CC BY 4.0), tied to the text's words through STEPBible's "
           "TIPNR (Tyndale House, CC BY 4.0). Base maps as credited under each.")
-# The base maps, in the picker's order: id, name, credit.
+# The base maps, in the picker's order: id, name, credit, the eras it's offered in ('' every book, even one with no
+# era; else atlas_eras' era ids). AWMC's ancient seas fit every era, its roads drawn only in the eras the Barrington
+# Atlas dates them to (atlas_eras.ERAS' letters) and its 200 CE borders only in the Roman ones; DARE's provinces and
+# roads are Rome's alone.
 MAPS = [
-    ("ne", "Natural Earth", "Base map: Natural Earth (public domain) - land, lakes, rivers and shaded relief; today's coastlines."),
+    ("ne", "Natural Earth", "Base map: Natural Earth (public domain) - land, lakes, rivers and shaded relief; today's coastlines.", ""),
     ("awmc", "Ancient World", "Base map: Ancient World Mapping Center, awmc.unc.edu (ODbL 1.0; from the Barrington Atlas and "
-             "OpenStreetMap) - ancient seas, inland water, roads, the Roman provinces of 200 CE."),
+             "OpenStreetMap) - ancient seas, inland water, the era's roads, the Roman provinces of 200 CE.", ""),
     ("dare", "Roman Empire", "Base map: Digital Atlas of the Roman Empire, Johan Åhlfeldt, imperium.ahlfeldt.se (CC BY-SA 3.0) - "
-             "provinces and roads; land and lakes from Natural Earth (public domain)."),
+             "provinces and roads; land and lakes from Natural Earth (public domain).",
+     " ".join(e[0] for e in atlas_eras.ERAS if e[3])),
 ]
 BOX = (-12.0, 4.0, 64.0, 50.0)     # west, south, east, north (degrees): every base map clipped to it
 LEVELS = (0.05, 0.015, 0.004, 0.001)     # Each level's simplification tolerance, in degrees (the page picks by zoom)
@@ -489,7 +505,15 @@ def base_map(mid):
     elif mid == "awmc":
         shapes += layer_rows("water", shapefile_rings("awmc/open_water_base.shp"))
         shapes += layer_rows("lake", [r for f in features("awmc/inland_water.geojson") for r in parts(f["geometry"])[0]], min_level=1)
-        shapes += layer_rows("road", lines=[l for f in features("awmc/roads.geojson") for l in parts(f["geometry"])[1]], min_level=1)
+        # (Its roads grouped by the periods the Barrington Atlas dates them to, the group's letters as its name - "HR",
+        # "" undated: the page draws those of the era shown)
+        periods = {}
+        for f in features("awmc/roads.geojson"):
+            pr = f["properties"]
+            name = "".join(sorted(set(re.sub(r"[^ACHRL]", "", (pr.get("timeperiod") or "") + (pr.get("timeperi_1") or "")))))
+            periods.setdefault(name, []).extend(parts(f["geometry"])[1])
+        for name, lines in sorted(periods.items()):
+            shapes += layer_rows("road", lines=lines, name=name, min_level=1)
         shapes += layer_rows("border", lines=[l for f in features("awmc/provinces.geojson") for l in parts(f["geometry"])[1]])
     elif mid == "dare":
         shapes += layer_rows("land", ne_land()) + layer_rows("lake", ne_lakes())
@@ -500,6 +524,67 @@ def base_map(mid):
             x, y = f["geometry"]["coordinates"][:2]
             labels.append(("province", f["properties"].get("name") or "", round(x, 3), round(y, 3)))
     return shapes, labels, images
+
+
+# ---- Eras and routes ----
+
+def centroid(ring):
+    """A ring's centroid (the shoelace formula; its points' mean for a degenerate one)."""
+    a = cx = cy = 0.0
+    for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]):
+        c = x0 * y1 - x1 * y0
+        a += c; cx += (x0 + x1) * c; cy += (y0 + y1) * c
+    if abs(a) < 1e-9:
+        return sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)
+    return cx / (3 * a), cy / (3 * a)
+
+
+def era_rows(main_db):
+    """atlas_eras' data as rows: eras (id, name, roads, roman, credit); era_regions (era, name, color, label lon, lat,
+    the rings encoded - closed - as the base maps' paths), in drawing order (their rowid); era_books (book id, first
+    chapter, last, era) - a Septuagint book with a Hebrew counterpart given that book's."""
+    eras = [(i, n, roads, int(roman), atlas_eras.CREDIT) for i, n, roads, roman in atlas_eras.ERAS]
+    regions = []
+    for era, *_ in atlas_eras.ERAS:
+        for name, color, rings, label in atlas_eras.REGIONS[era]:
+            if not label:
+                big = max(rings, key=lambda r: abs(sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(r, r[1:] + r[:1]))))
+                label = centroid(big)
+            regions.append((era, name, color, round(label[0], 3), round(label[1], 3), encode([r + r[:1] for r in rings])))
+    ids = {c: (i, h) for i, c, h in main_db.execute("SELECT id, code, heb FROM books")}
+    code_of = {i: c for c, (i, _) in ids.items()}
+    era_books = []
+    for code, (bid, heb) in ids.items():
+        spans = atlas_eras.BOOKS.get(code) or atlas_eras.LXX_ONLY.get(code) or (atlas_eras.BOOKS.get(code_of.get(heb), []) if heb else [])
+        era_books += [(bid, a, b, e) for a, b, e in spans]
+    return eras, regions, era_books
+
+
+def route_rows(main_db):
+    """atlas_routes' data as rows: routes (id, its books' ids space-separated, name), route_stops (route, n from 1,
+    OpenBible place id, book, chapter, verse). Each stop's place: OpenBible's with that name (a translation's name or
+    its friendly id, case ignored) listing the verse; several, the most cited; none listing it, the most cited of the
+    name. A name OpenBible hasn't stops the build."""
+    ids = {c: i for i, c in main_db.execute("SELECT id, code FROM books WHERE id <= 66")}
+    named = {}
+    for line in (DL / "obgeo" / "ancient.jsonl").read_text(encoding="utf-8").splitlines():
+        d = json.loads(line)
+        verses = {(int(s[:2]), int(s[2:5]), int(s[5:])) for s in (x.get("sort", "") for x in d.get("verses", [])) if len(s) == 8}
+        names = {n.lower() for n in d.get("translation_name_counts") or {}} | {d["friendly_id"].lower()}
+        for n in names:
+            named.setdefault(n, []).append((d["id"], verses))
+    routes, stops = [], []
+    for rid, books, name, route in atlas_routes.ROUTES:
+        routes.append((rid, " ".join(str(ids[b]) for b in books), name))
+        for n, (place, ref) in enumerate(route, 1):
+            code, c, v = ref.split(".")
+            at = (ids[code], int(c), int(v))
+            cands = named.get(place.lower())
+            if not cands:
+                raise SystemExit(f"atlas_routes {rid}: OpenBible has no place named {place!r}")
+            pid = max(cands, key=lambda x: (at in x[1], len(x[1])))[0]
+            stops.append((rid, n, pid, *at))
+    return routes, stops
 
 
 def write(path, script, tables):
@@ -526,7 +611,7 @@ def build(main_db, maps=True):
     places, found, by_tipnr = openbible()
     rows = match_words(main_db, tipnr_places(), found, by_tipnr)
     sizes, listed = {}, []
-    for mid, name, credit in MAPS:
+    for mid, name, credit, offered in MAPS:
         path = OUT / f"atlas_{mid}.db"
         if maps or not path.exists():
             shapes, labels, images = base_map(mid)
@@ -539,21 +624,32 @@ def build(main_db, maps=True):
             data = path.read_bytes()
             version, size = hashlib.sha256(data).hexdigest()[:12], len(data)
         sizes[path.name] = size
-        listed.append((mid, name, credit, f"data/notes/{path.name}", version, size))
-    used = {p for *_, p in rows}
+        listed.append((mid, name, credit, f"data/notes/{path.name}", version, size, offered))
+    eras, regions, era_books = era_rows(main_db)
+    routes, stops = route_rows(main_db)
+    used = {p for *_, p in rows} | {s[2] for s in stops}
     version, size = write(OUT / "atlas.db", """
         CREATE TABLE places (id TEXT PRIMARY KEY, name TEXT, sub TEXT, type TEXT, lon REAL, lat REAL, score INTEGER,
                              alts TEXT, note TEXT) WITHOUT ROWID;
         CREATE TABLE words (book INTEGER, chapter INTEGER, verse INTEGER, word INTEGER, place TEXT,
                             PRIMARY KEY (book, chapter, verse, word)) WITHOUT ROWID;
-        CREATE TABLE maps (id TEXT PRIMARY KEY, name TEXT, credit TEXT, file TEXT, version TEXT, bytes INTEGER);
-    """, {"places": [p for i, p in places.items() if i in used], "words": rows, "maps": listed})
+        CREATE TABLE maps (id TEXT PRIMARY KEY, name TEXT, credit TEXT, file TEXT, version TEXT, bytes INTEGER, eras TEXT);
+        CREATE TABLE eras (id TEXT PRIMARY KEY, name TEXT, roads TEXT, roman INTEGER, credit TEXT);
+        CREATE TABLE era_regions (era TEXT, name TEXT, color INTEGER, lon REAL, lat REAL, data BLOB);
+        CREATE TABLE era_books (book INTEGER, first INTEGER, last INTEGER, era TEXT);
+        CREATE TABLE routes (id TEXT PRIMARY KEY, books TEXT, name TEXT);
+        CREATE TABLE route_stops (route TEXT, n INTEGER, place TEXT, book INTEGER, chapter INTEGER, verse INTEGER,
+                                  PRIMARY KEY (route, n)) WITHOUT ROWID;
+    """, {"places": [p for i, p in places.items() if i in used], "words": rows, "maps": listed, "eras": eras,
+          "era_regions": regions, "era_books": era_books, "routes": routes, "route_stops": stops})
     sizes["atlas.db"] = size
     main_db.execute("CREATE TABLE IF NOT EXISTS note_sources (id TEXT PRIMARY KEY, kind TEXT, name TEXT, testaments TEXT,"
                     " credit TEXT, file TEXT, version TEXT, bytes INTEGER)")
-    main_db.execute("INSERT OR REPLACE INTO note_sources VALUES (?,?,?,?,?,?,?,?)", (*SOURCE, "data/notes/atlas.db", version, size))
+    main_db.execute("INSERT OR REPLACE INTO note_sources (id, kind, name, testaments, credit, file, version, bytes)"
+                    " VALUES (?,?,?,?,?,?,?,?)", (*SOURCE, "data/notes/atlas.db", version, size))     # (books: '' - every book)
     located = sum(1 for i in used if places[i][4] is not None)
-    print(f"atlas: {len(rows)} words name {len(used)} places ({located} located) of OpenBible's {len(places)}; "
+    print(f"atlas: {len(eras)} eras ({len(regions)} regions), {len(routes)} routes ({len(stops)} stops); "
+          f"{len(rows)} words name {len(used)} places ({located} located) of OpenBible's {len(places)}; "
           + ", ".join(f"{f} {b / 1e6:.2f} MB" for f, b in sizes.items()))
     return len(used), len(rows), sizes
 
