@@ -39,22 +39,31 @@ let book: Book;
 let chapter = 1;
 
 // The heading's place, a reference pair (refs.ts: bold capitals): the book's name and chapter in English and in its
-// own language - "GENESIS 1 בְּרֵאשִׁית א" - on one line; where that would wrap (a narrow screen, a long name) the
-// English alone; where that would too, its SBL abbreviation (booknames.ts' ABBR) with a full stop: 1 THESS. 1.
-// Checked again when the window resizes.
+// own language - "GENESIS 1 בְּרֵאשִׁית א" - for every book, or for none: both where every book's pair (at its last
+// chapter, its longest) fits the heading on one line, else the English alone for all (pairsFit: worked out once per
+// window size or book list, kept). The English that would wrap (a long name, a narrow screen): its SBL abbreviation
+// (booknames.ts' ABBR) with a full stop: 1 THESS. 1.
+let pairsFit: boolean | null = null;     // (null: to be worked out - a resize, the book list changed)
+const pair = (b: Book, c: number, native: boolean) => {
+  const lang = nativeName (b.code)?.[1];
+  placeBtn.innerHTML = refPair (`${b.name} ${c}`, native && lang ? nativeRef (b.code, lang, c) : "");
+};
+const enWraps = () => {
+  const e = placeBtn.querySelector<HTMLElement> (".refPair > :first-child")!;
+  return e.getBoundingClientRect ().height > parseFloat (getComputedStyle (e).fontSize) * 1.6;
+};
+/** The pair shown on one line: the original's on the English's line, and the English unwrapped. */
+const oneLine = () => {
+  const n = placeBtn.querySelector (".refNative")?.getBoundingClientRect (), e = placeBtn.querySelector (".refPair > :first-child")!.getBoundingClientRect ();
+  return ! enWraps () && (! n || Math.abs ((n.top + n.bottom) - (e.top + e.bottom)) / 2 < e.height * .6);
+};
 function showPlace () {
   if (! book) return;
-  const lang = nativeName (book.code)?.[1], en = () => placeBtn.querySelector<HTMLElement> (".refPair > :first-child")!.getBoundingClientRect ();
-  const wraps = () => en ().height > parseFloat (getComputedStyle (placeBtn.querySelector (".refPair > :first-child")!).fontSize) * 1.6;     // (The English on two lines)
-  if (lang) {     // (Both: kept where the original's sits on the English's line, and neither wraps)
-    placeBtn.innerHTML = refPair (`${book.name} ${chapter}`, nativeRef (book.code, lang, chapter));
-    const n = placeBtn.querySelector (".refNative")!.getBoundingClientRect (), e = en ();
-    if (! wraps () && Math.abs ((n.top + n.bottom) - (e.top + e.bottom)) / 2 < e.height * .6) return;
-  }
-  placeBtn.innerHTML = refPair (`${book.name} ${chapter}`);
-  if (wraps () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`);
+  pairsFit ??= books.every ((b) => { pair (b, b.chapters, true); return oneLine (); });
+  pair (book, chapter, pairsFit);
+  if (enWraps () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`);
 }
-window.addEventListener ("resize", showPlace);
+window.addEventListener ("resize", () => { pairsFit = null; showPlace (); });
 
 // (Each go numbered: a chapter still arriving from the database when another is picked isn't shown)
 let going = 0;
@@ -179,7 +188,7 @@ async function start () {
     return;
   }
   status.hidden = true;
-  books = rows as unknown as Book[];
+  books = rows as unknown as Book[]; pairsFit = null;
   initSearch (db, books, goVerse);
   initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
   initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
