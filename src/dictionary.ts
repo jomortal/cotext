@@ -281,6 +281,63 @@ export async function passageArticles (main: Db, places: number[][][], src = "to
   return lists;
 }
 
+//==== BY BOOK ====
+// The Archaeology finds by passage (notes.ts' drawBookFinds): every find bearing on the book read, at once - those
+// citing one of its verses and those its words name (a person, a place) - in the order of the verse each first comes
+// at, each with every verse of the book it comes at (cited or named), the list following the text one way.
+export interface BookArticle { id: string; title: string; line: string; photo: string; verses: number[]; }     // (verses: chapter * 1000 + verse, rising)
+
+/** A source's (src) articles for a book (its database id): each with its verses there, in the order of its first. */
+export async function bookArticles (main: Db, book: number, src: string): Promise<BookArticle[]> {
+  const o = await opened (main, src);
+  if (! o) return [];
+  const at = new Map<string, Set<number>> ();
+  const add = (id: string, v: number) => { (at.get (id) ?? at.set (id, new Set ()).get (id)!).add (v); };
+  for (const r of await o.db.all (`SELECT id, start FROM refs WHERE book = ?`, [book])) add (String (r.id), Number (r.start));
+  const named = new Map<string, string[]> ((await o.db.all ("SELECT strong, ids FROM lemmas")).map ((r) => [String (r.strong), idList (r.ids)]));
+  const strongs = [...named.keys ()];
+  for (let i = 0; i < strongs.length; i += 500) {     // (500 values a query: SQLite's limit)
+    const part = strongs.slice (i, i + 500);
+    for (const w of await main.all (`SELECT DISTINCT strong, chapter * 1000 + verse AS at FROM words
+                                     WHERE book = ? AND strong IN (${part.map (() => "?").join (",")})`, [book, ...part]))
+      for (const id of named.get (String (w.strong)) ?? []) add (id, Number (w.at));
+  }
+  const ids = [...at.keys ()];
+  const info = new Map<string, Row> ();
+  for (let i = 0; i < ids.length; i += 500) {
+    const part = ids.slice (i, i + 500);
+    for (const r of await o.db.all (`SELECT id, title, line FROM articles WHERE id IN (${part.map (() => "?").join (",")})`, part)) info.set (String (r.id), r);
+  }
+  const photos = await photosOf (o, ids);
+  return ids.filter ((id) => info.has (id)).map ((id) => ({ id, title: String (info.get (id)!.title), line: String (info.get (id)!.line ?? ""),
+    photo: photos.get (id)?.[0] ?? "", verses: [...at.get (id)!].sort ((a, b) => a - b) }))
+    .sort ((a, b) => a.verses[0] - b.verses[0] || a.title.localeCompare (b.title));
+}
+
+/** A book's verses (chapter * 1000 + verse) as a line of references, each going to its verse in the text: the first
+ *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). */
+const FEW = 12;
+export function verseLinks (book: number, verses: number[]): HTMLElement {
+  const line = document.createElement ("div");
+  line.className = "src";
+  const link = (x: number, i: number) => {
+    const a = document.createElement ("a");
+    a.className = "term";
+    a.textContent = `${Math.floor (x / 1000)}:${x % 1000}`;
+    a.addEventListener ("click", () => goVerse (book, Math.floor (x / 1000), x % 1000));
+    return [...(i ? [", "] : []), a];
+  };
+  line.append (...verses.slice (0, FEW).flatMap (link));
+  if (verses.length > FEW) {
+    const more = document.createElement ("a");
+    more.className = "term";
+    more.textContent = `+ ${verses.length - FEW} more`;
+    more.addEventListener ("click", () => { more.replaceWith (...verses.slice (FEW).flatMap ((x, i) => link (x, i + FEW))); });
+    line.append (" ", more);
+  }
+  return line;
+}
+
 //==== SEARCH ====
 /** A source's (src) articles whose title or text (tags off) has the typed text, any case: those whose title has it
  *  first, each group in the source's (alphabetical) order - each with its text as plain text (the search's snippet)

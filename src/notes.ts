@@ -31,7 +31,7 @@ import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { isWide, onWideChange, paneFrame } from "./layout";
-import { passageArticles, entry } from "./dictionary";
+import { passageArticles, entry, bookArticles, verseLinks } from "./dictionary";
 import { passageMap } from "./atlas";
 
 export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas"; name: string; testaments: string; credit: string;
@@ -209,6 +209,8 @@ const update = () => { drawNotes ().catch ((e) => console.warn ("Notes:", e)); }
 async function drawNotes () {
   const src = current ();
   if (panel.hidden || ! book || ! src || ! textDb || (src.file && ! ownFile (src) && open?.id !== src.id)) return;
+  if (BY_BOOK.has (src.id) && book.testament !== "LXX") { drawBookFinds (src.id); return; }
+  bookShown = "";     // (Anything else drawn: the book's list gone)
   const vs = versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;
@@ -350,6 +352,55 @@ async function drawArticles (id: string, per: { v: number; where: number[][] }[]
   });
   if (! bodyEl.children.length) bodyEl.innerHTML = "<p>No articles on this verse.</p>";
   placed ();
+}
+
+//==== BY BOOK ====
+// The Archaeology finds (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
+// there, in the order of the first: drawn once a book, then following the text one way - the text scrolled, the list
+// goes to the find of the verse read (the first find at it, else the next after it) unless that find is in view
+// already; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
+// dictionary's.
+const BY_BOOK = new Set (["finds"]);
+let bookShown = "";     // (The book drawn: "<source> <book id>")
+let bookAt = -1;        // (The verse last followed to: chapter * 1000 + verse)
+let bookRows: [number[], HTMLElement][] = [];     // (Each find's verses and its entry, in the list's order)
+async function drawBookFinds (id: string) {
+  const b = book!;
+  const key = `${id} ${b.id}`;
+  refEl.textContent = b.name;
+  if (key !== bookShown) {
+    bookShown = key; shownIds = key; bookAt = -1; bookRows = [];
+    const n = ++updating;
+    clearInterlinear ();
+    blocks = []; anchors = null;
+    bodyEl.innerHTML = "<p>Loading…</p>";
+    const list = await bookArticles (textDb!, b.id, id);
+    if (n !== updating) return;
+    bodyEl.replaceChildren ();
+    for (const a of list) {
+      const el = entry (textDb!, a.id, a.title, a.line, "", id, a.photo);
+      el.append (verseLinks (b.id, a.verses));
+      bodyEl.append (el);
+      bookRows.push ([a.verses, el]);
+    }
+    if (! list.length) bodyEl.innerHTML = "<p>No finds bear on this book.</p>";
+    notesScroll.scrollTop = 0;
+  }
+  followBook ();
+}
+/** The list taken to the verse read (above), once that verse changes and the text leads. */
+function followBook () {
+  if (leader !== "text" || ! bookRows.length) return;
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const top = main.getBoundingClientRect ().top + 6;
+  const row = isWide () ? rows.find ((r) => r.getBoundingClientRect ().bottom > top) : null;
+  const v = chapter * 1000 + (row ? Number (row.dataset.verse ?? 1) : versesNow ()[0]);
+  if (v === bookAt) return;
+  bookAt = v;
+  const target = (bookRows.find (([vs]) => vs.includes (v)) ?? bookRows.find (([vs]) => vs.some ((x) => x >= v)) ?? bookRows[bookRows.length - 1])[1];
+  const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
+  if (t.top >= nt.top && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)
+  notesScroll.scrollTop += t.top - nt.top - parseFloat (getComputedStyle (notesScroll).paddingTop);
 }
 
 /** The atlas for the verses (atlas.ts' passageMap): its one map, kept while the atlas is picked, set to their places. */
