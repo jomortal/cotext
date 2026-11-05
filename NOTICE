@@ -170,6 +170,22 @@ Archaeology finds (the word panel's Finds, the notes' and search's Archaeology f
     and license credited under it; reduced to JPEGs (a 160 px thumbnail and a 1200 px picture).
   - Names matched through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
 
+Ancient Near East parallels (the notes' and search's Ancient Near East parallels - public/data/notes/ane.db,
+  pipeline/ane.py):
+  - The entries, their parallels and the lines on them: COTEXT's own.
+  - Descriptions from Wikipedia (https://en.wikipedia.org), each entry's article at the revision in
+    pipeline/ane_pins.json, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Changes made by
+    COTEXT: each article's lead reduced to plain text, references and templates left out. This adaptation is shared
+    under the same license.
+  - Photos from Wikimedia Commons, each under its own free license (CC0, public domain, CC BY or CC BY-SA), its author
+    and license credited under it; reduced to JPEGs (a 160 px thumbnail and a 1200 px picture).
+  - Translations, public domain: L. W. King, The Code of Hammurabi; E. A. Wallis Budge, Tutankhamen: Amenism, Atenism
+    and Egyptian Monotheism (1923); George Smith, The Chaldean Account of Genesis (1876); Egyptian Literature (1901);
+    The Forgotten Books of Eden (1926) - from Wikisource (en.wikisource.org); E. A. Wallis Budge, The Babylonian Story
+    of the Deluge (1920) and The Babylonian Legends of the Creation (1921); T. G. Pinches, The Old Testament in the
+    Light of the Historical Records and Legends of Assyria and Babylonia (3rd ed., 1908) - from Project Gutenberg
+    (gutenberg.org). Excerpts only, footnote marks left out.
+
 ISBE, archaeology and sites (the word panel's ISBE, the notes' and search's ISBE - public/data/notes/isbe.db,
   pipeline/isbe.py):
   - The International Standard Bible Encyclopedia (1915), James Orr, general editor - public domain; its text from

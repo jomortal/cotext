@@ -4,8 +4,10 @@
 // (pipeline/finds.py: Wikipedia's inscribed finds, its word panel's button "Finds"), whose file also holds a photo
 // per find (photos: its thumbnail in the file, shown at an entry's right even offline; its full picture a file of its
 // own on the server, data/images/<source>/<id>.jpg, online only - shown over the opened text, credited under it;
-// offline, the thumbnail there and "Full picture online only"), and the ISBE's articles on
-// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE").
+// offline, the thumbnail there and "Full picture online only"), the ISBE's articles on
+// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE"), and the Ancient Near East
+// parallels (pipeline/ane.py: texts like the Code of Hammurabi or Gilgamesh paired with the passages they parallel,
+// photos as the finds'; topical, so no word panel button - by passage and searchable only).
 // - BY WORD: the word's panel's "Dictionary" (panel.ts) - the articles on the tapped word's root, opened over the
 //   word's info as the Verb chart is (grammar.ts' showOther: titled, its ✕ back to the word). The articles matching
 //   the word itself first (a person, a place, a thing or a term: its gloss or name), then those of its subject (the
@@ -27,7 +29,7 @@ import { openNotesDb, type Db, type Row } from "./db";
 
 // A source's name under an article's title (the note_sources name where it isn't here)
 const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia",
-                                        isbe: "International Standard Bible Encyclopedia" };
+                                        isbe: "International Standard Bible Encyclopedia", ane: "Ancient Near East parallels" };
 interface Opened { db: Db; name: string; credit: string; photos: boolean; }     // (photos: its file has a photos table)
 const files = new Map<string, Promise<Opened | null>> ();     // (Each source's file, once opened; null: none in this database)
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};
@@ -293,9 +295,10 @@ export async function passageArticles (main: Db, places: number[][][], src = "to
 }
 
 //==== BY BOOK ====
-// The Archaeology finds by passage (notes.ts' drawBookFinds): every find bearing on the book read, at once - those
-// citing one of its verses and those its words name (a person, a place) - in the order of the verse each first comes
-// at, each with every verse of the book it comes at (cited or named), the list following the text one way.
+// The Archaeology finds and the Ancient Near East parallels by passage (notes.ts' drawBookFinds): every entry bearing
+// on the book read, at once - those citing one of its verses (every verse of a span cited: Exodus 21:23-25 is 23, 24
+// and 25) and those its words name (a person, a place) - in the order of the verse each first comes at, each with
+// every verse of the book it comes at (cited or named), the list following the text one way.
 export interface BookArticle { id: string; title: string; line: string; photo: string; verses: number[]; }     // (verses: chapter * 1000 + verse, rising)
 
 /** A source's (src) articles for a book (its database id): each with its verses there, in the order of its first. */
@@ -304,7 +307,11 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
   if (! o) return [];
   const at = new Map<string, Set<number>> ();
   const add = (id: string, v: number) => { (at.get (id) ?? at.set (id, new Set ()).get (id)!).add (v); };
-  for (const r of await o.db.all (`SELECT id, start FROM refs WHERE book = ?`, [book])) add (String (r.id), Number (r.start));
+  const refs = await o.db.all (`SELECT id, start, "end" FROM refs WHERE book = ?`, [book]);
+  if (refs.length) {     // (Each span's verses, as the book has them: a span into the next chapter takes the verses there)
+    const all = (await main.all ("SELECT DISTINCT chapter * 1000 + verse AS at FROM words WHERE book = ? ORDER BY at", [book])).map ((r) => Number (r.at));
+    for (const r of refs) for (const v of all) if (v >= Number (r.start) && v <= Number (r.end)) add (String (r.id), v);
+  }
   const named = new Map<string, string[]> ((await o.db.all ("SELECT strong, ids FROM lemmas")).map ((r) => [String (r.strong), idList (r.ids)]));
   const strongs = [...named.keys ()];
   for (let i = 0; i < strongs.length; i += 500) {     // (500 values a query: SQLite's limit)

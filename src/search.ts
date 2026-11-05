@@ -25,7 +25,7 @@
 // - A source: its entries (notes.body and its quote, the tags taken off) containing the typed
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
-// - A dictionary (THE DICTIONARY, below: the Tyndale Bible Dictionary, the Archaeology finds): its articles, not verses -
+// - A dictionary (THE DICTIONARY, below: the Tyndale Bible Dictionary, the Archaeology finds, the Ancient Near East parallels): its articles, not verses -
 //   those whose title has the typed text first -, each its title over the stretch that matched (a find its photo at the
 //   right); tapped, the article opens under it, its cited verses tappable (dictionary.ts).
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the

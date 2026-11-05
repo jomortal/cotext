@@ -302,10 +302,10 @@ WIDTH = 1280     # (The Commons thumbnail fetched: a standard size, cut to FULL 
 FULL, THUMB = 1200, 160     # (The full picture's and the thumbnail's long side, px)
 
 
-def commons(names):
-    """Commons' records of image files (names, without "File:"), 50 a call, each kept in DL as img-<hash>.json
-    (only those not kept yet are fetched): its WIDTH px thumbnail's URL, licence and author."""
-    new = sorted({n for n in names if n and not (DL / ("img-" + safe(n) + ".json")).exists()})
+def commons(names, dl=DL):
+    """Commons' records of image files (names, without "File:"), 50 a call, each kept in dl as img-<hash>.json
+    (only those not kept yet are fetched): its WIDTH px thumbnail's URL, licence and author. Also used by ane.py."""
+    new = sorted({n for n in names if n and not (dl / ("img-" + safe(n) + ".json")).exists()})
     for i in range(0, len(new), 50):
         q = get(COMMONS, {"action": "query", "titles": "|".join("File:" + n for n in new[i:i + 50]),
                           "prop": "imageinfo", "iiprop": "url|extmetadata|sha1", "iiurlwidth": WIDTH})["query"]
@@ -313,7 +313,7 @@ def commons(names):
         pages = {p["title"]: p for p in q["pages"]}
         for n in new[i:i + 50]:
             page = pages.get(to.get("File:" + n, "File:" + n), {"missing": True})
-            (DL / ("img-" + safe(n) + ".json")).write_text(json.dumps({"query": {"pages": [page]}}))
+            (dl / ("img-" + safe(n) + ".json")).write_text(json.dumps({"query": {"pages": [page]}}))
 
 
 def file_name(eid):
@@ -321,14 +321,14 @@ def file_name(eid):
     return re.sub(r"[^A-Za-z0-9_.-]", "_", eid) + ".jpg"
 
 
-def pictures(name, pins, src, eid):
+def pictures(name, pins, src, eid, dl=DL):
     """An image file's (name, on Commons: commons() fetched its record) picture for an entry (eid) of a source (src):
     (its thumbnail as a data URI, its credit, its full picture's path under public/) - the full picture written to
-    IMAGES/src/; or None (no image, not on Commons, or not freely licensed). Its download pinned in
+    IMAGES/src/; or None (no image, not on Commons, or not freely licensed). Its download kept in dl and pinned in
     pins["images"][name] (SHA-256). Also used by ane.py."""
     if not name:
         return None
-    page = json.loads((DL / ("img-" + safe(name) + ".json")).read_text())["query"]["pages"][0]
+    page = json.loads((dl / ("img-" + safe(name) + ".json")).read_text())["query"]["pages"][0]
     if page.get("missing") or not page.get("imageinfo"):
         return None
     ii = page["imageinfo"][0]
@@ -337,7 +337,7 @@ def pictures(name, pins, src, eid):
     if not FREE.match(lic) or re.search(r"\b(nc|nd)\b", lic, re.I):
         return None
     artist = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", meta.get("Artist", {}).get("value", "")))).strip()
-    raw = DL / ("img-" + safe(name) + ".raw")
+    raw = dl / ("img-" + safe(name) + ".raw")
     if not raw.exists():
         raw.write_bytes(fetched(urllib.request.Request(ii.get("thumburl") or ii["url"], headers=UA)))
     sha = hashlib.sha256(raw.read_bytes()).hexdigest()
@@ -345,7 +345,7 @@ def pictures(name, pins, src, eid):
         raise SystemExit(f"{raw}: not the pinned image (SHA-256 differs)")
     full = IMAGES / src / file_name(eid)
     full.parent.mkdir(parents=True, exist_ok=True)
-    thumb = DL / ("img-" + safe(name) + ".t.jpg")
+    thumb = dl / ("img-" + safe(name) + ".t.jpg")
     if shutil.which("sips"):
         for out, size, quality in ((full, FULL, 60), (thumb, THUMB, 55)):
             subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", str(quality), "-Z", str(size),

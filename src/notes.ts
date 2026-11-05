@@ -23,7 +23,8 @@
 // - A dictionary (DICTIONARY: the Tyndale Bible Dictionary, the Archaeology finds) lists articles, not notes: for each
 //   verse those citing it, then those its words lead to (dictionary.ts' passageArticles), each its title over a line of
 //   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow one verse,
-//   wide the chapter in step with the text; an article listed once, at the first verse shown it's for).
+//   wide the chapter in step with the text; an article listed once, at the first verse shown it's for) - except the
+//   Archaeology finds and the Ancient Near East parallels, listed by book (BY BOOK, below).
 // - The atlas (MAPS: atlas.ts) is one map of the places the verses shown name (narrow the verse, wide the chapter),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 
@@ -355,12 +356,13 @@ async function drawArticles (id: string, per: { v: number; where: number[][] }[]
 }
 
 //==== BY BOOK ====
-// The Archaeology finds (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
+// The Archaeology finds and the Ancient Near East parallels (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
 // there, in the order of the first: drawn once a book, then following the text one way - the text scrolled, the list
 // goes to the find of the verse read (the first find at it, else the next after it) unless that find is in view
 // already, and every find's link to that verse is marked; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
 // dictionary's.
-const BY_BOOK = new Set (["finds"]);
+const BY_BOOK = new Set (["finds", "ane"]);
+const NONE_IN_BOOK: Record<string, string> = { finds: "No finds bear on this book.", ane: "No parallels for this book." };
 let bookShown = "";     // (The book drawn: "<source> <book id>")
 let bookAt = -1;        // (The verse last followed to: chapter * 1000 + verse)
 let bookRows: [number[], HTMLElement][] = [];     // (Each find's verses and its entry, in the list's order)
@@ -383,7 +385,7 @@ async function drawBookFinds (id: string) {
       bodyEl.append (el);
       bookRows.push ([a.verses, el]);
     }
-    if (! list.length) bodyEl.innerHTML = "<p>No finds bear on this book.</p>";
+    if (! list.length) bodyEl.innerHTML = `<p>${NONE_IN_BOOK[id]}</p>`;
     notesScroll.scrollTop = 0;
   }
   followBook ();

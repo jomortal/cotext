@@ -21,6 +21,11 @@ a non-commercial license are marked so in NOTICE.
   - [x] **ISBE, archaeology and sites** (1915, public domain; CrossWire's clean TEI): 904 articles - 813 places, 91 on
         archaeology and inscriptions - by passage (notes' ISBE), by word (a word panel's ISBE) and searchable.
   - [ ] ~~Barton, Archaeology and the Bible (1916)~~ - skipped: only scans and raw OCR (archive.org); no clean text.
+  - [x] **Ancient Near East parallels** (trial): 26 texts (Hammurabi, Gilgamesh XI, Enuma Elish, Amenemope, the Aten
+        hymn, treaties, Ludlul, the Baal Cycle, Amarna...) paired by hand with their passages, each parallel a line,
+        10 with the passage in a public-domain translation; Wikipedia's lead, a Commons photo (21); by book (notes'
+        Ancient Near East parallels) and searchable. Not found clean: Rogers' Cuneiform Parallels (1912), King's Seven
+        Tablets, Amenemope.
 - [x] **Atlas: eras and routes** (built 2026-11-04): POLITICAL BOUNDARIES, a switch shading the borders of the era of
       the book and chapter read (12 eras, patriarchs to Rome; drawn by hand, approximate); ROUTE, a dropdown of the
       book's own journeys (19: Abraham, the Exodus, Numbers 33, Deuteronomy 1-3, Joshua's campaigns, the deportations,

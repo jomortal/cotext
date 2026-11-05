@@ -1,0 +1,158 @@
+{
+ "wikisource": {
+  "Codex Hammurabi (King translation)": [
+   16270720,
+   "528bf040bf403e4a85d6a6577cd5155ac732644b71b66e9b9a03652349c25e0e"
+  ],
+  "Great Hymn to Aten": [
+   15470161,
+   "b9f3c098ebb7b7bddd8fa4a3b44eaf990b3c08a0ff2773545bccd979c93a6e18"
+  ],
+  "The Chaldean Account of Genesis/Chapter 17": [
+   11825535,
+   "92b25c57100ce95d5d8557fa7100c40f6ba1558ae0f3e19dd273acc5623dd462"
+  ],
+  "Egyptian Literature/Egyptian Tales/Anpu and Bata": [
+   9593559,
+   "509e18c929c37457261b0431a9e67b6ffc285c8bd103b0e8c8bd64c05d5dafc0"
+  ],
+  "The Forgotten Books of Eden/The Story of Ahikar": [
+   10332976,
+   "5a7d64bd4587345e5a9ab2f349f531399bd1c9150930147be8f91332e82ee6a7"
+  ]
+ },
+ "gutenberg": {
+  "7096": "45f09f5165f2523d96c09d67ab96fa7e15ae5d80da1a54f8b95ed00d6a8701e1",
+  "9914": "59e0178388b929a7f0c3fd6cb291e32c39b6e957c5c3a12f6c10c2db4303bc5b",
+  "38732": "c16a694c72a4d707ea31e410a65d7f52e61c6214219936deef14e25f8cf96d22"
+ },
+ "articles": {
+  "Code of Hammurabi": [
+   "Code of Hammurabi",
+   1381233449
+  ],
+  "Code of Ur-Nammu": [
+   "Code of Ur-Nammu",
+   1373810185
+  ],
+  "Laws of Eshnunna": [
+   "Laws of Eshnunna",
+   1370343770
+  ],
+  "Gilgamesh flood myth": [
+   "Gilgamesh flood myth",
+   1382108755
+  ],
+  "Atra-Hasis": [
+   "Atra-Hasis",
+   1372184020
+  ],
+  "Eridu Genesis": [
+   "Eridu Genesis",
+   1383108838
+  ],
+  "Enūma Eliš": [
+   "Enūma Eliš",
+   1375013481
+  ],
+  "Adapa": [
+   "Adapa",
+   1381075850
+  ],
+  "Sumerian King List": [
+   "Sumerian King List",
+   1377491582
+  ],
+  "Sargon of Akkad": [
+   "Sargon of Akkad",
+   1380099834
+  ],
+  "Instruction of Amenemope": [
+   "Instruction of Amenemope",
+   1355242423
+  ],
+  "Great Hymn to the Aten": [
+   "Great Hymn to the Aten",
+   1382797856
+  ],
+  "Egyptian–Hittite peace treaty": [
+   "Egyptian–Hittite peace treaty",
+   1381652842
+  ],
+  "Esarhaddon's Treaty with Ba'al of Tyre": [
+   "Esarhaddon's Treaty with Ba'al of Tyre",
+   1383383103
+  ],
+  "Ludlul bēl nēmeqi": [
+   "Ludlul bēl nēmeqi",
+   1382107074
+  ],
+  "Babylonian Theodicy": [
+   "Babylonian Theodicy",
+   1371479497
+  ],
+  "Baal Cycle": [
+   "Baal Cycle",
+   1383798631
+  ],
+  "Amarna letters": [
+   "Amarna letters",
+   1382435019
+  ],
+  "Gezer calendar": [
+   "Gezer calendar",
+   1375686271
+  ],
+  "Tale of Two Brothers": [
+   "Tale of Two Brothers",
+   1349992763
+  ],
+  "Story of Ahikar": [
+   "Story of Ahikar",
+   1379759604
+  ],
+  "Cyrus Cylinder": [
+   "Cyrus Cylinder",
+   1383590379
+  ],
+  "Enmerkar and the Lord of Aratta": [
+   "Enmerkar and the Lord of Aratta",
+   1380600394
+  ],
+  "Mari texts": [
+   "Mari texts",
+   1382893414
+  ],
+  "Assyrian law": [
+   "Assyrian law",
+   1327692812
+  ],
+  "Tale of Aqhat": [
+   "Tale of Aqhat",
+   1383798646
+  ]
+ },
+ "images": {
+  "P1050763_Louvre_code_Hammurabi_face_rwk.JPG": "bd1724079537e76a56215f9a3b5dde69ee508a3b40ae2ca657bebc0af2653442",
+  "Ur_Nammu_code_Istanbul.jpg": "7b3aa6ea4fef797ea599dfc515f3d6948de22e305ced6e941742c1a731e05bcd",
+  "British_Museum_Flood_Tablet_1.jpg": "910301ea141928e1fd0d9890ca3a5eb3ba50ba32768c49a04eb19a26a33758dd",
+  "Bm-epic-g.jpg": "3315d53ed1ed0b18d820bff626ea13bb91f01b92a3958874a165c840341562f3",
+  "Chaos_Monster_and_Sun_God.png": "70f6e155c259671f0e64efbf60b4d93afd9c342c1480a2bee94b17debad46ce2",
+  "Weld-Blundell_Prism_with_transcription_by_Stephen_Herbert_Langdon_(1876-1937).jpg": "d509bf0e5524af94ebb27fd9e73541e694cd893b681016df2bf5ddffcf44b547",
+  "Sargon_of_Akkad_on_his_victory_stele.jpg": "54ffe259ff307ce6950cbcb5d2e900cfee8d59db4fd3dbb6eaee25098f498796",
+  "Hieratic_Ostracon_with_the_beginning_of_\"The_Wisdom_of_Amenemope\"_MET_LC-26_3_165_EGDP027774.jpg": "a4c10c6fe68a8714728d20d4bcb88617dc03148458a9640afb4dd49ece84df2d",
+  "La_salle_dAkhenaton_(1356-1340_av_J.C.)_(Musée_du_Caire)_(2076972086).jpg": "d27ace400025cb34f25edd41a7a212e46c6412104c3efaa4da55724d09c3a30f",
+  "Karnak_Ägyptisch-Hethitischer_Friedensvertrag_06.jpg": "f249141ee38177cf1391544e423cf999fe139f60bd0279b6a2d1f721a72c2139",
+  "Treaty_of_Esarhaddon_with_Baal_of_Tyre_(K_3500_+_K_4444_+_K_10235).png": "f3e9a091db5e73ef7ce683df0809a0d8fada8c91ee5a08fb94d5b5c4bd4ae31f",
+  "Ludlul_bel_nemeqi_Ninive.jpg": "e5ed9c04a7427395b0df1fdf5d03c5101425b46ab37f8cac3395c7cbdd23d171",
+  "P1180250_Louvre_Langue_ougaritique_Tablette_poeme_mythologique_AO16641_et_16642_rwk.jpg": "de8c0d79a116f26a9ae45b21a931f4201354ea879b15376f66c39d624d7b9598",
+  "Five_Amarna_letters_on_display_at_the_British_Museum,_LondonA.jpg": "16fe48222c27209bb78fa1022e4d2d2685f130b67ac12abbf9733e381ce5741f",
+  "Gezer_calendar_close_up.jpg": "b52f69ab2147a7d90200f7abbaebb0fea93e5ec6963a59657085260ded6220fc",
+  "Tale_of_two_brothers.jpg": "5e573f871d25b7d5f365359effdadaf219c802b02f1fc94a415d889203093de3",
+  "Papyrus_narrating_the_story_of_the_wise_chancellor_Ahiqar._Aramaic_script._5th_century_BCE._From_Elephantine,_Egypt._Neues_Museum.jpg": "a4433a3921a90140b80b7b9318dbc2926eb6783ad4a115024e4f1e3c8e13f25d",
+  "Cyrus_Cylinder_front.jpg": "1b76a7df240f4f4f4f354284189961063a02fe701bc2fc2cd363cac9812da80f",
+  "Enmerkar_and_the_Lord_of_Aratta_Ashmolean.jpg": "a633da8e5b4dd53fae6312f5f5cd317b12a3369c316964e313f6538234d91386",
+  "Tablet_Zimri-Lim_Louvre_AO20161.jpg": "95e3d38685db5f3a2dbcd0ce068617bda093895f0348bbf114be162d90f27344",
+  "Danel_epic_AO17323_img_0160.jpg": "0f786b12fd32087365e7f173a64b61d9ac1d4cf3c4ad60425a25543c08b71ab8"
+ }
+}
