@@ -5,8 +5,8 @@
 // text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the book shown (those with notes
 //   for it: note_sources.books, pipeline/source_books.py - Rashi only in the Torah), grouped
-//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, DICTIONARY, MAPS, APPARATUS, COMMENTARIES, TRANSLATIONS and
-//   ANCIENT VERSIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
+//   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, DICTIONARY, MAPS, APPARATUS, COMMENTARIES, ANCIENT
+//   VERSIONS and TRANSLATIONS - the database's note_sources (pipeline/notes.py; the dictionary's: tyndale_dict.py) - so
 //   swapping one is a tap; the choice is kept per testament on the device, and stays through every book it covers.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
@@ -116,8 +116,8 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
     return g.children.length ? [g] : [];
   };
   return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary", "Dictionary"), ...group ("atlas", "Maps"),
-          ...group ("apparatus", "Apparatus"), ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"),
-          ...group ("version", "Ancient versions")];
+          ...group ("apparatus", "Apparatus"), ...group ("commentary", "Commentaries"), ...group ("version", "Ancient versions"),
+          ...group ("translation", "Translations")];
 }
 
 /** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
