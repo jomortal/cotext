@@ -463,6 +463,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcNative { font-weight: 400; }
 .vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
+.vcDeck .vcTr > :not(.src), .vcDeck .vcTr > :not(.src) :not(.vcNum) { font-size: 24px; line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
 .vcNum { font-size: var(--fs-xs); color: var(--soft); }
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }
 .vcCredits:empty { display: none; }
