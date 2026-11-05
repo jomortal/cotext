@@ -103,7 +103,8 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(100dvh - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
-.head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.head .row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }     /* (☰ at the left, the passage truly centered - whatever the side buttons' widths, ⋯ or ✕ -, ⋯ at the right: the play bar's layout) */
+.head .row > :first-child { justify-self: start; } .head .row > :last-child { justify-self: end; }
 .head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; }
 .head .place { flex: 0 1 auto; }     /* (The passage: a title - .gTitle's kind, below - on an icon pill) */
 .bar { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; align-items: center; }     /* (24px between buttons: they have no padding of their own) */
