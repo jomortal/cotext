@@ -182,10 +182,14 @@ Archaeology finds (the word panel's Finds, the notes' and search's Archaeology f
     of the persons and places it names. This adaptation is shared under the same license.
   - Photos from Wikimedia Commons, each under its own free license (CC0, public domain, CC BY or CC BY-SA), its author
     and license credited under it; reduced to JPEGs (a 160 px thumbnail and a 1200 px picture).
+  - Finds and passages added by COTEXT (pipeline/finds.py's NEW and MORE): the annals of Tiglath-pileser III and the
+    Behistun inscription, and the passages each find bears on.
+  - Inscriptions' texts tr. T. G. Pinches, The Old Testament in the Light of the Historical Records and Legends of
+    Assyria and Babylonia (3rd ed., 1908; public domain) - from Project Gutenberg (gutenberg.org). Excerpts only,
+    footnote marks left out.
   - Names matched through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
 
-Ancient Near East parallels (the notes' and search's Ancient Near East parallels - public/data/notes/ane.db,
-  pipeline/ane.py):
+Ancient Parallels (the notes' and search's Ancient Parallels - public/data/notes/ane.db, pipeline/ane.py):
   - The entries, their parallels and the lines on them: COTEXT's own.
   - Descriptions from Wikipedia (https://en.wikipedia.org), each entry's article at the revision in
     pipeline/ane_pins.json, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Changes made by
@@ -199,6 +203,19 @@ Ancient Near East parallels (the notes' and search's Ancient Near East parallels
     of the Deluge (1920) and The Babylonian Legends of the Creation (1921); T. G. Pinches, The Old Testament in the
     Light of the Historical Records and Legends of Assyria and Babylonia (3rd ed., 1908) - from Project Gutenberg
     (gutenberg.org). Excerpts only, footnote marks left out.
+
+Ancient Historians (the word panel's Historians, the notes' and search's Ancient Historians -
+  public/data/notes/historians.db, pipeline/historians.py):
+  - The entries, the passages they're paired with and the lines on them: COTEXT's own.
+  - Translations, public domain: Josephus, Jewish Antiquities and The Jewish War, tr. William Whiston (1737); Suetonius,
+    The Lives of the Twelve Caesars, tr. Alexander Thomson, rev. T. Forester; Pliny the Younger, Letters, tr. William
+    Melmoth, rev. F. C. T. Bosanquet; Lucian, The Death of Peregrine, tr. H. W. and F. G. Fowler (1905); Herodotus,
+    The Histories, tr. G. C. Macaulay (1890); Xenophon, Cyropaedia, tr. H. G. Dakyns; Polybius, The Histories, tr.
+    E. S. Shuckburgh (1889) - from Project Gutenberg (gutenberg.org); Tacitus, Annals, tr. A. J. Church and W. J.
+    Brodribb (1876); Philo, Against Flaccus, On the Embassy to Gaius and On the Cherubim, tr. C. D. Yonge (1854-55);
+    Eusebius, Church History, tr. A. C. McGiffert (Nicene and Post-Nicene Fathers, Series II, vol. 1, 1890) - from
+    Wikisource (en.wikisource.org); 1 and 2 Maccabees from Brenton's English Septuagint (1851; eBible.org). Excerpts
+    only, the translators' footnote marks left out.
 
 ISBE, archaeology and sites (the word panel's ISBE, the notes' and search's ISBE - public/data/notes/isbe.db,
   pipeline/isbe.py):

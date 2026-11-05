@@ -24,11 +24,27 @@ a non-commercial license are marked so in NOTICE.
   - [x] **ISBE, archaeology and sites** (1915, public domain; CrossWire's clean TEI): 904 articles - 813 places, 91 on
         archaeology and inscriptions - by passage (notes' ISBE), by word (a word panel's ISBE) and searchable.
   - [ ] ~~Barton, Archaeology and the Bible (1916)~~ - skipped: only scans and raw OCR (archive.org); no clean text.
-  - [x] **Ancient Near East parallels** (trial): 26 texts (Hammurabi, Gilgamesh XI, Enuma Elish, Amenemope, the Aten
-        hymn, treaties, Ludlul, the Baal Cycle, Amarna...) paired by hand with their passages, each parallel a line,
-        10 with the passage in a public-domain translation; Wikipedia's lead, a Commons photo (21); by book (notes'
-        Ancient Near East parallels) and searchable. Not found clean: Rogers' Cuneiform Parallels (1912), King's Seven
-        Tablets, Amenemope.
+  - [x] **Ancient Parallels** (trial; once "Ancient Near East parallels"): 32 topical and literary texts (Hammurabi,
+        Gilgamesh XI and Siduri, Enuma Elish, Amenemope, the Aten hymn, treaties, Ludlul, the Baal Cycle, the
+        Sumerian and Assyrian king lists, the Lament for Ur, the Dialogue of Pessimism, the Harper's Songs, Egyptian
+        love songs, the Prayer of Nabonidus...) paired by hand with their passages, each parallel a line, 9 with the
+        passage in a public-domain translation; Wikipedia's lead, a Commons photo (23); by book and searchable. Finds
+        attesting the Bible's events (the Cyrus Cylinder...) are in the Archaeology finds. Not found clean: Rogers'
+        Cuneiform Parallels (1912), King's Seven Tablets, Amenemope.
+  - [x] **Archaeology finds: passages and texts** - every passage each attesting find bears on (the Mesha Stele, the
+        Taylor Prism, the Black Obelisk, Shishak's Karnak list, the Babylonian chronicles, Lachish, Elephantine, Deir
+        Alla, Sargon II, Nabonidus, the Cyrus Cylinder, Merneptah, Tel Dan...: 983 verses, from 213), Pinches' (1908)
+        translation of 8 of their texts, and two finds added (Tiglath-pileser III's annals, Behistun).
+  - [x] **Ancient Historians** (2026-11-04): Josephus (Whiston) - Antiquities 1-11 a chapter an entry, each linked to
+        the passages it retells (149), and 33 entries from Antiquities 12-20 and the War on the Maccabees and the New
+        Testament (Herod, the census, Pilate, the Testimonium, John the Baptist, Agrippa, the famine, Theudas, Felix,
+        Festus, James, the fall of Jerusalem...) -, 1-2 Maccabees (Brenton), Philo (Yonge: Pilate's shields,
+        Carabbas, the Logos), Eusebius (James, Pella, Patmos...), Tacitus, Suetonius, Pliny, Lucian, Herodotus,
+        Xenophon and Polybius: 220 entries, 13,110 verses; by book, searchable, and by word (the Pharisees,
+        Sadducees, Herods, Pilate, Caiaphas, Felix... - "Historians" in the word panel). Skipped (scans only): Philo's
+        Life of Moses, Contemplative Life, Confusion of Tongues; Rawlinson's Herodotus (Macaulay's used).
+        Books with none in any of the three: Joel, Obadiah (OT: no clear, commonly cited parallel), 1 Thessalonians,
+        Titus, 1-3 John.
 - [x] **Atlas: eras and routes** (built 2026-11-04): POLITICAL BOUNDARIES, a switch shading the borders of the era of
       the book and chapter read (12 eras, patriarchs to Rome; generated, approximate); ROUTE, a dropdown of the
       book's own journeys (19: Abraham, the Exodus, Numbers 33, Deuteronomy 1-3, Joshua's campaigns, the deportations,
