@@ -30,7 +30,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; textH?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; textH?: number; sheetShare?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
@@ -38,6 +38,7 @@ if (sizes.sheetH) root.setProperty ("--sheetH", sizes.sheetH + "px");
 if (sizes.besideH) root.setProperty ("--besideH", sizes.besideH + "px");
 if (sizes.cardH) root.setProperty ("--cardH", sizes.cardH + "px");
 if (sizes.sheetW) root.setProperty ("--sheetW", String (sizes.sheetW));
+if (sizes.sheetShare) root.setProperty ("--sheetShare", String (sizes.sheetShare));
 if (sizes.textH) { root.setProperty ("--textH", sizes.textH + "px"); document.body.classList.add ("textSized"); }     // (Narrow: the text's height as last dragged, the panels under it sharing the rest)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
@@ -69,7 +70,20 @@ const notesSplit = document.getElementById ("notesSplit")!;
 const panesShare = () => notesEl.hidden && searchEl.hidden ? 0 : sizes.notesW ?? NOTES_W;
 // The panes' column's width: from its divider to the window's right edge, as a share of the width, 22-60 % (the
 // text keeping 40 % at least).
-drag (notesSplit, (x) => {
+// Narrow, the same divider lies between the word's panel and the panes under it (both open): the word's share (%) of
+// the room the two have below the text (--sheetShare), each keeping 120 px at least - the text held at its height.
+const narrowSplit = () => notesSplit.setAttribute ("aria-orientation", WIDE.matches ? "vertical" : "horizontal");
+narrowSplit (); WIDE.addEventListener ("change", narrowSplit);
+drag (notesSplit, (x, y) => {
+  if (! WIDE.matches) {
+    const sheet = document.getElementById ("sheet")!.getBoundingClientRect (), bar = innerHeight - barRoom (document.getElementById ("playBar"));
+    const room = bar - sheet.top - 14;     // (14: the divider)
+    if (room < 240) return;     // (Too short for two: left as it is)
+    if (! sizes.textH) { sizes.textH = Math.round (document.querySelector ("main")!.getBoundingClientRect ().height); root.setProperty ("--textH", sizes.textH + "px"); document.body.classList.add ("textSized"); }
+    sizes.sheetShare = Math.round (clamp (y - 7 - sheet.top, 120, room - 120) / room * 1000) / 10;
+    root.setProperty ("--sheetShare", String (sizes.sheetShare));
+    return;
+  }
   sizes.notesW = Math.round (clamp ((innerWidth - x) / innerWidth * 100, 22, 60) * 10) / 10;
   root.setProperty ("--notesW", String (sizes.notesW));
   placeWord ();
