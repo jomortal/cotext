@@ -9,7 +9,7 @@
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, last in ⋯'s options) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
-//   CHAPTER, FROM VERSE (a verse) and TO VERSE (blank: that verse alone, or one after it: a range within the
+//   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts blank, and is blank again after each card is added (each picker blank until
 //   the one before it is picked, + ADD CARD greyed out until FROM VERSE is; TO VERSE optional,
 //   blank for the one verse). The deck's settings one line, wrapping where it doesn't fit: LANGUAGE, TRANSLATION,
@@ -220,13 +220,16 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
     return l;
   };
   const chosen = !! (b && p.chapter);
+  const sep = (t: string) => Object.assign (document.createElement ("span"), { className: "vcSep", textContent: t });     // (As a reference reads: 3:16-18)
   el.replaceChildren (
     Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
           (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }), { className: "vcPick vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
+    sep (":"),
     pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? vs.map ((v): [number, string] => [v, String (v)]) : [])],
           p.from < 0 ? "" : p.from, (v) => { p.from = +v; p.to = 0; }, ! chosen),
+    sep ("-"),
     pick ("To verse", p.from > 0 ? [[0, "–"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
           p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
   addBtn.disabled = ! chosen || p.from < 0;
