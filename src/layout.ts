@@ -30,7 +30,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; textH?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
@@ -38,6 +38,7 @@ if (sizes.sheetH) root.setProperty ("--sheetH", sizes.sheetH + "px");
 if (sizes.besideH) root.setProperty ("--besideH", sizes.besideH + "px");
 if (sizes.cardH) root.setProperty ("--cardH", sizes.cardH + "px");
 if (sizes.sheetW) root.setProperty ("--sheetW", String (sizes.sheetW));
+if (sizes.textH) { root.setProperty ("--textH", sizes.textH + "px"); document.body.classList.add ("textSized"); }     // (Narrow: the text's height as last dragged, the panels under it sharing the rest)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
 /** A divider dragged: move (x, y) called with the pointer's place each frame it moves; kept when let go. */
@@ -135,7 +136,8 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
   scroll.before (scroll.querySelector<HTMLElement> (":scope > .top")!);     // (Its top row frozen over the scroller, every width)
   return scroll;
 }
-// A word's panel's height: from its divider down to the play bar; beside the text the text's word's panel's width
+// A word's panel's height: from its divider down to the play bar (narrow: the divider under the text, with any panel
+// open - the text's height, --textH); beside the text the text's word's panel's width
 // instead: from its divider to the panes' divider (the window's right edge while both are closed), the text keeping
 // 30 % of the window.
 for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] as const)
@@ -147,7 +149,13 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
       return;
     }
     const bar = innerHeight - barRoom (document.getElementById ("playBar"));     // (The play bar's top - the window's foot while it's down the side)
-    const mid = bar - document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom;
+    const head = document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom, mid = bar - head;
+    if (id === "sheetSplit" && ! WIDE.matches) {     // (Narrow: the divider under the text - the text's height, the panels sharing the rest, each 120 px at least)
+      const open = docks.filter ((d) => ! d.hidden).length;
+      sizes.textH = Math.round (clamp (y - 7 - head, 120, Math.max (120, mid - 14 - 120 * open)));     // (7: the divider's half)
+      root.setProperty ("--textH", sizes.textH + "px"); document.body.classList.add ("textSized");
+      return;
+    }
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
   });

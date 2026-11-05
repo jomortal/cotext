@@ -209,6 +209,12 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .col { display: contents; }     /* (The columns' boxes not there: their contents stack in the body's column) */
 body.docks :is(#sheet, #notes, #besideSheet, #search) { max-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }     /* (By id: to outweigh each panel's own limit) */
 body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
+/* The divider under the text (#sheetSplit) while any panel is open: dragged, the text that tall (--textH, layout.ts) and
+   the panels sharing the rest evenly - its line the text's under it. */
+body:has(.dock:not([hidden])) #sheetSplit { display: block; } body:has(.dock:not([hidden])) main { border-bottom: 0; }
+body.textSized:has(.dock:not([hidden])) main { flex: none; height: var(--textH); min-height: 0; }
+body.textSized :is(#sheet, #notes, #besideSheet, #search, #verseSheet):not([hidden]) { flex: 1 1 0; max-height: none; }
+body.textSized:has(.dock:not([hidden])) #sheet:not([hidden]), body.textSized:has(.dock:not([hidden])) #search:not([hidden]) { border-top: 0; }
 }
 .w.reading { background: var(--tint-strong); }
 .vnum { cursor: pointer; }
@@ -578,6 +584,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    their contents (and the heading's) the full width. One grid for both layouts: its columns 2 and 3 (the word beside
    the text: body.sideWord, below) empty unless the word is there. */
 .split { display: none; }
+/* A divider (layout.ts' drag): its line in the middle, a grip over it, the rest room to drag - drawn by its orientation. */
+.split { flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
+.split::before { content: ""; position: absolute; background: var(--edge); }
+.split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
+.split.on::after { background: var(--accent); opacity: 1; }
+.split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
+.split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
+.split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
 @media (min-width: 700px) {
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--paneCol, 0px);
          grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the panes' divider, the panes; a divider's column empty while hidden) */
@@ -598,13 +612,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #besideSheet { height: min(var(--besideH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
   /* A divider: a line in the edge color with a grip at its middle, as wide as a finger to take hold of; never scrolls
      the page when dragged (touch-action). Each word panel's shown with it. */
-  .split { display: block; flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
-  .split::before { content: ""; position: absolute; background: var(--edge); }
-  .split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
-  .split.on::after { background: var(--accent); opacity: 1; }
   /* Drawn by its orientation (aria-orientation): vertical - the panes' column's and, beside the text, the word's
      panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height, the search's against the notes' -
      sets a height. */
+  .split { display: block; }
   .split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }
   .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
   body:has(#notes:not([hidden]), #search:not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the panes' divider: no gap where they meet) */
@@ -626,9 +637,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); } body:has(#search:not([hidden])) #notes > .xRow { top: var(--x-top); }     /* (The notes under the search: away from the screen's top, no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
   .pane > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
-  .split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
-  .split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
-  .split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
   body:has(#sheet[hidden]) #sheetSplit, body:has(#besideSheet[hidden]) #besideSplit { display: none; }
 }
 /* The word beside the text (layout.ts' body.sideWord: wide, with at least 1200 px left for the text and its word once
