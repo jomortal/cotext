@@ -20,9 +20,9 @@
 //   the first if None was picked); and, for the original, Interlinear, Parsing and Transliteration (drawn as the
 //   reader draws it: chapterstudy.ts' textBox; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
 //   for a card left in English only with none picked, the first translation that has it.
-// - A CARD: its front the reference - and, where the card shows an original, the reference in its language under it
-//   (the Hebrew or Greek book name, chapter and verses in letters: "תְּהִלִּים כג:א", "Κατὰ Ἰωάννην γʹ:ιϛʹ"; the
-//   Septuagint's own book and numbering, Psalms and Jeremiah's differing: "Ψαλμοί κβʹ:αʹ"); turned over, the back alone
+// - A CARD: its front the reference - and, where the card shows an original, the reference in its language
+//   beside it (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
+//   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range), the original. Under the deck SHOW LIST / HIDE LIST (hidden at first) and the list, in the order added and laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
@@ -111,22 +111,25 @@ function greekNumber (n: number) {
   const H = ["", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "ϡ"], T = ["", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ϟ"], O = ["", "α", "β", "γ", "δ", "ε", "ϛ", "ζ", "η", "θ"];
   return H[Math.floor (n / 100) % 10] + T[Math.floor (n / 10) % 10] + O[n % 10] + "ʹ";
 }
-/** A reference in the original's own language: the book's Hebrew or Greek name (booknames.ts) and its chapter and
- *  verses in letters - "תְּהִלִּים כג:א", "Κατὰ Ἰωάννην γʹ:ιϛʹ" (the Septuagint's own book and numbering: "Ψαλμοί κβʹ:αʹ"). */
+/** A reference in the original's own language, beside the English: the book's Hebrew or Greek name (booknames.ts) and
+ *  its chapter and verses in letters - "תְּהִלִּים כג:א", "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ" (the Septuagint's own book and
+ *  numbering: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"). */
 function nativeRef (code: string, lang: "he" | "gr", c1: number, v1: number, c2: number, v2: number) {
   const name = nativeName (code)?.[0];
   if (! name) return "";
   const num = lang === "he" ? hebrewNumber : greekNumber;
   const span = ! v1 ? num (c1) : `${num (c1)}:${num (v1)}` + (c2 !== c1 ? `–${num (c2)}:${num (v2)}` : v2 > v1 ? `–${num (v2)}` : "");
-  return `<div class="vcRef vcNative ${lang}" dir="${lang === "he" ? "rtl" : "ltr"}" lang="${lang === "he" ? "he" : "grc"}">${esc (name)} ${span}</div>`;
+  // (Greek in capitals, as inscriptions and the oldest manuscripts: no accents or breathings - ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ)
+  const text = lang === "he" ? `${name} ${span}` : `${name} ${span}`.normalize ("NFD").replace (/[\u0300-\u036f]/g, "").toUpperCase ();
+  return `<span class="vcNative ${lang}" dir="${lang === "he" ? "rtl" : "ltr"}" lang="${lang === "he" ? "he" : "grc"}">${esc (text)}</span>`;
 }
 
 /** A card's two sides: the front its reference (and, with an original, the reference in its language under it); the
  *  back those, the translation's verses (numbered in a range), the original. */
 async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ front: string; back: string }> {
   const b = bookOf (c);
-  const ref = `<div class="vcRef">${esc (refText (c))}</div>`;
-  if (! b) return { front: ref, back: ref };
+  const ref = (native = "") => `<div class="vcRef"><span>${esc (refText (c))}</span>${native}</div>`;     // (The English and, beside it, the original's)
+  if (! b) return { front: ref (), back: ref () };
   const [lo, hi] = c.from ? [c.from, c.to] : [0, 999];
   let html = "";
   const tr = translationOf (b);
@@ -154,7 +157,7 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     native = lxx ? (lb ? nativeRef (lb.code, "gr", ws[0].chapter, c.from ? ws[0].verse : 0, z.chapter, z.verse) : "")
                  : nativeRef (b.code, orig, c.chapter, c.from, c.chapter, c.to);
   }
-  return { front: ref + native, back: ref + native + html };
+  return { front: ref (native), back: ref (native) + html };
 }
 
 // ---- The screen ----
