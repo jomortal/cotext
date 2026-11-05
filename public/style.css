@@ -297,9 +297,8 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
           padding: calc(64px + env(safe-area-inset-top, 0px)) var(--safe-r) var(--pad) var(--safe-l); }
-#screenMenu, #screenClose { position: fixed; z-index: 32; top: var(--head-top); }
+#screenMenu { position: fixed; z-index: 32; top: var(--head-top); }
 #screenMenu { left: var(--col-l); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
-#screenClose { right: var(--col-r); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
@@ -331,7 +330,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen .panelScroll > :not(.gInline), .sheet.grammarOpen > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
-.gTitle, .vcTopRow .vcTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
+.gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
 .gInline .src { margin-top: 2px; }
 .gBody { font-size: var(--fs-m); line-height: var(--lh); margin-top: 8px; }
 .giOther { margin-top: 8px; display: grid; gap: var(--gap); }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
@@ -445,15 +444,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
-.vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (The top bar - a drop-down open in it, growing with it) */
-.vcTopRow { touch-action: none; }     /* (The name's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
+.topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name and +, a drop-down open in it, growing with it) */
+.topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
 #screen[data-screen="Verse cards"] { padding-top: calc(var(--vcTopH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --vcTopH, versecards.ts) */
-.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
+.topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 .vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (+ where the Bible view's ⋯ is: the top row's right end) */
 
-#screen[data-screen="Verse cards"] #screenClose { display: none; }     /* (No ✕: back to the Bible by ☰, ⋯ in its place) */     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
-.vcTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
-@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: + at the column's edge, as the Bible view's ⋯) */
+.topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
+@media (min-width: 700px) { .topBar { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: + at the column's edge, as the Bible view's ⋯) */
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
@@ -597,7 +595,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      a screen's ☰ and ✕ at its own edges, as the heading's at the column's. */
   #picker { left: var(--textL, 0px); }     /* (From the text's column to the window's edge: over the panes too) */
   #screen { left: var(--textL, 0px); right: var(--studyR, 0px); }
-  #screenMenu { left: calc(var(--textL, 0px) + var(--safe-l)); } #screenClose { right: calc(var(--studyR, 0px) + var(--safe-r)); }
+  #screenMenu { left: calc(var(--textL, 0px) + var(--safe-l)); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch at whichever side the pane is. */
   .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--safe-l); }
@@ -674,7 +672,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen[data-screen="Verse cards"] #screenTitle { display: none; }     /* (Verse cards: no title - the deck's name at its top) */
+#screen[data-screen="Verse cards"] #screenTop { display: none; }     /* (Verse cards: its own top bar, the deck's name in it and + - the same kind, .topBar) */
 /* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
 #cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: var(--rule) !important; }
@@ -703,7 +701,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    the bottom half; wide side by side, the editor at the left. */
 #studyBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M6 3h9l4 4v14H6z'/%3E%3Cpath d='M9 10h7M9 13.5h7M9 17h4'/%3E%3Cpath d='M9 7h3' stroke-linecap='round'/%3E%3C/svg%3E"); }     /* (A page of text) */
 #screen[data-screen="Study printout"] { overflow: hidden; padding-bottom: max(var(--pad), env(safe-area-inset-bottom, 0px)); }
-#screen[data-screen="Study printout"] .pickerCard { max-width: none; height: 100%; grid-template-rows: auto minmax(0, 1fr); }
+#screen[data-screen="Study printout"] .pickerCard { max-width: none; height: 100%; grid-template-rows: minmax(0, 1fr); }
 #screen[data-screen="Study printout"] #screenBody { min-height: 0; grid-template-rows: minmax(0, 1fr); }
 .cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "preview" "editor"; }
 @media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); grid-template-areas: "editor preview"; } }
@@ -793,7 +791,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, #screenClose, #screenTitle, .csEditor, .chooseList { display: none !important; }
+  #screenMenu, #screenTop, .csEditor, .chooseList { display: none !important; }
   #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
   .csPreview { overflow: visible; border: 0; padding: 0; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;

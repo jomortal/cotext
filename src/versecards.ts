@@ -255,7 +255,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1><button class="pill icon vcTitle" id="vcMore" aria-label="${esc (d.name)}: deck options" aria-expanded="${menuOpen === "more"}">${esc (d.name)}</button></h1>
+  body.innerHTML = `<div class="topBar"><div class="topRow"><h1><button class="pill icon topTitle" id="vcMore" aria-label="${esc (d.name)}: deck options" aria-expanded="${menuOpen === "more"}">${esc (d.name)}</button></h1>
       <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button></span></div>
     <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
     <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick"><option value="new">+ New Deck</option>${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
@@ -313,7 +313,7 @@ async function draw (body: HTMLElement) {
   nameIn.value = d.name;
   nameIn.addEventListener ("input", () => {
     d.name = nameIn.value; save ();
-    body.querySelector (".vcTitle")!.textContent = d.name || "Untitled";
+    body.querySelector (".topTitle")!.textContent = d.name || "Untitled";
     deckPick.selectedOptions[0].textContent = d.name || "Untitled";
   });
   nameIn.addEventListener ("change", () => { if (! d.name.trim ()) { d.name = "Untitled"; nameIn.value = d.name; save (); } });
@@ -394,7 +394,7 @@ async function draw (body: HTMLElement) {
   });
   // The top row and a drop-down open under it act as one bar, growing as it opens: fixed, not scrolling with the card,
   // the screen's room starting under it (--vcTopH: its height, the screen's padding - style.css)
-  const screenEl = document.getElementById ("screen")!, topEl = body.querySelector<HTMLElement> (".vcTop")!;
+  const screenEl = document.getElementById ("screen")!, topEl = body.querySelector<HTMLElement> (".topBar")!;
   // BACK and NEXT fixed at the middle of the room (between the top - a drop-down open with it - and the bar), not
   // moving with the card: at the card's edges, measured again as the deck, the top or the window changes size
   const placeArrows = () => {
