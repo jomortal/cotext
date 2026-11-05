@@ -503,7 +503,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
-.vcDeck .cardBack .vcRef { font-size: var(--fs-2xl); font-weight: 600; text-align: center; }
+.vcDeck .cardBack .vcRef { font-size: var(--fs-2xl); text-align: center; }
+.vcRef > :not(.vcNative) { text-transform: uppercase; font-weight: 400; }     /* (The English reference in capitals, as the Greek's - not bold - front and back) */
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
 .vcNative { font-weight: 400; }
