@@ -56,10 +56,6 @@
 </main>
 <!-- The dividers (layout.ts), shown only on a wide screen: each word's panel's height (on its top edge) - beside the text, the text's word's panel's width (on its left edge) -, the right-hand column's width (#notesSplit, on its left edge), the search's height against the notes' (#paneSplit, between them). -->
 <div id="sheetSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the word's panel"></div>
-<div id="verseSheet" class="sheet dock" hidden>
-  <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
-  <div class="panelScroll"><div class="verseBody"></div></div>
-</div>
 <div id="sheet" class="sheet dock" hidden>
   <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
   <div class="heads">
@@ -78,6 +74,10 @@
     <div class="gBody giBody"></div>
     </div>
   </div>
+</div>
+<div id="verseSheet" class="sheet dock" hidden>
+  <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
+  <div class="panelScroll"><div class="verseBody"></div></div>
 </div>
 </div>
 <div id="notesSplit" class="split" role="separator" aria-orientation="vertical" aria-label="Resize the notes and the search"></div>

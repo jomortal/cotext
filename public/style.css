@@ -437,6 +437,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
 .vcSep { align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
+#vcPlace .vcPick .chooseWrap, .avPlace .vcPick .chooseWrap { display: block; } #vcPlace .vcPick .chooseBtn, .avPlace .vcPick .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
 #verseSheet { border-top: 1px solid var(--edge) !important; }
 .avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: 52px; }     /* (Clear of the ✕) */
@@ -573,6 +574,7 @@ body.sideWord #textCol { display: contents; }     /* (Its box not there: the tex
 body.sideWord:has(#sheet:not([hidden])) { --sheetCol: calc(var(--sheetW, 25) * 1%); }
 body.sideWord main { grid-column: 1; grid-row: 2; }
 body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet { grid-column: 3; grid-row: 2; height: auto; }
+body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWord #verseSheet { grid-column: 1 / 4; grid-row: 3; } body.sideWord #playBar { grid-row: 4; }     /* (The add-verse box under the text and its word, the play bar under it) */
 
 /* The search pane (search.ts): its bar the top row's width, beside the ✕, the picker (what's searched) under it; the count, then
    the results - each its reference (.src) over its text (the verse's original or interlinear English, or a source's), what matched in the
