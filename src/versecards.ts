@@ -6,8 +6,8 @@
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts at the chapter read and stays as it is between cards. The add row is
-//   one line where it fits (wrapping where not): the reference, ENGLISH ONLY, TRANSLATION, the deck's Interlinear,
-//   Parsing and Transliteration, OT, then + ADD CARD.
+//   one line where it fits (wrapping where not): the deck's Interlinear, Parsing and Transliteration, OT, ENGLISH
+//   ONLY, TRANSLATION, then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE), then + ADD CARD.
 // - AN OT CARD'S TEXT ("OT": picked on the add row when it's added - Hebrew at first): Hebrew or
 //   Greek LXX (the Septuagint verses translating the Hebrew reference: chapterstudy.ts' translatedWords, as the
 //   printout's Greek LXX text - Psalms and Jeremiah numbering differently, so headed with their own reference). An NT
@@ -166,11 +166,12 @@ async function draw (body: HTMLElement) {
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
     <div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false">
       <button class="pill" id="vcDelDeck">Delete deck</button></div>
-    <div class="vcAdd"><div id="vcPlace"></div>
-      <label class="vcPick"><input type="checkbox" id="vcEn"${newEn ? " checked" : ""}> English only</label>
-      <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
+    <div class="vcAdd">
       <button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button><button class="pill" data-o="translit">Transliteration</button>
       <label class="vcPick">OT<select class="choose" id="vcNew"${newEn ? " disabled" : ""}>${options (OT_CHOICES, newOT)}</select></label>
+      <label class="vcPick"><input type="checkbox" id="vcEn"${newEn ? " checked" : ""}> English only</label>
+      <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
+      <div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
     <div class="vcList"></div>
