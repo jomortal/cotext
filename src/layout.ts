@@ -152,8 +152,9 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
   });
-// A verse card's word's panel's height: from its divider down to the window's foot.
+// A verse card's word's panel's height: from its divider down to the deck's bar.
 drag (document.getElementById ("cardSplit")!, (_x, y) => {
-  sizes.cardH = Math.round (clamp (innerHeight - y, 120, Math.max (120, innerHeight - 160)));
+  const bar = document.querySelector<HTMLElement> (".vcBar")?.offsetHeight ?? 0;     // (The panel stands on the deck's bar)
+  sizes.cardH = Math.round (clamp (innerHeight - bar - y, 120, Math.max (120, innerHeight - bar - 160)));
   root.setProperty ("--cardH", sizes.cardH + "px");
 });

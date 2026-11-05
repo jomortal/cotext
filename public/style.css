@@ -419,14 +419,16 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcTop:has(#vcMore[aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
-:root { --vcFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); }     /* (The bar's room under its buttons: clear of the iPad's and iPhone's swipe-up edge) */
-.vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--fs-icon) - 18px - var(--vcFoot) - var(--pad));
+:root { --vcFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px));     /* (The bar's room under its buttons: clear of the iPad's and iPhone's swipe-up edge) */
+        --vcBarH: calc(var(--fs-icon) + 19px + var(--vcFoot)); }     /* (The bar's height: its line, arrows' padding, its own padding and line - the word's panel over it) */
+.vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--vcBarH) - var(--pad));
   display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 24px; background: var(--bg); border-top: 1px solid var(--edge);
+  box-sizing: border-box; height: var(--vcBarH); align-content: start;
   padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--vcFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
-.vcBar .pill { padding: 6px 0; }
+.vcBar .pill { padding: 6px 0; } .vcBar { align-items: center; }
 @media (min-width: 700px) { .vcBar { left: var(--textL, 0px); right: var(--studyR, 0px); } }
-#screen:has(.vcBar) { padding-bottom: calc(var(--fs-icon) + 18px + var(--vcFoot)); }     /* (Room under the screen for the bar) */
+#screen:has(.vcBar) { padding-bottom: var(--vcBarH); }     /* (Room under the screen for the bar) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
 /* ⋯'s options: under the top row, above the deck - pushing it down (not over it, as the Bible view's ⋯ menu: the
@@ -610,16 +612,16 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
 #screen[data-screen="Verse cards"] #screenTitle { display: none; }     /* (Verse cards: no title - the deck's name at its top) */
-/* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot, as the reader's, only on the Verse
+/* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
-#cardSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }
+#cardSheet { position: fixed; left: 0; right: 0; bottom: var(--vcBarH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }
 #screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }
 #screen:not(:has(#cardSheet:not([hidden]))) #cardSplit, #screen:not([data-screen="Verse cards"]) #cardSplit { display: none; }     /* (Its divider only with it) */
-#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--pad)); }
+#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--vcBarH) + var(--pad)); }
 @media (min-width: 700px) {     /* (Wide: as wide as the screen; its height as dragged (#cardSplit: layout.ts' --cardH), else just the word's info - the lexicon scrolling in its column beside it: --cardFit, versecards.ts -, else 45 % of the window) */
   #cardSheet { left: var(--textL, 0px); right: var(--studyR, 0px); height: min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)); border-top: 0 !important; }
-  #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)); }
-  #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + 14px + var(--pad)); }
+  #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + var(--vcBarH)); }
+  #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + 14px + var(--vcBarH) + var(--pad)); }
 }
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
