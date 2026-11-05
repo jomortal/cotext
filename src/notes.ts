@@ -446,7 +446,8 @@ export function noteElement (n: Note): HTMLElement {
 /** The church fathers' sources (FOLDED), whose quotes can run long: each note folded to its father and work over a
  *  line of it, as a dictionary's entry is (the same row, .hit) - tapped, the quote opens under it; tapped again, it
  *  folds - so the reader goes from Tertullian to Hippolytus without scrolling through Tertullian. The father and work
- *  are the body's lead (<b>father</b> <small>(work)</small>), taken off the quote. */
+ *  are the body's lead (<b>father <span class="life">(dates)</span></b> <small>(work)</small>), taken off the quote;
+ *  the dates keep their span, out of the heading's capitals (style.css' .life). */
 const FOLDED = new Set (["catena", "fathers"]);
 function foldedNote (n: Note): HTMLElement {
   const full = noteElement (n);
@@ -458,7 +459,7 @@ function foldedNote (n: Note): HTMLElement {
   row.setAttribute ("aria-expanded", "false");
   const head = document.createElement ("span");
   head.className = "src";
-  head.textContent = lead?.textContent ?? "";
+  if (lead) head.append (...lead.childNodes);
   if (work) {
     const w = document.createElement ("span");
     w.className = "dictWhy";     // (The work as written, not in the heading's capitals)

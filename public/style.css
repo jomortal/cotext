@@ -525,7 +525,7 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 /* The dictionary's entries (dictionary.ts: the notes' passage list, the search's results) - a result's row, its text one
    line cut short; tapped, the article opens under it, a grammar section's look (.gBody), set in from the row. */
 .dictLine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.dictWhy { text-transform: none; letter-spacing: 0; }
+.dictWhy, .src .life { text-transform: none; letter-spacing: 0; }     /* (.life: a church father's dates in his folded heading - notes.ts' foldedNote) */
 .dictBody { padding: 0 0 8px 12px; border-left: 2px solid var(--line); margin-bottom: 8px; }
 .dictBody[hidden] { display: none; }
 /* A find's photo (the Archaeology finds, pipeline/finds.py): a thumbnail at its entry's right, the size of its two

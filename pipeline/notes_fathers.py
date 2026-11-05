@@ -1,5 +1,7 @@
 """The notes panel's church fathers (notes.py builds them; its docstring lists every source): two commentaries, each
-quote led by its father and, where the source names it, the work it's from - <b>Chrysostom</b> <small>(Hom. xxi. 1)</small>.
+quote led by its father, his dates (writer_dates.json: Wikipedia's conventional dates, generated; none where unknown)
+and, where the source names it, the work it's from -
+<b>Chrysostom <span class="life">(c. 347-407)</span></b> <small>(Hom. xxi. 1)</small>.
 
   catena   Thomas Aquinas, Catena Aurea on the four Gospels, the Oxford translation (J. H. Parker, 1841-45, ed. J. H.
            Newman; public domain): the fathers' comments verse by verse, as Aquinas chained them. Text from the
@@ -40,6 +42,7 @@ COMMENTARIES_SHA = "c63381e05aa265e87a8db3852f25acacfde76b6ab2f8fe380841e6fdfbfc
 CCEL_MATTHEW = ("https://www.ccel.org/ccel/a/aquinas/catena1.xml",
                 "943a6b5fd668ef021877e99f210d96b84abbbe81212fe5627c6bb206f9ce1618")
 WORKS = notes.HERE / "fathers_works.json"     # Writings-Database work -> "pd" / "machine" (keep())
+DATES = json.loads((notes.HERE / "writer_dates.json").read_text())     # A father's name -> his dates, or null (lead())
 
 GOSPELS = [("Matthew", 40, 28), ("Mark", 41, 16), ("Luke", 42, 24), ("John", 43, 21)]     # (name, book id, chapters)
 # The Commentaries Database's book names (its book_names.json), the 66 books in the text's order (ids 1-66).
@@ -64,14 +67,24 @@ def name_case(s):
     return "".join(out)
 
 
-def lead(father, work, machine=False):
-    """A quote's lead: its father bold, its work (as the source cites it) small, in brackets."""
-    s = f"<b>{html.escape(father, quote=False)}</b>"
+def lead(father, work, machine=False, after=""):
+    """A quote's lead: its father bold, his dates after his name in a span of their own (src/notes.ts' foldedNote keeps
+    them out of the heading's capitals), then `after` (the source's addition to the name: " (as quoted by Jerome, AD
+    420)"); its work (as the source cites it) small, in brackets."""
+    e = lambda x: html.escape(x, quote=False)
+    if father not in DATES:
+        MISSING.add(father)
+    dates = DATES.get(father)
+    life = f' <span class="life">({dates})</span>' if dates else ""
+    s = f"<b>{e(father)}{life}{e(after)}</b>"
     if work:
         s += f" <small>({notes.script(work)}{'; machine translation' if machine else ''})</small>"
     elif machine:
         s += " <small>(machine translation)</small>"
     return s + " "
+
+
+MISSING = set()     # (Fathers not in writer_dates.json, listed by the build: add them there)
 
 
 def body(lead_html, paras):
@@ -226,6 +239,9 @@ def catena_rows():
             path = urllib.parse.quote(f"Thomas Aquinas/Catena Aurea/Commentary on {name}/Chapter {c}.html")
             url = f"https://raw.githubusercontent.com/HistoricalChristianFaith/Writings-Database/{WRITINGS_COMMIT}/{path}"
             rows += catena_chapter(b, notes.download("catena", f"{name} {c}.html", url))
+    if MISSING:
+        print(f"  catena fathers without an entry in writer_dates.json: {', '.join(sorted(MISSING))}")
+        MISSING.clear()
     return rows
 
 
@@ -317,9 +333,9 @@ def fathers_rows():
                 if not how:
                     left += 1
                     continue
-                father = author + c.get("append_to_author_name", "")
                 paras = [notes.script(re.sub(r"\s+", " ", p).strip()) for p in re.split(r"\n\s*\n|\n", c["quote"])]
-                b = body(lead(father, c.get("source_title", "").strip(), how == "machine"), paras)
+                b = body(lead(author, c.get("source_title", "").strip(), how == "machine",
+                              c.get("append_to_author_name", "")), paras)
                 if b:
                     rows.append([*at, author, b])
                     kept[author] = kept.get(author, 0) + 1
@@ -331,4 +347,6 @@ def fathers_rows():
         prev = (b, s)
         out.append((b, s, e, k, "", body_html))
     print(f"  fathers: {len(out)} kept from {len(kept)} fathers, {left} left out")
+    if MISSING:
+        print(f"  fathers without an entry in writer_dates.json: {', '.join(sorted(MISSING))}")
     return out

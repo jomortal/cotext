@@ -27,7 +27,8 @@ downloads/notes/historians/:
   account of them is given instead) and On the Confusion of Tongues - Yonge's volumes 2-4 are scans only on Wikisource
   but for Flaccus and the Embassy; Rawlinson's Herodotus (Gutenberg has Macaulay's, used instead).
 
-Each entry: its kind (Jewish, Roman, Greek, Christian), shown first in its line and text; its parallels, each its
+Each entry: its title, the author with his dates (a book's, its date of writing: 1 Maccabees (c. 100 BC);
+writer_dates.json) and what it's about; its kind (Jewish, Roman, Greek, Christian), shown first in its line and text; its parallels, each its
 passages (every passage on the same event, in both Testaments: the census under Quirinius links Luke 2:1-5 and Acts
 5:37), what the parallel is, and the passage itself under its reference (Antiquities 18.5.2), the translator's
 footnote marks left out.
@@ -64,6 +65,9 @@ SOURCE = ("historians", "dictionary", "Ancient Historians", "OT NT",
           "tr. H. G. Dakyns; Polybius tr. E. S. Shuckburgh - from Project Gutenberg, Wikisource and eBible.org.")
 BRENTON = HERE / "downloads" / "notes" / "brenton" / "eng-Brenton_usfm.zip"
 BRENTON_SHA = "9b1a4e09381885c658c1cc70ea56a64c125c85d8697a4f03cb6ad66a1bcd985c"     # (notes.py's pin of the same file)
+# An author's dates (a book's, its date of writing), shown after his name in the entry's title - Josephus (c. 37-100):
+# ... - from writer_dates.json (Wikipedia's conventional dates, generated; shared with notes_fathers.py).
+DATES = json.loads((HERE / "writer_dates.json").read_text())
 EUSEBIUS = "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius"
 
 # ---- The works ----
@@ -825,7 +829,9 @@ def entries(pins):
             body += [h, f"<p>{e(why)}</p>"]
             body += [blockquote(*quote(q, texts, pins)) for q in quotes]
         verses = len(tyndale_dict.verses_in(spans))
-        out.append((eid, f"{author}: {title}", "".join(body), f"{kind} · {line}"[:200], verses, spans))
+        dates = DATES.get(author)
+        named = f"{author} ({dates})" if dates else author
+        out.append((eid, f"{named}: {title}", "".join(body), f"{kind} · {line}"[:200], verses, spans))
         for s in words:
             lemmas.setdefault(s, []).append(eid)
 
