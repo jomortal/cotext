@@ -18,7 +18,8 @@
 //   chapterstudy.ts' translatedWords, as the printout's Greek LXX text), OT HEBREW - NT ENGLISH or
 //   OT ENGLISH - NT GREEK (while a choice leaves some cards in English only, TRANSLATION offers no None - switched to
 //   the first if None was picked); and, for the original, Interlinear, Parsing and Transliteration (drawn as the
-//   reader draws it: chapterstudy.ts' textBox, but the parsing without the verb colors; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
+//   reader draws it: chapterstudy.ts' textBox, but the parsing without the verb colors, and each verse number in the
+//   text's own letters - "ιϛʹ", "טז" - with its number under it as a gloss when Interlinear is on; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
 //   for a card left in English only with none picked, the first translation that has it.
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
@@ -151,6 +152,12 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
                    : (await chapterWords (db, b.id, c.chapter)).filter ((w) => w.verse >= lo && w.verse <= hi);
     const box = textBox (lxx ? { ...b, testament: "LXX" } : b, ws[0]?.chapter ?? c.chapter, ws, deckNow ().settings);
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
+    // (Each verse number in the text's own letters, as a word - its number under it with INTERLINEAR, as a gloss)
+    for (const v of box.querySelectorAll<HTMLElement> (".vnum")) {
+      const n = Number (v.textContent), he = !! v.closest (".vrow.he");
+      v.classList.add ("vcVnum");
+      v.innerHTML = `<div class="orig">${he ? hebrewNumber (n) : greekNumber (n)}</div><div class="gloss">${n}</div>`;
+    }
     html += `<div class="vcOrig">${box.outerHTML}</div>`;
     // (The Septuagint's reference its own: its book and numbering - Psalms and Jeremiah's differ)
     const lb = lxx && ws.length ? allBooks.find ((x) => x.id === ws[0].book) : undefined, z = ws[ws.length - 1];

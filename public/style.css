@@ -655,6 +655,8 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
 .csText .w.csNoGloss .gloss, .csText .w.csNoParse .parse { display: none; }     /* (A common word's helps, by the text item's frequency: chapterstudy.ts) */
 body.noVerbColors .csText .w .parse { color: inherit; }
 .vcDeck .csText .w .parse { color: inherit; }     /* (Verse cards: the parsing without the verb colors) */
+.vcDeck .vnum.vcVnum { padding-top: 0; font-weight: 400; color: var(--fg); }     /* (Verse cards: the verse number in the text's letters, as a word) */
+.vcDeck .csText:not(.csGloss) .vcVnum .gloss { display: none; }
 .csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: 2px solid var(--edge); font-size: var(--fs-s); margin-top: 6px; }
 .csBeside > .src { margin: 0 0 2px; }
 .csDoc .note { margin-top: 6px; }
