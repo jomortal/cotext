@@ -413,10 +413,13 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   requestAnimationFrame (tick);
 }
 
-// ▶: the chapter from the first verse whose line shows at the top of the view. (A verse number tapped opens the
-// add-verse box instead: versecards.ts.)
+// ▶: the chapter from the word picked (its panel open) - its verse from that word, the recording from that verse -,
+// else from the first verse whose line shows at the top of the view. (A verse number tapped opens the add-verse box
+// instead: versecards.ts.)
 playBtn.addEventListener ("click", () => {
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const picked = document.querySelector<HTMLElement> ("#chapter .w.on"), row = picked?.closest<HTMLElement> (".vrow");
+  if (picked && row && control !== playBtn) { start (playBtn, rows.slice (rows.indexOf (row)), picked); return; }
   const top = document.querySelector ("main")!.getBoundingClientRect ().top;
   const first = Math.max (0, rows.findIndex ((r) => r.getBoundingClientRect ().bottom > top + 8));
   start (playBtn, rows.slice (first));
