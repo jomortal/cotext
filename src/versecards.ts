@@ -283,6 +283,7 @@ async function draw (body: HTMLElement) {
   const openMenu = (k: typeof menuOpen) => {
     menuOpen = k;
     for (const m of menus) m.hidden = m.dataset.menu !== k;
+    placeArrows ();
     for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); if (icon) btn.textContent = n === k ? "✕" : icon; }     // (The title keeps its name)
     clearMenu ();
   };
@@ -401,12 +402,13 @@ async function draw (body: HTMLElement) {
     const over = menu.getBoundingClientRect ().bottom + 12 - (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top;
     if (over > 0) deckEl.style.marginTop = over + "px";
   };
-  // BACK and NEXT fixed at the screen's middle (between the top row and the bar), not moving with the card: at the
-  // card's edges, measured again as the deck or the window changes size
+  // BACK and NEXT fixed at the screen's middle (between the top row - or a drop-down open under it - and the bar), not
+  // moving with the card: at the card's edges, measured again as the deck, a drop-down or the window changes size
   const placeArrows = () => {
     const row = deckEl.querySelector<HTMLElement> (".vcCardRow"), bar = deckEl.querySelector<HTMLElement> (".vcBar");
     if (! row) return;
-    const r = row.getBoundingClientRect (), top = body.querySelector (".vcTop")!.getBoundingClientRect ().bottom;
+    const open = menus.find ((m) => ! m.hidden);
+    const r = row.getBoundingClientRect (), top = Math.max (body.querySelector (".vcTop")!.getBoundingClientRect ().bottom, open?.getBoundingClientRect ().bottom ?? 0);
     deckEl.style.setProperty ("--arrowL", r.left + "px"); deckEl.style.setProperty ("--arrowR", innerWidth - r.right + "px");
     deckEl.style.setProperty ("--arrowY", (top + (bar ? bar.getBoundingClientRect ().top : innerHeight)) / 2 + "px");
   };
