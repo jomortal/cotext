@@ -1,8 +1,9 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
-// - THE SCREEN (no title of its own): the open deck's name centered in the top row (between ☰ and ✕, as the Bible
-//   view's heading, staying as the screen scrolls) and ⋯ beside it, then the deck and the credits. ⋯ drops
-//   down everything else over the deck, as the Bible view's ⋯ menu (⋯ a ✕ while open, closing it), in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
+// - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
+//   the Bible view's heading, staying as the screen scrolls) and ⋯ at its right end, where the Bible view's is, then the deck and the credits. ⋯ shows
+//   everything else above the deck, pushing it down (the Bible view's ⋯ menu overlays; here the card stays in view),
+//   ⋯ a ✕ while open, closing it, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
 //   (below).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (last in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
@@ -233,7 +234,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
   body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1 class="vcTitle">${esc (d.name)}</h1>
-      <button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen}">${menuOpen ? "✕" : "⋯"}</button></div>
+      <button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen}">${menuOpen ? "✕" : "⋯"}</button></div></div>
     <div class="vcMenu"${menuOpen ? "" : " hidden"}>
     <label class="vcPick vcName">Name<input class="choose" id="vcName" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false"></label>
     <div class="vcAdd">
@@ -247,12 +248,12 @@ async function draw (body: HTMLElement) {
     <div class="vcHead">Decks</div>
     <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
-    </div></div>
+    </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
-  // ⋯ beside the deck's name: its options - the name, the settings, adding cards, the list, the decks - as the Bible
-  // view's ⋯ menu: dropped down over the deck (never moving it), ⋯ a ✕ while open that closes it (kept so between
-  // drawings)
+  // ⋯ at the top row's right: its options - the name, the settings, adding cards, the list, the decks - as the Bible
+  // view's ⋯ menu (⋯ a ✕ while open that closes it), but over the deck, pushing it down - the card still in view (kept
+  // so between drawings)
   const more = body.querySelector<HTMLElement> ("#vcMore")!, menu = body.querySelector<HTMLElement> (".vcMenu")!;
   more.addEventListener ("click", () => {
     menuOpen = ! menuOpen; menu.hidden = ! menuOpen;

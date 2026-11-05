@@ -411,17 +411,17 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: 1px solid var(--edge); }
-.vcTopRow { display: flex; justify-content: center; align-items: center; gap: 12px; padding: calc(6px + env(safe-area-inset-top, 0px)) 64px 6px; }     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
+.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; padding: calc(6px + env(safe-area-inset-top, 0px)) 64px 6px; }
+#vcMore { position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); }     /* (⋯ where the Bible view's is: the top row's right end) */
+#screen[data-screen="Verse cards"] #screenClose { display: none; }     /* (No ✕: back to the Bible by ☰, ⋯ in its place) */     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
 .vcTitle { min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-m); font-weight: 600; text-align: center; }
-@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } }
+@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } #vcMore { right: max(var(--pad), env(safe-area-inset-right, 0px)); } }     /* (Wide: ⋯ at the column's edge, as the Bible view's heading's) */
 .vcTop:has(#vcMore[aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
-/* ⋯'s options: as the Bible view's ⋯ menu (#options) - an overlay under the top row, over the deck (opening it never
-   moves the card), at most what's left of the screen, scrolling. */
-.vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 100%; left: 0; right: 0; box-sizing: border-box; background: var(--bg);
-  border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: contain;
-  padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }
+/* ⋯'s options: under the top row, above the deck - pushing it down (not over it, as the Bible view's ⋯ menu: the
+   card stays in view) -, a line under them. */
+.vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
