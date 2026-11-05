@@ -27,7 +27,7 @@
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
-//   - those references, the translation's verses (each numbered in a range), the original. The card centered on the
+//   - those references, the translation's verses (each numbered in a range; its name only in the credits below), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
 //   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on it turns it over
 //   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
@@ -151,10 +151,10 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     const ns = await (await fileOf (tr)).all (`SELECT start, body FROM notes WHERE book = ? AND start >= ? AND start <= ? ORDER BY start, ord`,
                                               [b.id, c.chapter * 1000 + lo, c.chapter * 1000 + hi]);
     const many = new Set (ns.map ((n) => n.start)).size > 1;
-    html += `<div class="vcTr"><div class="src">${esc (tr.name)}</div>` + (ns.length ? ns.map ((n) => many
+    html += `<div class="vcTr">` + (ns.length ? ns.map ((n) => many
       ? String (n.body).replace (/^(<p[^>]*>)?/, (p) => `${p || ""}<sup class="vcNum">${Number (n.start) % 1000}</sup> `) : String (n.body)).join ("")
       : "<p>Not in this translation.</p>") + "</div>";
-  } else if (deckNow ().settings.tr) html += `<div class="vcTr"><p class="src">Not in this translation.</p></div>`;
+  } else if (deckNow ().settings.tr) html += `<div class="vcTr"><p>Not in this translation.</p></div>`;
   const orig = originalOf (b);
   let native = "";
   if (orig) {
