@@ -457,8 +457,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
-.vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--pad));
-  display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s); }
+.vcDeck:has(.vcBar) { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s);
+  --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: versecards.ts' fitRoom) */
+  min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, versecards.ts) */
+.vcDeck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
+.vcDeck.vcPushed { margin-top: var(--vcPush); padding-top: 0; min-height: calc(var(--vcRoom) - var(--vcPush)); }     /* (A drop-down over the card: the deck starting under it, its room that much less - the card centered in what's left, the screen still one page) */
 .vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
 .vcBar .pill { padding: var(--head-y) 0; font-size: var(--fs-l); line-height: 1; }     /* (Its words larger than a pill's) */
 .vcBar > :first-child { justify-self: start; } .vcBar > :last-child { justify-self: end; }     /* (SHUFFLE and START OVER in the corners, FLIP centered - as the play bar's ▶) */
@@ -471,7 +474,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcCardRow > .pill.icon { position: fixed; top: var(--arrowY, 50%); translate: 0 -50%; }     /* (Fixed at the screen's middle, not moving with the card: versecards.ts' placeArrows measures where) */
 .vcCardRow > .pill.icon:first-child { left: var(--arrowL, 6px); } .vcCardRow > .pill.icon:last-child { right: var(--arrowR, 6px); }
 @media (min-width: 700px) { .vcBar { left: var(--textL, 0px); right: var(--studyR, 0px); } }
-#screen:has(.vcBar) { padding-bottom: var(--barH); }     /* (Room under the screen for the bar) */
+#screen:has(.vcBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
 .vcHead { margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 /* Level with the pickers (the add row's ":" and "-", + ADD VERSE, NEW VERSE): at the row's foot, a picker's height. */
 .vcSep, .pill.addVerse, .vcNewHead { align-self: end; line-height: var(--field-h); }

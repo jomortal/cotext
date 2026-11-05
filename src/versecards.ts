@@ -392,14 +392,17 @@ async function draw (body: HTMLElement) {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
   });
-  // The name's (or +'s) options lie over the room above the centered card: the deck pushed down only as far as they'd cover it
+  // The name's (or +'s) options lie over the room above the centered card; where they'd cover it, the deck starts under
+  // them, its room that much less, so the card is centered in what's left and the screen stays one page where it fits
   // (measured again as either changes size - a card turned, the window turned, the options opened)
   const clearMenu = () => {
-    deckEl.style.marginTop = "";
+    deckEl.classList.remove ("vcPushed");
     const menu = menus.find ((m) => ! m.hidden);
     if (! menu) return;
-    const over = menu.getBoundingClientRect ().bottom + 12 - (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top;
-    if (over > 0) deckEl.style.marginTop = over + "px";
+    const below = menu.getBoundingClientRect ().bottom + 12;
+    if (below <= (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top) return;     // (The card clear of it: left where it is)
+    deckEl.style.setProperty ("--vcPush", Math.max (0, below - deckEl.getBoundingClientRect ().top) + "px");     // (The deck from under it: .vcPushed)
+    deckEl.classList.add ("vcPushed");
   };
   // BACK and NEXT fixed at the screen's middle (between the top row - or, when it pushes the card down, a drop-down open
   // under it - and the bar), not
@@ -407,13 +410,29 @@ async function draw (body: HTMLElement) {
   const placeArrows = () => {
     const row = deckEl.querySelector<HTMLElement> (".vcCardRow"), bar = deckEl.querySelector<HTMLElement> (".vcBar");
     if (! row) return;
-    const open = deckEl.style.marginTop ? menus.find ((m) => ! m.hidden) : undefined;     // (clearMenu's push down)
+    const open = deckEl.classList.contains ("vcPushed") ? menus.find ((m) => ! m.hidden) : undefined;     // (clearMenu's push down)
     const r = row.getBoundingClientRect (), top = Math.max (body.querySelector (".vcTop")!.getBoundingClientRect ().bottom, open?.getBoundingClientRect ().bottom ?? 0);
     deckEl.style.setProperty ("--arrowL", r.left + "px"); deckEl.style.setProperty ("--arrowR", innerWidth - r.right + "px");
     deckEl.style.setProperty ("--arrowY", (top + (bar ? bar.getBoundingClientRect ().top : innerHeight)) / 2 + "px");
   };
   const watch = new ResizeObserver (() => { clearMenu (); placeArrows (); });
   watch.observe (deckEl); menus.forEach ((m) => watch.observe (m));
+  // The deck's room, measured: the screen's own height less its padding (the top row's room, the bar's - and the word
+  // panel's, when open) and the credits under the deck (with the gap above them) - kept free above the card too: the
+  // card centered on the screen, the credits at its foot, all on one screen without scrolling where they fit
+  const screenEl = document.getElementById ("screen")!;
+  const fitRoom = () => {
+    const c = credits.textContent ? credits.getBoundingClientRect ().bottom - deckEl.getBoundingClientRect ().bottom : 0, cs = getComputedStyle (screenEl);
+    deckEl.style.setProperty ("--vcCreditsH", c + "px");
+    const room = screenEl.clientHeight - parseFloat (cs.paddingTop) - parseFloat (cs.paddingBottom) - c;
+    deckEl.style.setProperty ("--vcRoom", room + "px");
+    // A card taller than the room left when centered: no room kept above it - it starts at the top (.vcTall)
+    const kids = [...deckEl.children].filter ((x) => ! x.classList.contains ("vcBar")) as HTMLElement[];
+    const content = kids.length ? kids[kids.length - 1].getBoundingClientRect ().bottom - kids[0].getBoundingClientRect ().top : 0;
+    deckEl.classList.toggle ("vcTall", content > room - c);
+  };
+  const fit = new ResizeObserver (fitRoom);
+  fit.observe (credits); fit.observe (screenEl); fit.observe (deckEl);
   deck ();
 }
 
