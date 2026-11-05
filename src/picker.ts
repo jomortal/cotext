@@ -12,6 +12,9 @@ const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
 
 document.getElementById ("pickerClose")!.addEventListener ("click", () => { picker.hidden = true; });
+// While the book list is open, the heading's ⋯ is inactive (greyed out: .pill:disabled)
+const optionsBtn = document.getElementById ("optionsBtn") as HTMLButtonElement;
+new MutationObserver (() => { optionsBtn.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
 
 // (On a wide screen it - and a study screen, ☰'s, but for its right edge (below) - starts and ends where the text's column does, so the panes' column
 // at the right stays in view: --textL and --textR, the text's insets from the window's edges, set on the root for
