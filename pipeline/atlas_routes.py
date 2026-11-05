@@ -1,5 +1,5 @@
 """The Atlas' ROUTES (atlas.py builds them into atlas.db; src/atlas.ts draws them): journeys the Bible's text itself
-traces, each an ordered list of stops, written here by hand from the verses.
+traces, each an ordered list of stops, generated here from the verses.
 
 ROUTES: (id, the books it's offered in (the app's book codes), its name, its stops). A stop is (place, verse): the
 place as OpenBible names it (a name its translations give it, or its friendly id: "Antioch 2"), the verse (book code,

@@ -15,10 +15,10 @@ wrong one.
     for it), else the one OpenBible gives its most likely modern site (modern.jsonl) when that site's score is 500 or
     more (half of scholarship or better) - OpenBible's line on what it shows ("Ruins at Tell es Sultan") before the
     credit. (OpenBible's choice over Wikidata's image: picked for the Bible's place, not the modern town.)
-  Plants, animals and objects - THINGS, matched by hand: an article -> the English Wikipedia article on what it is
+  Plants, animals and objects - THINGS, matched (generated): an article -> the English Wikipedia article on what it is
     (Ibex -> Nubian ibex, Hyssop -> Origanum syriacum); its Wikidata item's image (P18). Names whose identity is
     uncertain (Behemoth, Lily, Antelope...) or whose modern form misleads (Harp, Sword) are left out.
-  People and events - ARTWORK, matched by hand: an article -> a Commons file of Gustave Doré's Bible engravings (1866,
+  People and events - ARTWORK, matched (generated): an article -> a Commons file of Gustave Doré's Bible engravings (1866,
     public domain: "Doré's English Bible" and his New Testament plates). An article on several people only when the
     picture is of its first ("1.").
 Every picture from Wikimedia Commons under a free licence only (finds.pictures: CC0, public domain, CC BY, CC BY-SA),

@@ -1,5 +1,5 @@
 """Ancient Parallels: texts from the Bible's world - law codes, flood and creation stories, king lists, laments, wisdom,
-love songs, hymns, treaties, letters - each paired by hand with the passages it parallels, a line saying what the
+love songs, hymns, treaties, letters - each paired (generated) with the passages it parallels, a line saying what the
 parallel is, and, where a public-domain English translation exists as clean text, the parallel passage itself. Topical
 and literary parallels only: a find that attests the Bible's own events or people (the Mesha Stele, Sennacherib's
 annals, the Cyrus Cylinder) is in the Archaeology finds (finds.py, which shows the excerpts of their texts kept here -
@@ -63,7 +63,7 @@ PINS = HERE / "ane_pins.json"
 OUT = HERE.parent / "public" / "data" / "notes" / "ane.db"
 WIKISOURCE = "https://en.wikisource.org/w/api.php"
 SOURCE = ("ane", "dictionary", "Ancient Parallels", "OT NT",
-          "Texts from the Bible's world paired by hand with the passages they parallel (COTEXT). Descriptions from "
+          "Texts from the Bible's world paired with the passages they parallel, generated for COTEXT. Descriptions from "
           "Wikipedia (CC BY-SA 4.0; the revisions pinned in the build); photos from Wikimedia Commons, each credited "
           "under it. Translations public domain: L. W. King (Hammurabi); E. A. Wallis Budge (the Flood, Creation, the "
           "Aten hymn); T. G. Pinches (Amarna letters, Ludlul); George Smith (Sargon); Egyptian Literature "

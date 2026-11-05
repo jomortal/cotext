@@ -11,7 +11,7 @@ a non-commercial license are marked so in NOTICE.
       dropdown, each hit linked back by word or verse.
       Pictures (2026-11-04): places' site photos and maps, plants / animals / objects, Doré engravings for people
       and events - online only (pipeline/tobd_pictures.py). Rough: 210 MB on the server; more artwork (other
-      engravers) and objects could be matched by hand.
+      engravers) and objects could be matched.
 - [ ] **☰ Grammars**: pick a grammar (Gesenius, Machen, Smyth, unfoldingWord), its contents, read any section, search.
 - [ ] **☰ Bible Dictionary**: browse the Tyndale articles A-Z with a filter, each with its linked verses.
 - [x] **Atlas, by word and by passage** (built 2026-11-04 - pick a base map to keep) (try a few to compare): OpenBible.info geocoding (CC BY) + TIPNR places;
@@ -27,7 +27,7 @@ a non-commercial license are marked so in NOTICE.
   - [x] **Ancient Parallels** (trial; once "Ancient Near East parallels"): 32 topical and literary texts (Hammurabi,
         Gilgamesh XI and Siduri, Enuma Elish, Amenemope, the Aten hymn, treaties, Ludlul, the Baal Cycle, the
         Sumerian and Assyrian king lists, the Lament for Ur, the Dialogue of Pessimism, the Harper's Songs, Egyptian
-        love songs, the Prayer of Nabonidus...) paired by hand with their passages, each parallel a line, 9 with the
+        love songs, the Prayer of Nabonidus...) paired (generated) with their passages, each parallel a line, 9 with the
         passage in a public-domain translation; Wikipedia's lead, a Commons photo (23); by book and searchable. Finds
         attesting the Bible's events (the Cyrus Cylinder...) are in the Archaeology finds. Not found clean: Rogers'
         Cuneiform Parallels (1912), King's Seven Tablets, Amenemope.
@@ -72,7 +72,7 @@ a non-commercial license are marked so in NOTICE.
       2:18, Romans 1 / Wisdom 13-15, James 1:19 / Sirach 5:11, John 10:22 / 1 Maccabees 4...), and the OT's parallels
       (1 Esdras / 2 Chronicles 35-Nehemiah, Esther's and Daniel's additions, Baruch, Sirach / Proverbs, Wisdom /
       Psalms, 1 Maccabees / Daniel 8, 11): each the passage in Greek with Brenton's English and a line on the link;
-      roughly 300-500 links, gathered by hand (the 1611 KJV's margin, Wikipedia's lists, the texts compared - NA28's
+      roughly 300-500 links, gathered (generated) (the 1611 KJV's margin, Wikipedia's lists, the texts compared - NA28's
       index is copyrighted), each checked against both passages.
 - [ ] Before the public beta: slim the resources down (the user's pick).
 

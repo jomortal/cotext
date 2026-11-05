@@ -11,7 +11,7 @@ kept after; delete an entry to fetch it anew), fetched by ane.py's wikisource() 
 downloads/notes/historians/:
   - Josephus, Jewish Antiquities and Jewish War - William Whiston (1737), Project Gutenberg 2848 and 2850 (SHA-256).
     Antiquities 1-11 retell the Old Testament: an entry per chapter (Whiston's books and chapters), the chapter's text,
-    linked to the passages it retells (ANT, below: chosen by hand from the chapters' contents). Antiquities 12-20 and
+    linked to the passages it retells (ANT, below: chosen (generated) from the chapters' contents). Antiquities 12-20 and
     the War: the passages on the people and events of the Maccabean revolt and the New Testament (HISTORY).
   - 1 and 2 Maccabees - Brenton's English Septuagint (1851; eBible.org's USFM, notes.py's pinned download, its SHA-256
     checked here too): the Maccabean history Daniel foretells and the New Testament recalls.
@@ -57,7 +57,7 @@ DL = HERE / "downloads" / "notes" / "historians"
 PINS = HERE / "historians_pins.json"
 OUT = HERE.parent / "public" / "data" / "notes" / "historians.db"
 SOURCE = ("historians", "dictionary", "Ancient Historians", "OT NT",
-          "Ancient historians paired by hand with the passages they bear on (COTEXT). Translations public domain: "
+          "Ancient historians paired with the passages they bear on, generated for COTEXT. Translations public domain: "
           "Josephus tr. William Whiston (1737); 1-2 Maccabees from Brenton's Septuagint (1851); Philo tr. C. D. Yonge; "
           "Eusebius tr. A. C. McGiffert (1890); Tacitus tr. Church and Brodribb; Suetonius tr. Thomson and Forester; "
           "Pliny tr. Melmoth and Bosanquet; Lucian tr. H. W. and F. G. Fowler; Herodotus tr. G. C. Macaulay; Xenophon "
