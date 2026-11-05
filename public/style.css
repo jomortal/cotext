@@ -509,7 +509,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcDeck .vcTr > :not(.src) { font-family: var(--serif); }     /* (The cards' English verse in the serif, the Greek's Gentium - its reference in the page's sans serif) */
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
-.vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
+.vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--ui); order: -1; }     /* (The Greek reference in the page's sans serif, as the English beside it) */     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
 .vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }
