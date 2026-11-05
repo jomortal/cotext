@@ -127,15 +127,15 @@ async function draw (body: HTMLElement) {
     const d = byFreq () ? await details (words (l), bookId ()) : l.d;
     if (n !== refreshing) return;
     for (const b of body.querySelectorAll<HTMLElement> ("[data-list]")) b.setAttribute ("aria-pressed", String (b.dataset.list === picked));
-    freqRow.style.display = byFreq () ? "" : "none";     // (Its 20s only for the frequency lists)
-    bookRow.style.display = picked === "book" ? "" : "none";     // (And the book only for Book frequency)
+    freqRow.hidden = ! byFreq ();     // (Its 20s only for the frequency lists)
+    bookRow.hidden = picked !== "book";     // (And the book only for Book frequency)
     bookPick.value = String (theBook ());
     freqPick.innerHTML = Array.from ({ length: l.count }, (_, i) =>
       `<option value="${i}">${(i * LIST + 1).toLocaleString ()}-${Math.min ((i + 1) * LIST, l.ranked.length).toLocaleString ()}</option>`).join ("");
     freqPick.value = String (pickedList[listKey ()]);
     listBtn.setAttribute ("aria-pressed", String (listShown));
     body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
-    listEl.style.display = listShown ? "" : "none";
+    listEl.hidden = ! listShown;
     listEl.innerHTML = words (l).filter ((k) => d.has (k)).map ((k) => {
       const w = d.get (k)!;
       return `<div class="vocabRow"><span class="${t === "OT" ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;

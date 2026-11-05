@@ -70,7 +70,7 @@ export function openScreen (name: string) {
   // (Each opening drawn into a body of its own, laid out as #screenBody's own children: a screen still drawing when
   // another opens draws into one no longer shown)
   const body = document.createElement ("div");
-  body.style.display = "contents";
+  body.className = "screenPart";     // (style.css: display contents)
   screenBody.replaceChildren (body);
   const draw = screens.get (name);
   if (draw) draw (body); else body.innerHTML = "<p>Coming soon.</p>";

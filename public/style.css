@@ -1,5 +1,9 @@
 /* COTEXT's look, after the approved mock-ups (design/): warm paper, one serif for each language, a sans for the rest;
-   light and dark from the device's setting. Colors and fonts are tokens here, used by name below. */
+   light and dark from the device's setting. Colors, fonts, sizes, spacing, corners and lines are tokens (:root), used by
+   name below. Each kind of thing has one rule, its cases listed in it - a pill and an icon pill (.pill, .pill.icon), a
+   caption (.ref, .src), a note, a field's label (.freq...), a box (.choose...), an overlay (#options, .chooseList), a
+   plain button (.chooseItem...), a list's row (.guideRow...), a title (.gTitle...), a bottom bar (#playBar, .vcBar),
+   things level with the pickers (.vcSep...) - and anything is hidden one way, by the hidden attribute. */
 
 @font-face { font-family: "Ezra SIL"; src: url("fonts/EzraSIL.woff") format("woff"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
@@ -20,10 +24,35 @@
      prose read (an entry, a grammar section, a note); l headings and the menus' items (☰, the books and chapters).
      The text itself (the interlinear's words, a card's word) is sized on its own. */
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
-  --fs-icon: 22px;
+  --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
+  --fs-icon: 22px;     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
+  /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
+     3xl a card's front, a pattern; card a flashcard's word. */
+  --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
-  --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */     /* (The icon buttons - ☰ ✕ ⋯ ‹ › ▶, the notes' and speakers' icons - and the heading's buttons) */
+  --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
+  /* The edges: a box's sides clear of the notch (--safe-l / -r) and the heading's, centered on --page beyond it
+     (--col-l / -r: the % the box's own where used); --x-room kept clear of a panel's ✕. */
+  --safe-l: max(var(--pad), env(safe-area-inset-left, 0px)); --safe-r: max(var(--pad), env(safe-area-inset-right, 0px));
+  --col-l: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2));
+  --col-r: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2));
+  --x-room: 52px;
+  --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
+  /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
+     columns; -l between buttons with no padding. */
+  --gap-s: 4px; --gap: 10px; --gap-m: 12px; --gap-l: 24px;
+  --field-h: calc(var(--fs-s) * 1.2 + 14px); --field-h-m: calc(var(--fs-m) * 1.2 + 14px);     /* (A picker's height, -m the larger's: a label or mark beside it set level by its line height) */
+  /* Corners: --radius a box (the pickers and their lists, menus, the map, a printout's preview); -s a photo or a
+     pattern's square; -xs a bar's ends, a scroll bar's, a divider's grip; card a flashcard's; round a pill's. */
+  --radius: 8px; --radius-s: 4px; --radius-xs: 3px; --radius-card: 14px; --round: 999px;
+  /* Lines: --rule one kept (--edge), --hair one between rows (--line: not shown); -side a quote's bar at its left. */
+  --rule: 1px solid var(--edge); --hair: 1px solid var(--line); --rule-side: 2px solid var(--edge); --hair-side: 2px solid var(--line);
+  --shadow: 0 6px 20px rgb(0 0 0 / .18);     /* (Anything over the page: the ⋯ menu, a picker's list) */
+  /* The accent's tints: a word tapped, the verse read in a find's verses; a word read aloud; a line dragged (solid). */
+  --tint: color-mix(in oklch, var(--accent) 14%, transparent); --tint-strong: color-mix(in oklch, var(--accent) 28%, transparent);
+  --tint-solid: color-mix(in oklch, var(--accent) 10%, var(--bg));
+  --faint: color-mix(in srgb, var(--soft) 35%, transparent);     /* (The scroll bars' thumbs) */
   /* The atlas' maps (atlas.ts): water, land, roads, borders - muted, so the places' points (the accent) stand out;
      light in either mode (.atlasMap, above). */
   --map-water: #cfdde3; --map-land: #efeadf; --map-road: #b0745a; --map-border: #8a8478;
@@ -41,66 +70,74 @@
 html, body { position: fixed; inset: 0; overflow: hidden; }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }     /* (The one way anything is hidden - the hidden attribute -, whatever its own display) */
 /* Scroll bars everywhere small and faint (the user's choice, as Claude's desktop app's): a 6px rounded thumb in the muted
    text color at a third, on no track; a panel's starting below its ✕ (the track's margin), never beside it. Chrome and
    Safari by ::-webkit-scrollbar (the standard scrollbar-width would switch it off in Chrome); Firefox, which has no
    such styling, thin. */
 ::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
-::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--soft) 35%, transparent); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--faint); border-radius: var(--radius-xs); }
 :is(#sheet, #besideSheet) :is(.panelScroll, .infoBox)::-webkit-scrollbar-track { margin-top: 48px; }     /* (The ✕: 8-44px down) */
 .pane > .panelScroll::-webkit-scrollbar-track { margin-top: 56px; }     /* (Its ✕: 17-53px down, over the scroller on a phone) */
-@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--soft) 35%, transparent) transparent; } }
-main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: 1px solid var(--edge);     /* (The text never less than a third of the screen: the panels below shrink first) */
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--faint) transparent; } }
+main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: var(--rule);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
-       padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px));     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
+       padding: 0 var(--safe-r) var(--pad) var(--safe-l);     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
        display: grid; grid-template-columns: minmax(0, var(--page)); justify-content: center; align-content: start; gap: 14px; }     /* (The text at most --page wide, centered: margins either side beyond that) */
 h1 { font-size: var(--fs-l); margin: 0; }
-p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: 1.5; }
+p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh); }
 .credit { margin-top: 24px; font-size: var(--fs-xs); }
 
 /* The heading: ☰ (the study drawer), ‹ passage ›, ⋯ (the helps' menu, opening under it). */
 /* Above the scrolling text, not inside it: the body a column - the heading, then main filling the rest and scrolling
    on its own - so the text can't go above or behind it, whatever its height; under the clock it's the heading's own color. */
-.head { flex: none; z-index: 5; display: grid; gap: 10px; background: var(--bg); border-bottom: 1px solid var(--edge);
-        padding: calc(6px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)) 6px max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }
+.head { flex: none; z-index: 5; display: grid; gap: var(--gap); background: var(--bg); border-bottom: var(--rule);
+        padding: var(--head-top) var(--col-r) var(--head-y) var(--col-l); }
 .head { position: relative; }
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
-#options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box; background: var(--bg);
-           border-bottom: 1px solid var(--edge); box-shadow: 0 6px 20px rgb(0 0 0 / .18); max-height: calc(100dvh - 100%); overflow-y: auto; overscroll-behavior: contain;
-           padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }
-#options[hidden] { display: none; }
+/* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
+#options, .chooseList { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
+#options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
+           border-bottom: var(--rule); max-height: calc(100dvh - 100%);
+           padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
 .head .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; }
-.head .row .pill, .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: 6px 0; }
-.pill.icon { padding: 6px 0; }
-.head .row .place { font-size: var(--fs-m); font-weight: 600; flex: 0 1 auto; }
-.bar { display: flex; gap: 10px 24px; flex-wrap: wrap; align-items: center; }     /* (24px between buttons: they have no padding of their own) */
-.bar[hidden] { display: none; }
-.freq { display: grid; gap: 4px; flex: 1; min-width: 200px; font-size: var(--fs-xs); color: var(--soft); }
+.head .place { flex: 0 1 auto; }     /* (The passage: a title - .gTitle's kind, below - on an icon pill) */
+.bar { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; align-items: center; }     /* (24px between buttons: they have no padding of their own) */
+/* A field's label (.freq, .chartPick's, .vcPick, a panel's .sheetPick): its name small and muted over the field. */
+.freq, .chartPick label, .vcPick, :is(.sheet, .pane) .sheetPick { display: grid; gap: var(--gap-s); font-size: var(--fs-xs); color: var(--soft); }
+.freq { flex: 1; min-width: 200px; }
 .freq b { color: var(--fg); }
 .freq input { width: 100%; accent-color: var(--accent); }
 .freq[for="freq"] { flex: 1 1 100%; }     /* (The frequency slider: a line of its own, the full width) */
 
-.pill { font: inherit; font-size: var(--fs-s); border: 1px solid var(--line); background: transparent; color: var(--fg);
-        border-radius: 999px; padding: 5px 0; cursor: pointer; position: relative; }
+.pill { font: inherit; font-size: var(--fs-s); border: var(--hair); background: transparent; color: var(--fg);
+        border-radius: var(--round); padding: 5px 0; cursor: pointer; position: relative; }
 /* A button's text (or icon) lined up with the page's margin, like any other text - no side padding, as it shows no
    border or fill - its tap area reaching past it all round (::after), so it's as easy to hit as before. */
 .pill::after { content: ""; position: absolute; inset: -8px -10px; }
-.pill:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
+.pill:disabled, .chooseBtn:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
 .pill[aria-pressed="true"] { border-color: var(--line); color: var(--accent); }     /* (Picked: its text in the accent) */
+/* An icon pill (.icon: ☰ ✕ ⋯ ‹ › ▶, the speakers', the play bar's, the heading's): the icon's size, the heading's
+   height. */
+.pill.icon { font-size: var(--fs-icon); line-height: 1; padding: var(--head-y) 0; }
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
-.ref { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 8px; }
+/* A caption (.ref a verse's reference, .src a source's or list's heading): small capitals, muted. */
+.ref, .src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
+.ref { margin-top: 8px; }
+/* A note (a count, a hint, a label over a list): small and muted. */
+.vcHead, .timelineNote, .vcNum, .vocabRow .n, table.chart .count, table.chart .none, table.chart .same, .csCount { font-size: var(--fs-xs); color: var(--soft); }
 .vrow { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 0 8px; margin-top: 10px; }
 .vrow.he { direction: rtl; }
 .vnum { font-size: var(--fs-xs); font-weight: 600; color: var(--soft); padding-top: .9em; text-align: center; font-variant-numeric: tabular-nums; }     /* (The verse number in the margin) */
 .verse { display: flex; flex-wrap: wrap; gap: 14px 12px; min-width: 0; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
-.w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: 8px; padding: 2px 4px; }
-.w.on { background: color-mix(in oklch, var(--accent) 14%, transparent); }
-.orig { font-size: var(--word-he); line-height: 1.5; }
+.w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: var(--radius); padding: 2px 4px; }
+.w.on { background: var(--tint); }
+.orig { font-size: var(--word-he); line-height: var(--lh); }
 .he .orig { font-family: var(--heb); }
 .gr .orig { font-family: var(--grk); font-size: var(--word-gr); }
 .gloss { font-size: var(--fs-s); color: var(--soft); direction: ltr; text-align: center; }
@@ -133,12 +170,12 @@ body.noVerbColors .w .parse { color: inherit; }
    iPhone's swipe-up edge. */
 :root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--fs-icon) * 1.1 + 19px + var(--barFoot)); }
 @media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
-#playBar { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; background: var(--bg); box-sizing: border-box; height: var(--barH);
-           padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--barFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#playBar { gap: 8px; }     /* (▶ centered, the notes' icon and the search's side by side at the right edge) */
+:is(#playBar, .vcBar) { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
+                        height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, the others at its ends) */
+#playBar { flex: none; }
+#playBar > .credit { margin: 0; grid-column: 1; }     /* (A recording's credit, at its left while it plays: audio.ts) */
 #playBtn { grid-column: 2; }
 #playBar .playRight { grid-column: 3; justify-self: end; display: flex; gap: 8px; }
-#playBar .pill { font-size: var(--fs-icon); line-height: 1; padding: 6px 0; }
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
    panel leaves no line behind: Safari kept a hidden panel's top border painted over the text), between two of the
@@ -146,8 +183,8 @@ body.noVerbColors .w .parse { color: inherit; }
    play bar when a panel is open above it. */
 /* (Written by id, not as siblings: the panels sit in the columns' boxes, #textCol and #paneCol - index.html) */
 body:has(#sheet:not([hidden])) #search:not([hidden]), body:has(#sheet:not([hidden]), #search:not([hidden])) #notes:not([hidden]),
-body:has(#sheet:not([hidden]), #search:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: 1px solid var(--edge); }
-body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
+body:has(#sheet:not([hidden]), #search:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: var(--rule); }
+body:has(.dock:not([hidden])) #playBar { border-top: var(--rule); }
 /* Narrow (layout.ts), several panels open (body.docks; --docks their number - layout.ts counts them): they share the
    room between the heading and the play bar (--mid: notes.ts measures it) evenly with the text - two a third each,
    three a quarter each, four a fifth -, the text keeping its share at least; each panel no taller than its content. */
@@ -156,11 +193,12 @@ body:has(.dock:not([hidden])) #playBar { border-top: 1px solid var(--edge); }
 body.docks :is(#sheet, #notes, #besideSheet, #search) { max-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }     /* (By id: to outweigh each panel's own limit) */
 body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 }
-#playBar[hidden], #playBtn[hidden], #audioSettings[hidden], .speakBtn[hidden] { display: none; }
-.w.reading { background: color-mix(in oklch, var(--accent) 28%, transparent); }
+.w.reading { background: var(--tint-strong); }
 .vnum { cursor: pointer; }
 .vnum.playing { color: var(--accent); }
-#voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; border-radius: 8px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); max-width: 100%; }
+#voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; background: var(--bg); color: var(--fg); max-width: 100%; }
+/* A box (a picker, its list, the printout's preview and options): a kept line round it, rounded. */
+#voicePick, .choose, .chooseList, .csPreview, .csMenu { border: var(--rule); border-radius: var(--radius); }
 #audioSettings { flex: 1 1 100%; }
 
 /* The panes (.pane: the notes panel, notes.ts, and the search pane, search.ts - built alike, layout.ts' paneFrame):
@@ -170,7 +208,6 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
    (the row scrolling with the rest), then its contents - the notes: the verse, the notes (a grammar section's look:
    .gBody), the source's credit. Under them the play bar, last, with the home indicator's room. */
 .pane { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: calc(var(--mid, 100dvh) / 2); }     /* (Narrow, alone: at most half the room between the bars - --mid, as the word's panel) */
-.pane[hidden] { display: none; }
 .pane .top { align-items: center; margin-bottom: 10px; position: relative; z-index: 3; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest; over the pinned heading's shadow - #notesRef.stick - so its picker's border shows) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
@@ -179,7 +216,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 /* The notes' heading line while the list follows the text one way (notes.ts' ONE-WAY FOLLOWING): held at the panel's
    top, over the notes scrolling under it, clear of the frozen ✕ - it names the verse read and where the next notes are. */
 #notesRef.stick { position: sticky; top: calc(4px - var(--pad)); padding: 4px 52px 4px 0; z-index: 2; background: var(--bg); box-shadow: 0 calc(-1 * var(--pad)) 0 var(--bg); }     /* (Stuck, up over the scroller's top padding, its shadow the page's color filling that padding so nothing shows above it; at rest no higher than its place, so it never covers the picker over it) */
-#notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+#notes .note { border-top: var(--hair); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
 #notes .note .src { margin: 0 0 4px; }
 #notes .nQuote { font-weight: 600; }
@@ -191,15 +228,15 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 .sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); max-height: 50vh; max-height: calc(var(--mid, 100dvh) / 2); }     /* (At most half the room between the bars - --mid, notes.ts -, whatever opens in it - a grammar section, a full entry: beyond that it scrolls) */
 /* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
    what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
-:is(.sheet, .pane) > .xRow { position: absolute; z-index: 4; top: var(--pad); right: max(var(--pad), env(safe-area-inset-right, 0px)); }     /* (z 4: over the pane's top row, z 3 - else it takes the ✕'s tap) */
+:is(.sheet, .pane) > .xRow { position: absolute; z-index: 4; top: var(--pad); right: var(--safe-r); }     /* (z 4: over the pane's top row, z 3 - else it takes the ✕'s tap) */
 /* Each panel a frame that doesn't scroll, its ✕ placed in it (above), and inside it the scroller (panel.ts / notes.ts
    wrap the panel's contents in .panelScroll): so the ✕ never moves, not even with the bounce at a scroll's end. */
 :is(.sheet, .pane):not([hidden]) { display: flex; flex-direction: column; position: relative; }
 :is(.sheet, .pane) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
-  padding: var(--pad) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
+  padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
-.pane .top { padding-right: 52px; }     /* (Clear of the frozen ✕) */
+.pane .top { padding-right: var(--x-room); }     /* (Clear of the frozen ✕) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
@@ -207,20 +244,19 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 :is(.sheet, .pane) > .panelScroll { padding-top: calc(var(--pad) - 4px); padding-bottom: calc(var(--pad) - 4px); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 - 4px); }
 }
-.gInline .top, .gInline .sheetPick { padding-right: 52px; }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
-.sheet[hidden], #picker[hidden], #status[hidden], #drawer[hidden], #screen[hidden] { display: none; }
-.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.gInline .top, .gInline .sheetPick { padding-right: var(--x-room); }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-m); }
 .sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
 .sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
-.sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; line-height: 1.5; }     /* (Room between its lines when it wraps) */
-.src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 12px; }
-.sheet .def { font-size: var(--fs-m); line-height: 1.55; margin-top: 4px; font-family: var(--ui); }
+.sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; line-height: var(--lh); }     /* (Room between its lines when it wraps) */
+.src { margin-top: 12px; }     /* (A caption: .ref's rule) */
+.sheet .def { font-size: var(--fs-m); line-height: var(--lh); margin-top: 4px; font-family: var(--ui); }
 .sheet .def b { font-family: var(--grk); }
 
 /* The passage picker: over the text - the whole screen, or a wide one's text column (picker.ts sets its right) -, books
    then chapters, at most the text's 8 inches wide. */
 #picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20;
-          padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) 0 max(var(--pad), env(safe-area-inset-left, 0px)); }
+          padding: 0 var(--safe-r) 0 var(--safe-l); }
 /* The list scrolls in its own box (#pickerBody), its ✕ placed over the top right corner outside it - no bar of its own -
    so the ✕ never moves, not even with the bounce at the list's ends. */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; position: relative; }
@@ -229,22 +265,21 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings - one line on a phone, beside the ✕) */
 #pickerBody > .src:first-child { margin-top: 6px; padding-right: 36px; }
 #pickerBody::-webkit-scrollbar-track { margin-top: calc(56px + env(safe-area-inset-top, 0px)); }     /* (Its scroll bar below the ✕, never beside it) */     /* (The first level with the ✕, clear of it) */
-.pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: 10px; }
+.pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: var(--gap); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
-.choices.numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 10px 10px; border-top: 1px solid var(--line); }     /* (A book's chapters, open under it in the list: six to a row, every row even) */
-.choices.numbers .pill { padding: 7px 0; }
+.choices.numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 10px 10px; border-top: var(--hair); }     /* (A book's chapters, open under it in the list: six to a row, every row even) */
 
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */
 #drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed; tapping it still closes the drawer) */
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: 80vw; background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
-               border-right: 1px solid var(--edge); display: grid; align-content: start; gap: 10px; overflow-y: auto;
-               padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(3 * var(--pad)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
+               border-right: var(--rule); display: grid; align-content: start; gap: var(--gap); overflow-y: auto;
+               padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(3 * var(--pad)) var(--pad) var(--safe-l); }
 #drawerPanel .top { align-items: center; justify-content: flex-end; }     /* (Just its ✕, at the right) */
 .src .langPick { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--soft); padding: 0; margin-right: 10px; }     /* (The book list's Old Testament heading: HEBREW and GREEK LXX in its own small capitals, the one picked in the accent - .pill[aria-pressed]) */
 .src .langPick[aria-pressed="true"] { color: var(--accent); }
-#drawerPanel > .pill { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 0; font-size: var(--fs-l); }
+#drawerPanel > .pill { display: flex; align-items: center; gap: var(--gap); text-align: left; padding: 10px 0; font-size: var(--fs-l); }
 #drawerPanel > .pill::before { content: ""; flex: none; width: 20px; height: 20px; background: currentColor;
                              -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
 #bibleBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M12 6.5C10 5 7 4.5 3 5v13c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5V5c-4-.5-7 0-9 1.5z'/%3E%3Cpath d='M12 6.5v13'/%3E%3C/svg%3E"); }     /* (An open book) */
@@ -256,22 +291,22 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #timelineBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 12h18M6 9v6M12 7v10M18 10v4'/%3E%3C/svg%3E"); }     /* (A line with marks along it) */
 #pronounceBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.5h3.5L12 5.5v13l-4.5-4H4z'/%3E%3Cpath d='M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11'/%3E%3C/svg%3E"); }
 .colorKey { display: grid; gap: 0; margin: 6px 0 14px; }     /* (About verb colors: a row a color - the parsing's color and name, what it means) */
-.colorKey > div { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding: 8px 0; font-size: var(--fs-s); align-items: baseline; }
+.colorKey > div { grid-template-columns: 9.5em minmax(0, 1fr); padding: 8px 0; align-items: baseline; }     /* (A list's row: .guideRow's rule) */
 .colorKey .parse { font-size: var(--fs-s); }
-.steps { padding-left: 1.4em; line-height: 1.6; font-size: var(--fs-s); }     /* (Getting better voices' steps) */
+.steps { padding-left: 1.4em; line-height: var(--lh-loose); font-size: var(--fs-s); }     /* (Getting better voices' steps) */
 
 /* A study screen: full screen, ☰ at its top left to move between them. */
 #screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
-          padding: calc(64px + env(safe-area-inset-top, 0px)) max(var(--pad), env(safe-area-inset-right, 0px)) var(--pad) max(var(--pad), env(safe-area-inset-left, 0px)); }
-#screenMenu { position: fixed; z-index: 32; top: calc(6px + env(safe-area-inset-top, 0px)); left: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2)); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
-#screenClose { position: fixed; z-index: 32; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
+          padding: calc(64px + env(safe-area-inset-top, 0px)) var(--safe-r) var(--pad) var(--safe-l); }
+#screenMenu, #screenClose { position: fixed; z-index: 32; top: var(--head-top); }
+#screenMenu { left: var(--col-l); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
+#screenClose { right: var(--col-r); }     /* (Exactly where the heading's ☰ and ⋯ are, so nothing moves as a screen opens) */     /* (✕: back to the text; fixed like the ☰) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
    iPadOS draws a blur there in Home Screen apps, and a blur over one solid color shows nothing. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
 .sheet .root, .card .root { display: inline-flex; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
-.sheet .root[hidden] { display: none; }     /* (The word as written, when it's the dictionary form: panel.ts) */
 /* A pill's line icon (the panel's speaker): in the text's color, one color. */
 .pill .ico { width: 1.1em; height: 1.1em; display: block; }
 
@@ -284,8 +319,8 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
 .full .seg { white-space: nowrap; }     /* (The spelled-out parsing wraps only after a comma: grammar.ts) */
 .sheet .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
-.sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: 52px; }     /* (The word as written: its own row, clear of the ✕) */
-.sheet .btns { display: flex; gap: 10px 24px; flex-wrap: wrap; justify-content: flex-end; }
+.sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: var(--x-room); }     /* (The word as written: its own row, clear of the ✕) */
+.sheet .btns { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; justify-content: flex-end; }
 .sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the accent; one tapped, its
@@ -293,15 +328,14 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    panel stays at most half the screen, scrolling. */
 :is(.sheet, .pane) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 .sheet .term.on { font-weight: 700; }
-.gInline { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
-.gInline[hidden] { display: none; }
+.gInline { border-top: var(--hair); margin-top: 14px; padding-top: 12px; }
 .sheet.grammarOpen .panelScroll > :not(.gInline), .sheet.grammarOpen > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
-.gTitle { font-weight: 600; font-size: var(--fs-m); }
+.gTitle, .vcTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }     /* (A title: a grammar section's, the deck's name, the heading's passage) */
 .gInline .src { margin-top: 2px; }
-.gBody { font-size: var(--fs-m); line-height: 1.55; margin-top: 8px; }
-.giOther { margin-top: 8px; display: grid; gap: 10px; }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
+.gBody { font-size: var(--fs-m); line-height: var(--lh); margin-top: 8px; }
+.giOther { margin-top: 8px; display: grid; gap: var(--gap); }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
 .giOther > .choices { flex-direction: column; align-items: start; }     /* (The dictionary's articles on a word - dictionary.ts - one a line) */
 .gBody p { color: var(--fg); font-size: inherit; margin: 0 0 8px; }
 .gHead { font-weight: 600; margin: 14px 0 6px; }
@@ -316,8 +350,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gBody sup { font-size: .7em; }
 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
-:is(.sheet, .pane) .sheetPick[hidden] { display: none; }
-:is(.sheet, .pane) .sheetPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); margin: 10px 0; }
+:is(.sheet, .pane) .sheetPick { margin: 10px 0; }     /* (A field's label: .freq's rule) */
 /* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
    column, the picker over the section's own scroller (.giScroll: its heading and text), so the text never runs up
    behind the picker. */
@@ -327,7 +360,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
 .sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
 :is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-right: 0; }     /* (The two columns the panel's full width - the word's side at its right edge, its scroll bar at the panel's edge: its margin inside it, below - by id, to outweigh the panels' padding) */
-.sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+.sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { padding-right: var(--safe-r); }
 .sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   max-width: none; margin: 0; padding-block: calc(var(--pad) / 2) var(--pad); }     /* (Each column scrolls on its own; half the top margin, as in one column) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
@@ -343,20 +376,20 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    the ✕ (kept over it) - no empty bar above it. */
 .sheet.grammarOpen .gInline.other .giScroll { grid-row: 1 / -1; }
 .sheet.grammarOpen .gInline.other .xRow { position: relative; z-index: 1; }
-.sheet.grammarOpen .gInline.other .top { padding-right: 52px; }
+.sheet.grammarOpen .gInline.other .top { padding-right: var(--x-room); }
 .sheet .def .sense { margin: 2px 0 2px 14px; }     /* (A fuller lexicon's senses, nested as it numbers them: pipeline/bdb.py, greek_lex.py) */
-.sheet .def .lexEntry + .lexEntry { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }     /* (One Strong's, several entries) */
+.sheet .def .lexEntry + .lexEntry { margin-top: 10px; padding-top: 10px; border-top: var(--hair); }     /* (One Strong's, several entries) */
 .sheet .lexCredit { margin-top: 8px; }
 
 /* A verb form's pattern (paradigm.ts; the Verb chart and the paradigm cards): the root's letters (Hebrew) or the stem
    (Greek) as dotted squares, a Hebrew square's vowel under it (holam over it); filled, the root's letters in the accent's
    color. */
-.pattern { display: inline-flex; align-items: flex-end; gap: 2px; font-size: 30px; line-height: 1.2; white-space: nowrap; }
+.pattern { display: inline-flex; align-items: flex-end; gap: 2px; font-size: var(--fs-3xl); line-height: 1.2; white-space: nowrap; }
 .pattern.he { font-family: var(--heb); direction: rtl; padding: .45em 0 .6em; }     /* (Room for the squares' vowels, over and under) */
 .pattern.he.filled { padding: 0; }
 .pattern.gr { font-family: var(--grk); }
 .pattern.filled { display: inline; }
-.slot { display: inline-grid; place-items: end center; width: .72em; height: 1.05em; border: 2px dotted var(--soft); border-radius: 4px;
+.slot { display: inline-grid; place-items: end center; width: .72em; height: 1.05em; border: 2px dotted var(--soft); border-radius: var(--radius-s);
         margin: 0 1px; line-height: 1; position: relative; box-sizing: border-box; }
 .slot.wide { width: 1.6em; }
 .slot.small { width: .5em; height: .8em; }
@@ -369,41 +402,39 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* The Verb chart (chart.ts): its pickers, then its one column of forms - scrolling sideways if ever too wide (the screen itself
    never wider than the window). */
 #screen .pickerCard { grid-template-columns: minmax(0, 1fr); }
-#screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.chartPick { display: flex; flex-wrap: wrap; gap: 10px; align-items: start; }     /* (start: a picker's open list never stretches the one beside it) */
-.chartPick label { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 1 1 140px; min-width: 0; }
+#screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-m); }
+#screenBody > .screenPart { display: contents; }     /* (Each opening's own box, laid out as #screenBody's children: study.ts) */
+.chartPick { display: flex; flex-wrap: wrap; gap: var(--gap); align-items: start; }     /* (start: a picker's open list never stretches the one beside it) */
+.chartPick label { flex: 1 1 140px; min-width: 0; }     /* (A field's label: .freq's rule) */
 .chartPick .choose { width: 100%; box-sizing: border-box; }
 .chartScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
 table.chart { border-collapse: collapse; width: 100%; }
 table.chart th { padding: 6px; font-size: var(--fs-xs); color: var(--soft); font-weight: 600; letter-spacing: .04em; }
-table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: 1px solid var(--edge); }
+table.chart tr > th:first-child { text-align: left; white-space: nowrap; border-top: var(--rule); }
 table.chart th.parse { color: var(--fg); font-size: var(--fs-xs); }
 table.chart th.group { text-align: left; color: var(--fg); font-size: var(--fs-xs); letter-spacing: .08em; padding: 18px 6px 6px; border-top: 0; }     /* (Each group's heading: PERFECT, PARTICIPLE...) */
-table.chart td { padding: 12px 8px 10px; border-top: 1px solid var(--edge); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
+table.chart td { padding: 12px 8px 10px; border-top: var(--rule); text-align: left; width: 100%; vertical-align: top; min-width: 6.5em; }
 table.chart .cForm { min-height: 1.5em; }
 table.chart .pattern.he { font-size: var(--word-he); } table.chart .pattern.gr { font-size: var(--word-gr); }     /* (Its forms as big as the text's words) */
 table.chart .parse { margin-top: 6px; }     /* (Its codes as the interlinear's: .parse) */
 table.chart .mean { font-size: var(--fs-s); color: var(--soft); }     /* (Its English as big as the interlinear's) */
-table.chart .count { display: block; font-size: var(--fs-xs); color: var(--soft); }
-table.chart .none, table.chart .same { color: var(--soft); font-size: var(--fs-xs); }
+table.chart .count { display: block; }     /* (It and .none, .same: notes - .vcHead's rule) */
 table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in by the regular pattern) */
 
 /* Flashcards (cards.ts): a card, its front large, its back under it once turned; AGAIN / GOT IT under the card. */
-.card { border: 1px solid var(--edge); border-radius: 14px; padding: 28px 16px; text-align: center; cursor: pointer;
-        display: grid; gap: 10px; justify-items: center; min-height: 160px; align-content: center; }
-.cardFront { font-size: 44px; line-height: 1.3; }
-.cardFront .pattern { font-size: 44px; }
-.cardFront .heWord, .cardFront .grWord { font-size: 44px; }
-.cardBack { font-size: var(--fs-m); line-height: 1.5; display: grid; gap: 4px; }
-.cardBack[hidden], .cardBar[hidden] { display: none; }
-.cardBack .heWord { font-size: 28px; } .cardBack .grWord { font-size: 24px; }
+.card { border: var(--rule); border-radius: var(--radius-card); padding: 28px 16px; text-align: center; cursor: pointer;
+        display: grid; gap: var(--gap); justify-items: center; min-height: 160px; align-content: center; }
+.cardFront { font-size: var(--fs-card); line-height: 1.3; }
+.cardFront .pattern { font-size: var(--fs-card); }
+.cardFront .heWord, .cardFront .grWord { font-size: var(--fs-card); }
+.cardBack { font-size: var(--fs-m); line-height: var(--lh); display: grid; gap: var(--gap-s); }
+.cardBack .heWord { font-size: var(--word-he); } .cardBack .grWord { font-size: var(--fs-2xl); }
 /* A one-sided deck's card (cards.ts's backOnly: My vocab): front and back drawn alike, so the word and the English look
    the same on either side, whichever faces first. */
-.card.single .cardFront, .card.single .cardBack { font-size: 44px; line-height: 1.3; display: block; }
-.card.single .heWord, .card.single .grWord { font-size: 44px; }
-.card.single > [hidden] { display: none; }
-.card .meaning { font-size: 32px; line-height: 1.25; }     /* (A vocab card's English) */
-.paradigm { font-weight: 700; letter-spacing: .02em; font-size: 18px; }
+.card.single .cardFront, .card.single .cardBack { font-size: var(--fs-card); line-height: 1.3; display: block; }
+.card.single .heWord, .card.single .grWord { font-size: var(--fs-card); }
+.card .meaning { font-size: var(--fs-3xl); line-height: 1.25; }     /* (A vocab card's English) */
+.paradigm { font-weight: 700; letter-spacing: .02em; font-size: var(--fs-l); }
 .cardBar { justify-content: center; }
 .cardBar .pill { font-size: var(--fs-s); padding: 7px 0; }
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", over BACK, SHOW and NEXT) */
@@ -413,25 +444,23 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    start of the line - then the list, a line per card (reference, original picker, ✕). */
 .vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; }
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
-.vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
+.vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
-.vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: 1px solid var(--edge); }
-.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; min-height: calc(var(--fs-icon) + 12px); padding: calc(6px + env(safe-area-inset-top, 0px)) 100px 6px; }     /* (As tall as ☰ and ⋯, the name centered on them, clear of + and ⋯) */
-.vcTopBtns { position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2)); display: flex; gap: 18px; align-items: center; }     /* (⋯ where the Bible view's is: the top row's right end - + before it) */
+.vcTop { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }
+.vcTopRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 100px var(--head-y); }     /* (As tall as ☰ and ⋯, the name centered on them, clear of + and ⋯) */
+.vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (⋯ where the Bible view's is: the top row's right end - + before it) */
 #vcPlus { font-size: calc(var(--fs-icon) * 1.15); line-height: 1; }
 #screen[data-screen="Verse cards"] #screenClose { display: none; }     /* (No ✕: back to the Bible by ☰, ⋯ in its place) */     /* (The deck's name and ⋯ beside it, centered in the screen's top row between ☰ and ✕ - as the Bible view's heading -, staying while the screen scrolls) */
-.vcTitle { min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-m); font-weight: 600; text-align: center; }
-@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: max(var(--pad), env(safe-area-inset-right, 0px)); } }     /* (Wide: ⋯ at the column's edge, as the Bible view's heading's) */
+.vcTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
+@media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } .vcTopBtns { right: var(--safe-r); } }     /* (Wide: ⋯ at the column's edge, as the Bible view's heading's) */
 .vcTop:has([aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ or + open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
 .vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--pad));
-  display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; background: var(--bg); border-top: 1px solid var(--edge);
-  box-sizing: border-box; height: var(--barH); align-content: start;
-  padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--barFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
-.vcBar .pill { padding: 6px 0; font-size: var(--fs-l); line-height: 1; } .vcBar { align-items: center; }     /* (Its words larger than a pill's) */
+  display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s); }
+.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
+.vcBar .pill { padding: var(--head-y) 0; font-size: var(--fs-l); line-height: 1; }     /* (Its words larger than a pill's) */
 .vcBar > :first-child { justify-self: start; } .vcBar > :last-child { justify-self: end; }     /* (SHUFFLE and START OVER in the corners, FLIP centered - as the play bar's ▶) */
 /* BACK and NEXT: arrows inside the card's edges, at its middle - the card near the screen's edges (6px), its text kept
    clear of the arrows. */
@@ -442,78 +471,77 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcCardRow > .pill.icon:first-child { justify-self: start; } .vcCardRow > .pill.icon:last-child { justify-self: end; }
 @media (min-width: 700px) { .vcBar { left: var(--textL, 0px); right: var(--studyR, 0px); } }
 #screen:has(.vcBar) { padding-bottom: var(--barH); }     /* (Room under the screen for the bar) */
-.vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
-.vcHead[hidden] { display: none; }
-.vcSep { align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
+.vcHead { margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
+/* Level with the pickers (the add row's ":" and "-", + ADD VERSE, NEW VERSE): at the row's foot, a picker's height. */
+.vcSep, .pill.addVerse, .vcNewHead { align-self: end; line-height: var(--field-h); }
+.vcSep { margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
 #vcPlace .vcPick .chooseWrap, .avPlace .vcPick .chooseWrap { display: block; } #vcPlace .vcPick .chooseBtn, .avPlace .vcPick .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
 .vcPickName { white-space: nowrap; width: 0; overflow: visible; }     /* (A picker's name not widening it: FROM VERSE's box as narrow as its numbers, the name running on over the gap) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
-#verseSheet { border-top: 1px solid var(--edge) !important; }
-.avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: 52px; }     /* (Clear of the ✕) */
+#verseSheet { border-top: var(--rule) !important; }
+.avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: var(--x-room); }     /* (Clear of the ✕) */
 /* Its text the word's panel's sizes: the labels as its parsing line (--fs-s), the choices and marks as its entry (--fs-m). */
 #verseSheet .vcPick { font-size: var(--fs-s); }
 #verseSheet .choose, #verseSheet .vcSep { font-size: var(--fs-m); }
-#verseSheet .vcSep, #verseSheet .pill.addVerse { line-height: calc(var(--fs-m) * 1.2 + 14px); }
-.pill.addVerse { font-size: var(--fs-l); font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); padding: 0; }     /* (+ ADD VERSE, the Verse cards' and the Bible's: larger, level with the pickers) */
-.vcNewHead { font-weight: 600; align-self: end; line-height: calc(var(--fs-s) * 1.2 + 14px); }     /* (NEW VERSE: the add row's bold heading at its start, level with the pickers) */
+#verseSheet .vcSep, #verseSheet .pill.addVerse { line-height: var(--field-h-m); }
+.pill.addVerse { font-size: var(--fs-l); font-weight: 600; padding: 0; }     /* (+ ADD VERSE, the Verse cards' and the Bible's: larger, level with the pickers) */
+.vcNewHead { font-weight: 600; }     /* (NEW VERSE: the add row's bold heading at its start, level with the pickers) */
 .vcAdd.vcStacked > :first-child, .vcAdd.vcStacked > .addVerse { flex-basis: 100%; text-align: start; } .vcAdd.vcStacked > .vcNewHead { line-height: normal; }     /* (The row not fitting on one line: NEW VERSE (or DECK) and + ADD VERSE each on a line of their own) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
-.vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); }
-.vcMenu:not([hidden])::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 100vw; translate: -50%; border-bottom: 1px solid var(--edge); }     /* (Its line under it across the whole screen, not just the column - cut at the screen's sides) */
+.vcMenu:not([hidden]) { display: grid; gap: var(--gap); position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); }
+.vcMenu:not([hidden])::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 100vw; translate: -50%; border-bottom: var(--rule); }     /* (Its line under it across the whole screen, not just the column - cut at the screen's sides) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
 #vcPlace, .avPlace { display: flex; gap: 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line, kept together - BOOK narrowing where it must, its name cut short) */
 #vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 0 1 auto; width: calc(11em + 38px); min-width: 0; }
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vcDeck .card.single .cardFront { font-size: 32px; }
-.vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
-.vcDeck .card.single .cardBack[hidden] { display: none; }
-.vcDeck .cardBack .vcRef { font-size: 20px; font-weight: 600; text-align: center; }
+.vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
+.vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
+.vcDeck .cardBack .vcRef { font-size: var(--fs-xl); font-weight: 600; text-align: center; }
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcNative { font-weight: 400; }
 .vcNative.he { font-family: var(--heb); } .vcNative.gr { font-family: var(--grk); order: -1; }     /* (Greek first, then the English; Hebrew, read from the right, already first) */
 .vcDeck .cardBack p { margin: 0 0 4px; }
-.vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: 24px; line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
-.vcNum { font-size: var(--fs-xs); color: var(--soft); }
+.vcDeck .vcTr > *, .vcDeck .vcTr > * :not(.vcNum) { font-size: var(--fs-2xl); line-height: 1.4; color: var(--fg); }     /* (The English as prominent as the original: its size - the Greek's - and the text's color) */
 .vcDeck .vcOrig .heWord, .vcDeck .vcOrig .grWord { font-size: inherit; }
 .vcCredits:empty { display: none; }
 
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
-.guideRow { display: grid; grid-template-columns: minmax(0, 8em) minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 6px; font-size: var(--fs-s); }
+/* A list's row (the Parsing guide's, My vocab's, the Pronunciation guide's, About verb colors'): columns, a line over it. */
+.guideRow, .vocabRow, .sayRow, .colorKey > div { display: grid; gap: var(--gap-m); border-top: var(--hair); font-size: var(--fs-s); }
+.guideRow { grid-template-columns: minmax(0, 8em) minmax(0, 1fr); padding-top: 6px; }
 .guideRow .parse { font-size: var(--fs-s); overflow-wrap: anywhere; }
 
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
-.vocabRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 6px; font-size: var(--fs-s); }
-.vocabRow .n { color: var(--soft); font-size: var(--fs-xs); }
+.vocabRow { grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; padding-top: 6px; }     /* (A list's row: .guideRow's rule) */
 /* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (over it near
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }
-.chooseBtn:disabled { opacity: .4; cursor: default; }     /* (As a pill not there to pick) */
 #vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's To verse: not greyed out before From verse is picked, only not yet opening) */
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
-              box-shadow: 0 6px 20px rgb(0 0 0 / .18); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-              border: 1px solid var(--edge); border-radius: 8px; background: var(--bg); }
-.chooseList[hidden] { display: none; }
+              -webkit-overflow-scrolling: touch;
+              background: var(--bg); }     /* (A box, an overlay: #voicePick's and #options' rules) */
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
 .chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
 /* One line: the English, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
    reads right to left within the line), muted beside the English. */
-.bookNative { font-size: 1.15em; line-height: 1.6; unicode-bidi: isolate; color: var(--soft); }     /* (One line height for both, so the rows are the same height in either list) */
+.bookNative { font-size: 1.15em; line-height: var(--lh-loose); unicode-bidi: isolate; color: var(--soft); }     /* (One line height for both, so the rows are the same height in either list) */
 .bookEn { margin-right: .7em; }     /* (The gap after the English, on its left-to-right span: on the Hebrew's right-to-left one Safari put it on the far side) */
 .bookNative.he { font-family: var(--heb); } .bookNative.gr { font-family: var(--grk); }
 .chooseList .ref { padding: 6px 10px 2px; margin: 0; }
-.chooseItem { font: inherit; font-size: var(--fs-s); text-align: left; padding: 9px 10px; border: 0; border-top: 1px solid var(--line);
-              background: transparent; color: var(--fg); cursor: pointer; }
+/* A plain button (a picker's choice, a result's row, a place's name): the text around it, no box. */
+.chooseItem, .hit, .atlasName { font: inherit; text-align: start; border: 0; background: transparent; cursor: pointer; }
+.chooseItem { font-size: var(--fs-s); padding: 9px 10px; border-top: var(--hair); color: var(--fg); }
 .chooseItem:first-child { border-top: 0; }
 .chooseItem[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
 /* The Pronunciation guide (pronounce.ts): a row a letter - the letter, its name and sound, its speaker. */
-.sayRow { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding: 8px 0; font-size: var(--fs-s); }
-.sayRow .sayLetter { font-size: 24px; }
+.sayRow { grid-template-columns: 3.2em minmax(0, 1fr) auto; align-items: center; padding: 8px 0; }     /* (A list's row: .guideRow's rule) */
+.sayRow .sayLetter { font-size: var(--fs-2xl); }
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
 
 /* The wide layout (layout.ts; the same 700 px as its matchMedia): the body a grid - the heading across the top, then
@@ -531,7 +559,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
          grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the panes' divider, the panes; a divider's column empty while hidden) */
   body:has(#notes:not([hidden]), #search:not([hidden])) { --paneCol: calc(var(--notesW, 33.333) * 1%); }     /* (layout.ts' NOTES_W the same) */
   .head, #playBar { grid-column: 1 / 4; }     /* (The heading and the play bar the text's only - and the word's beside it: the panes run the full height beside them) */
-  #playBar { grid-row: 3; border-top: 1px solid var(--edge); }
+  #playBar { grid-row: 3; border-top: var(--rule); }
   .col { grid-row: 2; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
   #textCol { grid-column: 1; } #notesSplit { grid-row: 1 / -1; grid-column: 4; } #paneCol { grid-row: 1 / -1; grid-column: 5; }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
@@ -548,7 +576,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      the page when dragged (touch-action). Each word panel's shown with it. */
   .split { display: block; flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
   .split::before { content: ""; position: absolute; background: var(--edge); }
-  .split::after { content: ""; position: absolute; background: var(--soft); border-radius: 2px; opacity: .5; }
+  .split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
   .split.on::after { background: var(--accent); opacity: 1; }
   /* Drawn by its orientation (aria-orientation): vertical - the panes' column's and, beside the text, the word's
      panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height, the search's against the notes' -
@@ -559,16 +587,16 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   body:has(#notes[hidden]):has(#search[hidden]) #notesSplit, body:is(:has(#notes[hidden]), :has(#search[hidden])) #paneSplit { display: none; }     /* (The column's divider while either pane is open, the panes' only while both are) */
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
-  .head, #options { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+  .head, #options { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   /* The book picker over the text's column only, a study screen over it and the word's panel beside it - the panes
      left in view either way (picker.ts sets --textL / --textR, the text's insets, and --studyR, the panes' column's);
      a screen's ☰ and ✕ at its own edges, as the heading's at the column's. */
   #picker { left: var(--textL, 0px); right: var(--textR, 0px); }
   #screen { left: var(--textL, 0px); right: var(--studyR, 0px); }
-  #screenMenu { left: calc(var(--textL, 0px) + max(var(--pad), env(safe-area-inset-left, 0px))); } #screenClose { right: calc(var(--studyR, 0px) + max(var(--pad), env(safe-area-inset-right, 0px))); }
+  #screenMenu { left: calc(var(--textL, 0px) + var(--safe-l)); } #screenClose { right: calc(var(--studyR, 0px) + var(--safe-r)); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch at whichever side the pane is. */
-  .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px max(var(--pad), env(safe-area-inset-left, 0px)); }
+  .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--safe-l); }
   .pane > .xRow { top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
   body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); } body:has(#search:not([hidden])) #notes > .xRow { top: var(--pad); }     /* (The notes under the search: away from the screen's top, no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
@@ -598,10 +626,9 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 #searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
 #searchCount { margin-top: 0; }
 #searchCount:empty { display: none; }
-.hit { display: grid; gap: 2px; width: 100%; font: inherit; text-align: start; padding: 8px 0; border: 0; border-top: 1px solid var(--line);
-       background: transparent; color: var(--fg); cursor: pointer; }
+.hit { display: grid; gap: 2px; width: 100%; padding: 8px 0; border-top: var(--hair); color: var(--fg); }     /* (A plain button: .chooseItem's rule) */
 .hit .src { margin-top: 0; }
-.hitText { font-size: var(--fs-m); line-height: 1.6; }
+.hitText { font-size: var(--fs-m); line-height: var(--lh-loose); }
 .hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
 .hitText.gr { font-family: var(--grk); }
 .hitWord { color: var(--accent); }
@@ -610,16 +637,15 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    line cut short; tapped, the article opens under it, a grammar section's look (.gBody), set in from the row. */
 .dictLine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .dictWhy, .src .life { text-transform: none; letter-spacing: 0; }     /* (.life: a church father's dates in his folded heading - notes.ts' foldedNote) */
-.dictBody { padding: 0 0 8px 12px; border-left: 2px solid var(--line); margin-bottom: 8px; }
-.dictBody[hidden] { display: none; }
+.dictBody { padding: 0 0 8px 12px; border-left: var(--hair-side); margin-bottom: 8px; }
 /* A find's photo (the Archaeology finds, pipeline/finds.py): a thumbnail at its entry's right, the size of its two
    lines; opened, the photo over its text (as a grammar section's images: the panel's width at most), credited under it. */
 .hit.withThumb { grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; }
 .hit.withThumb > :not(.dictThumb) { grid-column: 1; }
-.bookVerses a.here { font-weight: 600; text-decoration-thickness: 2px; background: color-mix(in oklch, var(--accent) 18%, transparent); border-radius: 3px; }     /* (The Archaeology finds: the verse read, in each find's verses - notes.ts' followBook) */
-.dictThumb { grid-column: 2; grid-row: 1 / span 2; height: 3.2em; width: auto; max-width: 5em; object-fit: cover; border-radius: 4px; }
+.bookVerses a.here { font-weight: 600; text-decoration-thickness: 2px; background: var(--tint); border-radius: var(--radius-xs); }     /* (The Archaeology finds: the verse read, in each find's verses - notes.ts' followBook) */
+.dictThumb { grid-column: 2; grid-row: 1 / span 2; height: 3.2em; width: auto; max-width: 5em; object-fit: cover; border-radius: var(--radius-s); }
 .dictPhoto { margin: 8px 0 0; }
-.dictPhoto img { display: block; max-width: 100%; max-height: 40vh; border-radius: 4px; }
+.dictPhoto img { display: block; max-width: 100%; max-height: 40vh; border-radius: var(--radius-s); }
 .dictPhoto .credit { margin-top: 4px; }
 
 /* The atlas (atlas.ts): its map the panel's width, at most 40% of the screen tall, dragged and pinched by itself (the
@@ -627,14 +653,14 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    each its name (a result's heading, tapped picking it out on the map) over its verses (links, as the parsing's terms) -
    the one picked in the accent - a route's stops (.atlasStops) listed the same way; BASE MAP, POLITICAL BOUNDARIES,
    ROUTE and the credits as the panel's. */
-.atlasMap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: 40vh; max-height: 40dvh; border-radius: 8px; overflow: hidden; }
+.atlasMap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: 40vh; max-height: 40dvh; border-radius: var(--radius); overflow: hidden; }
 .atlasMap canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .atlasStatus { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .atlasStatus:empty { display: none; }
-.atlasInfo { display: grid; gap: 4px; }
+.atlasInfo { display: grid; gap: var(--gap-s); }
 .atlasList { margin-top: 8px; }
 .atlasRow { cursor: default; }
-.atlasName { font: inherit; font-size: var(--fs-xs); text-align: start; border: 0; background: transparent; padding: 0; margin: 0; cursor: pointer; }
+.atlasName { font-size: var(--fs-xs); padding: 0; margin: 0; }     /* (A plain button: .chooseItem's rule) */
 .atlasRow.on .atlasName { color: var(--accent); }
 .atlasVerses { font-size: var(--fs-s); color: var(--soft); }
 .atlasCredit { margin-top: 8px; }
@@ -647,7 +673,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 #screen[data-screen="Verse cards"] #screenTitle { display: none; }     /* (Verse cards: no title - the deck's name at its top) */
 /* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
-#cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }
+#cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: var(--rule) !important; }
 #screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }
 #screen:not(:has(#cardSheet:not([hidden]))) #cardSplit, #screen:not([data-screen="Verse cards"]) #cardSplit { display: none; }     /* (Its divider only with it) */
 #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--barH) + var(--pad)); }
@@ -657,7 +683,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
   #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: calc(var(--cardPanelH) + var(--barH)); }
   #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--cardPanelH) + 14px + var(--barH) + var(--pad)); }
 }
-.timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
+.timelineNote { margin: 0; }     /* (A note: .vcHead's rule) */
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
             height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
 .timeline canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }     /* (A finger up or down scrolls the page; sideways and pinches the timeline: timeline.ts) */
@@ -675,25 +701,24 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 #screen[data-screen="Study printout"] { overflow: hidden; padding-bottom: max(var(--pad), env(safe-area-inset-bottom, 0px)); }
 #screen[data-screen="Study printout"] .pickerCard { max-width: none; height: 100%; grid-template-rows: auto minmax(0, 1fr); }
 #screen[data-screen="Study printout"] #screenBody { min-height: 0; grid-template-rows: minmax(0, 1fr); }
-.cstudy { display: grid; min-height: 0; height: 100%; gap: 12px; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "preview" "editor"; }
+.cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "preview" "editor"; }
 @media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); grid-template-areas: "editor preview"; } }
-.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--edge); border-radius: 8px; padding: var(--pad); }
-.csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }     /* (Book, chapter, verses: one row, wrapping) */
+.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
+.csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }
 .csEditor { grid-area: editor; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
-.csLine { border-bottom: 1px solid var(--edge); background: var(--bg); }
-.csLine.dragged { background: color-mix(in oklch, var(--accent) 10%, var(--bg)); }
-.csRow { display: flex; align-items: center; gap: 12px; min-height: 40px; }
-.csHandle { cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
+.csLine { border-bottom: var(--rule); background: var(--bg); }
+.csLine.dragged { background: var(--tint-solid); }
+.csRow { display: flex; align-items: center; gap: var(--gap-m); min-height: 40px; }
+.csHandle { touch-action: none; cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
 .csName { flex: 1; min-width: 0; font-size: var(--fs-s); }
 .csOptsBtn { font-size: var(--fs-xs); color: var(--soft); }
 .csOptsBtn[aria-expanded="true"] { color: var(--accent); }
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
-.csOpts[hidden], .csMenu[hidden] { display: none; }
 .csEmpty { padding: 4px 0; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); margin-top: 8px; }
-.csMenu { border: 1px solid var(--edge); border-radius: 8px; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }
+.csMenu { padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
@@ -713,10 +738,10 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 /* The printout itself: the app's own text, notes and entries (.vrow, .note, .gBody, .atlasMap...), the chapter its
    title, each block headed; the text's lines shown by its own options, whatever the ⋯ menu says for the reader. */
 .csDoc { max-width: var(--page); margin: 0 auto; }
-.csTitle { font-size: 24px; }
+.csTitle { font-size: var(--fs-2xl); }
 .csSub { margin-top: 2px; }
 .csBlock { margin-top: 22px; }
-.csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: 1px solid var(--edge); padding-bottom: 4px; }
+.csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: var(--rule); padding-bottom: 4px; }
 .csArticle { font-size: var(--fs-m); margin: 14px 0 4px; }
 /* A text drawn by its own options (chapterstudy.ts' textBox: the printout's text items and the verse cards' original), whatever the ⋯ menu says for the reader. */
 .csText .w { cursor: default; }
@@ -729,7 +754,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 .vcDeck .csText .w { cursor: pointer; }     /* (A card's words tapped for their panel) */
 .vcDeck .csText:not(.csGloss) .vcVnum .gloss { display: none; }
 .vcDeck .vcVnumN { font-size: .75em; }     /* (The verse number smaller than the words, not read as one of them - on their baseline, its line as tall as theirs, so it and its gloss line up with them) */
-.csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: 2px solid var(--edge); font-size: var(--fs-s); margin-top: 6px; }
+.csBeside { margin: 4px 0 6px calc(1.6em + 8px); padding-left: 10px; border-left: var(--rule-side); font-size: var(--fs-s); margin-top: 6px; }
 .csBeside > .src { margin: 0 0 2px; }
 .csDoc .note { margin-top: 6px; }
 .csDoc .note .src { margin: 0 0 4px; }
@@ -739,17 +764,17 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 .csSnap { display: none; }
 .csDoc .sheetPick, .csDoc .chooseWrap { display: none; }     /* (An article's map's BASE MAP: not in the printout - an Atlas item's pickers are on its line) */
 .csWords { display: grid; }
-.csWord { padding: 6px 0; border-bottom: 1px solid var(--edge); }
-.csWordHead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.csWord { padding: 6px 0; border-bottom: var(--rule); }
+.csWordHead { display: flex; align-items: baseline; gap: var(--gap-m); flex-wrap: wrap; }
 .csTr { font-style: italic; color: var(--soft); font-size: var(--fs-s); }
-.csCount { margin-left: auto; color: var(--soft); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
-.csDef { font-size: var(--fs-s); line-height: 1.5; }
+.csCount { margin-left: auto; font-variant-numeric: tabular-nums; }
+.csDef { font-size: var(--fs-s); line-height: var(--lh); }
 .csYear { color: var(--fg); font-weight: 600; font-size: var(--fs-m); }
-.csAxis { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--soft); margin-top: 10px; border-bottom: 1px solid var(--edge); }
+.csAxis { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--soft); margin-top: 10px; border-bottom: var(--rule); }
 .csLane { position: relative; padding-bottom: 6px; }
 .csLane > .src { margin-top: 8px; }
 .csBarRow { position: relative; height: 26px; }
-.csBar { position: absolute; top: 2px; height: 6px; border-radius: 3px; background: var(--soft); }
+.csBar { position: absolute; top: 2px; height: 6px; border-radius: var(--radius-xs); background: var(--soft); }
 .csBar.here { background: var(--accent); }
 .csBarLabel { position: absolute; top: 10px; left: 0; font-size: var(--fs-xs); white-space: nowrap; color: var(--fg); }
 .csBarLabel.here { color: var(--accent); font-weight: 600; }
@@ -771,6 +796,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
            --bg: #fff; --fg: #1d1c1a; --soft: #6b6862; --edge: #dedad2; --accent: oklch(0.56 0.13 250);
            --qal: oklch(0.56 0.13 25); --niphal: oklch(0.56 0.13 205); --piel: oklch(0.56 0.13 70); --pual: oklch(0.56 0.13 115);
            --hithpael: oklch(0.56 0.13 295); --hiphil: oklch(0.56 0.13 160); --other: oklch(0.56 0.13 340);
+           --rule: 1px solid var(--edge); --rule-side: 2px solid var(--edge); --tint: color-mix(in oklch, var(--accent) 14%, transparent);     /* (The lines and tint made again from these colors: :root's are made from its own) */
            -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .csDoc canvas { display: none; }
   .csSnap { display: block; width: 100%; }

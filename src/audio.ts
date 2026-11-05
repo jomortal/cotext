@@ -307,8 +307,7 @@ let playingVersion = "";
 let recSession = 0;                                // (So a stopped recording's late loads and events are ignored)
 // The credit (and any message), at the play bar's left while a recording plays.
 const credit = document.createElement ("span");
-credit.className = "credit";
-credit.style.cssText = "margin: 0; grid-column: 1";
+credit.className = "credit";     // (style.css: #playBar > .credit)
 credit.hidden = true;
 document.getElementById ("playBar")!.prepend (credit);
 

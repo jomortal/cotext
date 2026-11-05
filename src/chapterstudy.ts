@@ -284,7 +284,6 @@ function changed () { save (); drawLines (); render (); }
 /** A line dragged by its handle (pointer events: touch and mouse alike): it moves among the lines as it passes their
  *  middles; let go, the new order is kept. */
 function dragging (handle: HTMLElement, line: HTMLElement) {
-  handle.style.touchAction = "none";
   handle.addEventListener ("pointerdown", (e) => {
     e.preventDefault ();
     handle.setPointerCapture (e.pointerId);
