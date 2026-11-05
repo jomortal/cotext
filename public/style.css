@@ -436,13 +436,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen:has(.vcBar) { padding-bottom: var(--barH); }     /* (Room under the screen for the bar) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
+.vcNewHead { font-weight: 600; margin-top: 6px; margin-bottom: -4px; }     /* (NEW VERSE: the add row's bold heading, last in ⋯'s options) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
 .vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBook .chooseBtn { min-width: 11em; }     /* (BOOK as wide as a long name even while blank) */
-.vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
 .vcDeck .card.single .cardFront { font-size: 32px; }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }

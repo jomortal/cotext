@@ -1,20 +1,19 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
-// flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
+// flip, BACK / NEXT (arrows), FLIP, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
 //   the Bible view's heading, staying as the screen scrolls) and ⋯ at its right end, where the Bible view's is, then the deck and the credits. ⋯ shows
 //   everything else over the room above the card - pushing the deck down only as far as it would cover it (the Bible
-//   view's ⋯ menu overlays; here the card stays in view) -, ⋯ a ✕ while open, closing it, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
-//   (below).
-// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (last in
+//   view's ⋯ menu overlays; here the card stays in view) -, ⋯ a ✕ while open, closing it, in order: DECKS, NAME (edited in place), the deck's
+//   settings (below), VERSE LIST and, last, under the bold heading NEW VERSE, the add row (below).
+// - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (first in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
-// - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
+// - ADDING: picked on the add row (NEW VERSE, last in ⋯'s options) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (a verse) and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts blank, and is blank again after each card is added (each picker blank until
 //   the one before it is picked, + ADD CARD greyed out until FROM VERSE is; TO VERSE optional,
-//   blank for the one verse). The add row is
-//   two lines, each wrapping where it doesn't fit: the deck's LANGUAGE, TRANSLATION, Transliteration, Interlinear
-//   and Parsing; then the reference (BOOK, CHAPTER, FROM VERSE, TO VERSE) and + ADD CARD.
+//   blank for the one verse). The deck's settings one line, wrapping where it doesn't fit: LANGUAGE, TRANSLATION,
+//   Transliteration, Interlinear and Parsing.
 // - FOR ALL THE DECK'S CARDS (its settings, each change showing at once on the card shown): TRANSLATION - None or one
 //   of the notes' English translations (notes.ts' translationSources, each file read as the notes read it:
 //   openSource); LANGUAGE - what each testament's cards show: ENGLISH ONLY (no Greek or Hebrew), OT HEBREW - NT GREEK
@@ -30,8 +29,8 @@
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
-//   edge; its words larger than a pill's): SHUFFLE, SHOW, START OVER; BACK and NEXT arrows either side of the card. A tap on its front turns it
-//   over; only HIDE turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
+//   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on its front turns it
+//   over; only FLIP turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
 //   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in ⋯'s options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
@@ -238,18 +237,19 @@ async function draw (body: HTMLElement) {
   body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1 class="vcTitle">${esc (d.name)}</h1>
       <button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen}">${menuOpen ? "✕" : "⋯"}</button></div></div>
     <div class="vcMenu"${menuOpen ? "" : " hidden"}>
+    <div class="vcHead">Decks</div>
+    <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
+      <button class="pill" id="vcNewDeck">+ New deck</button></div>
     <label class="vcPick vcName">Name<input class="choose" id="vcName" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false"></label>
     <div class="vcAdd">
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <button class="pill" data-o="translit">Transliteration</button><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button>
-      <div class="vcBreak"></div><div id="vcPlace"></div>
-      <button class="pill" id="vcAddBtn">+ Add card</button></div>
+</div>
     <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
-    <div class="vcHead">Decks</div>
-    <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
-      <button class="pill" id="vcNewDeck">+ New deck</button></div>
+    <div class="vcNewHead">New Verse</div>
+    <div class="vcAdd"><div id="vcPlace"></div><button class="pill" id="vcAddBtn">+ Add card</button></div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
@@ -265,7 +265,7 @@ async function draw (body: HTMLElement) {
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   // A word tapped on a card: its panel at the screen's foot, as the reader's (tapped again, it closes); the card
-  // changed (BACK, SHOW, NEXT...) closes it.
+  // changed (BACK, FLIP, NEXT...) closes it.
   hideCardPanel ();
   deckEl.addEventListener ("click", (e) => {
     const t = e.target as HTMLElement, wordEl = t.closest<HTMLElement> (".w[data-wk]");
@@ -315,8 +315,8 @@ async function draw (body: HTMLElement) {
     const ids = d.cards.map ((c) => c.id).join ();
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
     else {
-      shown = showDeck (deckEl, made, undefined, undefined, true, false); shownIds = ids;
-      // (SHUFFLE, SHOW and START OVER in one bar at the screen's foot, as the Bible view's play bar)
+      shown = showDeck (deckEl, made, undefined, undefined, true, false, "Flip"); shownIds = ids;
+      // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
       // (BACK and NEXT as arrows either side of the card, as the Bible view's chapter arrows)

@@ -15,10 +15,11 @@ import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, h
 export interface Card { front: string; back: string; /* HTML */ }
 
 /** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
- *  without it the deck has no such button. tapTurns false: a tap turns the card over but not back (HIDE does).
+ *  without it the deck has no such button. tapTurns false: a tap turns the card over but not back (HIDE does). flipWord: SHOW / HIDE's one name both ways
+ *  (the Verse cards' FLIP).
  *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English; a verse card: the verse with its reference); otherwise under it. */
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false,
-                                          tapTurns = true): DeckShown<C> {
+                                          tapTurns = true, flipWord = ""): DeckShown<C> {
   const first = [...cards];
   let deck = [...cards], at = 0;
   el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
@@ -31,11 +32,11 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; flip.textContent = "Show";
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; flip.textContent = flipWord || "Show";
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
   // Turned over (a tap on the card, or SHOW - HIDE while turned - between BACK and NEXT); again, turned back.
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; flip.textContent = back.hidden ? "Show" : "Hide"; } };     // (Tapped again: turned back)
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; flip.textContent = flipWord || (back.hidden ? "Show" : "Hide"); } };     // (Tapped again: turned back)
   // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
   // (tapTurns false: a tap turns it over, not back - the Verse cards, whose back's words are tapped for their panel;
   // HIDE turns it back)
