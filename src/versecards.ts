@@ -1,7 +1,7 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - the open deck's NAME
-//   at the top, labelled VERSE CARD DECK (the screen without a title); SHOW DECKS at the bottom (beside SHOW LIST, hidden at first) shows a row of buttons, as My vocab's
+//   at the top, labelled VERSE CARD DECK (the screen without a title); SHOW DECKS at the bottom (under SHOW LIST and its list, hidden at first) shows a row of buttons, as My vocab's
 //   lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
@@ -209,8 +209,9 @@ async function draw (body: HTMLElement) {
       <div class="vcBreak"></div><div id="vcPlace"></div>
       <button class="pill" id="vcAddBtn">+ Add card</button></div>
     <div class="deck vcDeck"></div>
-    <div class="bar"><button class="pill" id="vcShowList"></button><button class="pill" id="vcShowDecks"></button></div>
+    <div class="bar"><button class="pill" id="vcShowList"></button></div>
     <div class="bar vcList"></div>
+    <div class="bar"><button class="pill" id="vcShowDecks"></button></div>
     <div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
     <div class="src vcCredits"></div>`;
@@ -255,7 +256,7 @@ async function draw (body: HTMLElement) {
       b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"])); b.disabled = settings.lang === "en";
     }
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
-    showList.hidden = ! d.cards.length; showing ();
+    showList.parentElement!.hidden = ! d.cards.length; showing ();
     if (! d.cards.length) { deckEl.innerHTML = "<p>No verse cards yet - pick a reference above.</p>"; credits.textContent = ""; shown = null; return; }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
