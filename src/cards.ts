@@ -58,12 +58,14 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
       deck = deck.map (swap); first.splice (0, first.length, ...first.map (swap));
       if (deck.length) { front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; }
     },
+    go (pick) { const i = deck.findIndex (pick); if (i >= 0) { at = i; show (); } },
   };
 }
 
 /** A deck shown. update: the cards' contents changed (a setting - the Verse cards' translation or lines) - each card swapped
- *  for its new version (matched by same), the order, the card shown and whether it's turned over kept. */
-export interface DeckShown<C extends Card> { update (next: C[], same: (a: C, b: C) => boolean): void; }
+ *  for its new version (matched by same), the order, the card shown and whether it's turned over kept. go: the first card
+ *  pick matches shown, its front up (a verse card just added). */
+export interface DeckShown<C extends Card> { update (next: C[], same: (a: C, b: C) => boolean): void; go (pick: (c: C) => boolean): void; }
 
 /** A fresh order each time a deck opens. */
 const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor (Math.random () * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };

@@ -194,6 +194,7 @@ function fitPanel () {
 
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
+let goTo = "";     // (A card just added - here or from the Bible's verse numbers -: shown first when its deck is next drawn)
 let menuOpen: "" | "more" | "add" = "";     // (The top row's drop-down open: the name's options, +'s NEW VERSE, or neither)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
@@ -345,6 +346,7 @@ async function draw (body: HTMLElement) {
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
     else {
       shown = showDeck (deckEl, made, undefined, undefined, true, ".w", "Flip"); shownIds = ids;
+      if (goTo) { shown.go ((c) => c.id === goTo); goTo = ""; }
       // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE and START OVER in its corners)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       bar.append (...["shuffle", "flip", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
@@ -368,10 +370,11 @@ async function draw (body: HTMLElement) {
   addBtn.addEventListener ("click", () => {
     const p = pickAt;
     if (! p.book || ! p.chapter || p.from <= 0) return;
-    d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
+    const id = newId ();
+    d.cards.push ({ id, code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
     pickAt = { book: null, chapter: 0, from: -1, to: 0 };     // (Blank for the next card)
     drawPick (placeEl, addBtn);
-    save (); deck ();
+    goTo = id; save (); deck ();
   });
   // A LANGUAGE leaving some cards English only (no original): TRANSLATION offering no None (those cards show a
   // translation: the first, if None was picked)
@@ -450,7 +453,8 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
   add.addEventListener ("click", () => {
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
     if (! d || ! p.book || ! p.chapter || p.from <= 0) return;
-    d.cards.push ({ id: newId (), code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
+    goTo = newId ();
+    d.cards.push ({ id: goTo, code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
     save (); verseSheet.hidden = true;
   });
   verseSheet.hidden = false;
