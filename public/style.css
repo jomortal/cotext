@@ -410,6 +410,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--soft); flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
+.vcPick:has(> input[type=checkbox]) { align-self: stretch; grid-template-rows: auto 1fr; }     /* (English only: its label level with the pickers' labels, the box centered where a picker sits) */
+.vcPick > input[type=checkbox] { align-self: center; justify-self: center; margin: 0; }
 .vcDeck .card.single .cardFront { font-size: 32px; }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: 1.5; text-align: start; justify-self: stretch; display: grid; gap: 12px; }
 .vcDeck .card.single .cardBack[hidden] { display: none; }
