@@ -13,6 +13,8 @@
 //   search's share of the two, each keeping 120 px at least), and #sheetSplit / #besideSplit, on each word's panel's top edge
 //   (its height, from 120 px to the room between the bars less 160 px for what's above it). All kept on the device
 //   (localStorage) and set on the root as --notesW, --searchH (percentages, unitless), --sheetH and --besideH (px).
+//   A verse card's word's panel (over the Verse cards screen, at its foot: panel.ts' #cardSheet) has its own, #cardSplit:
+//   its height (--cardH, px; 120 px to the window's height less 160).
 // - The word beside the text (wide, with 1200 px or more for the text and its word once the panes' column is taken
 //   off, while either pane is open: placeWord, body.sideWord in style.css): the text's word's panel a column of its
 //   own between the text and the panes - text | word | panes -, its width (--sheetW, a percentage, unitless: 15-40 %
@@ -27,12 +29,13 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
 if (sizes.sheetH) root.setProperty ("--sheetH", sizes.sheetH + "px");
 if (sizes.besideH) root.setProperty ("--besideH", sizes.besideH + "px");
+if (sizes.cardH) root.setProperty ("--cardH", sizes.cardH + "px");
 if (sizes.sheetW) root.setProperty ("--sheetW", String (sizes.sheetW));
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
@@ -149,3 +152,8 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
   });
+// A verse card's word's panel's height: from its divider down to the window's foot.
+drag (document.getElementById ("cardSplit")!, (_x, y) => {
+  sizes.cardH = Math.round (clamp (innerHeight - y, 120, Math.max (120, innerHeight - 160)));
+  root.setProperty ("--cardH", sizes.cardH + "px");
+});

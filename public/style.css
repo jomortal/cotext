@@ -587,9 +587,17 @@ body.sideWord #sheetSplit { grid-column: 2; grid-row: 2; } body.sideWord #sheet 
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
 #screen[data-screen="Verse cards"] #screenTitle { display: none; }
-#cardSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }     /* (A verse card's word's panel: over the screen at its foot, as the reader's - panel.ts) */
+#cardSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: 1px solid var(--edge) !important; }
+#screen:not(:has(#cardSheet:not([hidden]))) #cardSplit, #screen:not([data-screen="Verse cards"]) #cardSplit { display: none; }     /* (Its divider only with it) */
+@media (min-width: 700px) {     /* (Wide: as wide as the screen, its height set by its divider - layout.ts' #cardSplit) */
+  /* (Its height: as dragged, else just the word's info - the lexicon scrolling in its column beside it: --cardFit,
+     versecards.ts -, else 45 % of the window) */
+  #cardSheet { left: var(--textL, 0px); right: var(--studyR, 0px); height: min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)); border-top: 0 !important; }
+  #cardSplit { position: fixed; z-index: 33; left: var(--textL, 0px); right: var(--studyR, 0px); bottom: min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)); }
+}     /* (A verse card's word's panel: over the screen at its foot, as the reader's - panel.ts) */
 #screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }     /* (Only on the Verse cards screen) */
-#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--pad)); }     /* (Room to scroll the card and its buttons above the panel) */     /* (Verse cards: no title - VERSE CARD DECK names the deck at its top) */
+#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--pad)); }
+@media (min-width: 700px) { #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(min(var(--cardH, var(--cardFit, calc(100dvh * .45))), calc(100dvh - 160px)) + 14px + var(--pad)); } }     /* (Room to scroll the card and its buttons above the panel) */     /* (Verse cards: no title - VERSE CARD DECK names the deck at its top) */
 .timelineNote { margin: 0; font-size: var(--fs-xs); color: var(--soft); }
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
             height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }

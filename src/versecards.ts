@@ -178,6 +178,19 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
 
 // ---- The screen ----
 
+/** The word's panel's height, until its divider is dragged (wide, its two columns): just the word's info - the
+ *  lexicon scrolling in its column beside it - set as --cardFit (style.css). */
+function fitPanel () {
+  const sheet = document.getElementById ("cardSheet")!, info = sheet.querySelector<HTMLElement> (".infoBox");
+  if (sheet.hidden || ! info || ! sheet.classList.contains ("twoCol")) return;
+  // (The info stretched to the panel's height: its own height measured from its contents - its last shown child's foot
+  // - and its padding; plus what's around the scroller)
+  const scroll = sheet.querySelector<HTMLElement> (".panelScroll")!, top = info.getBoundingClientRect ().top;
+  const foot = Math.max (...[...info.children].map ((c) => (c as HTMLElement).offsetParent ? c.getBoundingClientRect ().bottom : top));
+  const need = foot - top + info.scrollTop + parseFloat (getComputedStyle (info).paddingBottom) + sheet.offsetHeight - scroll.clientHeight;
+  document.documentElement.style.setProperty ("--cardFit", Math.ceil (need) + "px");
+}
+
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
 let listShown = false;     // (The deck's list of cards: hidden till SHOW LIST)
@@ -239,7 +252,7 @@ async function draw (body: HTMLElement) {
   deckEl.addEventListener ("click", (e) => {
     const t = e.target as HTMLElement, wordEl = t.closest<HTMLElement> (".w[data-wk]");
     const w = wordEl && cardWords.get (wordEl.dataset.wk!);
-    if (w && wordEl) showCardPanel (db, w, wordEl);
+    if (w && wordEl) showCardPanel (db, w, wordEl).then (fitPanel);
     else if (t.closest ("[data-k]")) hideCardPanel ();
   });
   const showList = body.querySelector<HTMLElement> ("#vcShowList")!;
