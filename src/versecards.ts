@@ -1,7 +1,7 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - the open deck's NAME
-//   at the top; SHOW DECKS at the bottom (beside SHOW LIST, hidden at first) shows a row of buttons, as My vocab's
+//   at the top, labelled VERSE CARD DECK (the screen without a title); SHOW DECKS at the bottom (beside SHOW LIST, hidden at first) shows a row of buttons, as My vocab's
 //   lists, the one open lit (the last one used when the screen opens; "My verses" at first),
 //   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
@@ -166,7 +166,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false"></div>
+  body.innerHTML = `<label class="vcPick vcName">Verse Card Deck<input class="choose" id="vcName" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false"></label>
     <div class="vcAdd">
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === language ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
