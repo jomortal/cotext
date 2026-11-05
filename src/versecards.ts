@@ -256,7 +256,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
   body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1><button class="pill icon vcTitle" id="vcMore" aria-label="${esc (d.name)}: deck options" aria-expanded="${menuOpen === "more"}">${esc (d.name)}</button></h1>
-      <span class="vcTopBtns"><button class="pill icon x" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button></span></div>
+      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button></span></div>
     <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
     <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick"><option value="new">+ New Deck</option>${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
       <button class="pill" id="vcDelDeck">Delete deck</button></div>
