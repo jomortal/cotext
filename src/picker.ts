@@ -1,5 +1,5 @@
-// Choosing a passage: the heading's button opens a list over the text - the whole screen, or on a wide one only the
-// text's column, the panes' column at its right (the search over the notes) left uncovered - the books under their headings (main.ts: the Old Testament in
+// Choosing a passage: the heading's button opens a list where the text is - under the heading, over the play bar (both
+// kept in view), over any panes open (the word's, the notes', the search) - the books under their headings (main.ts: the Old Testament in
 // the language picked - Hebrew, or the Septuagint's books that have a Hebrew counterpart: HEBREW / GREEK LXX in its
 // heading -, then the New Testament, always), one under another; a book tapped opens its chapters (numbers, six
 // to a row; only those it has - Enoch's fragments) under it in the list - one book open at a time, tapped again
@@ -21,13 +21,19 @@ const text = document.querySelector ("main")!;
 // A study screen also covers the word's panel beside the text: its right inset, --studyR, the panes' column's (from
 // their divider), else the window's edge.
 const panesSplit = document.getElementById ("notesSplit")!;
+// The picker between the heading and the play bar: --headB, the heading's bottom, and --playB, the play bar's height
+// from the window's foot (style.css' #picker)
+const head = document.querySelector<HTMLElement> (".head")!, playBar = document.getElementById ("playBar")!;
 const fit = () => {
+  const root0 = document.documentElement.style;
+  root0.setProperty ("--headB", `${head.getBoundingClientRect ().bottom}px`);
+  root0.setProperty ("--playB", `${Math.max (0, innerHeight - playBar.getBoundingClientRect ().top)}px`);
   const r = text.getBoundingClientRect (), root = document.documentElement.style, split = panesSplit.getBoundingClientRect ();
   root.setProperty ("--textL", `${Math.max (0, r.left)}px`);
   root.setProperty ("--textR", `${Math.max (0, innerWidth - r.right)}px`);
   root.setProperty ("--studyR", `${split.width ? Math.max (0, innerWidth - split.left) : 0}px`);
 };
-new ResizeObserver (fit).observe (text);
+new ResizeObserver (fit).observe (text); new ResizeObserver (fit).observe (head); new ResizeObserver (fit).observe (playBar);
 addEventListener ("resize", fit);
 
 type Go = (book: Book, chapter: number) => void;
@@ -37,7 +43,7 @@ type Chapters = (book: Book) => Promise<number[]>;
  *  chaptersOf: a book's chapter numbers (from the database: a promise). */
 export function openPicker (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {
   showBooks (groups, go, chaptersOf);
-  picker.hidden = false;
+  fit (); picker.hidden = false;
 }
 
 function showBooks (groups: [string | Node[], Book[]][], go: Go, chaptersOf: Chapters) {

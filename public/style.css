@@ -256,16 +256,16 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 
 /* The passage picker: over the text - the whole screen, or a wide one's text column (picker.ts sets its right) -, books
    then chapters, at most the text's 8 inches wide. */
-#picker { position: fixed; inset: 0; background: var(--bg); overflow: hidden; z-index: 20; }
-/* The list scrolls in its own box (#pickerBody) the screen's width - its scroll bar at the screen's edge, as the Verse
-   cards' - starting under the ✕ (placed where theirs is, over the box's top, no bar of its own), so the bar never
-   meets the ✕; the list in it as far from the edge as a verse card (12px). */
+#picker { position: fixed; top: var(--headB, 0px); bottom: var(--playB, 0px); left: 0; right: 0; background: var(--bg); overflow: hidden; z-index: 20; }     /* (Where the text is: under the heading, over the play bar - both kept -, over any panes: picker.ts' --headB, --playB) */
+/* The list scrolls in its own box (#pickerBody), the whole room's width - its scroll bar at the edge, as a tall verse
+   card's - its ✕ floating over its top right (no bar of its own), clear of the scroll bar; the list as far from the
+   edge as a verse card (12px). */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; position: relative; }
-#picker .top { position: absolute; z-index: 1; top: var(--head-top); right: var(--col-r); }
-#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: calc(var(--head-top) + var(--fs-icon) * 1.15 + var(--head-y) * 3);
-              padding: 0 max(12px, env(safe-area-inset-right, 0px)) calc(var(--pad) + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+#picker .top { position: absolute; z-index: 1; top: var(--head-y); right: var(--col-r); }
+#pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto;
+              padding: calc(var(--fs-icon) * .5) max(12px, env(safe-area-inset-right, 0px)) calc(var(--pad) + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
 #pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; text-align: center; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings, centered - one line on a phone) */
-#pickerBody > .src:first-child { margin-top: 2px; }
+#pickerBody > .src:first-child { margin-top: 0; }
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: var(--gap); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choices .pill { font-size: var(--fs-l); padding: 7px 0; }
@@ -594,10 +594,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
   .head, #options { padding-left: var(--safe-l); padding-right: var(--safe-r); }
-  /* The book picker over the text's column only, a study screen over it and the word's panel beside it - the panes
-     left in view either way (picker.ts sets --textL / --textR, the text's insets, and --studyR, the panes' column's);
+  /* The book picker from the text's column over the panes, a study screen over the text and the word's panel beside it - the panes
+     left in view (picker.ts sets --textL / --textR, the text's insets, and --studyR, the panes' column's);
      a screen's ☰ and ✕ at its own edges, as the heading's at the column's. */
-  #picker { left: var(--textL, 0px); right: var(--textR, 0px); }
+  #picker { left: var(--textL, 0px); }     /* (From the text's column to the window's edge: over the panes too) */
   #screen { left: var(--textL, 0px); right: var(--studyR, 0px); }
   #screenMenu { left: calc(var(--textL, 0px) + var(--safe-l)); } #screenClose { right: calc(var(--studyR, 0px) + var(--safe-r)); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
