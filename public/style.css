@@ -42,6 +42,7 @@
   --col-l: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2));
   --col-r: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2));
   --x-room: 52px;
+  --x-w: calc(var(--fs-icon) * .84);     /* (A ✕ button's width: its glyph's, at --fs-icon) */
   --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
   /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
      columns; -l between buttons with no padding. */
@@ -249,7 +250,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
   padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
-.pane .top { padding-right: var(--x-room); }     /* (Clear of the frozen ✕) */
+.pane .top { padding-right: calc(var(--x-w) + var(--pad)); }     /* (Clear of the frozen ✕ by as much as the row's left margin - the scroller's, --pad - so the picker is as far from the ✕ as from the left) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
@@ -616,7 +617,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #screenMenu { left: calc(var(--textL, 0px) + var(--safe-l)); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch at whichever side the pane is. */
-  .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(52px + env(safe-area-inset-right, 0px)) 10px var(--safe-l); }
+  .pane > .top { flex: none; margin: 0; padding: calc(var(--pad) + env(safe-area-inset-top, 0px)) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (The picker as far from the ✕ as from the left edge) */
   .pane > .xRow { top: calc(var(--x-top) + env(safe-area-inset-top, 0px)); }     /* (The column reaches the screen's top: clear of the clock) */
   body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); } body:has(#search:not([hidden])) #notes > .xRow { top: var(--x-top); }     /* (The notes under the search: away from the screen's top, no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
@@ -817,7 +818,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
-  .pane > .panelScroll { padding-inline: var(--text-edge); } .pane .top { padding-left: var(--text-edge); }     /* (The resources' panes - notes, search - their side margins small: more room for their text) */
+  .pane > .panelScroll { padding-inline: var(--text-edge); } .pane > .top { padding-left: var(--text-edge); padding-right: calc(var(--pad) + var(--x-w) + var(--text-edge)); }     /* (The resources' panes - notes, search - their side margins small: more room for their text) */
 }
 
 @media print {
