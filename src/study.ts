@@ -1,6 +1,6 @@
 // The study menu: ☰ opens a drawer from the left, above everything (design/mock-hebrew.html) - the study screens:
-// Vocab, Verb paradigms, Verb chart, Parsing guide. Each opens full screen, with ☰ at its top left (to move between
-// them) and ✕ at its top right (back to the text); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts), each for the
+// Vocab, Verb paradigms, Verb chart, Parsing guide, Pronunciation, Timeline. Each opens full screen, with ☰ at its top left (to move between
+// them) and ✕ at its top right (back to the text); its contents drawn by its own module (onScreen: vocab.ts, cards.ts, chart.ts, guide.ts, pronounce.ts, timeline.ts), each for the
 // testament shown; one not built says it's coming. Picking an item, ✕ or tapping outside closes the drawer.
 // At its top, HEBREW / GREEK: the Old Testament read - Hebrew (the Hebrew Bible) or Greek (the Septuagint, its
 // books the Hebrew Bible lacks too); the New Testament is Greek either way. Kept on the device; main.ts goes to the
@@ -66,6 +66,7 @@ export function onScreen (name: string, draw: (body: HTMLElement) => void | Prom
 /** Opens a study screen by its name (as the drawer's items name them). */
 export function openScreen (name: string) {
   screenTitle.textContent = name;
+  screen.dataset.screen = name;     // (style.css: a screen's own width - the Timeline's the whole screen's)
   // (Each opening drawn into a body of its own, laid out as #screenBody's own children: a screen still drawing when
   // another opens draws into one no longer shown)
   const body = document.createElement ("div");
@@ -76,6 +77,9 @@ export function openScreen (name: string) {
   screen.hidden = false;
   screen.scrollTop = 0;
 }
+
+/** Back to the text, as the screen's ✕ (the Timeline: an item tapped). */
+export function closeScreen () { screen.hidden = true; }
 
 document.getElementById ("drawerBtn")!.addEventListener ("click", open);
 document.getElementById ("screenMenu")!.addEventListener ("click", open);

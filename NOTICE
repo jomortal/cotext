@@ -213,6 +213,15 @@ Atlas (the word panel's Map, the notes' Atlas - public/data/notes/atlas.db and a
     (W. R. Shepherd, Historical Atlas, 1911; G. A. Smith, Historical Atlas of the Holy Land, 1915) - approximate.
   - Routes (pipeline/atlas_routes.py): written for COTEXT from the Bible's text; their places OpenBible's (above).
 
+Timeline (☰ Timeline and the word panel's person dates - public/data/notes/timeline.db, pipeline/timeline.py):
+  - Theographic Bible Metadata, Robert Rouse (github.com/robertrouse/theographic-bible-metadata, at commit
+    3f461f2f3cf8939f2b79430ae238a36528024ed3), licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).
+    Its dates follow Floyd Nolen Jones's chronology (The Chronology of the Old Testament). Changes: its events and
+    people reduced to timeline items (lanes, labels with typos corrected, start and end years, first verse), persons'
+    lines and the chapters' years; the derived file is shared under the same license.
+  - The text's words tied to its people through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
+  - Empires: the Atlas' eras (pipeline/atlas_eras.py, above), spanned by the years Theographic gives their chapters.
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as

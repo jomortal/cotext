@@ -32,9 +32,11 @@ a non-commercial license are marked so in NOTICE.
       the returns, Paul's journeys and the voyage to Rome), numbered with arrows, uncertain sites hollow and dashed,
       each stop linked to its verse; base maps offered only for their era (DARE only in Roman eras, AWMC's roads only
       the era's), falling back and coming back as resources do.
-- [ ] **☰ Timeline** (queued, after the Atlas's eras): lanes (patriarchs and judges, Israel's and Judah's kings,
-      prophets, empires, Jesus and the apostles), zoomable, the chapter read marked, each item tapped going to its
-      verses; a person's dates in the word panel. Data: Theographic Bible Metadata (license to check first: CC BY-SA?).
+- [x] **☰ Timeline** (built 2026-11-04): lanes (patriarchs and judges, Israel's and Judah's kings, prophets, empires
+      - the Atlas' eras -, Jesus and the apostles; 371 items), top to bottom on a phone, left to right wide; dragged,
+      pinched or wheeled from the whole Bible to one reign; the chapter read marked ("you are here") and opened on;
+      each item tapped going to its verses; a person's dates in the word panel (96 persons) with a Timeline button.
+      Data: Theographic Bible Metadata (CC BY-SA 4.0), Floyd Nolen Jones's chronology (after Ussher).
 - [ ] Before the public beta: slim the resources down (the user's pick).
 
 ## In progress
