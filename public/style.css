@@ -174,7 +174,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #notesRef { margin-top: 0; }
 /* The notes' heading line while the list follows the text one way (notes.ts' ONE-WAY FOLLOWING): held at the panel's
    top, over the notes scrolling under it, clear of the frozen ✕ - it names the verse read and where the next notes are. */
-#notesRef.stick { position: sticky; top: calc(4px - var(--pad)); margin-top: calc(4px - var(--pad)); padding: var(--pad) 52px 4px 0; z-index: 2; background: var(--bg); }     /* (Up over the scroller's top padding - calc(var(--pad) - 4px) -, so nothing shows above it) */
+#notesRef.stick { position: sticky; top: calc(4px - var(--pad)); padding: 4px 52px 4px 0; z-index: 2; background: var(--bg); box-shadow: 0 calc(-1 * var(--pad)) 0 var(--bg); }     /* (Stuck, up over the scroller's top padding, its shadow the page's color filling that padding so nothing shows above it; at rest no higher than its place, so it never covers the picker over it) */
 #notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
 #notes .note .src { margin: 0 0 4px; }
