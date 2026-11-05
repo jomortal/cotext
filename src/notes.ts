@@ -10,10 +10,19 @@
 //   swapping one is a tap; the choice is kept per testament on the device, and stays through every book it covers.
 // - A source is its own database file, downloaded the first time it's picked and kept (db.ts: openNotesDb); one is
 //   open at a time.
-// - Narrow: the notes on one verse - the one being read aloud while ▶ reads (audio.ts signals each word lit), otherwise
-//   the first whose last line is still in view at the text's top (until half of it is gone) - following as the text scrolls. Wide: the
-//   notes on every verse of the chapter, each under its reference, following the text both ways (TWO-WAY SCROLLING,
-//   below: a translation in step, any other kind loosely). A note on a range (1:1-18) shows once, at its first verse shown, its range above it; a
+// - Which verses show, and how the panel follows the text - "the verse read" narrow being the one read aloud while ▶
+//   reads (audio.ts signals each word lit), otherwise the first whose last line is still in view at the text's top
+//   (until half of it is gone; versesNow):
+//   - A translation, and the Hebrew OT beside the Septuagint: narrow, the verse read's; wide, every verse of the
+//     chapter, in step with the text both ways (TWO-WAY SCROLLING, below).
+//   - A spotty source (SPOTTY, below: notes on under half the book's verses - HOTTP, John Lightfoot, Ramban, STEPBible's
+//     and some books' Dead Sea Scrolls, church fathers, Rashi...): the whole book's notes at once, each verse's under
+//     its chapter:verse, following the text one way (ONE-WAY FOLLOWING) - narrow and wide alike.
+//   - Any other (commentaries with notes on most verses, apparatus, the Targums, diagrams, the dictionary): narrow, the
+//     chapter's notes, each verse's under its reference (verses with none left out), following the text one way; wide,
+//     every verse of the chapter, following the text both ways loosely (TWO-WAY SCROLLING).
+//   Following one way, the heading line names the verse read, and when it has no notes, where the next are ("Genesis
+//   1:4 - no notes; next at 1:7"). A note on a range (1:1-18) shows once, at its first verse shown, its range above it; a
 //   note on words (Translation Notes') shows them first. The list is redrawn only when the notes change, so a range
 //   note read through several verses keeps its place. A translation or an ancient version (a Targum: its Aramaic,
 //   right to left, with the English under it) is a source with a "note" per verse: its text.
@@ -22,8 +31,8 @@
 //   several verses shows on each, the words of the others dimmed.
 // - A dictionary (DICTIONARY: the Tyndale Bible Dictionary, the Archaeology finds) lists articles, not notes: for each
 //   verse those citing it, then those its words lead to (dictionary.ts' passageArticles), each its title over a line of
-//   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow one verse,
-//   wide the chapter in step with the text; an article listed once, at the first verse shown it's for) - except the
+//   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow the chapter,
+//   followed one way; wide the chapter, loosely; an article listed once, at the first verse shown it's for) - except the
 //   Archaeology finds, the Ancient Parallels and the Ancient Historians, listed by book (BY BOOK, below).
 // - The atlas (MAPS: atlas.ts) is one map of the places the chapter names (narrow and wide alike),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
@@ -158,7 +167,8 @@ btn.addEventListener ("click", () => {
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
-/** The verses to show. Wide: every verse of the chapter. Narrow: one - the verse being read aloud, else the first
+/** The verses to show - and, narrow, the verse read that ONE-WAY FOLLOWING goes to. Wide: every verse of the chapter.
+ *  Narrow: one - the verse being read aloud, else the first
  *  whose last line is still in view: the middle of its last word's original (the Hebrew or Greek, not the word's
  *  column, which has room above it) at or below the text's top edge - so the notes move on once a verse's last line is
  *  half gone under the heading. */
@@ -212,17 +222,22 @@ async function drawNotes () {
   const src = current ();
   if (panel.hidden || ! book || ! src || ! textDb || (src.file && ! ownFile (src) && open?.id !== src.id)) return;
   if (BY_BOOK.has (src.id) && book.testament !== "LXX") { drawBookFinds (src.id); return; }
+  const b = book, db = open?.db;
+  if (await spotty (src, b)) { if (current () === src && book === b) drawBookNotes (src); return; }
+  if (current () !== src || book !== b) return;     // (Another source or book meanwhile: its own update draws it)
   bookShown = "";     // (Anything else drawn: the book's list gone)
+  const wide = isWide ();
+  // (Narrow, any source not read in step - but the atlas - is the chapter's, followed one way: ONE-WAY FOLLOWING)
+  const oneWay = ! wide && ! IN_STEP.has (src.kind) && src.kind !== "atlas";
   // (The atlas always the whole chapter's places, narrow too: its list is the chapter's)
   const rowsAll = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")].map ((r) => Number (r.dataset.verse ?? 1));
-  const vs = src.kind === "atlas" && rowsAll.length ? rowsAll : versesNow ();
+  const vs = (src.kind === "atlas" || oneWay) && rowsAll.length ? rowsAll : versesNow ();
   const key = vs.join (",");
-  if (key === shownVerse) return;
+  if (key === shownVerse) return;     // (Following one way meanwhile: follow's frame, below)
   shownVerse = key;
   const n = ++updating, still = () => n === updating;
-  const wide = isWide ();
   const many = wide || vs.length > 1;
-  const b = book, db = open?.db;
+  const blocky = wide || oneWay;     // (Each verse's notes in a block of their own: wide for TWO-WAY SCROLLING, else to follow one way)
   // Each verse's places whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses it
   // translates ([book, chapter, verse]; none: the Hebrew lacks it); otherwise its own.
   const hebrewKeyed = !! heb && (src.kind === "original" || offers (src, "OT"));
@@ -240,6 +255,7 @@ async function drawNotes () {
   if (! all.length) {
     if (shownIds === "lxx") return;
     shownIds = "lxx";
+    oneWayFrom ("");
     clearInterlinear ();
     bodyEl.innerHTML = LXX_ONLY;
     return;
@@ -248,6 +264,7 @@ async function drawNotes () {
     const ids = "he " + all.join (" ");
     if (ids === shownIds) return;
     shownIds = ids;
+    oneWayFrom ("");
     const el = document.createElement ("div");
     el.className = "besideText";
     // (Each Hebrew verse once, though two LXX verses may translate it; wide, each LXX verse placed at the first of its own)
@@ -261,7 +278,7 @@ async function drawNotes () {
     placed ();
     return;
   }
-  if (src.kind === "dictionary") { drawArticles (src.id, per, n, wide, many); return; }
+  if (src.kind === "dictionary") { drawArticles (src.id, per, n, wide, blocky, many); return; }
   if (src.kind === "atlas") { drawAtlas (per, n, many); return; }
   // Each verse's notes, a note already shown for an earlier verse (a range, a sentence) not again
   const seen = new Set<number> ();
@@ -286,24 +303,27 @@ async function drawNotes () {
     if (! still ()) return;
   }
   shownIds = ids;
+  oneWayFrom (oneWay ? noneWord (src.kind) : "");
+  if (oneWay && hebrewKeyed) for (const p of per) if (p.where.length) oneHeb.set (chapter * 1000 + p.v, ` - Hebrew ${heb!.name} ${refs (p.where)}`);
   clearInterlinear ();
   bodyEl.replaceChildren ();
   const kind = src.kind;
-  const none = kind === "translation" ? "Not in this translation." : kind === "version" ? "Not in this version."
+  const none = oneWay ? `No ${oneSay} in this chapter.` : kind === "translation" ? "Not in this translation." : kind === "version" ? "Not in this version."
              : kind === "syntax" ? "No diagram for this verse." : "No notes on this verse.";
-  for (const g of groups) {
-    // (Wide: each verse's notes in a block of their own, marked with its verse, for TWO-WAY SCROLLING)
-    const box = wide ? document.createElement ("div") : bodyEl;
-    if (wide) { box.className = "vBlock"; box.dataset.verse = String (g.v); bodyEl.append (box); blocks.push ([g.v, box]); }
-    if (many) {
-      const h = document.createElement ("div");
-      h.className = "src verseHead";
-      h.textContent = `${chapter}:${g.v}`;
-      box.append (h);
-    }
+  for (const [i, g] of groups.entries ()) {
+    const ref = chapter * 1000 + g.v;
+    const box = blocky ? verseBlock (`${chapter}:${g.v}`, g.v) : bodyEl;
+    if (blocky) { bodyEl.append (box); if (wide) blocks.push ([g.v, box]); else oneRows.push ([[ref], box]); }
+    else if (many) box.append (verseBlock (`${chapter}:${g.v}`).firstChild!);
     if (! g.where.length) { box.insertAdjacentHTML ("beforeend", LXX_ONLY); continue; }
     if (! g.notes.length) {
-      // (A verse whose note began at an earlier verse shown above: nothing more to say for it)
+      // (A verse whose note began at an earlier verse shown above: nothing more to say for it - following one way,
+      // it's that block's verse too; a verse with none at all left out)
+      if (oneWay) {
+        box.remove (); oneRows.pop ();
+        if (read[i].flat ().length && oneRows.length) oneRows[oneRows.length - 1][0].push (ref);
+        continue;
+      }
       if (many && seen.size) {
         if (wide) { box.remove (); blocks.pop (); } else bodyEl.lastElementChild?.remove ();
         continue;
@@ -319,7 +339,20 @@ async function drawNotes () {
     for (const n of g.notes) box.append (FOLDED.has (src.id) ? foldedNote (n) : noteElement (n));
   }
   if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
-  placed ();
+  if (oneWay) placedOneWay (); else placed ();
+}
+
+/** A verse's block: its reference (label) as a heading, then its notes - marked with its verse (v) for TWO-WAY
+ *  SCROLLING. */
+function verseBlock (label: string, v?: number): HTMLElement {
+  const box = document.createElement ("div");
+  box.className = "vBlock";
+  if (v !== undefined) box.dataset.verse = String (v);
+  const h = document.createElement ("div");
+  h.className = "src verseHead";
+  h.textContent = label;
+  box.append (h);
+  return box;
 }
 
 /** A dictionary's (id: its source) articles for the verses (dictionary.ts' passageArticles: those citing each verse,
@@ -327,48 +360,185 @@ async function drawNotes () {
  *  under its reference when there are several (wide, each in its block; a verse with none of its own left out), each
  *  article an entry - its title over a line of it (its photo at the right, where it has one), tapped opening it in
  *  place. */
-async function drawArticles (id: string, per: { v: number; where: number[][] }[], n: number, wide: boolean, many: boolean) {
+async function drawArticles (id: string, per: { v: number; where: number[][] }[], n: number, wide: boolean, blocky: boolean, many: boolean) {
   const lists = await passageArticles (textDb!, per.map ((p) => p.where), id);
   if (n !== updating) return;
   const ids = id + " " + per.map ((p, i) => p.v + ":" + lists[i].map ((a) => a.id).join (".")).join (",");
   if (ids === shownIds) return;
   shownIds = ids;
+  oneWayFrom (blocky && ! wide ? "articles" : "");
   clearInterlinear ();
   bodyEl.replaceChildren ();
   per.forEach (({ v, where }, i) => {
     if (! lists[i].length && (many || ! where.length)) { if (! where.length && ! many) bodyEl.innerHTML = LXX_ONLY; return; }
-    const box = wide ? document.createElement ("div") : bodyEl;
-    if (wide) { box.className = "vBlock"; box.dataset.verse = String (v); bodyEl.append (box); blocks.push ([v, box]); }
-    if (many) {
-      const h = document.createElement ("div");
-      h.className = "src verseHead";
-      h.textContent = `${chapter}:${v}`;
-      box.append (h);
-    }
+    const box = blocky ? verseBlock (`${chapter}:${v}`, v) : bodyEl;
+    if (blocky) { bodyEl.append (box); if (wide) blocks.push ([v, box]); else oneRows.push ([[chapter * 1000 + v], box]); }
+    else if (many) box.append (verseBlock (`${chapter}:${v}`).firstChild!);
     for (const a of lists[i]) box.append (entry (textDb!, a.id, a.title, a.line, a.why, id, a.photo));
   });
-  if (! bodyEl.children.length) bodyEl.innerHTML = "<p>No articles on this verse.</p>";
-  placed ();
+  const oneWay = blocky && ! wide;
+  if (! bodyEl.children.length) bodyEl.innerHTML = oneWay ? "<p>No articles in this chapter.</p>" : "<p>No articles on this verse.</p>";
+  if (oneWay) placedOneWay (); else placed ();
+}
+
+//==== ONE-WAY FOLLOWING ====
+// The panel's list - a book's or, narrow, a chapter's - follows the text one way: the text scrolled (or read aloud),
+// the list goes to the entry of the verse read (the first at it, else the next after it) unless that entry's heading is
+// in view already; the list scrolled (to read on in it) moves nothing. The verse read: wide, the text's first row in
+// view; narrow, versesNow's. Every drawing that follows one way fills oneRows; followOneWay, run from follow's frame
+// and after each such drawing, does the rest.
+const IN_STEP = new Set (["translation", "original"]);     // (Read verse for verse against the text: never one way)
+let oneRows: [number[], HTMLElement][] = [];     // (Each entry's verses - chapter * 1000 + verse - and its element, in the list's order)
+let oneAt = -1;                                  // (The verse last followed to)
+let oneSay = "";                                 // (What the entries are, for the heading line - "notes"; "": the heading not changed - BY BOOK's)
+let oneScope = "chapter";                        // (What the list holds: "chapter" or "book")
+const oneHeb = new Map<number, string> ();       // (Beside the Septuagint: each verse's Hebrew verses, as the heading adds them)
+const noneWord = (kind: string) => kind === "syntax" ? "diagram" : kind === "dictionary" ? "articles" : kind === "version" ? "text" : "notes";
+
+/** A drawing begun: following one way with nothing yet (say: what its entries are, as oneSay - "" for a drawing that
+ *  doesn't follow one way, or keeps its heading; scope: what it holds), the heading held at the top only when it speaks. */
+function oneWayFrom (say: string, scope = "chapter") {
+  oneRows = []; oneAt = -1; oneSay = say; oneScope = scope; oneHeb.clear ();
+  refEl.classList.toggle ("stick", !! say);
+}
+
+/** The list just drawn placed: from its top, then at the verse read - the text leading, whatever was touched last. */
+function placedOneWay () {
+  leader = "text"; oneAt = -1;
+  notesScroll.scrollTop = 0;
+  followOneWay ();
+}
+
+/** The list taken to the verse read (above), once that verse changes and the text leads; the heading line (oneSay)
+ *  names that verse, and when it has no entry, the next one's ("Genesis 1:4 - no notes; next at 1:7"). The heading is
+ *  then held at the panel's top (.stick), and an entry is placed under it. */
+function followOneWay () {
+  if (leader !== "text" || ! oneRows.length || panel.hidden || ! book) return;
+  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const top = main.getBoundingClientRect ().top + 6;
+  const row = isWide () ? rows.find ((r) => r.getBoundingClientRect ().bottom > top) : null;
+  const v = chapter * 1000 + (row ? Number (row.dataset.verse ?? 1) : versesNow ()[0]);
+  if (v === oneAt) return;
+  oneAt = v;
+  markVerse (bodyEl, v);     // (BY BOOK: every find's link to the verse read marked, shown even among those "+ more" hides)
+  const hit = oneRows.find (([vs]) => vs.includes (v));
+  const next = hit ?? oneRows.find (([vs]) => vs.some ((x) => x >= v));
+  if (oneSay) {
+    const at = (r: number) => `${Math.floor (r / 1000)}:${r % 1000}`;
+    const after = next ? Math.min (...next[0].filter ((x) => x >= v)) : 0;
+    refEl.textContent = `${book.name} ${at (v)}${oneHeb.get (v) ?? ""}`
+      + (hit ? "" : after ? ` - no ${oneSay}; next at ${at (after)}` : ` - no ${oneSay}; none after it in this ${oneScope}`);
+  }
+  const target = (next ?? oneRows[oneRows.length - 1])[1];
+  const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
+  // (The entry placed under the held heading: it sticks its own top - negative, style.css - into the scroller's padding)
+  const edge = nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop) + (oneSay ? parseFloat (getComputedStyle (refEl).top) + refEl.offsetHeight : 0);
+  if (t.top >= edge - 1 && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)
+  notesScroll.scrollTop += t.top - edge;
+}
+
+//==== SPOTTY ====
+// A source with notes on under half a book's verses (SPOTTY: the verses a note covers, its range counted, against the
+// book's verses in the text) shows that book's notes all at once, each verse's under its chapter:verse in order, and
+// follows the text one way (above) - narrow and wide alike - so a reader sees what there is and where, rather than
+// "no notes" verse after verse. Decided per source and book from the data, once (spottiness). Measured 2026-11-04:
+// HOTTP (5-43 %), John Lightfoot (13-29 %), Ramban (19-36 %) in every book; STEPBible's apparatus in every OT book
+// (1-24 %) and some NT letters (Romans, Philippians, the Pastorals, Hebrews...: 35-47 %); the SBLGNT apparatus in
+// about half the NT; the Dead Sea Scrolls, the church fathers and Rashi in some books (the Dead Sea Scrolls' Joshua,
+// Kings, Jeremiah; the fathers' Deuteronomy, Chronicles...; Rashi's Joshua, Judges, Samuel, Kings, Chronicles);
+// Vincent's Matthew (41 %). Every other source covers more (Codex Sinaiticus, IGNTP, J. B. Lightfoot's Colossians,
+// the Targums: every verse). Only commentaries, apparatus and ancient versions are measured: a diagram covers every
+// sentence, and the dictionary's articles come from each verse's words too. Beside the Septuagint never (by verse, as
+// BY BOOK's there).
+const SPOTTY = 0.5;
+const NOTE_KINDS = new Set (["commentary", "apparatus", "version"]);
+const spottiness = new Map<string, Promise<boolean>> ();     // ("<source> <book id>" -> whether it's spotty there)
+const bookVerses = new Map<number, Promise<number[]>> ();     // (A book's verses in the text, chapter * 1000 + verse, rising)
+const versesOf = (id: number) => {
+  let p = bookVerses.get (id);
+  if (! p) {
+    p = textDb!.all ("SELECT DISTINCT chapter * 1000 + verse AS r FROM words WHERE book = ? ORDER BY r", [id]).then ((rs) => rs.map ((r) => Number (r.r)));
+    bookVerses.set (id, p);
+    p.catch (() => bookVerses.delete (id));
+  }
+  return p;
+};
+/** The first index in a rising list at or above x. */
+function lowerBound (xs: number[], x: number) {
+  let lo = 0, hi = xs.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < x) lo = m + 1; else hi = m; }
+  return lo;
+}
+/** Whether a source (its file open) is spotty in a book (above). */
+function spotty (s: Source, b: Book): Promise<boolean> {
+  if (! NOTE_KINDS.has (s.kind) || b.testament === "LXX" || open?.id !== s.id) return Promise.resolve (false);
+  const k = `${s.id} ${b.id}`, db = open.db;
+  let p = spottiness.get (k);
+  if (! p) {
+    p = Promise.all ([versesOf (b.id), db.all (`SELECT start, "end" FROM notes WHERE book = ?`, [b.id])]).then (([vs, ns]) => {
+      const covered = new Set<number> ();
+      for (const r of ns) for (let i = lowerBound (vs, Number (r.start)); i < vs.length && vs[i] <= Number (r.end); i++) covered.add (i);
+      return vs.length > 0 && covered.size < SPOTTY * vs.length;
+    });
+    spottiness.set (k, p);
+    p.catch (() => spottiness.delete (k));     // (Its file closed meanwhile: measured again next time)
+  }
+  return p;
+}
+
+/** A spotty source's notes on the whole book (above): each verse's in a block under its chapter:verse, a note on a
+ *  range under its first verse (its range above it), the church fathers' folded; drawn once a book, then followed. */
+async function drawBookNotes (src: Source) {
+  const b = book!, key = `${src.id} ${b.id}`;
+  if (key !== bookShown) {
+    bookShown = key; shownIds = key; shownVerse = "";
+    oneWayFrom (noneWord (src.kind), "book");
+    const n = ++updating;
+    clearInterlinear ();
+    blocks = []; anchors = null;
+    bodyEl.classList.add ("gBody");
+    refEl.textContent = b.name;
+    bodyEl.innerHTML = "<p>Loading…</p>";
+    const [notes, vs] = await Promise.all ([open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ?
+                                                           ORDER BY start, "end" DESC, ord`, [b.id]) as unknown as Promise<Note[]>, versesOf (b.id)]);
+    if (n !== updating) return;
+    bodyEl.replaceChildren ();
+    let at = -1, box: HTMLElement | null = null, refsHere: number[] = [];
+    for (const nt of notes) {
+      if (nt.start !== at || ! box) {
+        at = nt.start;
+        box = verseBlock (`${Math.floor (at / 1000)}:${at % 1000}`);
+        refsHere = [];
+        bodyEl.append (box);
+        oneRows.push ([refsHere, box]);
+      }
+      box.append (FOLDED.has (src.id) ? foldedNote (nt) : noteElement (nt));
+      for (let i = lowerBound (vs, nt.start); i < vs.length && vs[i] <= nt.end; i++) if (! refsHere.includes (vs[i])) refsHere.push (vs[i]);
+      if (! refsHere.includes (nt.start)) refsHere.unshift (nt.start);     // (A note on a verse the text lacks: still its own)
+    }
+    if (! notes.length) bodyEl.innerHTML = `<p>No ${oneSay} on this book.</p>`;
+    placedOneWay ();
+    return;
+  }
+  followOneWay ();
 }
 
 //==== BY BOOK ====
-// The Archaeology finds, the Ancient Parallels and the Ancient Historians (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
-// there, in the order of the first: drawn once a book, then following the text one way - the text scrolled, the list
-// goes to the find of the verse read (the first find at it, else the next after it) unless that find is in view
-// already, and every find's link to that verse is marked; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
-// dictionary's.
+// The Archaeology finds, the Ancient Parallels and the Ancient Historians (BY_BOOK) list the whole book's at once
+// (dictionary.ts' bookArticles), each with its verses there, in the order of the first: drawn once a book, then
+// following the text one way (ONE-WAY FOLLOWING), every find's link to the verse read marked. Beside the Septuagint
+// they're by verse as the dictionary's.
 const BY_BOOK = new Set (["finds", "ane", "historians"]);
 const NONE_IN_BOOK: Record<string, string> = { finds: "No finds bear on this book.", ane: "No parallels for this book.",
                                                historians: "No historians' passages for this book." };
-let bookShown = "";     // (The book drawn: "<source> <book id>")
-let bookAt = -1;        // (The verse last followed to: chapter * 1000 + verse)
-let bookRows: [number[], HTMLElement][] = [];     // (Each find's verses and its entry, in the list's order)
+let bookShown = "";     // (The book drawn - here or by SPOTTY: "<source> <book id>")
 async function drawBookFinds (id: string) {
   const b = book!;
   const key = `${id} ${b.id}`;
   refEl.textContent = b.name;
   if (key !== bookShown) {
-    bookShown = key; shownIds = key; bookAt = -1; bookRows = [];
+    bookShown = key; shownIds = key; shownVerse = "";
+    oneWayFrom ("");
     const n = ++updating;
     clearInterlinear ();
     blocks = []; anchors = null;
@@ -380,27 +550,13 @@ async function drawBookFinds (id: string) {
       const el = entry (textDb!, a.id, a.title, a.line, "", id, a.photo);
       el.append (verseLinks (b.id, a.verses));
       bodyEl.append (el);
-      bookRows.push ([a.verses, el]);
+      oneRows.push ([a.verses, el]);
     }
     if (! list.length) bodyEl.innerHTML = `<p>${NONE_IN_BOOK[id]}</p>`;
-    notesScroll.scrollTop = 0;
+    placedOneWay ();
+    return;
   }
-  followBook ();
-}
-/** The list taken to the verse read (above), once that verse changes and the text leads. */
-function followBook () {
-  if (leader !== "text" || ! bookRows.length) return;
-  const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
-  const top = main.getBoundingClientRect ().top + 6;
-  const row = isWide () ? rows.find ((r) => r.getBoundingClientRect ().bottom > top) : null;
-  const v = chapter * 1000 + (row ? Number (row.dataset.verse ?? 1) : versesNow ()[0]);
-  if (v === bookAt) return;
-  bookAt = v;
-  markVerse (bodyEl, v);     // (Every find's link to the verse read marked, shown even among those "+ more" hides)
-  const target = (bookRows.find (([vs]) => vs.includes (v)) ?? bookRows.find (([vs]) => vs.some ((x) => x >= v)) ?? bookRows[bookRows.length - 1])[1];
-  const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
-  if (t.top >= nt.top && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)
-  notesScroll.scrollTop += t.top - nt.top - parseFloat (getComputedStyle (notesScroll).paddingTop);
+  followOneWay ();
 }
 
 /** The atlas for the verses (atlas.ts' passageMap): its one map, kept while the atlas is picked, set to their places. */
@@ -409,6 +565,7 @@ async function drawAtlas (per: { v: number; where: number[][] }[], n: number, ma
   const ids = "atlas " + per.map ((p) => p.v + ":" + p.where.join ("/")).join (",");
   if (ids === shownIds) return;
   shownIds = ids;
+  oneWayFrom ("");
   atlasView ??= passageMap (textDb!);
   if (atlasView.el.parentElement !== bodyEl) { clearInterlinear (); bodyEl.replaceChildren (atlasView.el); }
   await atlasView.update (book!.id, chapter, per, many ? "No places named in this chapter." : "No places named in this verse.");
@@ -493,7 +650,7 @@ let frame = 0;
 // (The verses not changed while the word's panel shows a word of the Hebrew OT here: the panel scrolls the text to keep
 // a word in view, which would move the notes on to another verse, the word tapped with them.)
 const follow = () => {
-  if (! frame && ! panel.hidden) frame = requestAnimationFrame (() => { frame = 0; if (! panel.querySelector (".w.on")) update (); sync (); });
+  if (! frame && ! panel.hidden) frame = requestAnimationFrame (() => { frame = 0; if (! panel.querySelector (".w.on")) update (); sync (); followOneWay (); });
 };
 main.addEventListener ("scroll", follow, { passive: true });
 document.addEventListener ("cotext:reading", () => { leader = "text"; follow (); });     // (The text leads while ▶ reads)
@@ -501,7 +658,7 @@ document.addEventListener ("cotext:reading", () => { leader = "text"; follow ();
 onWideChange (() => { shownVerse = ""; shownIds = null; if (! panel.hidden) show (); });
 
 //==== TWO-WAY SCROLLING ====
-// Wide, the text and the notes scroll together: whichever the finger, pen or wheel was last put on leads (pointerdown,
+// Wide, for a source that's not spotty (SPOTTY: those follow one way, ONE-WAY FOLLOWING), the text and the notes scroll together: whichever the finger, pen or wheel was last put on leads (pointerdown,
 // touchstart, wheel), the other follows - set a frame at a time from the leader's place. The follower's own scroll
 // events (from being set) are ignored, so neither drives the other back: no loop, no jitter. Two ways of following:
 // - In step (a translation, and the Hebrew OT beside the Septuagint: read verse for verse against the text): the
@@ -558,7 +715,7 @@ function across (x: number, from: "t" | "r", to: "t" | "r") {
 function sync () {
   if (! isWide () || panel.hidden || ! blocks.length) return;
   const kind = current ()?.kind;
-  if (kind !== "translation" && kind !== "original") { loose (); return; }
+  if (! IN_STEP.has (kind ?? "")) { loose (); return; }
   const [lead, follower, from, to] = leader === "text" ? [main, notesScroll, "t", "r"] as const : [notesScroll, main, "r", "t"] as const;
   const want = Math.round (across (lead.scrollTop, from, to));
   if (Math.abs (follower.scrollTop - want) >= 1) follower.scrollTop = want;

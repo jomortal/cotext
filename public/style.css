@@ -172,6 +172,9 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
 .pane .chooseBtn { width: 100%; box-sizing: border-box; }
 #notesRef { margin-top: 0; }
+/* The notes' heading line while the list follows the text one way (notes.ts' ONE-WAY FOLLOWING): held at the panel's
+   top, over the notes scrolling under it, clear of the frozen ✕ - it names the verse read and where the next notes are. */
+#notesRef.stick { position: sticky; top: calc(4px - var(--pad)); margin-top: calc(4px - var(--pad)); padding: var(--pad) 52px 4px 0; z-index: 2; background: var(--bg); }     /* (Up over the scroller's top padding - calc(var(--pad) - 4px) -, so nothing shows above it) */
 #notes .note { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
 #notes .note .src { margin: 0 0 4px; }
