@@ -108,7 +108,7 @@ onScreen ("Timeline", async (body) => {
   /** The canvas' size and layout: vertical (time down), the time axis' start (off) and length (len), the lanes'. */
   function geometry () {
     const w = wrap.clientWidth, hh = wrap.clientHeight;
-    const vertical = w < NARROW;
+    const vertical = false;
     const gutter = vertical ? 42 : 22;     // (The years' labels: a column at the left, or a row along the top)
     const head = vertical ? 36 : 0;        // (Narrow: the lanes' names in a row over the columns)
     const off = vertical ? head : 0, len = vertical ? hh - head : w;
