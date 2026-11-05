@@ -24,7 +24,7 @@
 //   verse those citing it, then those its words lead to (dictionary.ts' passageArticles), each its title over a line of
 //   it (a find its photo at the right), tapped opening the article in place - drawn as the notes are (narrow one verse,
 //   wide the chapter in step with the text; an article listed once, at the first verse shown it's for) - except the
-//   Archaeology finds and the Ancient Near East parallels, listed by book (BY BOOK, below).
+//   Archaeology finds, the Ancient Parallels and the Ancient Historians, listed by book (BY BOOK, below).
 // - The atlas (MAPS: atlas.ts) is one map of the places the verses shown name (narrow the verse, wide the chapter),
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 
@@ -314,7 +314,7 @@ async function drawNotes () {
       for (const n of g.notes) box.append (drawDiagram (JSON.parse (n.body) as Sentence, text, at));
       continue;
     }
-    for (const n of g.notes) box.append (noteElement (n));
+    for (const n of g.notes) box.append (FOLDED.has (src.id) ? foldedNote (n) : noteElement (n));
   }
   if (! bodyEl.children.length) bodyEl.innerHTML = `<p>${none}</p>`;
   placed ();
@@ -350,13 +350,14 @@ async function drawArticles (id: string, per: { v: number; where: number[][] }[]
 }
 
 //==== BY BOOK ====
-// The Archaeology finds and the Ancient Near East parallels (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
+// The Archaeology finds, the Ancient Parallels and the Ancient Historians (BY_BOOK) list the whole book's at once (dictionary.ts' bookArticles), each with its verses
 // there, in the order of the first: drawn once a book, then following the text one way - the text scrolled, the list
 // goes to the find of the verse read (the first find at it, else the next after it) unless that find is in view
 // already, and every find's link to that verse is marked; the list scrolled (to look through it) moves nothing. Beside the Septuagint they're by verse as the
 // dictionary's.
-const BY_BOOK = new Set (["finds", "ane"]);
-const NONE_IN_BOOK: Record<string, string> = { finds: "No finds bear on this book.", ane: "No parallels for this book." };
+const BY_BOOK = new Set (["finds", "ane", "historians"]);
+const NONE_IN_BOOK: Record<string, string> = { finds: "No finds bear on this book.", ane: "No parallels for this book.",
+                                               historians: "No historians' passages for this book." };
 let bookShown = "";     // (The book drawn: "<source> <book id>")
 let bookAt = -1;        // (The verse last followed to: chapter * 1000 + verse)
 let bookRows: [number[], HTMLElement][] = [];     // (Each find's verses and its entry, in the list's order)
@@ -437,6 +438,40 @@ export function noteElement (n: Note): HTMLElement {
   el.className = "note";
   el.innerHTML = (n.start !== n.end ? `<div class="src">${range (n.start, n.end)}</div>` : "")
                + (n.quote ? `<p class="nQuote">${n.quote}</p>` : "") + n.body;
+  return el;
+}
+
+/** The church fathers' sources (FOLDED), whose quotes can run long: each note folded to its father and work over a
+ *  line of it, as a dictionary's entry is (the same row, .hit) - tapped, the quote opens under it; tapped again, it
+ *  folds - so the reader goes from Tertullian to Hippolytus without scrolling through Tertullian. The father and work
+ *  are the body's lead (<b>father</b> <small>(work)</small>), taken off the quote. */
+const FOLDED = new Set (["catena", "fathers"]);
+function foldedNote (n: Note): HTMLElement {
+  const full = noteElement (n);
+  const lead = full.querySelector ("p > b");
+  const work = lead?.nextElementSibling?.tagName === "SMALL" ? lead.nextElementSibling : null;
+  const el = document.createElement ("div");
+  const row = document.createElement ("button");
+  row.className = "hit";
+  row.setAttribute ("aria-expanded", "false");
+  const head = document.createElement ("span");
+  head.className = "src";
+  head.textContent = lead?.textContent ?? "";
+  if (work) {
+    const w = document.createElement ("span");
+    w.className = "dictWhy";     // (The work as written, not in the heading's capitals)
+    w.textContent = ` · ${(work.textContent ?? "").replace (/^\(|\)$/g, "")}`;
+    head.append (w);
+  }
+  lead?.remove (); work?.remove ();
+  const line = document.createElement ("span");
+  line.className = "hitText dictLine";     // (One line, cut: style.css)
+  line.textContent = (full.textContent ?? "").trim ();
+  row.append (head, line);
+  full.classList.add ("dictBody");
+  full.hidden = true;
+  row.addEventListener ("click", () => { full.hidden = ! full.hidden; line.hidden = ! full.hidden; row.setAttribute ("aria-expanded", String (! full.hidden)); });
+  el.append (row, full);
   return el;
 }
 
