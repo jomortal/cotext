@@ -2,7 +2,7 @@
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings - a row of buttons at
 //   the top, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
-//   then + NEW DECK; the open deck's NAME edited in place, DELETE DECK (asked first) taking it and its cards away.
+//   each with a ✕ to its right deleting it and its cards (asked first), then + NEW DECK; the open deck's NAME edited in place.
 // - ADDING: picked on the add row - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, FROM VERSE (Whole chapter, or a verse) and TO VERSE (that verse alone, or one after it: a range within the
 //   chapter) - then + ADD CARD. The pick starts at the chapter read and stays as it is between cards. The add row is
@@ -162,10 +162,9 @@ async function drawPick (el: HTMLElement) {
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="bar vcDecks">${decks.map ((x) => `<button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button>`).join ("")}
+  body.innerHTML = `<div class="bar vcDecks">${decks.map ((x) => `<span class="vcDeckName"><button class="pill" data-deck="${x.id}" aria-pressed="${x === d}">${esc (x.name)}</button><button class="pill icon" data-del="${x.id}" aria-label="Delete ${esc (x.name)}">✕</button></span>`).join ("")}
       <button class="pill" id="vcNewDeck">+ New deck</button></div>
-    <div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false">
-      <button class="pill" id="vcDelDeck">Delete deck</button></div>
+    <div class="vcAdd"><input class="choose" id="vcName" type="text" enterkeyhint="done" aria-label="Deck name" autocomplete="off" spellcheck="false"></div>
     <div class="vcAdd">
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === language ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
@@ -179,7 +178,7 @@ async function draw (body: HTMLElement) {
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
-  // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, DELETE DECK (asked first).
+  // Decks: one tapped opens it, + NEW DECK makes and opens one, its name edited in place, its ✕ deleting it (asked first).
   for (const b of body.querySelectorAll<HTMLElement> ("[data-deck]")) b.addEventListener ("click", () => { at = b.dataset.deck!; save (); draw (body); });
   body.querySelector ("#vcNewDeck")!.addEventListener ("click", () => { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; save (); draw (body); });
   const nameIn = body.querySelector<HTMLInputElement> ("#vcName")!;
@@ -189,11 +188,13 @@ async function draw (body: HTMLElement) {
     body.querySelector (`[data-deck="${d.id}"]`)!.textContent = d.name || "Untitled";
   });
   nameIn.addEventListener ("change", () => { if (! d.name.trim ()) { d.name = "Untitled"; nameIn.value = d.name; save (); } });
-  body.querySelector ("#vcDelDeck")!.addEventListener ("click", () => {
-    if (! confirm (`Delete the deck "${d.name}"${d.cards.length ? ` and its ${d.cards.length} card${d.cards.length > 1 ? "s" : ""}` : ""}?`)) return;
-    decks = decks.filter ((x) => x !== d);
+  for (const b of body.querySelectorAll<HTMLElement> ("[data-del]")) b.addEventListener ("click", () => {
+    const x = decks.find ((y) => y.id === b.dataset.del)!;
+    if (! confirm (`Delete the deck "${x.name}"${x.cards.length ? ` and its ${x.cards.length} card${x.cards.length > 1 ? "s" : ""}` : ""}?`)) return;
+    decks = decks.filter ((y) => y !== x);
     if (! decks.length) decks = [newDeck ("My verses")];
-    at = decks[0].id; save (); draw (body);
+    if (x === d) at = decks[0].id;
+    save (); draw (body);
   });
   trPick.value = trs.some ((s) => s.id === settings.tr) ? settings.tr : "";
   // The deck, drawn afresh from the cards and settings as they are (a later drawing winning over one still arriving).
