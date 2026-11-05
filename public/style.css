@@ -505,7 +505,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
 .vcDeck .cardBack .vcRef { font-size: var(--fs-2xl); text-align: center; }
 .vcRef > :not(.vcNative) { text-transform: uppercase; font-weight: 400; }     /* (The English reference in capitals, as the Greek's - not bold - front and back) */
-.vcDeck :is(.vcRef > :not(.vcNative), .vcTr > :not(.src)) { font-family: var(--serif); }     /* (The cards' English - the reference and the verse - in the serif, the Greek's Gentium) */
+.vcDeck .vcTr > :not(.src) { font-family: var(--serif); }     /* (The cards' English verse in the serif, the Greek's Gentium - its reference in the page's sans serif) */
 .vcDeck .cardFront .vcRef > :not(.vcNative) { font-size: var(--fs-2xl); } .vcDeck .cardBack .vcRef > :not(.vcNative) { font-size: var(--fs-xl); }     /* (The English reference smaller than the original's: the front's a size down, the back's the English verse's) */
 .vcRef:has(.vcNative) { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 24px; }     /* (The English and the original's reference side by side, wrapping where narrow) */
 .vcRef:has(.vcNative.he) { flex-wrap: wrap-reverse; }     /* (Too narrow for both on one line: the Hebrew on top) */
