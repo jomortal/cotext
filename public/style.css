@@ -801,6 +801,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
+  .pane > .panelScroll { padding-inline: 6px; } .pane .top { padding-left: 6px; }     /* (The resources' panes - notes, search - their side margins small: more room for their text) */
 }
 
 @media print {
