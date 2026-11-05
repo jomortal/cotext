@@ -227,7 +227,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 .pane .top { align-items: center; margin-bottom: 10px; position: relative; z-index: 3; }     /* (Narrow, not frozen: the top row and ✕ scroll away with the rest) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
-.pane .chooseBtn { width: 100%; box-sizing: border-box; }
+.pane .chooseBtn { width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }     /* (A long resource name cut short on one line, not wrapped) */
 #notesRef { margin-top: 0; }
 #notes .note { border-top: var(--hair); padding-top: 8px; margin-top: 8px; }
 #notes .note:first-child { border-top: 0; margin-top: 0; }
@@ -251,6 +251,7 @@ body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 .pane .top { padding-right: calc(var(--x-w) + var(--pad)); }     /* (Clear of the frozen ✕ by as much as the row's left margin - the scroller's, --pad - so the picker is as far from the ✕ as from the left) */
+@media (max-width: 600px), (max-height: 500px) { .pane > .panelScroll { padding-inline: var(--text-edge); } .pane .top { padding-right: calc(var(--pad) + var(--x-w)); } }     /* (A phone: the resources' side margins as small as the text's, upright as sideways - the picker as far from the ✕ as from the left) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
