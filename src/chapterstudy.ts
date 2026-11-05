@@ -13,7 +13,7 @@
 //     BESIDE EACH VERSE (under each verse of the first text item, study-Bible style, the source named) or AS ITS OWN
 //     SECTION (each verse's notes under its reference). Beside each verse with no text item: as its own section.
 //   ARTICLES - the dictionaries (Tyndale, ISBE: the articles the chapter's verses cite or its words lead to; the
-//     Archaeology finds and the Ancient Near East parallels: those bearing on the chapter's verses), picked one or
+//     Archaeology finds, the Ancient Parallels and the Ancient Historians: those bearing on the chapter's verses), picked one or
 //     several at a time from their list, each its own item, printed as the article opens in the app.
 //   THE ATLAS - the map of the places the chapter names (or the range's), with the list of them and their verses; its
 //     options BASE MAP, POLITICAL BOUNDARIES and ROUTE (the book's journeys, where it has any) - the map's own
@@ -50,7 +50,7 @@ type Item = { id: string } & (
 
 const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
 const UNDER = [5, 10, 25, 50, 100, 200, 500];     // (WORD LIST's frequencies: words coming fewer times than this in the testament)
-const DICT_NAMES: Record<string, string> = { tobd: "Tyndale", isbe: "ISBE", finds: "Find", ane: "Parallel" };     // (An article's line: "Tyndale: Jericho")
+const DICT_NAMES: Record<string, string> = { tobd: "Tyndale", isbe: "ISBE", finds: "Find", ane: "Parallel", historians: "Historian" };     // (An article's line: "Tyndale: Jericho")
 
 let db: Db;
 let where: () => [Book, number] = () => { throw new Error ("Chapter Study: not started"); };
@@ -332,7 +332,7 @@ async function showArticles (s: Source) {
   const vs = await verses ();
   let list: { id: string; title: string; line: string }[] = [];
   try {
-    if (s.id === "finds" || s.id === "ane")
+    if (s.id === "finds" || s.id === "ane" || s.id === "historians")
       list = (await bookArticles (db, book.id, s.id)).filter ((a) => a.verses.some ((x) => Math.floor (x / 1000) === chapter));
     else list = (await passageArticles (db, vs.map ((v) => [[book.id, chapter, v]]), s.id)).flat ();
   } catch { menuEl.replaceChildren (el ("p", "", `${s.name} couldn't be loaded.`)); return; }

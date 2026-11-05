@@ -1,0 +1,91 @@
+{
+ "wikisource": {
+  "The Annals (Tacitus)/Book 15": [
+   15815493,
+   "0c99a3d549018d2be2387a01bed746b7807cd1e10d46bc539e606202dd3b2064"
+  ],
+  "The Annals (Tacitus)/Book 12": [
+   3773637,
+   "cb0d4d236b9398e2326d934323a6e538096bc023c62f53a1e4d507f3b1298e90"
+  ],
+  "The Works of Philo Judaeus/Volume 4/Against Flaccus": [
+   15934571,
+   "e35bb9c394254bbde41e09891a79b88b0de0790cacecb6acbc200ad2a8a0046d"
+  ],
+  "The Works of Philo Judaeus/Volume 4/On the Virtues and Office of Ambassadors": [
+   15950058,
+   "547d19cfd1fb52b102e19a67323969ae3b75d5213d44caf3a59790733e4de0e7"
+  ],
+  "The Works of Philo Judaeus/Volume 1/On the Cherubim, etc.": [
+   15934574,
+   "8c74bb0361a4eba683040788df2d4eca368036921247f42f098f79fa38909f91"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book I/Chapter 7": [
+   11989081,
+   "b89f9c93f7bc39635e906c628d825a99a0148a4802e793fb9429af7f75c9e3cd"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 9": [
+   11989162,
+   "b6c2c0498ada92bbdb1edf82539b9f3a502199b4886869dac26958cae01f2482"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 15": [
+   11989188,
+   "448acedfb6c4bd9c0260ed3ff8c3a4b6e5bb9077f67b44bb44b32cfc095ae17e"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 39": [
+   12090073,
+   "3c41e5f3848b73876af9f2a9650e57ee260f8e77bf59bd0908ca1e81832f4363"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 17": [
+   11989200,
+   "0ad11937d66202228428d694f2eef95a82aa5c9d1e3987b786c3591f32495045"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 22": [
+   11989437,
+   "4877c8106cd5f464f8fdc0dabd4b241a87193b472e7ef91fa52a04c59faa1794"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 25": [
+   11997828,
+   "1233dda65ed7232a02c478341d03b5b89ed3e84df5da92793860c0f6d75320d8"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book II/Chapter 23": [
+   11989446,
+   "06d7eeb12fb077fd195237fcbe1df9fbe819350363013a8cf319aa7bd3ba47ba"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 1": [
+   11997836,
+   "f279d5eb2ae3c9fd73e3af5b1b74646e56c6dfdd0da3bace5894af22fd917fdb"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 5": [
+   11997887,
+   "b64392e978d2d2b53d364aa1b51607f84beff057e5b84f1c0b77858709e39eff"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 11": [
+   11997896,
+   "e7ca24a9df4e7c8b56561a2a865dc452555de44a6106137b0b68aeeede429ee7"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 18": [
+   11997905,
+   "039101cecdbc63baad7ae2aafa9681d892fc045b7e45e984054d2f592b1af264"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 20": [
+   11997907,
+   "db9a147e8846a26b6b1b88b85f70ee168712d5d23d4a2cf630175934a02e524b"
+  ],
+  "Nicene and Post-Nicene Fathers: Series II/Volume I/Church History of Eusebius/Book III/Chapter 31": [
+   12090064,
+   "a8f60a8db0a5624b4118221f75c19f048234cc6da8361b5ca6aeb85af98de88f"
+  ]
+ },
+ "gutenberg": {
+  "2848": "bb2e32da8ba3adc109b7694e6a8f2f11570462af2bedd55798da70b754c6e440",
+  "2850": "9a72663aefa6b22bb4398d5f878bb027c6b6de839e7cbe744a34240505fd8d20",
+  "6400": "ce62a16afa01bbf5c597788d8c73290ad7bc8ac09a5c87ed9b5c8010c1a9687f",
+  "2811": "38246747bde7ef4da17603bee74b5344cc1502f8e41d6515fe72651ca0e8fa9a",
+  "47242": "4c7fc8233d28962b26de6cc6839f4de9326fe059ca0b8290f278eb066c0c7409",
+  "2707": "b4a845d38e9051690201561803d2aa83f6589a7b3f80273b97d79801981e64a3",
+  "2456": "7b28f25dbed0064cd8f66c662eaa776cccd535cdeb6e3ff94c37dd1cc2a752db",
+  "2085": "bc4cce39e27ef1b43be758d63be853f7a8cd0c28332673061c5395cacd85637e",
+  "44126": "8342147f7eb2d0325c3df4b80d56adcac72f5a0f45a2499cab9db44315d78c26"
+ }
+}

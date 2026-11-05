@@ -9,9 +9,11 @@
 // only, the thumbnail too - data/images/tobd/<id>.t.jpg in a list (none shown when it can't load), the full picture
 // in an opened article ("Picture online only" when it can't) - and whose places' articles open with the atlas' map of
 // the place (its maps table: atlas.ts' wordMap, as a word's Map shows it), the ISBE's articles on
-// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE"), and the Ancient Near East
-// parallels (pipeline/ane.py: texts like the Code of Hammurabi or Gilgamesh paired with the passages they parallel,
-// photos as the finds'; topical, so no word panel button - by passage and searchable only).
+// archaeology and sites (pipeline/isbe.py: the 1915 encyclopedia, its button "ISBE"), the Ancient Parallels
+// (pipeline/ane.py: texts like the Code of Hammurabi or Gilgamesh paired with the passages they parallel, photos as
+// the finds'; topical, so no word panel button - by passage and searchable only), and the Ancient Historians
+// (pipeline/historians.py: Josephus, Philo, the Maccabees, Eusebius, the Greek and Roman historians, each passage beside
+// the verses it bears on; by word too - the people and groups they name -, its button "Historians").
 // - BY WORD: the word's panel's "Dictionary" (panel.ts) - the articles on the tapped word's root, opened over the
 //   word's info as the Verb chart is (grammar.ts' showOther: titled, its ✕ back to the word). The articles matching
 //   the word itself first (a person, a place, a thing or a term: its gloss or name), then those of its subject (the
@@ -34,7 +36,8 @@ import { wordMap, type Place } from "./atlas";
 
 // A source's name under an article's title (the note_sources name where it isn't here)
 const NAMES: Record<string, string> = { tobd: "Tyndale Open Bible Dictionary", finds: "Archaeology finds · Wikipedia",
-                                        isbe: "International Standard Bible Encyclopedia", ane: "Ancient Near East parallels" };
+                                        isbe: "International Standard Bible Encyclopedia", ane: "Ancient Parallels",
+                                        historians: "Ancient Historians" };
 interface Opened { db: Db; name: string; credit: string; photos: boolean; maps: boolean; }     // (photos, maps: its file has that table)
 const files = new Map<string, Promise<Opened | null>> ();     // (Each source's file, once opened; null: none in this database)
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};
@@ -331,7 +334,7 @@ export async function passageArticles (main: Db, places: number[][][], src = "to
 }
 
 //==== BY BOOK ====
-// The Archaeology finds and the Ancient Near East parallels by passage (notes.ts' drawBookFinds): every entry bearing
+// The Archaeology finds, the Ancient Parallels and the Ancient Historians by passage (notes.ts' drawBookFinds): every entry bearing
 // on the book read, at once - those citing one of its verses (every verse of a span cited: Exodus 21:23-25 is 23, 24
 // and 25) and those its words name (a person, a place) - in the order of the verse each first comes at, each with
 // every verse of the book it comes at (cited or named), the list following the text one way.

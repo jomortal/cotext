@@ -93,11 +93,12 @@ function makePanel (sheet: HTMLElement) {
     const p = mapPlace;
     if (p && mainDb) grammar.showOther (p.name, (body) => { wordMap (mainDb!, body, p); }, "Atlas" + (p.sub ? ` · ${p.sub}` : ""));
   });
-  // "Finds" and "ISBE", last: the other dictionaries' articles on the word's person or place (dictionary.ts) - the
-  // archaeology finds (finds.db, pipeline/finds.py), the ISBE's articles on archaeology and sites (isbe.db,
-  // pipeline/isbe.py) - the article, or the choice of them, over the word's info as Dictionary's are; each shown only
-  // when the word's root has one there.
-  const others = ([["finds", "Finds"], ["isbe", "ISBE"]] as const).map (([src, label]) => {
+  // "Finds", "ISBE" and "Historians", last: the other dictionaries' articles on the word's person, place or group
+  // (dictionary.ts) - the archaeology finds (finds.db, pipeline/finds.py), the ISBE's articles on archaeology and sites
+  // (isbe.db, pipeline/isbe.py), the ancient historians' passages (historians.db, pipeline/historians.py: Pilate,
+  // the Pharisees, Herod Antipas...) - the article, or the choice of them, over the word's info as Dictionary's are;
+  // each shown only when the word's root has one there.
+  const others = ([["finds", "Finds"], ["isbe", "ISBE"], ["historians", "Historians"]] as const).map (([src, label]) => {
     const btn = document.createElement ("button");
     btn.className = "pill"; btn.textContent = label; btn.hidden = true;
     const x = { src, btn, found: { exact: [], subject: [] } as Found };
