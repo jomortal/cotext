@@ -431,9 +431,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen:has(.vcBar) { padding-bottom: var(--vcBarH); }     /* (Room under the screen for the bar) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
-/* ⋯'s options: under the top row, above the deck - pushing it down (not over it, as the Bible view's ⋯ menu: the
-   card stays in view) -, a line under them. */
-.vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
+/* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
+   cover it (versecards.ts), so the card stays in view -, a line under them. */
+#screen[data-screen="Verse cards"] .pickerCard { position: relative; }
+.vcMenu:not([hidden]) { display: grid; gap: 10px; position: absolute; top: 0; left: 0; right: 0; z-index: 1; background: var(--bg); padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
 .vcBook .chooseBtn { min-width: 11em; }     /* (BOOK as wide as a long name even while blank) */
 .vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */

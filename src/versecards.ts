@@ -2,8 +2,8 @@
 // flip, BACK / SHOW / NEXT, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
 //   the Bible view's heading, staying as the screen scrolls) and ⋯ at its right end, where the Bible view's is, then the deck and the credits. ⋯ shows
-//   everything else above the deck, pushing it down (the Bible view's ⋯ menu overlays; here the card stays in view),
-//   ⋯ a ✕ while open, closing it, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
+//   everything else over the room above the card - pushing the deck down only as far as it would cover it (the Bible
+//   view's ⋯ menu overlays; here the card stays in view) -, ⋯ a ✕ while open, closing it, in order: NAME (edited in place), the add row (below), VERSE LIST and DECKS
 //   (below).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; under DECKS (last in
 //   ⋯'s options) a row of buttons, as My vocab's lists, the one open lit (the last one used when the screen opens; "My verses" at first),
@@ -260,6 +260,7 @@ async function draw (body: HTMLElement) {
   more.addEventListener ("click", () => {
     menuOpen = ! menuOpen; menu.hidden = ! menuOpen;
     more.setAttribute ("aria-expanded", String (menuOpen)); more.textContent = menuOpen ? "✕" : "⋯";
+    clearMenu ();
   });
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
@@ -353,6 +354,16 @@ async function draw (body: HTMLElement) {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
   });
+  // ⋯'s options lie over the room above the centered card: the deck pushed down only as far as they'd cover it
+  // (measured again as either changes size - a card turned, the window turned, the options opened)
+  const clearMenu = () => {
+    deckEl.style.marginTop = "";
+    if (menu.hidden) return;
+    const over = menu.getBoundingClientRect ().bottom + 12 - (deckEl.firstElementChild ?? deckEl).getBoundingClientRect ().top;
+    if (over > 0) deckEl.style.marginTop = over + "px";
+  };
+  const watch = new ResizeObserver (() => clearMenu ());
+  watch.observe (deckEl); watch.observe (menu);
   deck ();
 }
 
