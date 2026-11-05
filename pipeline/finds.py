@@ -13,7 +13,7 @@ first run, kept after: a rebuild reads the same revisions; delete an entry to fe
     significant ...") and the disputed ones are left out: they give none of the table's facts.
   - Each find's own article (its name's link, redirects followed; fetched 50 at a time - the API throttles single
     calls): its wikitext - its lead (before the first heading; as plain text, templates, tables and references dropped),
-    its infobox (the facts a bulleted find lacks: facts_from) and its scripture references.
+    and its infobox (the facts a bulleted find lacks: facts_from).
   - Its photo: the list's own image for the row, from Wikimedia Commons when its licence is free (CC0, public domain,
     CC BY, CC BY-SA - not NC or ND; a file only on Wikipedia itself is non-free: none), fetched as Commons' 1280 px
     thumbnail (pinned by its SHA-256) and made by macOS's sips into two JPEGs (pictures()): the full picture, 1200 px
@@ -21,23 +21,23 @@ first run, kept after: a rebuild reads the same revisions; delete an entry to fe
     served, never in the downloaded .db nor kept by the service worker (sw.js) -, and a thumbnail 160 px on its long
     side at quality 55 (about 5-10 kB) inside the .db, so the lists show it offline; credited under it with its author
     and licence. Without sips both are the thumbnail as it comes.
-COTEXT's additions (NEW, MORE): finds the list lacks (the annals of Tiglath-pileser III, the Behistun inscription), as
-  its bulleted rows are; and for a find attesting the Bible's events or people, every passage on them (Wikipedia seldom
-  cites verses: the Mesha Stele gets 2 Kings 3, 1 Chronicles 5:8-10, Isaiah 15-16 and Jeremiah 48), and its own text in
-  T. G. Pinches' translation where his book has it (the Taylor Prism, the Black Obelisk, the Kurkh Monolith, Sargon II,
-  Tiglath-pileser III, the Cyrus Cylinder, Nabonidus: ane.py's EXCERPTS and pins, through ane.quoted()), under "Its
-  text".
-Scripture references: "2 Kings 20:20", "2 Chronicles 32:2-4", "Exodus 1:11; 12:37" (a book's full English name, I / II
-  or 1 / 2 / First / Second before it, then chapter:verse, a range or a comma's verses; "ch. v" after a ";" in the
-  same book; "20, 20:" before a quotation as 20:20), in the row's significance and the article's text, its
-  references' too (a citation's title can quote a verse; {{Bible verse}} templates read as text first).
-  A chapter alone ("Daniel 5") isn't taken: too often not a citation. Each becomes verse spans as tyndale_dict's
-  (verse_spans: the same book codes and LAST), the find's verse index (refs) and links in its text (data-ref).
-Words (by word): the names the find's row links or names - its name's capitalized words, the links in its name,
-  discovery place and significance (their shown text and their target, a "(...)" dropped) - looked up in STEPBible's
-  TIPNR (tyndale_dict.tipnr(): every person, place and other name with its Strong's keys). A name with several keys
-  (Ahab the king, Ahab the prophet; Hebrew and Greek; persons and places only, not TIPNR's other names), per language: the keys the find's own verses have a word of;
-  none, the one with the most words in the text. Each key's words then offer the find.
+COTEXT's additions: NEW, finds the list lacks (the annals of Tiglath-pileser III, the Behistun inscription), as its
+  bulleted rows are; and PASSAGES, every find's place in the Bible (generated, each passage checked against the verse's
+  text) - its date and the biblical event or period it lines up with (shown in its facts as "Lines up with", so the
+  reader sees why it's linked), the passages narrating or directly referring to that event (Sennacherib's Annals:
+  2 Kings 18:13-19:37, 2 Chronicles 32:1-23, Isaiah 36-37; none for a find no event of the Bible's lines up with), the
+  persons and places it attests, and its own text in T. G. Pinches' translation where his book has it (the Taylor
+  Prism, the Black Obelisk, the Kurkh Monolith, Sargon II, Tiglath-pileser III, the Cyrus Cylinder, Nabonidus: ane.py's
+  EXCERPTS and pins, through ane.quoted()), under "Its text". Every find built must be in PASSAGES (and only those).
+Scripture references (PASSAGES', and ane.py's and historians.py's through references()): "2 Kings 20:20",
+  "2 Chronicles 32:2-4, 30", "Exodus 1:11; 12:37" (a book's full English name, I / II or 1 / 2 / First / Second before
+  it, then chapter:verse, a range or a comma's verses; "ch:vs" after a ";" in the same book) - each verse spans as
+  tyndale_dict's (verse_spans: the same book codes and LAST), the find's verse index (refs) and the links under
+  "In the Bible" in its text (data-ref). The articles' own references aren't read.
+Words (by word): PASSAGES' names, looked up in STEPBible's TIPNR (tyndale_dict.tipnr(): its persons and places with
+  their Strong's keys) - only the keys with a word in the find's own passages (Ahab the king, not Ahab the prophet), so
+  a name the passages don't use links nothing. Each key's words then offer the find (the word panel's Finds); the
+  by-book list doesn't use them (dictionary.ts' bookArticles: the finds' passages only).
 
 Output: public/data/notes/finds.db - tyndale_dict's tables, so dictionary.ts reads either:
   articles  id (the find's article title, as in its URL: Siloam_inscription), title (the list's name), html (the facts, what it bears
@@ -86,57 +86,132 @@ SOURCE = ("finds", "dictionary", "Archaeology finds", "OT NT",
           "Names matched through STEPBible's TIPNR (CC BY 4.0).")
 
 # ---- COTEXT's additions ----
-# Finds the list lacks, as its bulleted rows are (facts from their articles' infoboxes): what they bear on, its links
-# (names TIPNR may know: the words that offer the find).
+# Finds the list lacks, as its bulleted rows are (facts from their articles' infoboxes): what they bear on.
 NEW = [{"name": "Annals of Tiglath-pileser III", "link": "Tiglath-Pileser III", "image": "", "now": "British Museum (slabs from his palace at Nimrud)", "found": "Nimrud, 1840s",
         "date": "745-727 BC (his reign)", "writing": "Akkadian cuneiform",
         "bears": "Tiglath-pileser III (Pul) of Assyria, 745-727 BC: Menahem of Samaria's tribute, Pekah overthrown and "
-                 "Hoshea set on Israel's throne, Ahaz's tribute, the deportations from Galilee and Transjordan.",
-        "links": [("Menahem", "Menahem"), ("Pekah", "Pekah"), ("Hoshea", "Hoshea"), ("Ahaz", "Ahaz"),
-                  ("Tiglath-pileser", "Tiglath-Pileser III")]},
+                 "Hoshea set on Israel's throne, Ahaz's tribute, the deportations from Galilee and Transjordan."},
        {"name": "Behistun Inscription", "link": "Behistun inscription", "image": "", "now": "", "found": "", "date": "",
         "writing": "", "bears": "Darius I of Persia, 522-486 BC, tells how he won the throne and put down the revolts - "
-                               "the Darius under whom the temple was rebuilt (Ezra 4-6, Haggai, Zechariah).",
-        "links": [("Darius", "Darius I")]}]
-# A find's passages beyond those its article cites (Wikipedia seldom gives verses) - every passage on the events or
-# people it attests -, and the excerpts of its text in a public-domain translation (ane.py's EXCERPTS: Pinches, 1908).
-MORE = {
-    "Mesha_Stele": ("2 Kings 3:4-27; 1 Chronicles 5:8-10; Numbers 21:29; 1 Kings 11:7; Isaiah 15:1-16:14; Jeremiah 48:1-47", []),
-    "Bubastite_Portal": ("1 Kings 14:25-26; 2 Chronicles 12:2-9", []),
-    "Sennacherib's_Annals": ("2 Kings 18:13-19:37; Isaiah 36:1-37:38; 2 Chronicles 32:1-23", ["sennach"]),
-    "Black_Obelisk_of_Shalmaneser_III": ("2 Kings 9:1-10:36", ["jehu"]),
-    "Kurkh_Monoliths": ("1 Kings 16:29-30; 20:1-34; 22:1-4", ["qarqar"]),
-    "Tiglath-Pileser_III": ("2 Kings 15:19-20, 29-30; 16:7-10; 1 Chronicles 5:6, 26; 2 Chronicles 28:20-21", ["tpMenahem", "tpPekah"]),
-    "Nimrud_Tablet_K.3751": ("2 Kings 16:7-10; 2 Chronicles 28:16-21", []),
-    "Sargon_II's_Prisms": ("2 Kings 17:3-6, 24; 18:9-11; Isaiah 20:1", ["sargon"]),
-    "Nebuchadnezzar_Chronicle": ("2 Kings 24:1-17; 2 Chronicles 36:5-10; Jeremiah 24:1; 46:2", []),
-    "Babylonian_Chronicles": ("2 Kings 23:29; 24:10-17; Jeremiah 46:2; Nahum 2:1-3:19; Zephaniah 2:13-15", []),     # (The fall of Nineveh, 612 BC, among them)
-    "Jehoiachin's_Rations_Tablets": ("2 Kings 25:27-30; Jeremiah 52:31-34", []),
-    "Lachish_letters": ("Jeremiah 34:7; 38:4", []),
-    "Lachish_reliefs": ("2 Kings 18:14, 17; 19:8; 2 Chronicles 32:9; Isaiah 36:2; 37:8; Micah 1:13", []),
-    "Elephantine_papyri_and_ostraca": ("Ezra 6:3-12; Nehemiah 2:10, 19; 4:1-8; 6:1-14; 12:22; 13:28", []),
-    "Deir_Alla_inscription": ("Numbers 22:1-24:25; Joshua 13:22; Micah 6:5; 2 Peter 2:15-16", []),
-    "Nabonidus_Chronicle": ("Daniel 5:1-31; Isaiah 45:1-2", ["nabChron"]),
-    "Cylinders_of_Nabonidus": ("Daniel 5:1-31; 7:1; 8:1", ["nabPrayer"]),
-    "Cyrus_Cylinder": ("Ezra 1:1-4; 6:3-5; 2 Chronicles 36:22-23; Isaiah 44:28-45:4; Daniel 5:30-31", ["cyName", "cyBattle", "cyReturn"]),
-    "Merneptah_Stele": ("Joshua 10:33; 16:10; Judges 1:18-36", []),
-    "Tel_Dan_stele": ("2 Kings 8:28-29; 9:14-29; 2 Chronicles 22:5-9", []),
-    "Melqart_stele": ("1 Kings 15:18-20; 20:1", []),
-    "Stele_of_Zakkur": ("2 Kings 13:3, 24-25", []),
-    "Tell_al-Rimah_stela": ("2 Kings 13:10-13", []),
-    "Behistun_inscription": ("Ezra 4:5, 24; 5:1-6:15; Haggai 1:1, 15; 2:10; Zechariah 1:1, 7; 7:1", []),
-    "Victory_stele_of_Esarhaddon": ("2 Kings 19:37; Isaiah 37:38; Ezra 4:2", []),
-    "Siloam_inscription": ("2 Kings 20:20; 2 Chronicles 32:2-4, 30", []),
-    "Ketef_Hinnom_scrolls": ("Numbers 6:24-26", []),
-    "Yavne-Yam_ostracon": ("Exodus 22:26-27; Deuteronomy 24:12-13", []),
-    "Nebo-Sarsekim_Tablet": ("Jeremiah 39:3, 13", []),
-    "Tell_es-Safi_inscription": ("1 Samuel 17:4", []),
-    "Heliodorus_stele": ("Daniel 11:20", []),
-    "Pilate_stone": ("Luke 3:1; Matthew 27:2, 11-26; Mark 15:1-15; Luke 23:1-25; John 18:28-19:16; Acts 4:27; 1 Timothy 6:13", []),
-    "Delphi_Inscription": ("Acts 18:12-17", []),
-    "Temple_Warning_inscription": ("Acts 21:26-30; Ephesians 2:14", []),
-    "Arch_of_Titus": ("Matthew 24:1-2; Luke 19:41-44; 21:20-24", []),
-    "Judaea_Capta_coinage": ("Luke 21:20-24", []),
+                               "the Darius under whom the temple was rebuilt (Ezra 4-6, Haggai, Zechariah)."}]
+# Every find's place in the Bible (generated, each passage checked against the verse's text: it names the find's
+# person, place or event): fid -> (its date, the biblical event or period it lines up with, the passages narrating or
+# directly referring to that event, period or person - '' none: a find no event of the Bible's lines up with -, the
+# names it attests (TIPNR's persons and places: the word panel's Finds, only for a Strong's key with a word in those
+# passages - never a broad name: Israel, Judah, Assyria, Egypt, Babylon, Jerusalem), the excerpts of its text in a
+# public-domain translation (ane.py's EXCERPTS: Pinches, 1908)). These passages are a find's only links to the text:
+# its article's own scripture references aren't read (Wikipedia's are too often of another era or misread). A verse
+# merely sharing a name from another era is never linked (no Genesis for an Assyrian annal).
+PASSAGES = {
+    "Amman_Citadel_Inscription": ("9th century BC", "Ammon's god Milcom, worshipped in Solomon's and Josiah's days",
+        "1 Kings 11:5, 33; 2 Kings 23:13", [], []),
+    "Arad_ostraca": ("c. 600 BC", "Judah's fortress at Arad in its last years; no event the Bible tells", "", [], []),
+    "Arch_of_Titus": ("c. AD 81 (the sack, AD 70)", "the fall of Jerusalem and its temple, AD 70, foretold by Jesus",
+        "Matthew 24:1-2; Mark 13:1-2; Luke 19:41-44; 21:5-6, 20-24", [], []),
+    "Autobiography_of_Weni": ("c. 2300 BC", "Egypt's Old Kingdom raids into the Levant, before the Bible's history", "", [], []),
+    "Azekah_Inscription": ("c. 701 BC", "Sennacherib's campaign against Hezekiah of Judah",
+        "2 Kings 18:13; 2 Chronicles 32:1, 9; Isaiah 36:1", ["Sennacherib", "Hezekiah"], []),
+    "Babylonian_Chronicles": ("745-668 BC", "Shalmaneser V's capture of Samaria, Merodach-baladan, Sennacherib murdered and Esarhaddon after him",
+        "2 Kings 17:3-6; 18:9-11; 19:36-37; 20:12; Isaiah 37:37-38; 39:1", ["Shalmaneser", "Sennacherib", "Esarhaddon", "Merodach-baladan"], []),
+    "Behistun_inscription": ("c. 520 BC", "Darius I, in whose reign the temple was rebuilt",
+        "Ezra 4:5, 24; 5:5-7; 6:1-15; Haggai 1:1, 15; 2:10; Zechariah 1:1, 7; 7:1", ["Darius"], []),
+    "Berlin_pedestal_relief": ("c. 1400 BC (disputed)", "a possible early naming of Israel; no event the Bible tells", "", [], []),
+    "Black_Obelisk_of_Shalmaneser_III": ("c. 841 BC", "Jehu of Israel, his rise and reign; Hazael of Damascus",
+        "1 Kings 19:15-17; 2 Kings 8:7-15; 9:1-10:36", ["Jehu", "Hazael"], ["jehu"]),
+    "Bubastite_Portal": ("c. 925 BC", "Shishak's invasion of Judah in Rehoboam's fifth year",
+        "1 Kings 11:40; 14:25-26; 2 Chronicles 12:2-9", ["Shishak"], []),
+    "Bulla_(seal)": ("various", "seals in general; no one event", "", [], []),
+    "Cylinders_of_Nabonidus": ("c. 540 BC", "Belshazzar, Nabonidus' son, the last night of Babylon",
+        "Daniel 5:1-30; 7:1; 8:1", ["Belshazzar"], ["nabPrayer"]),
+    "Cyrus_Cylinder": ("c. 539 BC", "Cyrus' decree letting the exiles go home and rebuild",
+        "2 Chronicles 36:22-23; Ezra 1:1-11; 6:3-5; Isaiah 44:28-45:4", ["Cyrus"], ["cyName", "cyBattle", "cyReturn"]),
+    "Deir_Alla_inscription": ("c. 800 BC", "Balaam son of Beor, the seer hired against Israel",
+        "Numbers 22:5-24:25; 31:8, 16; Deuteronomy 23:4-5; Joshua 13:22; 24:9-10; Nehemiah 13:2; Micah 6:5; 2 Peter 2:15-16; Jude 1:11; Revelation 2:14", ["Balaam"], []),
+    "Delphi_Inscription": ("c. AD 52", "Gallio, proconsul of Achaia, at Paul's trial in Corinth", "Acts 18:12-17", ["Gallio"], []),
+    "Ekron_Royal_Dedicatory_Inscription": ("7th century BC", "Ekron, the Philistine city of the prophets' oracles (8th-7th century BC)",
+        "Jeremiah 25:20; Amos 1:8; Zephaniah 2:4", ["Ekron"], []),
+    "Elephantine_papyri_and_ostraca": ("c. 410-400 BC", "Nehemiah's day: Sanballat of Samaria and Johanan the high priest",
+        "Nehemiah 2:10, 19; 4:1-2, 7; 6:1-14; 12:22-23; 13:28", ["Sanballat", "Johanan"], []),
+    "Erastus_of_Corinth": ("mid-1st century AD", "Erastus, Corinth's city treasurer and Paul's helper",
+        "Acts 19:22; Romans 16:23; 2 Timothy 4:20", ["Erastus"], []),
+    "Esarhaddon's_Treaty_with_Ba'al_of_Tyre": ("c. 675 BC", "Esarhaddon, Sennacherib's son and heir",
+        "2 Kings 19:37; Ezra 4:2; Isaiah 37:38", ["Esarhaddon"], []),
+    "Eunēlos_inscription": ("Hellenistic", "a late syncretic naming of Yahweh; no event the Bible tells", "", [], []),
+    "Execration_texts": ("c. 1900-1800 BC", "early names of Canaan's towns; no event the Bible tells", "", [], []),
+    "Hasmonean_coinage": ("c. 135-37 BC", "the Hasmonean kings, after the Old Testament", "", [], []),
+    "Heliodorus_stele": ("178 BC", "Seleucus IV's tax collector Heliodorus (2 Maccabees 3), the one Daniel foresees", "Daniel 11:20", [], []),
+    "Ipuwer_Papyrus": ("c. 1250 BC copy of an older poem", "Egypt in chaos; tied to no event the Bible tells", "", [], []),
+    "Jehoiachin's_Rations_Tablets": ("c. 592-569 BC", "Jehoiachin of Judah, captive in Babylon",
+        "2 Kings 24:8-17; 25:27-30; 2 Chronicles 36:9-10; Jeremiah 22:24-30; 24:1; 29:2; 52:31-34; Ezekiel 1:2", ["Jehoiachin", "Coniah", "Jeconiah"], []),
+    "Jehucal": ("c. 590 BC", "Jehucal son of Shelemiah, Zedekiah's official in Jeremiah's day", "Jeremiah 37:3; 38:1", ["Jehucal", "Shelemiah"], []),
+    "Judaea_Capta_coinage": ("AD 71 on", "the fall of Jerusalem, AD 70, foretold by Jesus", "Luke 19:41-44; 21:20-24", [], []),
+    "Ketef_Hinnom_scrolls": ("c. 600 BC", "the priestly blessing; God keeping covenant with those who love him", "Numbers 6:24-26; Deuteronomy 7:9", [], []),
+    "Khirbet_Beit_Lei_graffiti": ("7th-6th century BC", "a prayer naming Jerusalem; no event the Bible tells", "", [], []),
+    "Khirbet_Qeiyafa_ostracon": ("10th century BC", "a text from the Elah valley, its reading disputed; no event the Bible tells", "", [], []),
+    "King_Ahaz's_seal": ("c. 735-715 BC", "Ahaz son of Jotham, king of Judah",
+        "2 Kings 15:38; 16:1-20; 2 Chronicles 27:9; 28:1-27; Isaiah 7:1-12", ["Ahaz", "Jotham"], []),
+    "Kuntillet_Ajrud_inscriptions": ("c. 800 BC", "\"Yahweh of Teman\": God coming from Teman", "Habakkuk 3:3", ["Teman"], []),
+    "Kurkh_Monoliths": ("853 BC", "Ahab of Israel at the battle of Qarqar, in the years of his wars with Aram",
+        "1 Kings 16:29-30; 20:1-34; 22:1-4", ["Ahab"], ["qarqar"]),
+    "LMLK_seal": ("c. 700 BC", "Hezekiah's royal stores and potters, readying for Assyria",
+        "2 Chronicles 32:27-29", [], []),
+    "Lachish_ewer": ("13th century BC", "Canaanite Lachish before Israel; no event the Bible tells", "", [], []),
+    "Lachish_letters": ("c. 588 BC", "Babylon's siege of Judah's last cities, Lachish and Azekah, in Zedekiah's day",
+        "Jeremiah 34:6-7; 38:4", ["Lachish", "Azekah"], []),
+    "Lachish_reliefs": ("c. 701 BC", "Sennacherib's siege of Lachish",
+        "2 Kings 18:14, 17; 19:8; 2 Chronicles 32:9; Isaiah 36:2; 37:8; Micah 1:13", ["Lachish", "Sennacherib"], []),
+    "Melqart_stele": ("9th century BC", "Ben-hadad of Damascus", "1 Kings 15:18-20; 20:1", ["Ben-hadad"], []),
+    "Merneptah_Stele": ("c. 1208 BC", "Israel in Canaan in the judges' time; Gezer and Ashkelon",
+        "Joshua 10:33; 16:10; Judges 1:18, 29", ["Gezer", "Ashkelon"], []),
+    "Mesha_Stele": ("c. 840 BC", "Mesha of Moab's revolt against Omri's house",
+        "1 Kings 16:16-28; 2 Kings 1:1; 3:4-27; Numbers 21:29; 1 Kings 11:7; 1 Chronicles 5:8-10; Isaiah 15:1-16:14; Jeremiah 48:1-47",
+        ["Mesha", "Omri", "Dibon", "Medeba", "Nebo", "Aroer", "Jahaz", "Kiriathaim", "Ataroth"], []),
+    "Nabonidus_Chronicle": ("c. 539 BC", "Cyrus' capture of Babylon", "Daniel 5:1-31; Isaiah 45:1-2", ["Cyrus"], ["nabChron"]),
+    "Nazareth_Inscription": ("1st century AD", "Caesar's edict against robbing graves; the story that the disciples stole Jesus' body",
+        "Matthew 28:11-15", [], []),
+    "Nebo-Sarsekim_Tablet": ("595 BC", "Nebo-Sarsekim (Sarsechim), Nebuchadnezzar's chief official at Jerusalem's fall", "Jeremiah 39:3", ["Sarsechim"], []),
+    "Nebuchadnezzar_Chronicle": ("605-594 BC", "Nebuchadnezzar at Carchemish and his first siege of Jerusalem, 597 BC",
+        "2 Kings 24:1-17; 2 Chronicles 36:5-10; Jeremiah 24:1; 46:2; Daniel 1:1-2", ["Nebuchadnezzar", "Jehoiakim", "Jehoiachin", "Carchemish"], []),
+    "Nimrud_Slab": ("c. 800 BC", "Adad-nirari III's campaigns west; he isn't named in the Bible", "", [], []),
+    "Nimrud_Tablet_K.3751": ("c. 729 BC", "Tiglath-pileser III and Ahaz of Judah's tribute",
+        "2 Kings 16:7-10; 2 Chronicles 28:16-21", ["Tiglath-pileser", "Ahaz"], []),
+    "Ophel_pithos": ("10th century BC", "a jar's few letters from Jerusalem; no event the Bible tells", "", [], []),
+    "Papyrus_Brooklyn_35.1446": ("c. 1740 BC", "the name Shiphrah, a Hebrew midwife's in Egypt", "Exodus 1:15-21", ["Shiphrah"], []),
+    "Pilate_stone": ("c. AD 26-36", "Pontius Pilate, governor of Judea at Jesus' trial",
+        "Matthew 27:2, 11-26, 58, 62-65; Mark 15:1-15, 43-44; Luke 3:1; 13:1; 23:1-25, 52; John 18:28-19:22, 31, 38; Acts 3:13; 4:27; 13:28; 1 Timothy 6:13", ["Pilate"], []),
+    "Pim_weight": ("c. 700 BC", "the pim, the Philistines' charge for sharpening in Saul's day", "1 Samuel 13:21", [], []),
+    "Royal_Steward_inscription": ("c. 700 BC", "Shebna, Hezekiah's steward",
+        "Isaiah 22:15-25; 36:3, 11, 22; 37:2; 2 Kings 18:18, 26, 37; 19:2", ["Shebna"], []),
+    "Saba'a_Stele": ("c. 800 BC", "Adad-nirari III's campaign to Philistia; he isn't named in the Bible", "", [], []),
+    "Samaria_Ostraca": ("c. 780 BC", "Manasseh's clans in Samaria's hills (Shemida, Abiezer, Helek, Shechem, Hoglah, Noah)",
+        "Numbers 26:29-33; 27:1; Joshua 17:1-3; 1 Chronicles 7:18-19", ["Shemida", "Abiezer", "Helek", "Hoglah", "Noah"], []),
+    "Sargon_II's_Prisms": ("c. 720-711 BC", "the fall of Samaria and its resettling; Sargon's taking of Ashdod",
+        "2 Kings 17:3-6, 24; 18:9-11; Isaiah 20:1", ["Sargon", "Ashdod"], ["sargon"]),
+    "Sebek-khu_Stele": ("c. 1850 BC", "an Egyptian raid on Sekmem (Shechem?), before the Bible's history", "", [], []),
+    "Sefire_steles": ("c. 750 BC", "an Aramaic treaty's blessings and curses; no event the Bible tells", "", [], []),
+    "Sennacherib's_Annals": ("c. 690 BC (the campaign, 701 BC)", "Sennacherib's campaign against Hezekiah and the siege of Jerusalem",
+        "2 Kings 18:13-19:37; 2 Chronicles 32:1-23; Isaiah 36:1-37:38", ["Sennacherib", "Hezekiah"], ["sennach"]),
+    "Shaphan": ("c. 600 BC", "Gemariah son of Shaphan, in whose room Baruch read Jeremiah's scroll",
+        "Jeremiah 36:10-12, 25", ["Gemariah"], []),
+    "Siloam_inscription": ("c. 700 BC", "Hezekiah's tunnel, bringing the spring's water into the city",
+        "2 Kings 20:20; 2 Chronicles 32:2-4, 30; Isaiah 22:9-11", ["Hezekiah", "Gihon"], []),
+    "Statue_of_Idrimi": ("c. 1450 BC", "an early naming of Canaan, before Israel's history", "", [], []),
+    "Stele_of_Zakkur": ("c. 785 BC", "Hazael and his son Ben-hadad of Damascus", "2 Kings 13:3, 24-25", ["Hazael", "Ben-hadad"], []),
+    "Tel_Dan_stele": ("c. 840 BC", "Hazael's war with Joram of Israel and Ahaziah of Judah; the house of David",
+        "2 Kings 8:28-29; 9:14-29; 2 Chronicles 22:5-9", ["Hazael", "Joram", "Jehoram", "Ahaziah"], []),
+    "Tell_al-Rimah_stela": ("c. 800 BC", "Joash of Israel's tribute to Assyria", "2 Kings 13:10-13", ["Joash", "Jehoash"], []),
+    "Tell_es-Safi_inscription": ("c. 950 BC", "Philistine Gath and the name Goliath",
+        "1 Samuel 17:4, 23; 21:9; 22:10; 2 Samuel 21:19; 1 Chronicles 20:5", ["Goliath", "Gath"], []),
+    "Temple_Warning_inscription": ("c. 20 BC-AD 70", "the temple's barrier to foreigners: Paul seized for bringing a Greek in",
+        "Acts 21:26-30; Ephesians 2:14", [], []),
+    "Tiglath-Pileser_III": ("745-727 BC", "Tiglath-pileser (Pul): Menahem's tribute, Pekah and Hoshea, Ahaz, the deportations",
+        "2 Kings 15:19-20, 29-30; 16:7-10; 1 Chronicles 5:6, 26; 2 Chronicles 28:20-21", ["Tiglath-pileser", "Pul", "Menahem", "Pekah", "Hoshea", "Ahaz"], ["tpMenahem", "tpPekah"]),
+    "Trumpeting_Place_inscription": ("1st century BC-AD", "a sign at Herod's temple for the priests' trumpet; no event the Bible tells", "", [], []),
+    "Victory_stele_of_Esarhaddon": ("671 BC", "Esarhaddon, and his war with Tirhakah (Taharqa)",
+        "2 Kings 19:9, 37; Ezra 4:2; Isaiah 37:9, 38", ["Esarhaddon", "Tirhakah"], []),
+    "Yavne-Yam_ostracon": ("c. 630 BC", "a laborer's cloak taken in pledge: the law that it be returned",
+        "Exodus 22:26-27; Deuteronomy 24:12-13", [], []),
+    "Yeho'ezer_ben_Hosh'ayahu_seal": ("c. 700 BC", "a Judean official; the names belong to no one in the Bible", "", [], []),
 }
 
 
@@ -186,17 +261,12 @@ def bible_template(m):
     return " ".join(f[:2])
 
 
-def plain(wt, links=None, refs=False):
+def plain(wt):
     """Wikitext as plain text: references, comments and templates dropped ({{sort|key|shown}} -> shown, a Bible verse
-    template -> its reference), [[target|text]] -> text, '' / ''' marks dropped. links: (text, target) of each link.
-    refs: the references' text kept (their tags dropped, a citation as its title: a title can quote a verse)."""
+    template -> its reference), [[target|text]] -> text, '' / ''' marks dropped."""
     wt = re.sub(r"<!--.*?-->", "", wt, flags=re.S)
     wt = re.sub(r"<ref[^>/]*/>", "", wt)
-    if refs:
-        wt = re.sub(r"\{\{\s*[Cc]it(?:e|ation)[^{}]*?\|\s*title\s*=\s*([^|{}]*)[^{}]*\}\}", r" \1 ", wt)
-        wt = re.sub(r"</?ref[^>]*>", " ", wt)
-    else:
-        wt = re.sub(r"<ref[^>]*>.*?</ref>", "", wt, flags=re.S)
+    wt = re.sub(r"<ref[^>]*>.*?</ref>", "", wt, flags=re.S)
     wt = BIBLE_TEMPLATE.sub(bible_template, wt)
     wt = re.sub(r"\{\{\s*sort\s*\|[^|{}]*\|([^{}]*)\}\}", r"\1", wt)
     for _ in range(4):
@@ -207,8 +277,6 @@ def plain(wt, links=None, refs=False):
         if target.lower().startswith(("file:", "image:", "category:")):
             return ""
         text = (text or target) + (m.group(2) or "")
-        if links is not None:
-            links.append((text, target))
         return text
     wt = re.sub(r"\[\[([^\[\]]*)\]\](\w*)", link, wt)
     wt = re.sub(r"\[https?://\S+ ([^\]]*)\]", r"\1", wt)
@@ -220,8 +288,7 @@ def plain(wt, links=None, refs=False):
 # ---- The list ----
 
 def rows(wt):
-    """The four tables' rows: [{name, link, image, now, found, date, writing, bears, links}] (links: the name's,
-    discovery place's and significance's (text, target))."""
+    """The four tables' rows: [{name, link, image, now, found, date, writing, bears}]."""
     body = re.split(r"\n==[^=]", wt.split("==Selected artifacts significant to biblical chronology==")[1])[0]
     out = []
     for table in re.findall(r"\{\|.*?\n\|\}", body, flags=re.S):
@@ -235,24 +302,20 @@ def rows(wt):
                 continue
             m = re.search(r"\[\[([^\[\]|]*)(?:\|[^\[\]]*)?\]\]", cells[0])
             img = re.search(r"\[\[(?:File|Image):([^|\]]*)", cells[1])
-            links = []
-            name = plain(cells[0], links)
-            found = plain(cells[3], links)
-            bears = plain(cells[6], links)
+            name, found, bears = plain(cells[0]), plain(cells[3]), plain(cells[6])
             out.append({"name": name, "link": m.group(1).strip() if m else "", "image": img.group(1).strip() if img else "",
                         "now": plain(cells[2]), "found": found, "date": plain(cells[4]), "writing": plain(cells[5]),
-                        "bears": bears, "links": links})
+                        "bears": bears})
     for line in body.splitlines():     # (The bullets: "*[[Pilate Stone]] (c. 36 AD) – carved inscription ...")
         m = re.match(r"\*+\s*\[\[([^\[\]|]*)(?:\|([^\[\]]*))?\]\](\w*)(.*)$", line)
         if not m or m.group(1).lower().startswith(("list of", "file:")) or "myth" in m.group(1).lower():
             continue
-        links = [(m.group(2) or m.group(1), m.group(1))]
         rest = m.group(4)
         date = re.match(r"\s*\(([^)]*\d[^)]*)\)", plain(rest))
-        bears = plain(re.sub(r"^\s*(\([^)]*\))?\s*(<ref[^>]*/>|<ref.*?</ref>)*\s*[–:-]?\s*", "", rest), links)
+        bears = plain(re.sub(r"^\s*(\([^)]*\))?\s*(<ref[^>]*/>|<ref.*?</ref>)*\s*[–:-]?\s*", "", rest))
         out.append({"name": plain(m.group(2) or m.group(1)) + m.group(3), "link": m.group(1).strip(), "image": "",
                     "now": "", "found": "", "date": date.group(1).strip() if date else "", "writing": "",
-                    "bears": bears, "links": links})
+                    "bears": bears})
     return out
 
 
@@ -325,12 +388,17 @@ BOOK_OF = {n.replace("_", " ").lower(): i + 1 for i, n in enumerate(NAMES)} | {"
 NUM = {"1": "1", "i": "1", "first": "1", "2": "2", "ii": "2", "second": "2", "3": "3", "iii": "3", "third": "3"}
 ONE = "|".join(sorted({re.escape(n.split(" ", 1)[1]) for n in BOOK_OF if n[0].isdigit()}, key=len, reverse=True))
 WHOLE = "|".join(sorted({re.escape(n) for n in BOOK_OF if not n[0].isdigit()}, key=len, reverse=True))
+NUMBERED = rf"(?:1|2|3|I{{1,3}}|First|Second|Third)\s+(?:{ONE})\b"     # (A numbered book's name: "2 Samuel")
+VERSES = r"\d+(?::\d+)?(?:[-–]\d+(?::\d+)?)?"     # (One part: "15", "15-25", "5:6", "25:1-26:3")
 REF = re.compile(rf"\b(?:(1|2|3|I{{1,3}}|First|Second|Third)\s+({ONE})|({WHOLE}))\.?\s+(\d+)(?::|,\s*(?=\d+(?:[-–]\d+)?:))"
-                 rf"(\d+[\d:,\-–\s;]*\d|\d+)", re.I)
+                 rf"({VERSES}(?:\s*[,;]\s*(?!{NUMBERED}){VERSES})*)", re.I)
+# (The verses after a book never take in the next numbered book's number: "Isaiah 22:15-25; 2 Samuel 5:6" is Isaiah
+#  22:15-25 and 2 Samuel 5:6, never Isaiah 22:2.)
 
 
 def references(text):
-    """Every reference in text as (book id, its OSIS-like form for tyndale_dict.verse_spans, as written)."""
+    """Every reference in text as (book id, its OSIS-like form for tyndale_dict.verse_spans, as written): each part
+    in its own book - a part is read only while it's the same book's (REF stops before a numbered book's name)."""
     out = []
     for m in REF.finditer(text):
         if m.group(1):
@@ -467,12 +535,12 @@ def fetch_all():
     return finds, pins
 
 
-def find_html(f, refs, quotes=()):
-    """A find as the dictionary's light HTML: its facts, what it bears on, its own text in a public-domain translation
+def find_html(f, refs, quotes=(), lines_up=""):
+    """A find as the dictionary's light HTML: its facts (lines_up: PASSAGES' date and event, as "Lines up with"), what it bears on, its own text in a public-domain translation
     (quotes: blockquotes, under "Its text"), its article's lead, its Bible references (each a link to its first verse),
     the credit for its text."""
     e = html.escape
-    facts = [("Date", f["date"]), ("Found", f["found"]), ("Now", f["now"]), ("Writing", f["writing"])]
+    facts = [("Date", f["date"]), ("Found", f["found"]), ("Now", f["now"]), ("Writing", f["writing"]), ("Lines up with", lines_up)]
     out = ["<p>" + "<br>".join(f"<b>{k}</b> {e(v)}" for k, v in facts if v) + "</p>"]
     if f["bears"]:
         out.append(f"<p><b>Bears on</b> {e(f['bears'])}</p>")
@@ -503,8 +571,8 @@ def last_verses(main_db):
 def namer(main_db, kinds=("person", "place")):
     """A function (name, verses) -> the Strong's keys TIPNR writes the name with (any case; TIPNR's capitalized names
     of the kinds given only: not its "other" names - a month, a deity, a book's "Chronicles" - nor the common words its
-    records list - Abel's "stone"): per language (Hebrew, Greek), the keys with a word in the verses given ({(book,
-    chapter * 1000 + verse)}); none, the one with the most words in the text."""
+    records list - Abel's "stone"): those with a word in the verses given ({(book, chapter * 1000 + verse)}), Hebrew
+    and Greek alike - none there, none at all (a name the find's passages don't use links nothing)."""
     tyndale_dict.download()     # (TIPNR)
     names = {}
     for strong, (kind, ns) in tyndale_dict.tipnr().items():
@@ -512,7 +580,6 @@ def namer(main_db, kinds=("person", "place")):
             for n in ns:
                 if n[:1].isupper():
                     names.setdefault(n.lower(), set()).add(strong)
-    count = dict(main_db.execute("SELECT strong, COUNT(*) FROM words WHERE book <= 66 GROUP BY strong"))
 
     def keys(name, verses):
         found = names.get(name.strip().lower(), set())
@@ -522,12 +589,7 @@ def namer(main_db, kinds=("person", "place")):
         for b, cv in sorted(verses):
             here.update(s for (s,) in main_db.execute("SELECT strong FROM words WHERE book = ? AND chapter = ? AND verse = ?",
                                                       (b, cv // 1000, cv % 1000)))
-        out = []
-        for lang in "HG":
-            ks = [k for k in found if k.startswith(lang) and count.get(k)]
-            if ks:
-                out += [k for k in ks if k in here] or [max(ks, key=lambda k: count[k])]
-        return out
+        return sorted(k for k in found if k in here)
     return keys
 
 
@@ -572,9 +634,10 @@ def build(main_db):
     import ane     # (Its translations' excerpts - here, not at the top: ane.py imports this module)
     last_verses(main_db)
     finds, pins = fetch_all()
-    missing = set(MORE) - {(f["article"]["title"] if f["article"] else f["name"]).replace(" ", "_") for f in finds}
-    if missing:
-        raise SystemExit(f"finds.MORE names finds not built: {sorted(missing)}")
+    built = {(f["article"]["title"] if f["article"] else f["name"]).replace(" ", "_") for f in finds}
+    if set(PASSAGES) ^ built:
+        raise SystemExit(f"finds.PASSAGES out of step with the finds built: not built {sorted(set(PASSAGES) - built)}, "
+                         f"not in PASSAGES {sorted(built - set(PASSAGES))}")
     keys = namer(main_db)
     pins.pop("photos", None)     # (The 300 px photos pinned before the full pictures: replaced by "images")
     shutil.rmtree(IMAGES / "finds", ignore_errors=True)     # (Written anew: no picture of a find gone left behind)
@@ -584,20 +647,17 @@ def build(main_db):
         if fid in seen:
             continue
         seen.add(fid)
-        text = f["bears"] + "\n" + (plain(f["article"]["wikitext"], refs=True) if f["article"] else "")
-        more, keys_ = MORE.get(fid, ("", []))
-        more = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", more) for r in references(part)] if more else []     # (A book at a time, as ane.py's)
-        refs = list(dict.fromkeys((osis, shown) for _, osis, shown in references(text) + more))
+        when, event, passages, names, keys_ = PASSAGES[fid]
+        refs = list(dict.fromkeys((osis, shown) for _, osis, shown in references(passages)))
+        if passages and not refs:
+            raise SystemExit(f"finds.PASSAGES[{fid!r}]: no passage read in {passages!r}")
         spans = [sp for osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
         verses = tyndale_dict.verses_in(spans)
-        cands = {w for w in re.findall(r"[A-Z][a-z]+", f["name"])}
-        for text_, target in f["links"]:
-            cands.update({text_, re.sub(r"\s*\(.*\)", "", target)})
-        for n in cands:
+        for n in names:
             for k in keys(n, verses):
                 lemmas.setdefault(k, []).append(fid)
         line = (f["bears"] or (f["article"]["lead"][0] if f["article"] and f["article"]["lead"] else ""))[:200]
-        entries.append((fid, f["name"], find_html(f, refs, ane.quoted(keys_) if keys_ else ()), line, len(verses), spans))
+        entries.append((fid, f["name"], find_html(f, refs, ane.quoted(keys_) if keys_ else (), f"{when}: {event}"), line, len(verses), spans))
         pic = pictures(f["image"], pins, "finds", fid)
         if pic:
             photos[fid] = pic

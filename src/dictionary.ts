@@ -335,11 +335,16 @@ export async function passageArticles (main: Db, places: number[][][], src = "to
 //==== BY BOOK ====
 // The Archaeology finds, the Ancient Parallels and the Ancient Historians by passage (notes.ts' drawBookFinds): every entry bearing
 // on the book read, at once - those citing one of its verses (every verse of a span cited: Exodus 21:23-25 is 23, 24
-// and 25) and those its words name (a person, a place) - in the order of the verse each first comes at, each with
-// every verse of the book it comes at (cited or named), the list following the text one way.
+// and 25) and, for a source in BY_WORD, those its words name (a person, a group) - in the order of the verse each first
+// comes at, each with every verse of the book it comes at (cited or named), the list following the text one way.
+// The finds list only their own passages (finds.py's PASSAGES): a word they name (Hezekiah) is in other eras' verses
+// too, so word matches would set an Assyrian annal beside Genesis; the historians' names and groups (the Pharisees,
+// Pilate) are topical, wanted wherever they occur. (The Ancient Parallels have no words.)
+const BY_WORD = new Set (["historians"]);
 export interface BookArticle { id: string; title: string; line: string; photo: string; verses: number[]; }     // (verses: chapter * 1000 + verse, rising)
 
-/** A source's (src) articles for a book (its database id): each with its verses there, in the order of its first. */
+/** A source's (src) articles for a book (its database id): each with its verses there, in the order of its first -
+ *  cited, and named by its words where the source is BY_WORD's. */
 export async function bookArticles (main: Db, book: number, src: string): Promise<BookArticle[]> {
   const o = await opened (main, src);
   if (! o) return [];
@@ -350,7 +355,7 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
     const all = (await main.all ("SELECT DISTINCT chapter * 1000 + verse AS at FROM words WHERE book = ? ORDER BY at", [book])).map ((r) => Number (r.at));
     for (const r of refs) for (const v of all) if (v >= Number (r.start) && v <= Number (r.end)) add (String (r.id), v);
   }
-  const named = new Map<string, string[]> ((await o.db.all ("SELECT strong, ids FROM lemmas")).map ((r) => [String (r.strong), idList (r.ids)]));
+  const named = new Map<string, string[]> (! BY_WORD.has (src) ? [] : (await o.db.all ("SELECT strong, ids FROM lemmas")).map ((r) => [String (r.strong), idList (r.ids)]));
   const strongs = [...named.keys ()];
   for (let i = 0; i < strongs.length; i += 500) {     // (500 values a query: SQLite's limit)
     const part = strongs.slice (i, i + 500);
@@ -371,7 +376,7 @@ export async function bookArticles (main: Db, book: number, src: string): Promis
 }
 
 /** A book's verses (chapter * 1000 + verse) as a line of references, each going to its verse in the text: the first
- *  FEW, then "+ n more" showing the rest (a find naming Israel or Assyria comes at hundreds). Each reference carries
+ *  FEW, then "+ n more" showing the rest (a historian's entry on the Pharisees comes at dozens). Each reference carries
  *  its verse (data-at) and its place in the book's order (data-i); past the first FEW, data-more: hidden until
  *  "+ more" is tapped. The verse read is brought to the front and marked (markVerse), shown even among the hidden. */
 const FEW = 12;

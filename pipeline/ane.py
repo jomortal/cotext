@@ -573,7 +573,7 @@ def parallel(title, passages, lead=""):
     """A parallel's passages ("Exodus 21:23-25; Leviticus 24:19-20", each as finds.references() reads it) as (a heading
     of links to them - after lead, e.g. "Parallels ", so the reference reads as what the text parallels, not a quote -,
     their verse spans). Also used by historians.py."""
-    refs = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", passages) for r in finds.references(part)]     # (A book at a time: "Judges 1:21; 2 Samuel 5:6" read whole would take "; 2" for a verse)
+    refs = [r for part in re.split(r";\s*(?=(?:[1-3]\s)?[A-Z])", passages) for r in finds.references(part)]     # (A book at a time)
     if not refs:
         raise SystemExit(f"{title}: no passage read in {passages!r}")
     spans = [sp for _, osis, _ in refs for sp in tyndale_dict.verse_spans(osis)]
