@@ -230,7 +230,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
   const pick = (label: string, options: [number | string, string][], value: number | string, set: (v: string) => void, off = false) => {
     const l = document.createElement ("label"); l.className = "vcPick";
     l.append (Object.assign (document.createElement ("span"), { className: "vcPickName", textContent: label }));     // (Its name: no wider than the box - running on over the gap)
-    const s = document.createElement ("select"); s.className = "choose"; s.disabled = off;
+    const s = document.createElement ("select"); s.className = "choose"; s.disabled = off; s.setAttribute ("aria-label", label);
     s.append (...options.map (([v, t]) => new Option (t, String (v))));
     s.value = String (value);
     s.addEventListener ("change", () => { set (s.value); drawPick (el, addBtn, p); });
@@ -238,17 +238,25 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
     return l;
   };
   const sep = (t: string) => Object.assign (document.createElement ("span"), { className: "vcSep", textContent: t });     // (As a reference reads: 3:16-18)
+  // FROM VERSE, "-" and TO VERSE under one name, VERSES (each box named only for a screen reader)
+  const verses = (...items: HTMLElement[]) => {
+    const g = document.createElement ("div"); g.className = "vcPick vcVerses";
+    const row = document.createElement ("div"); row.className = "vcVerseRow"; row.append (...items);
+    g.append (Object.assign (document.createElement ("span"), { className: "vcPickName", textContent: "Verses" }), row);
+    return g;
+  };
   el.replaceChildren (
     Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
           (v) => { p.book = books.find ((x) => x.code === v) ?? null; }), { className: "vcPick vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? mostChapters () }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; }),
     sep (":"),
-    pick ("From verse", [...(p.from > 0 ? [] : [BLANK]), ...vs.map ((v): [number, string] => [v, String (v)])],
-          p.from > 0 ? p.from : "", (v) => { p.from = +v; }),
-    sep ("-"),
-    pick ("To verse", p.from > 0 ? [[0, "–"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
-          p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0));
+    verses (
+      pick ("From verse", [...(p.from > 0 ? [] : [BLANK]), ...vs.map ((v): [number, string] => [v, String (v)])],
+            p.from > 0 ? p.from : "", (v) => { p.from = +v; }),
+      sep ("-"),
+      pick ("To verse", p.from > 0 ? [[0, "–"], ...vs.filter ((v) => v > p.from).map ((v): [number, string] => [v, String (v)])] : [BLANK],
+            p.from > 0 ? p.to : "", (v) => { p.to = +v; }, p.from <= 0)));
   addBtn.disabled = ! chosen || p.from <= 0;
 }
 

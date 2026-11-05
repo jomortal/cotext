@@ -477,6 +477,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcSep { margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
 #vcPlace .vcPick .chooseWrap, .avPlace .vcPick .chooseWrap { display: block; } #vcPlace .vcPick .chooseBtn, .avPlace .vcPick .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
 .vcPickName { white-space: nowrap; width: 0; overflow: visible; }     /* (A picker's name not widening it: FROM VERSE's box as narrow as its numbers, the name running on over the gap) */
+.vcVerses .vcVerseRow { display: flex; gap: 16px; align-items: end; color: var(--fg); font-size: var(--fs-m); } .vcVerseRow .vcPickName { display: none; }     /* (VERSES: one name over FROM VERSE - TO VERSE, the boxes' own names hidden) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
 #verseSheet { border-top: var(--rule) !important; }
 .avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: var(--x-room); }     /* (Clear of the ✕) */
