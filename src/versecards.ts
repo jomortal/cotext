@@ -7,7 +7,7 @@
 //   settings (below), VERSE LIST and, last, the add row (below), the bold heading NEW VERSE at its start.
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; first in ⋯'s options
 //   the one open (the last one used when the screen opens; "My verses" at first) -
-//   SELECT DECK a drop-down of them, DELETE DECK beside it deleting the open one and its cards (asked first), then + NEW DECK; the NAME edited in place.
+//   SELECT DECK a drop-down of them, its first choice + NEW DECK, DELETE DECK beside it deleting the open one and its cards (asked first); the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, +'s drop-down) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (picked in any order -
@@ -256,8 +256,8 @@ async function draw (body: HTMLElement) {
   body.innerHTML = `<div class="vcTop"><div class="vcTopRow"><h1 class="vcTitle">${esc (d.name)}</h1>
       <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button><button class="pill icon" id="vcMore" aria-label="Deck options" aria-expanded="${menuOpen === "more"}">${menuOpen === "more" ? "✕" : "⋯"}</button></span></div></div>
     <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
-    <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick">${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
-      <button class="pill" id="vcDelDeck">Delete deck</button><button class="pill" id="vcNewDeck">+ New deck</button></div>
+    <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick"><option value="new">+ New Deck</option>${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
+      <button class="pill" id="vcDelDeck">Delete deck</button></div>
     <label class="vcPick vcName">Name<input class="choose" id="vcName" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false"></label>
     <div class="vcAdd">
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
@@ -298,11 +298,14 @@ async function draw (body: HTMLElement) {
   const listHead = body.querySelector<HTMLElement> ("#vcListHead")!;
   const listEl = body.querySelector<HTMLElement> (".vcList")!, credits = body.querySelector<HTMLElement> (".vcCredits")!;
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
-  // Decks: SELECT DECK opens the one picked, DELETE DECK beside it deletes the open one (asked first), + NEW DECK makes
-  // and opens one; its name edited in place.
+  // Decks: SELECT DECK opens the one picked - its first choice, + NEW DECK, makes and opens one -, DELETE DECK beside
+  // it deletes the open one (asked first); its name edited in place.
   const deckPick = body.querySelector<HTMLSelectElement> ("#vcDeckPick")!;
-  deckPick.addEventListener ("change", () => { at = deckPick.value; save (); draw (body); });
-  body.querySelector ("#vcNewDeck")!.addEventListener ("click", () => { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; save (); draw (body); });
+  deckPick.addEventListener ("change", () => {
+    if (deckPick.value === "new") { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; }
+    else at = deckPick.value;
+    save (); draw (body);
+  });
   const nameIn = body.querySelector<HTMLInputElement> ("#vcName")!;
   nameIn.value = d.name;
   nameIn.addEventListener ("input", () => {
