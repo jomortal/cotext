@@ -173,7 +173,7 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     for (const v of box.querySelectorAll<HTMLElement> (".vnum")) {
       const n = Number (v.textContent), he = !! v.closest (".vrow.he");
       v.classList.add ("vcVnum");
-      v.innerHTML = `<div class="orig">${he ? hebrewNumber (n) : greekNumber (n)}</div><div class="gloss">${n}</div>`;
+      v.innerHTML = `<div class="orig"><span class="vcVnumN">${he ? hebrewNumber (n) : greekNumber (n)}</span></div><div class="gloss">${n}</div>`;     // (The number smaller, in a line as tall as the words')
     }
     html += `<div class="vcOrig">${box.outerHTML}</div>`;
     // (The Septuagint's reference its own: its book and numbering - Psalms and Jeremiah's differ)
