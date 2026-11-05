@@ -28,7 +28,9 @@
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
-//   - those references, the translation's verses (each numbered in a range), the original. A tap on its front turns it
+//   - those references, the translation's verses (each numbered in a range), the original. The card centered on the
+//   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (but raised clear of the swipe-up
+//   edge): SHUFFLE, BACK, SHOW, NEXT, START OVER. A tap on its front turns it
 //   over; only HIDE turns it back (a tap on the back is for its words): a word of the original tapped opens its panel at the screen's foot, as the reader's
 //   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in ⋯'s options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
@@ -220,8 +222,8 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement) {
   };
   const chosen = !! (b && p.chapter);
   el.replaceChildren (
-    pick ("Book", [...(b ? [] : [BLANK]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
-          (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }),
+    Object.assign (pick ("Book", [...(b ? [] : [BLANK]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
+          (v) => { p.book = books.find ((x) => x.code === v) ?? null; p.chapter = 0; p.from = -1; p.to = 0; }), { className: "vcPick vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? 0 }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; p.from = -1; p.to = 0; }, ! b),
     pick ("From verse", [...(p.from < 0 ? [BLANK] : []), ...(chosen ? vs.map ((v): [number, string] => [v, String (v)]) : [])],
@@ -311,7 +313,14 @@ async function draw (body: HTMLElement) {
     if (n !== drawing) return;
     const ids = d.cards.map ((c) => c.id).join ();
     if (kept && shown && ids === shownIds) shown.update (made, (a, b) => a.id === b.id);
-    else { shown = showDeck (deckEl, made, undefined, undefined, true, false); shownIds = ids; }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
+    else {
+      shown = showDeck (deckEl, made, undefined, undefined, true, false); shownIds = ids;
+      // (Its buttons in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE, BACK, SHOW, NEXT, START OVER)
+      const bar = document.createElement ("div"); bar.className = "vcBar";
+      bar.append (...["shuffle", "back", "flip", "next", "over"].map ((k) => deckEl.querySelector (`[data-k=${k}]`)!));
+      deckEl.querySelectorAll (".cardBar").forEach ((x) => x.remove ());
+      deckEl.append (bar);
+    }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
     credits.textContent = [...used.values ()].filter (Boolean).join (" ");
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;

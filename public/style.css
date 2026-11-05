@@ -417,12 +417,23 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcTitle { min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-m); font-weight: 600; text-align: center; }
 @media (min-width: 700px) { .vcTop { left: var(--textL, 0px); right: var(--studyR, 0px); } #vcMore { right: max(var(--pad), env(safe-area-inset-right, 0px)); } }     /* (Wide: ⋯ at the column's edge, as the Bible view's heading's) */
 .vcTop:has(#vcMore[aria-expanded="true"]) { border-bottom-color: transparent; }     /* (⋯ open: no line under the name - the options run on from it, as the Bible view's ⋯ menu) */
+/* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
+   to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
+:root { --vcFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); }     /* (The bar's room under its buttons: clear of the iPad's and iPhone's swipe-up edge) */
+.vcDeck:has(.vcBar) { min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--fs-icon) - 18px - var(--vcFoot) - var(--pad));
+  display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 24px; background: var(--bg); border-top: 1px solid var(--edge);
+  padding: 6px max(var(--pad), env(safe-area-inset-right, 0px)) var(--vcFoot) max(var(--pad), env(safe-area-inset-left, 0px)); }
+.vcBar .pill { padding: 6px 0; }
+@media (min-width: 700px) { .vcBar { left: var(--textL, 0px); right: var(--studyR, 0px); } }
+#screen:has(.vcBar) { padding-bottom: calc(var(--fs-icon) + 18px + var(--vcFoot)); }     /* (Room under the screen for the bar) */
 .vcHead { font-size: var(--fs-xs); color: var(--soft); margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 .vcHead[hidden] { display: none; }
 /* ⋯'s options: under the top row, above the deck - pushing it down (not over it, as the Bible view's ⋯ menu: the
    card stays in view) -, a line under them. */
 .vcMenu:not([hidden]) { display: grid; gap: 10px; padding-bottom: var(--pad); border-bottom: 1px solid var(--edge); }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A deck's name and its ✕, together - and a card's reference and its ✕ in the list, laid out the same) */
+.vcBook .chooseBtn { min-width: 11em; }     /* (BOOK as wide as a long name even while blank) */
 .vcBreak { flex-basis: 100%; height: 0; }     /* (The add row's reference starting a line of its own) */
 #vcPlace { display: contents; }     /* (The add row's Book, Chapter, From and To verse: items of the row, wrapping with it) */
 .vcDeck .card.single .cardFront { font-size: 32px; }
