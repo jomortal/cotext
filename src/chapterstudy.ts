@@ -432,7 +432,9 @@ onScreen ("Study printout", async (body) => {
   const show = (on: boolean) => { shown = on; box.classList.toggle ("csNoEditor", ! on); toggle.setAttribute ("aria-pressed", String (on)); };
   toggle.addEventListener ("click", () => { show (! shown); try { localStorage.setItem (EDITOR_KEY, shown ? "1" : "0"); } catch { /* private mode */ } });
   show (shown);
-  bar.append (toggle);
+  // (Unseen stand-ins for the Bible's ‹, ▶ and ›, so the bar's room is shared out as the play bar's: the pencil exactly where its search is)
+  const ghost = (g: string, c: number, r: number) => { const x = el ("span", "pill icon csGhost" + (g === "▶" ? "" : " arrow"), g); x.setAttribute ("aria-hidden", "true"); x.style.setProperty ("--c", String (c)); x.style.setProperty ("--r", String (r)); return x; };
+  bar.append (ghost ("‹", 1, 1), ghost ("▶", 3, 3), toggle, ghost ("›", 5, 5));
   body.append (box, bar);
   drawSections ();
   render ();
