@@ -83,6 +83,8 @@ import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
+import { nativeName } from "./booknames";
+import { nativeRef, refPair } from "./refs";
 import { printSplit } from "./layout";
 import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
 import type { FileKind } from "./printfiles";
@@ -880,8 +882,12 @@ async function render () {
             h (`${textName (book, true)} text` + (ws.length ? ` (${wordsSpan (ws)})` : ""));
             box = textBox ({ ...book, testament: otherTestament (book) }, ws[0]?.chapter ?? chapter, ws, it);
             if (! ws.length) box.append (el ("p", "", `No ${testamentName (otherTestament (book))} verses for these verses.`));
-          } else {
-            h (`${textName (book)} text`);
+          } else {     // (Headed as the Bible's heading: the verses' reference in English and in the original, one line - refs.ts)
+            const lang = nativeName (book.code)?.[1], v1 = range[0] ?? 0, v2 = range[range.length - 1] ?? 0, all = range.length === (await allVerses (ch)).length;     // (The whole chapter: its number alone)
+            const en = `${book.name} ${chapter}` + (all ? "" : v1 === v2 ? `:${v1}` : `:${v1}–${v2}`);
+            const head = el ("h2", "csHead");
+            head.innerHTML = refPair (en, lang ? nativeRef (book.code, lang, chapter, all ? 0 : v1, chapter, all || v1 === v2 ? 0 : v2) : "");
+            block.append (head);
             box = textBox (book, chapter, (await ch.words).filter ((w) => range.includes (w.verse)), it);
           }
           if (it.under) {     // (A common word's helps taken off: its root coming under times or more in its testament)

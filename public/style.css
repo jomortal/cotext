@@ -377,7 +377,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gInline .top { align-items: start; }
 .gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }
 .head .place .refPair { font-size: calc(var(--fs-m) / var(--ref-en-k)); }     /* (The heading's passage: its English the title's size - refs.ts) */
-#place { min-width: 0; overflow: hidden; } #place .refPair { flex-wrap: nowrap; } #place .refPair > * { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-align: center; }     /* (One line, each centered in its side - its own width and an even share of the room left - the Greek at the left, the Hebrew (read from the right) at the right: .refPair's order -; too wide for it, main.ts' showPlace abbreviates) */
+#place { min-width: 0; overflow: hidden; } :is(#place, .csHead) .refPair { flex-wrap: nowrap; } :is(#place, .csHead) .refPair > * { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-align: center; }     /* (The Bible's heading and a Study printout's text, alike: one line, each centered in its side - its own width and an even share of the room left - the Greek at the left, the Hebrew (read from the right) at the right: .refPair's order -; too wide for it, main.ts' showPlace abbreviates) */
 .gInline .src { margin-top: 2px; }
 .gBody { font-size: var(--fs-m); line-height: var(--lh); margin-top: 8px; }
 .giOther { margin-top: 8px; display: grid; gap: var(--gap); }     /* (The word's Verb chart in the section's place: the chart's own styles, spaced as on its screen) */
