@@ -487,20 +487,27 @@ onScreen ("Study printout", async (body) => {
 });
 const EDITOR_KEY = "cotext.study.editor";     // (The pane shown: "1" the editor, "out" the download pane, "0" none)
 
+/** The printouts to add to (the Bible's add boxes' PRINTOUT picker, versecards.ts): each its id and name as shown,
+ *  and the open one's (the last used) - picked at first. */
+export function printoutChoices (): { list: { id: string; name: string }[]; open: string } {
+  load ();
+  return { list: printouts.map ((p) => ({ id: p.id, name: nameShown (p) })), open: now ().id };
+}
+
 /** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
  *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
- *  no items, as "+ Add passage" adds one, kept. Added to the open printout (the last used, whether
- *  the screen is open or not), redrawn if it's shown. False for a book not among bookList's. */
-export function addStudyReference (code: string, chapter: number, from: number, to: number): boolean {
-  return addStudy (code, chapter, from, to, "");
+ *  no items, as "+ Add passage" adds one, kept. Added to the printout picked (into: its id - none, the open one), which
+ *  becomes the open one (the last used), redrawn if it's shown. False for a book not among bookList's. */
+export function addStudyReference (code: string, chapter: number, from: number, to: number, into = ""): boolean {
+  return addStudy (code, chapter, from, to, "", undefined, into);
 }
 
 /** A resource (a source of the resources pane: its id) added to the Study printout from the resources pane's +: the
  *  item it makes (sourceItem) for the verses from - to (as addStudyReference's) put in the printout's section for that
  *  passage - the first of the same book and chapter whose verses take them in -, or, none, in a new section of those
  *  verses (added as addStudyReference adds one). False for a book or resource not there. */
-export function addStudyResource (code: string, chapter: number, from: number, to: number, src: string): boolean {
-  return addStudy (code, chapter, from, to, src);
+export function addStudyResource (code: string, chapter: number, from: number, to: number, src: string, into = ""): boolean {
+  return addStudy (code, chapter, from, to, src, undefined, into);
 }
 
 /** A resource's line for the Bible's add box (versecards.ts, the resources pane's +), as the editor draws a line: its
@@ -530,7 +537,7 @@ export function draftResource (code: string, chapter: number, from: number, to: 
   return {
     line,
     range (f: number, t: number) { sec.from = f; sec.to = t; it.from = it.to = 0; redraw (); },
-    add: () => addStudy (code, sec.chapter, sec.from, sec.to, src, it),
+    add: (into = "") => addStudy (code, sec.chapter, sec.from, sec.to, src, it, into),
   };
 }
 
@@ -546,12 +553,13 @@ function sourceItem (s: Source, from: number, to: number): Item {
 
 /** addStudyReference's, addStudyResource's and draftResource's work (made: the item with its settings, draftResource's): in the open printout (the last used: the printouts read back
  *  first if they haven't been), saved, redrawn if shown. */
-function addStudy (code: string, chapter: number, from: number, to: number, src: string, made?: Item): boolean {
+function addStudy (code: string, chapter: number, from: number, to: number, src: string, made?: Item, into = ""): boolean {
   const b = bookList ().find ((x) => x.code === code);
   const s = src && b ? sourceOf (b, src) : null;
   if (! b || (src && ! s && ! made)) return false;
   const open = !! sectionsEl?.isConnected;
   load ();
+  if (into && into !== at && printouts.some ((p) => p.id === into)) openPrintout (into);     // (The one picked: open now, the last used)
   const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
   const f = Math.max (from || 0, 0), t = f && (to || 0) > f ? to : f;
   // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)

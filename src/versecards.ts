@@ -43,7 +43,7 @@ import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
 import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
-import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource } from "./chapterstudy";
+import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { onSwipe } from "./bars";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
@@ -435,6 +435,16 @@ document.getElementById ("notesAdd")!.addEventListener ("click", () => {
             notesPick.value, Number (rows[rows.length - 1].dataset.verse));
 });
 let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last picked, while the app runs)
+/** PRINTOUT: a picker of the Study printouts, the open one (the last used) picked at first - where the box adds to the
+ *  Study printout (as DECK for the Verse cards). */
+function printoutPick (): HTMLLabelElement {
+  const { list, open } = printoutChoices ();
+  const l = document.createElement ("label"); l.className = "vcPick"; l.textContent = "Printout";
+  const sel = document.createElement ("select"); sel.className = "choose";
+  sel.append (...list.map ((x) => new Option (x.name, x.id, false, x.id === open)));
+  l.append (sel);
+  return l;
+}
 /** The box: for a verse (from a verse's margin), or for a resource (src: its id - from the resources pane's +: headed
  *  ADD A RESOURCE, the verses picked, then the resource's line as the Study printout draws it, its Options under it -
  *  chapterstudy.ts' draftResource -, then + ADD TO STUDY PRINTOUT; last: the chapter filled in's last verse - all its
@@ -443,7 +453,7 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
   fromNotes = !! src;
   if (src) {
-    body.innerHTML = `<h2 class="avHead">Add a Resource</h2><div class="vcAdd"><div class="avPlace"></div></div><div class="avItem"></div>
+    body.innerHTML = `<h2 class="avHead">Add a Resource</h2><div class="vcAdd avTarget"><div class="avPlace"></div></div><div class="avItem"></div>
       <button class="pill addVerse" id="avAdd">+ Add to Study Printout</button>`;
     const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!, itemEl = body.querySelector<HTMLElement> (".avItem")!;
     drawPick (place, add, p, allBooks);     // (Every book, the Septuagint's too; alone on its row: nothing to stack - stackWhenWrapped)
@@ -463,7 +473,9 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
     };
     follow ();
     place.addEventListener ("change", () => setTimeout (follow));     // (After drawPick has taken the pick in)
-    add.addEventListener ("click", () => { if (draft && p.from > 0 && draft.add ()) closeBox (); });
+    const into = printoutPick ();     // (Which printout: over the verses)
+    body.querySelector (".avTarget")!.prepend (into);
+    add.addEventListener ("click", () => { if (draft && p.from > 0 && draft.add (into.querySelector ("select")!.value)) closeBox (); });
     verseSheet.hidden = false;
     return;
   }
@@ -473,13 +485,14 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
     <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
   drawPick (place, add, p); stackWhenWrapped (place);
-  const to = body.querySelector<HTMLSelectElement> ("#avTo")!, deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!;
-  const pickTo = () => { addTo = to.value; deckRow.hidden = addTo !== "cards"; };     // (DECK only for the Verse cards)
+  const to = body.querySelector<HTMLSelectElement> ("#avTo")!, deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!, into = printoutPick ();
+  deckRow.after (into);
+  const pickTo = () => { addTo = to.value; deckRow.hidden = addTo !== "cards"; into.hidden = addTo !== "study"; };     // (DECK for the Verse cards, PRINTOUT for the Study printout)
   to.value = addTo; pickTo ();
   to.addEventListener ("change", pickTo);
   add.addEventListener ("click", () => {
     if (! p.book || ! p.chapter || p.from <= 0) return;
-    if (addTo === "study") { addStudyReference (p.book.code, p.chapter, p.from, p.to); closeBox (); return; }     // (A new section of the Study printout)
+    if (addTo === "study") { addStudyReference (p.book.code, p.chapter, p.from, p.to, into.querySelector ("select")!.value); closeBox (); return; }     // (A new section of the Study printout)
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
     if (! d) return;
     goTo = newId ();
