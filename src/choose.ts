@@ -33,15 +33,17 @@ function enhance (sel: HTMLSelectElement) {
   // notes panel's under the play bar, a sticky ✕); closed, it goes back beside its button.
   const close = () => { list.hidden = true; btn.setAttribute ("aria-expanded", "false"); if (list.parentElement !== wrap) wrap.append (list); };
   // Fixed to the screen, under the button - or over it when there's more room above (a picker near the bottom, as
-  // the notes panel's) - and no taller than the room there, so its last choice can always be reached; not clipped by
+  // the notes panel's) - and as tall as the room there, so its last choice can always be reached; not clipped by
   // a scrolling panel it's in. Scrolling it never scrolls what's behind (overscroll contained, style.css); anything
   // else scrolled closes it, as the button has moved from under it.
   const place = () => {
     const r = box (btn), h = px (window.visualViewport?.height ?? innerHeight), gap = 12;     // (CSS px, whatever the UI's scale: zoom.ts)
     const below = h - r.bottom - gap, above = r.top - gap, up = below < 240 && above > below;
-    Object.assign (list.style, { left: `${r.left}px`, width: `${r.width}px`,
+    // (As tall as the room there and as wide as its choices - at least its button's width, no further than the screen's
+    // right edge: a choice on one line where it fits)
+    Object.assign (list.style, { left: `${r.left}px`, width: "max-content", minWidth: `${r.width}px`, maxWidth: `${px (innerWidth) - r.left - gap}px`,
       top: up ? "" : `${r.bottom}px`, bottom: up ? `${h - r.top}px` : "",
-      maxHeight: `${Math.min (h * .5, up ? above : below)}px`, marginTop: up ? "0" : "4px", marginBottom: up ? "4px" : "0" });
+      maxHeight: `${up ? above : below}px`, marginTop: up ? "0" : "4px", marginBottom: up ? "4px" : "0" });
   };
   addEventListener ("scroll", (e) => { if (! list.hidden && ! list.contains (e.target as Node)) close (); }, true);
   addEventListener ("resize", () => { if (! list.hidden) place (); });
