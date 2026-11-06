@@ -624,7 +624,11 @@ function drawLines () {
       if (it.k === "memo") {     // (A note: its box under its line, kept and printed as it's typed - the lines not redrawn, so the box keeps its place)
         const box = el ("textarea", "choose csMemoBox");
         Object.assign (box, { value: it.text, rows: 3, placeholder: "Type a note" });
-        box.addEventListener ("input", () => { it.text = box.value; save (); render (); });
+        box.addEventListener ("input", () => {     // (Shown as it's typed: its block's text set in place - the preview not drawn again)
+          it.text = box.value; save ();
+          const b = previewEl.querySelector<HTMLElement> (`[data-item="${it.id}"]`);
+          if (b) { b.querySelector (".csMemo")!.textContent = it.text; b.hidden = ! it.text.trim (); } else render ();
+        });
         line.append (box);
       }
       return line;
@@ -634,6 +638,18 @@ function drawLines () {
 
 /** The items changed: kept, the lines and the preview redrawn. */
 function changed () { save (); drawLines (); render (); }
+
+/** A section's preview blocks put in its items' order, in place (a line dragged); false where a block isn't there (still
+ *  being drawn): the preview then drawn again. The notes beside the text have no block of their own (they're in the text's). */
+function reorder (sec: Section): boolean {
+  const part = previewEl.querySelector<HTMLElement> (`[data-sec="${sec.id}"]`);
+  if (! part || (sec.items.some ((i) => i.k === "note" && i.beside) && sec.items.filter ((i) => i.k === "text" && ! i.other).length > 1)) return false;     // (Which text the notes go beside may have changed: drawn again)
+  const besides = new Set (sec.items.filter ((i) => i.k === "note" && i.beside && sec.items.some ((t) => t.k === "text" && ! t.other)).map ((i) => i.id));
+  const blocks = sec.items.filter ((i) => ! besides.has (i.id)).map ((i) => part.querySelector<HTMLElement> (`:scope > [data-item="${i.id}"]`));
+  if (blocks.some ((b) => ! b)) return false;
+  part.append (...blocks as HTMLElement[]);
+  return true;
+}
 
 /** A line dragged by its handle (pointer events: touch and mouse alike): it moves among its section's lines as it
  *  passes their middles; let go, the section's new order is kept. */
@@ -657,7 +673,7 @@ function dragging (handle: HTMLElement, line: HTMLElement, sec: Section) {
       const order = [...linesEl.querySelectorAll<HTMLElement> (".csLine")].map ((l) => l.dataset.id);
       const moved = order.join () !== sec.items.map ((i) => i.id).join ();
       sec.items.sort ((a, b) => order.indexOf (a.id) - order.indexOf (b.id));
-      if (moved) changed ();
+      if (moved) { save (); drawLines (); if (! reorder (sec)) render (); }     // (The preview's blocks moved in place - at once - not drawn again)
     };
     handle.addEventListener ("pointermove", move);
     handle.addEventListener ("pointerup", up);
@@ -923,6 +939,7 @@ async function render () {
   for (const [i, sec] of sections.entries ()) {
     const { book, chapter } = sec, ch = dataOf (sec);
     const part = el ("div", "csPart");
+    part.dataset.sec = sec.id;     // (Its blocks found by their items' ids - data-item -, moved in place when a line's dragged: reorder)
     part.append (el ("h1", "csTitle", refName (sec)));
     const vs = await verses (sec);
     const list: Item[] = sec.items;     // (Nothing added: nothing shown, not even the text)
@@ -933,6 +950,7 @@ async function render () {
     for (const it of list) {
       if (it.k === "note" && beside.includes (it as Item & { k: "note" })) continue;     // (Drawn under the text's verses)
       const block = el ("section", "csBlock");
+      block.dataset.item = it.id;
       const h = (t: string) => block.append (el ("h2", "csHead", t));
       try {
         if (it.k === "text") {
@@ -1025,9 +1043,9 @@ async function render () {
           const t = await chapterTime (book.id, chapter);
           if (t) { cite ("timeline"); block.append (timelineBlock (t, book, chapter)); }
           else block.append (el ("p", "", "The timeline couldn't be loaded."));
-        } else if (it.k === "memo") {
-          if (! it.text.trim ()) continue;     // (Nothing typed: nothing printed)
+        } else if (it.k === "memo") {     // (Nothing typed: nothing shown or printed - kept hidden, its text set as it's typed)
           block.append (el ("p", "csMemo", it.text));
+          block.hidden = ! it.text.trim ();
         } else if (it.k === "words") {
           h ("Word list");
           cite (`text:${book.testament}`); cite (`lex:${book.testament}`);
