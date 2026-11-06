@@ -97,15 +97,16 @@ function drag (el: HTMLElement, move: (x: number, y: number) => void) {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo, v));
 
-/** The Study printout's divider (chapterstudy.ts; style.css' .cstudy) - narrow, horizontal, the preview over the editor:
- *  the preview's share of the room's height, % (--printShare, 15-85; half until dragged); wide, vertical, the preview
- *  at the left: its share of the width (--printW, 30-80; two thirds until dragged). Each kept. */
+/** The Study printout's divider (chapterstudy.ts; style.css' .cstudy) - upright, horizontal, the preview over the
+ *  editor: the preview's share of the room's height, % (--printShare, 15-85; half until dragged); sideways, vertical,
+ *  the preview at the left: its share of the width (--printW, 30-80; two thirds until dragged). Each kept. */
+const SIDEWAYS = matchMedia ("(orientation: landscape)");     // (style.css' .cstudy query: keep the two the same)
 export function printSplit (split: HTMLElement, box: HTMLElement) {
-  const turn = () => split.setAttribute ("aria-orientation", WIDE.matches ? "vertical" : "horizontal");
-  turn (); WIDE.addEventListener ("change", turn);
+  const turn = () => split.setAttribute ("aria-orientation", SIDEWAYS.matches ? "vertical" : "horizontal");
+  turn (); SIDEWAYS.addEventListener ("change", turn);
   drag (split, (x, y) => {
     const r = box.getBoundingClientRect ();
-    if (WIDE.matches) {
+    if (SIDEWAYS.matches) {
       sizes.printW = Math.round (clamp ((x - r.left) / r.width * 100, 30, 80));
       root.setProperty ("--printW", String (sizes.printW));
     } else {

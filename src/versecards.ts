@@ -433,14 +433,14 @@ document.getElementById ("notesAdd")!.addEventListener ("click", () => {
 let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last picked, while the app runs)
 /** The box: for a verse (from a verse's margin), or for a resource (src: its id - from the resources pane's +: headed
  *  ADD A RESOURCE, the verses picked, then the resource's line as the Study printout draws it, its Options under it -
- *  chapterstudy.ts' draftResource -, then ADD TO STUDY PRINTOUT; last: the chapter filled in's last verse - all its
+ *  chapterstudy.ts' draftResource -, then + ADD TO STUDY PRINTOUT; last: the chapter filled in's last verse - all its
  *  verses picked, the whole chapter's, 0 - 0). */
 function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }, src?: string, last = 0) {
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
   fromNotes = !! src;
   if (src) {
     body.innerHTML = `<h2 class="avHead">Add a Resource</h2><div class="vcAdd"><div class="avPlace"></div></div><div class="avItem"></div>
-      <button class="pill addVerse" id="avAdd">Add to Study Printout</button>`;
+      <button class="pill addVerse" id="avAdd">+ Add to Study Printout</button>`;
     const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!, itemEl = body.querySelector<HTMLElement> (".avItem")!;
     drawPick (place, add, p, allBooks);     // (Every book, the Septuagint's too; alone on its row: nothing to stack - stackWhenWrapped)
     // (The resource's line for the passage picked: made again for another book or chapter, its verses changed in place)
