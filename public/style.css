@@ -86,6 +86,7 @@
   /* The accent's tints: a word tapped, the verse read in a find's verses; a word read aloud; a line dragged (solid). */
   --tint: color-mix(in oklch, var(--accent) 14%, transparent); --tint-strong: color-mix(in oklch, var(--accent) 28%, transparent);
   --tint-solid: color-mix(in oklch, var(--accent) 10%, var(--bg));
+  --wrong: var(--qal);     /* (A wrong answer picked - Learn's -: the palette's red, beside the accent's right one) */
   --faint: color-mix(in srgb, var(--soft) 35%, transparent);     /* (The scroll bars' thumbs) */
   /* The atlas' maps (atlas.ts): water, land, roads, borders - muted, so the places' points (the accent) stand out;
      light in either mode (.atlasMap, above). */
@@ -165,7 +166,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* A button's text (or icon) lined up with the page's margin, like any other text - no side padding, as it shows no
    border or fill - its tap area reaching past it all round (::after), so it's as easy to hit as before. */
 .pill::after { content: ""; position: absolute; inset: -8px -10px; }
-.pill:disabled, .chooseBtn:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
+.pill:disabled, .chooseBtn:disabled, .hit:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't; a Learn lesson still locked) */
 .pill[aria-pressed="true"] { border-color: var(--line); color: var(--accent); }     /* (Picked: its text in the accent) */
 /* An action (.pill.action: + Add item, + Add passage, + Add note, Download, Print, + Add Verse, + Add, a deck's card's
    + Known words): a text button in the accent, set apart from the plain pills beside it. */
@@ -178,7 +179,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .ref, .src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
 .ref { margin-top: 8px; }
 /* A note (a count, a hint, a label over a list): small and muted. */
-.vcHead, .timelineNote, .vcNum, .vocabRow .n, table.chart .count, table.chart .none, table.chart .same, .csCount { font-size: var(--fs-xs); color: var(--soft); }
+.vcHead, .timelineNote, .vcNum, .vocabRow .n, table.chart .count, table.chart .none, table.chart .same, .csCount, .learnStatus { font-size: var(--fs-xs); color: var(--soft); }
 :has(> .vrow) { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--vnum-gap); }     /* (The verses' box: one margin column for all its numbers, as wide as the widest) */
 :has(> .vrow.he) { direction: rtl; } :has(> .vrow) > :not(.vrow) { grid-column: 1 / -1; direction: ltr; }
 .vrow { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; margin-top: 10px; }
@@ -342,6 +343,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #chartBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E"); }
 #guideBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10'/%3E%3C/svg%3E"); }
 #timelineBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 12h18M6 9v6M12 7v10M18 10v4'/%3E%3C/svg%3E"); }     /* (A line with marks along it) */
+#learnBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 9.5L12 5l9.5 4.5L12 14z'/%3E%3Cpath d='M6.5 11.8V16c3 2.5 8 2.5 11 0v-4.2M21.5 9.5v5.5'/%3E%3C/svg%3E"); }     /* (A mortarboard: Learn) */
 #pronounceBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.5h3.5L12 5.5v13l-4.5-4H4z'/%3E%3Cpath d='M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11'/%3E%3C/svg%3E"); }
 .colorKey { display: grid; gap: 0; margin: 6px 0 14px; }     /* (About verb colors: a row a color - the parsing's color and name, what it means) */
 .colorKey > div { grid-template-columns: 9.5em minmax(0, 1fr); align-items: baseline; }     /* (A list's row: .guideRow's rule) */
@@ -501,7 +503,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .card .meaning { font-size: var(--fs-3xl); line-height: 1.25; }     /* (A vocab card's English) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: var(--fs-l); }
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", under the card) */
-.pill.cardAction { align-self: center; justify-self: center; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
+.pill.cardAction { align-self: center; justify-self: center; }
+/* Learn (learn.ts): the path a list of plain buttons (.hit), a question on a card (the flashcards' look, not turned:
+   no pointer), its choices the book picker's inline list (.chooseList.inline) - the right one in the accent
+   (aria-pressed), a wrong pick in --wrong, struck through. */
+.card.learnCard { cursor: default; }
+.learnQuiz { display: grid; gap: var(--gap); }
+.chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the

@@ -17,7 +17,7 @@ const picked: Record<string, string> = {};
 try { Object.assign (picked, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 
 let db: Db;
-let grammars: { id: string; name: string; lang: string }[] = [];
+let grammars: { id: string; name: string; lang: string; credit: string }[] = [];
 const mapped = new Map<string, Set<string>> ();     // grammar -> the term keys it has a section for (initGrammar)
 const all: { setLang: (l: Lang) => void; repick: (l: Lang) => void }[] = [];     // (Every panel's: GRAMMAR follows the text, a choice every panel)
 
@@ -25,7 +25,7 @@ const all: { setLang: (l: Lang) => void; repick: (l: Lang) => void }[] = [];    
 export async function initGrammar (theDb: Db) {
   db = theDb;
   const [gs, terms] = await Promise.all ([
-    db.all ("SELECT id, name, lang FROM grammars ORDER BY rowid"),     /* (the pipeline's order: a language's first is the default) */
+    db.all ("SELECT id, name, lang, credit FROM grammars ORDER BY rowid"),     /* (the pipeline's order: a language's first is the default) */
     db.all ("SELECT DISTINCT grammar, key FROM grammar_terms")]);
   grammars = gs as unknown as typeof grammars;
   for (const r of terms) {
@@ -120,35 +120,16 @@ export function grammarIn (sheet: HTMLElement) {
   }
 
   /** The key's sections in the grammar, over the word's info: the first section's heading as the title, the § numbers
-   *  ("Gesenius §§44, 106"), then the text - each section's number (and its heading, where it changes) before it when
-   *  there's more than one. */
+   *  ("Gesenius §§44, 106"), then the text (readSections). */
   async function openSection (grammar: string, key: string, term: HTMLElement) {
     const parts = await db.all ("SELECT first, last FROM grammar_terms WHERE key = ? AND grammar = ? ORDER BY part", [key, grammar]);
-    const sections = await Promise.all (parts.map ((p) => db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
-                                                                  [grammar, Number (p.first), Number (p.last)])));
+    const { title, labels, count, html } = await readSections (grammar, parts.map ((p) => [Number (p.first), Number (p.last)]));
     if (! term.isConnected) return;     // (Another word shown while they were read)
-    const blocks: string[] = [], labels: string[] = [];
-    let title = "", count = 0, lastHeading = "";
-    for (const rows of sections) {
-      if (! rows.length) continue;
-      title ||= String (rows[0].heading);
-      if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
-      count += rows.length;
-      for (const r of rows) {
-        const head = r.heading !== lastHeading && blocks.length ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
-        lastHeading = String (r.heading);
-        const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
-        const body = String (r.body);
-        blocks.push (head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body));
-      }
-    }
-    if (! blocks.length) return;
+    if (! count) return;
     openKey = key;
-    const name = grammars.find ((g) => g.id === grammar)?.name ?? grammar;
     titleEl.textContent = title;
-    secEl.textContent = labels.length ? `${name} ${count > 1 ? "§§" : "§"}${labels.join (", ")}` : name;
-    // (The bodies are the pipeline's own light HTML: <p>, <b>, <i>, tables and script spans, text escaped.)
-    bodyEl.innerHTML = blocks.join ("");
+    secEl.textContent = sectionCaption (grammar, labels, count);
+    bodyEl.innerHTML = html;
     bodyEl.classList.toggle ("one", count === 1);
     showPick ();
     bodyEl.hidden = false; otherEl.hidden = true; otherEl.replaceChildren ();
@@ -188,5 +169,41 @@ export function grammarIn (sheet: HTMLElement) {
   all.push ({ setLang, repick });
   return { showParsing, hideGrammar, showOther };
 }
+
+/** A grammar's sections read in order - ranges of seqs, [first, last] each (grammar_sections) - as the word's panel and
+ *  ☰ Learn (learn.ts) show them: the first section's heading as the title, each range's § numbers ("43–44"), how many
+ *  sections, and their text as HTML - each section's number (and its heading, where it changes) before it; with one
+ *  section, style.css hides the number (.gBody.one: it's in the caption). The bodies are the pipeline's own light HTML
+ *  (<p>, <b>, <i>, tables and script spans, text escaped). */
+export async function readSections (grammar: string, ranges: [number, number][]) {
+  const sections = await Promise.all (ranges.map (([first, last]) => db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
+                                                                             [grammar, first, last])));
+  const blocks: string[] = [], labels: string[] = [];
+  let title = "", count = 0, lastHeading = "";
+  for (const rows of sections) {
+    if (! rows.length) continue;
+    title ||= String (rows[0].heading);
+    if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
+    count += rows.length;
+    for (const r of rows) {
+      const head = r.heading !== lastHeading && blocks.length ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
+      lastHeading = String (r.heading);
+      const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
+      const body = String (r.body);
+      blocks.push (head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body));
+    }
+  }
+  return { title, labels, count, html: blocks.join ("") };
+}
+
+/** The caption under a section's title: the grammar's name and its § numbers ("Gesenius §§43–44"; a book without
+ *  numbers, its name alone). */
+export function sectionCaption (grammar: string, labels: string[], count: number) {
+  const name = grammars.find ((g) => g.id === grammar)?.name ?? grammar;
+  return labels.length ? `${name} ${count > 1 ? "§§" : "§"}${labels.join (", ")}` : name;
+}
+
+/** A grammar's credit line (the grammars table's), as the screens that quote it show it. */
+export const grammarCredit = (grammar: string) => grammars.find ((g) => g.id === grammar)?.credit ?? "";
 
 const esc = (s: string) => s.replace (/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);

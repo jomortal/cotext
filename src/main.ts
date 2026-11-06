@@ -19,6 +19,7 @@ import { initGuide } from "./guide";
 import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
 import "./pronounce";     // (Registers the Pronunciation screen)
+import "./learn";     // (Registers the Learn screen)
 import { initNotes, setNotesPassage } from "./notes";
 import { initSearch, setSearchPassage } from "./search";
 import { initDictionary } from "./dictionary";
