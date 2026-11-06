@@ -412,7 +412,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    (.gHead) in the page's sans; its Hebrew and Greek in their own fonts (.he, .grc). Learn's SHOW IN THE GRAMMAR marks
    the passage (mark), or the whole section (.found), in the tapped word's tint (.w.on's), kept until another link is
    followed. */
-.readText { font-family: var(--serif); font-size: var(--fs-xl); }
+.readText, .fold > .hit > .dictLine { font-family: var(--serif); font-size: var(--fs-xl); }     /* (A fold's preview line - its text's first words - in the same font and size as its text opened) */
 .gSec mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
