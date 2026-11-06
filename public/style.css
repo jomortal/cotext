@@ -66,6 +66,7 @@
   --map-water: #cfdde3; --map-land: #efeadf; --map-road: #b0745a; --map-border: #8a8478;
   --heb: "Ezra SIL", "SBL Hebrew", serif; --serif: "Gentium", "Gentium Plus", serif; --grk: var(--serif); --ui: system-ui, -apple-system, sans-serif;
 }
+@media (pointer: fine) { :root { --fs-icon: 17px; } }     /* (A mouse's screen - a desktop: the icons at most two thirds a finger's size, everything sized from them - bars, heading - following) */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
   --accent: oklch(0.77 0.12 250); --qal: oklch(0.77 0.12 25); --niphal: oklch(0.77 0.12 205); --piel: oklch(0.77 0.12 70); --pual: oklch(0.77 0.12 115); --hithpael: oklch(0.77 0.12 295); --hiphil: oklch(0.77 0.12 160); --other: oklch(0.77 0.12 340); color-scheme: dark } }
