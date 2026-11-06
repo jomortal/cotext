@@ -11,7 +11,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord, wordColumns, addDock } from "./layout";
+import { isSideWord, rightShare, wordSplit, wordColumns, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -153,6 +153,12 @@ function makePanel (sheet: HTMLElement, lean = false) {
     box.className = "lexBox";
     info.after (box);
     box.append (q ("lexRow"), defEl, q ("lexCredit")); }
+  // The divider between the two columns (style.css shows it only then): dragged, the word's info's share of the panel
+  // (layout.ts' wordSplit), kept for every word's panel.
+  const split = document.createElement ("div");
+  split.className = "split wordSplit"; split.setAttribute ("role", "separator"); split.setAttribute ("aria-orientation", "vertical");
+  split.setAttribute ("aria-label", "Resize the lexicon against the word");
+  info.after (split);
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
@@ -186,7 +192,13 @@ function makePanel (sheet: HTMLElement, lean = false) {
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
     const two = fixed === 2 || sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
-    if (two) {
+    const share = rightShare ();
+    info.style.maxWidth = two && share ? "none" : "";
+    if (two && share) {     // (As dragged: the divider's middle --rightShare of the panel's width from its right edge - the info its own right margin and the gap less)
+      const gap = parseFloat (getComputedStyle (sheetScroll).columnGap) || 0;
+      info.style.width = `${sheetScroll.getBoundingClientRect ().width * share / 100 - split.offsetWidth / 2 - gap - parseFloat (getComputedStyle (info).paddingRight)}px`;
+    }
+    else if (two) {
       info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
       // (Plus its scroll bar's width, where it has one that takes room - Windows', always shown: else the bar would take
       // that much from the lines and wrap them)
@@ -195,6 +207,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
     }
   };
   new ResizeObserver (columns).observe (sheet);
+  wordSplit (split, sheetScroll, columns);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
   q ("speakBtn").addEventListener ("click", () => { if (picked) sayWord (picked); });
   q ("speakRoot").addEventListener ("click", () => sayText (lemmaEl.textContent ?? ""));     // (The dictionary form)

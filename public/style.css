@@ -386,7 +386,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* Two columns (panel.ts' .twoCol: the panel at least twice as wide as the word's info needs): the info - the words,
    parsing, vocab gloss and buttons - on the right, the lexicon - its picker, entry and credit -
    on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
-.sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(2 * var(--pad)); overflow: hidden; padding-block: 0; }
+.sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(var(--pad) - var(--split-w) / 2); overflow: hidden; padding-block: 0; }     /* (Either side of the divider: 2 --pad between the columns in all) */
+.sheet .wordSplit { order: 0; margin: 0; max-width: none; } .sheet .panelScroll > .infoBox { order: 1; }     /* (The divider between the two columns, panel.ts: dragged, the word's info's share - layout.ts' wordSplit) */
+:is(.sheet:not(.twoCol), .sheet.grammarOpen) .wordSplit { display: none; }
 :is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-right: 0; }     /* (The two columns the panel's full width - the word's side at its right edge, its scroll bar at the panel's edge: its margin inside it, below - by id, to outweigh the panels' padding) */
 .sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { padding-right: var(--safe-r); }
 .sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
@@ -869,12 +871,13 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 /* PAIR - an iPad upright (a touch screen wider than a phone's, upright: layout.ts' PAIR, keep the two the same): the
    notes and the search share the panel's place under the text, side by side - the notes at the left, the search at
    the right (#paneCol a row, reversed: index.html has the search first) -, #paneSplit between them (vertical:
-   layout.ts) setting the search's share (--searchH, half at first). */
+   layout.ts) at --rightShare % of the width from the right edge (half at first) - the word's panel's two columns'
+   divider's place too. */
 @media (orientation: portrait) and (min-width: 600.02px) and (pointer: coarse) {
   #paneCol:has(.dock:not([hidden])) { display: flex; flex-direction: row-reverse; flex: none; min-height: 0;
     height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (The panel's height: ONE PANE's) */
   #paneCol > .dock { flex: 1 1 0px; height: auto; min-width: 0; }
-  #paneCol > #search { flex-grow: var(--searchH, 50); } #paneCol > #notes { flex-grow: calc(100 - var(--searchH, 50)); }
+  body:has(#notes:not([hidden])) #paneCol > #search { flex: none; width: calc(var(--rightShare, 50) * 1% - var(--split-w) / 2); }     /* (With the notes: the notes the rest; alone, the full width) */
   body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
 }
 

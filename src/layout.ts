@@ -33,7 +33,7 @@
 //   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
 //   An iPad upright (PAIR: a touch screen wider than a phone's, upright) lets the notes and the search share the
 //   panel's place, side by side - the notes at the left, the search at the right, #paneSplit (vertical) between them
-//   setting the search's share (--searchH, as wide).
+//   at --rightShare (rightShareTo) - the same place as the divider between the word's panel's two columns.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
 import { barRoom, SIDE_BAR } from "./bars";
@@ -51,7 +51,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number; cardShare?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number; cardShare?: number; rightShare?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
@@ -62,6 +62,7 @@ if (sizes.sheetW) root.setProperty ("--sheetW", String (sizes.sheetW));
 if (sizes.paneH) root.setProperty ("--paneH", sizes.paneH + "px");
 if (sizes.verseH) root.setProperty ("--verseH", sizes.verseH + "px");
 if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
+if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
 root.setProperty ("--long", `${Math.max (screen.width, screen.height)}px`);     // (The screen's long side, either way up: the card divider's measure)
 if (sizes.paneH || sizes.verseH || sizes.sheetH) document.body.classList.add ("panesSized");     // (Narrow: the panels at their heights as last dragged, the text taking the rest - sizeBelow)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
@@ -87,6 +88,23 @@ function drag (el: HTMLElement, move: (x: number, y: number) => void) {
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo, v));
+
+// One place for two side-by-side dividers: the word's panel's, between its two columns (the lexicon at the left, the
+// word's info at the right), and PAIR's, between the notes and the search - --rightShare, % of the box's width from
+// the divider's middle to its right edge (20-80 %), so the two stand at the same place; dragging either moves both.
+/** The right-hand side's share (%), as last dragged; undefined until then - the word's info as wide as it needs and the
+ *  search half (panel.ts' columns, style.css' PAIR). */
+export const rightShare = () => sizes.rightShare;
+function rightShareTo (box: HTMLElement, x: number) {
+  const r = box.getBoundingClientRect ();
+  sizes.rightShare = Math.round (clamp ((r.right - x) / r.width * 100, 20, 80) * 10) / 10;
+  root.setProperty ("--rightShare", String (sizes.rightShare));
+}
+/** A word's panel's divider between its two columns (the panel's scroller, scroll): dragged, --rightShare; relayout ()
+ *  lays this panel out by it. */
+export function wordSplit (split: HTMLElement, scroll: HTMLElement, relayout: () => void) {
+  drag (split, (x) => { rightShareTo (scroll, x); relayout (); });
+}
 const NOTES_W = 33.333;     // (The panes' column's width at first, % of the window: style.css' fallback the same)
 const notesEl = document.getElementById ("notes")!, searchEl = document.getElementById ("search")!;
 const notesSplit = document.getElementById ("notesSplit")!;
@@ -108,15 +126,15 @@ drag (notesSplit, (x, y) => {
 // The search's height against the notes' (both open; the search on top): its share (%) of the room the two have
 // between them - the column less its dividers and the second word's panel (style.css gives them flex-grow by it) -,
 // from the search's top to the divider's middle, each pane keeping 120 px at least. PAIR (side by side, the search at
-// the right): its width's share, from the divider's middle to the search's right edge, each keeping 120 px.
+// the right): the divider's place, --rightShare (rightShareTo).
 const paneSplit = document.getElementById ("paneSplit")!;
 const pairSplit = () => paneSplit.setAttribute ("aria-orientation", PAIR.matches ? "vertical" : "horizontal");
 pairSplit (); PAIR.addEventListener ("change", pairSplit);
 drag (paneSplit, (x, y) => {
-  const s = searchEl.getBoundingClientRect (), n = notesEl.getBoundingClientRect ();
-  const room = PAIR.matches ? s.width + n.width : s.height + n.height, at = PAIR.matches ? s.right - x - 7 : y - 7 - s.top;     // (7: the divider's half)
+  if (PAIR.matches) { rightShareTo (paneSplit.parentElement!, x); return; }
+  const s = searchEl.getBoundingClientRect (), room = s.height + notesEl.getBoundingClientRect ().height;
   if (room < 240) return;     // (Too short a column for two: left as it is)
-  sizes.searchH = Math.round (clamp (at, 120, room - 120) / room * 1000) / 10;
+  sizes.searchH = Math.round (clamp (y - 7 - s.top, 120, room - 120) / room * 1000) / 10;     // (7: the divider's half)
   root.setProperty ("--searchH", String (sizes.searchH));
 });
 // The word beside the text (body.sideWord: style.css): while wide, whenever the text and its word have at least
