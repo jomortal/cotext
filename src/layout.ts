@@ -19,9 +19,17 @@
 //   off, while either pane is open: placeWord, body.sideWord in style.css): the text's word's panel a column of its
 //   own between the text and the panes - text | word | panes -, its width (--sheetW, a percentage, unitless: 15 % up -
 //   as wide as the text keeping 30 % of the window allows) set by #sheetSplit, now a vertical divider on its left edge.
+// - A phone (PHONE: style.css' phone media query, the same), upright or sideways - a stack of three cards (below):
+//   the word card (the word's panel, #sheet - or #besideSheet, for a word tapped in the notes), the notes and the
+//   search. Only the front card shows, beside the text: upright under it, sideways at its right
+//   the full height (the heading over the text only), one divider between them (#sheetSplit upright, #notesSplit
+//   sideways). The divider is at the same share of the screen both ways: the text's share (--share, %: 60 is 60 % of
+//   the way down upright, 60 % of the way across sideways), so dragging in one sets the other.
+//   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
 import { barRoom, SIDE_BAR } from "./bars";
+const PHONE = matchMedia ("(max-width: 600px), (max-height: 500px)");     // (style.css' phone media query: keep the two the same)
 const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: keep the two the same)
 /** Whether the page is laid out wide now. */
 export const isWide = () => WIDE.matches;
@@ -30,7 +38,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number; share?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
@@ -40,6 +48,7 @@ if (sizes.cardH) root.setProperty ("--cardH", sizes.cardH + "px");
 if (sizes.sheetW) root.setProperty ("--sheetW", String (sizes.sheetW));
 if (sizes.paneH) root.setProperty ("--paneH", sizes.paneH + "px");
 if (sizes.verseH) root.setProperty ("--verseH", sizes.verseH + "px");
+if (sizes.share) root.setProperty ("--share", String (sizes.share));
 if (sizes.paneH || sizes.verseH || sizes.sheetH) document.body.classList.add ("panesSized");     // (Narrow: the panels at their heights as last dragged, the text taking the rest - sizeBelow)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
@@ -71,11 +80,12 @@ const notesSplit = document.getElementById ("notesSplit")!;
 const panesShare = () => notesEl.hidden && searchEl.hidden ? 0 : sizes.notesW ?? NOTES_W;
 // The panes' column's width: from its divider to the window's right edge, as a share of the width, 22-60 % (the
 // text keeping 40 % at least).
-// Narrow, the same divider lies between the word's panel and the panes under it (both open): the panes' height
-// (sizeBelow).
-const narrowSplit = () => notesSplit.setAttribute ("aria-orientation", WIDE.matches ? "vertical" : "horizontal");
-narrowSplit (); WIDE.addEventListener ("change", narrowSplit);
+// Narrow (not a phone), the same divider lies between the word's panel and the panes under it (both open): the panes'
+// height (sizeBelow). A phone held sideways: the divider between the text and the front card (phoneShare).
+const narrowSplit = () => notesSplit.setAttribute ("aria-orientation", WIDE.matches || SIDE_BAR.matches ? "vertical" : "horizontal");
+narrowSplit (); WIDE.addEventListener ("change", narrowSplit); SIDE_BAR.addEventListener ("change", narrowSplit);
 drag (notesSplit, (x, y) => {
+  if (PHONE.matches) { phoneShare (x, document.querySelector ("main")!.getBoundingClientRect ().left, document.body.getBoundingClientRect ().right); return; }
   if (! WIDE.matches) { sizeBelow (notesSplit, y); return; }
   sizes.notesW = Math.round (clamp ((innerWidth - x) / innerWidth * 100, 22, 60) * 10) / 10;
   root.setProperty ("--notesW", String (sizes.notesW));
@@ -91,8 +101,8 @@ drag (document.getElementById ("paneSplit")!, (_x, y) => {
   root.setProperty ("--searchH", String (sizes.searchH));
 });
 // The word beside the text (body.sideWord: style.css): while wide, whenever the text and its word have at least
-// SIDE px between them - the window less the panes' column and its divider, while either pane is open - and on a phone
-// held sideways (bars.ts' SIDE_BAR) while no pane is open, in the panes' place.
+// SIDE px between them - the window less the panes' column and its divider, while either pane is open. Never on a phone:
+// there the word's panel is a card (below).
 // Kept so as the window resizes, a pane opens or closes and a divider is dragged; the text's word's divider with it,
 // vertical beside the text (style.css draws a divider by its aria-orientation), else horizontal.
 const SIDE = 1200;
@@ -102,7 +112,7 @@ let side = false;
 export const isSideWord = () => side;
 function placeWord () {
   const w = panesShare (), panes = w ? innerWidth * w / 100 + 14 : 0;
-  const now = WIDE.matches && (innerWidth - panes >= SIDE || (SIDE_BAR.matches && ! panes));     // (A phone held sideways, no pane open: beside the text, where the panes would be)
+  const now = WIDE.matches && ! PHONE.matches && innerWidth - panes >= SIDE;
   if (now === side) return;
   side = now;
   document.body.classList.toggle ("sideWord", side);
@@ -113,18 +123,50 @@ addEventListener ("resize", placeWord);
 WIDE.addEventListener ("change", placeWord);
 for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (el, { attributes: true, attributeFilter: ["hidden"] });
 
-// Narrow, the panels open share the room with the text (style.css): their number set on the root as --docks, and
-// body.docks while two or more are open (one alone keeps its own height limit).
+// Narrow (not a phone), the panels open share the room with the text (style.css): their number set on the root as
+// --docks, and body.docks while two or more are open (one alone keeps its own height limit).
+// A phone: the cards' stack - the open cards in the order they came to the front, the front last, marked .front
+// (style.css shows only it). One word at a time: a word's panel opening closes the other (by its ✕, as if tapped).
+// Opening a card, or tapping its button while it's open, puts it in front; its ✕ closes it, showing the card in front
+// before it; all closed, the divider goes and the text takes the screen.
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
+const KINDS = [["sheet", "besideSheet"], ["notes"], ["search"]];     // (The word card - either word's panel -, the notes, the search)
+const kindOf = (d: HTMLElement) => KINDS.find ((k) => k.includes (d.id));
+const stack: HTMLElement[] = [];
+const restack = () => { for (const d of docks) d.classList.toggle ("front", d === stack.at (-1)); };
 const countDocks = () => {
   const n = docks.filter ((d) => ! d.hidden).length;
   root.setProperty ("--docks", String (n));
   document.body.classList.toggle ("docks", n >= 2);
+  for (const d of docks) {
+    const kind = kindOf (d), at = stack.indexOf (d);
+    if (! kind) continue;
+    if (d.hidden) { if (at >= 0) stack.splice (at, 1); continue; }
+    if (at >= 0) continue;
+    stack.push (d);     // (Just opened: in front)
+    if (PHONE.matches) for (const o of stack) if (o !== d && kind.includes (o.id)) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The other of its kind closed - its own ✕, so all it does on closing is done)
+  }
+  restack ();
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
+/** A card brought to the front (its button tapped while it's open, a new word in its panel): true when, on a phone, it
+ *  was open behind another - so its button only brings it forward, not closing it. */
+export function toFront (d: HTMLElement): boolean {
+  const at = stack.indexOf (d);
+  if (d.hidden || at < 0 || at === stack.length - 1) return false;
+  stack.splice (at, 1); stack.push (d); restack ();
+  return PHONE.matches;
+}
+// A phone: the divider dragged between the text and the front card - its middle at p (y upright, x sideways) between
+// the text's start and the room's end (the play bar's top; sideways the side bar's edge): the text's share of the
+// two (less the divider), 20-80 %, kept for both orientations (--share: style.css).
+function phoneShare (p: number, start: number, end: number) {
+  sizes.share = Math.round (clamp ((p - 7 - start) / (end - start - 14) * 100, 20, 80) * 10) / 10;     // (7: the divider's half)
+  root.setProperty ("--share", String (sizes.share));
+}
 
-// Narrow, a divider dragged sets the height of the panel just under it - the word's panel's --sheetH (the wide
+// Narrow (not a phone), a divider dragged sets the height of the panel just under it - the word's panel's --sheetH (the wide
 // layout's too), the panes' --paneH (the search's and the notes' alike), the add-verse box's --verseH, the second
 // word's panel's --besideH (px; body.panesSized, style.css) - from the divider's middle to the panel's foot. Each
 // panel then keeps its height as another is resized, opened or closed: the text alone takes up the change, keeping
@@ -158,7 +200,7 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
   return scroll;
 }
 // A word's panel's height: from its divider down to the play bar (narrow: the divider under the text, with any panel
-// open - the height of the panel under it, sizeBelow); beside the text the text's word's panel's width
+// open - the height of the panel under it, sizeBelow; a phone upright: the text's share, phoneShare); beside the text the text's word's panel's width
 // instead: from its divider to the panes' divider (the window's right edge while both are closed), the text keeping
 // 30 % of the window.
 for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] as const)
@@ -171,6 +213,7 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
     }
     const bar = innerHeight - barRoom (document.getElementById ("playBar"));     // (The play bar's top - the window's foot while it's down the side)
     const head = document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom, mid = bar - head;
+    if (id === "sheetSplit" && PHONE.matches) { phoneShare (y, document.querySelector ("main")!.getBoundingClientRect ().top, bar); return; }     // (A phone upright: the divider between the text and the front card)
     if (id === "sheetSplit" && ! WIDE.matches) { sizeBelow (sheetSplit, y); return; }
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");

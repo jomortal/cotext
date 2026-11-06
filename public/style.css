@@ -202,11 +202,12 @@ body.noVerbColors .w .parse { color: inherit; }
 body:has(#sheet:not([hidden])) #search:not([hidden]), body:has(#sheet:not([hidden]), #search:not([hidden])) #notes:not([hidden]),
 body:has(#sheet:not([hidden]), #search:not([hidden]), #notes:not([hidden])) #besideSheet:not([hidden]) { border-top: var(--rule); }
 body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(--rule); }     /* (Its line over it with a panel open under the text, or the book menu over it) */
-/* Narrow (layout.ts), several panels open (body.docks; --docks their number - layout.ts counts them): they share the
-   room between the heading and the play bar (--mid: notes.ts measures it) evenly with the text - two a third each,
-   three a quarter each, four a fifth -, the text keeping its share at least; each panel no taller than its content. */
-@media (max-width: 699.98px) {
-.col { display: contents; }     /* (The columns' boxes not there: their contents stack in the body's column) */
+@media (max-width: 699.98px) { .col { display: contents; } }     /* (Narrow: the columns' boxes not there - their contents stack in the body's column) */
+/* Narrow (layout.ts) but not a phone (a phone's cards: PHONE, below), several panels open (body.docks; --docks their
+   number - layout.ts counts them): they share the room between the heading and the play bar (--mid: notes.ts measures
+   it) evenly with the text - two a third each, three a quarter each, four a fifth -, the text keeping its share at
+   least; each panel no taller than its content. */
+@media (min-width: 600.02px) and (max-width: 699.98px) and (min-height: 500.02px) {
 body.docks :is(#sheet, #notes, #besideSheet, #search) { max-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }     /* (By id: to outweigh each panel's own limit) */
 body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
 /* The divider under the text (#sheetSplit) while any panel is open - its line the text's under it -, and with the
@@ -598,6 +599,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
 .split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
 .split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
+.split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }     /* (Wide, and a phone held sideways) */
+.split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
+.split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
 @media (min-width: 700px) {
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--sheetCol, 0px) auto var(--paneCol, 0px);
          grid-template-rows: auto minmax(0, 1fr) auto; }     /* (The text, the word's divider and panel beside it, the panes' divider, the panes; a divider's column empty while hidden) */
@@ -612,7 +616,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      order; the two share the column's room by --searchH (the search's %, layout.ts' #paneSplit; half each at first):
      one open alone fills it whatever its share. */
   #search { flex-grow: var(--searchH, 50); } #notes { flex-grow: calc(100 - var(--searchH, 50)); }
-  body:has(#notes[hidden]) :is(#besideSplit, #besideSheet) { display: none !important; }     /* (The second word's panel only with the notes it belongs to, not under the search alone) */
+  @media (min-height: 500.02px) { body:has(#notes[hidden]) :is(#besideSplit, #besideSheet) { display: none !important; } }     /* (The second word's panel only with the notes it belongs to, not under the search alone - but for a phone's word card, PHONE below) */
   .sheet { flex: none; max-height: none; border-top: 0 !important; }     /* (Its divider is its top line) */
   #sheet { height: min(var(--sheetH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
   #besideSheet { height: min(var(--besideH, calc(var(--mid, 100dvh) * .4)), calc(var(--mid, 100dvh) - 172px)); }
@@ -622,10 +626,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
      panel's (layout.ts sets it) - sets a width; horizontal - a word's panel's height, the search's against the notes' -
      sets a height. */
   .split { display: block; }
-  .split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }
-  .split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
   body:has(#notes:not([hidden]), #search:not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the panes' divider: no gap where they meet) */
-  .split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
   body:has(#notes[hidden]):has(#search[hidden]) #notesSplit, body:is(:has(#notes[hidden]), :has(#search[hidden])) #paneSplit { display: none; }     /* (The column's divider while either pane is open, the panes' only while both are) */
   /* The heading and the ⋯ menu their column's full width, inside the --pad margins - ☰ and ⋯ at its edges; the text,
      the panels' contents and the screens still at most --page. */
@@ -823,10 +824,10 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    (--barH) none. Their buttons top to bottom as left to right: search, ▶, notes; Shuffle, Flip, Start over. */
 :root { --sideBar: 0px; --sheetW0: 25; }     /* (--sheetW0: the word's panel beside the text, % of the window, until dragged) */
 @media (orientation: landscape) and (max-height: 500px) {
-  :root { --sheetW0: 40; --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
+  :root { --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
   body { right: var(--sideBar); }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
-  :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } body.sideWord #sheet > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the text, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
+  :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
   :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
@@ -835,6 +836,32 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
+}
+
+/* A PHONE (layout.ts' PHONE: keep the two the same), upright or sideways: the panels a stack of three cards - the word
+   card (#sheet, or #besideSheet for a word of the notes), the notes, the search -, only the front one shown (.front:
+   layout.ts keeps the stack), the others open under it. One divider between the text and the front card, at the text's
+   share of the room (--share, %, layout.ts: the same both ways; half at first): upright #sheetSplit, the card under the
+   text; sideways #notesSplit, the card at the text's right the full height, the heading over the text only. No card
+   open: no divider, the text the full room. The add-verse box (#verseSheet) not a card: its own height under the text. */
+@media (max-width: 600px), (max-height: 500px) {
+  :is(#sheet, #besideSheet, #search, #notes):not(.front) { display: none !important; }
+  :is(#sheet, #besideSheet, #search, #notes).dock { border-top: 0 !important; max-height: none; min-height: 0; }     /* (The divider is its line) */
+  :is(#sheetSplit, #notesSplit, #paneSplit, #besideSplit) { display: none !important; }
+}
+@media (max-width: 600px) and (orientation: portrait), (max-width: 600px) and (min-height: 500.02px) {     /* (Upright: a phone not held sideways - SIDE BAR) */
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) main { flex: var(--share, 50) 1 0px; min-height: 0; border-bottom: 0; }
+  :is(#sheet, #besideSheet, #search, #notes).dock { flex: calc(100 - var(--share, 50)) 1 0px; height: auto; }
+}
+@media (orientation: landscape) and (max-height: 500px) {     /* (Sideways: SIDE BAR's) */
+  body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--cardW, 0px); grid-template-rows: auto minmax(0, 1fr) auto; }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) { --cardW: calc((100% - var(--split-w)) * (100 - var(--share, 50)) / 100); }
+  .col { display: contents; }
+  .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; } #verseSheet { grid-column: 1; grid-row: 3; }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }
+  :is(#sheet, #besideSheet, #search, #notes).dock { grid-column: 3; grid-row: 1 / -1; height: auto; flex: none; }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
 }
 
 @media print {
