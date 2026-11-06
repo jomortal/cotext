@@ -18,14 +18,11 @@ const body = document.getElementById ("pickerBody")!;
 const idle = ["optionsBtn", "playBtn", "searchBtn", "notesBtn"].map ((id) => document.getElementById (id) as HTMLButtonElement);
 new MutationObserver (() => { for (const b of idle) b.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
 
-// (On a wide screen it - and a study screen, ☰'s, but for its right edge (below) - starts and ends where the text's column does, so the panes' column
+// (On a wide screen it starts and ends where the text's column does, so the panes' column
 // at the right stays in view: --textL and --textR, the text's insets from the window's edges, set on the root for
 // style.css; kept so as the column changes - a pane opened or closed, a split dragged, the window resized)
 // (Measured on the text itself, main: with the word beside the text #textCol has no box of its own - style.css)
 const text = document.querySelector ("main")!;
-// A study screen also covers the word's panel beside the text: its right inset, --studyR, the panes' column's (from
-// their divider), else the window's edge.
-const panesSplit = document.getElementById ("notesSplit")!;
 // The picker between the heading and the play bar: --headB, the heading's bottom, and --playB, the play bar's height
 // from the window's foot (style.css' #picker)
 const head = document.querySelector<HTMLElement> (".head")!, playBar = document.getElementById ("playBar")!;
@@ -33,10 +30,9 @@ const fit = () => {
   const root0 = document.documentElement.style;
   root0.setProperty ("--headB", `${head.getBoundingClientRect ().bottom}px`);
   root0.setProperty ("--playB", `${barRoom (playBar)}px`);
-  const r = text.getBoundingClientRect (), root = document.documentElement.style, split = panesSplit.getBoundingClientRect ();
+  const r = text.getBoundingClientRect (), root = document.documentElement.style;
   root.setProperty ("--textL", `${Math.max (0, r.left)}px`);
   root.setProperty ("--textR", `${Math.max (0, innerWidth - r.right)}px`);
-  root.setProperty ("--studyR", `${split.width ? Math.max (0, innerWidth - split.left) : 0}px`);
 };
 new ResizeObserver (fit).observe (text); new ResizeObserver (fit).observe (head); new ResizeObserver (fit).observe (playBar);
 addEventListener ("resize", fit);
