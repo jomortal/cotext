@@ -807,7 +807,6 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csDoc { max-width: var(--page); margin: 0 auto; }
 .csTitle { font-size: var(--fs-2xl); }
 .csPart + .csPart { margin-top: calc(2 * var(--gap-l)); }     /* (A later section of the printout, headed with its reference: set apart from the one before) */
-.csSub { margin-top: 2px; }
 .csBlock { margin-top: 22px; }
 .csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: var(--rule); padding-bottom: 4px; }
 .csArticle { font-size: var(--fs-m); margin: 14px 0 4px; }

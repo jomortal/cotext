@@ -860,7 +860,6 @@ async function render () {
     const { book, chapter } = sec, ch = dataOf (sec);
     const part = el ("div", "csPart");
     part.append (el ("h1", "csTitle", refName (sec)));
-    if (! i) part.append (el ("div", "src csSub", "Study printout"));
     const vs = await verses (sec);
     const list: Item[] = sec.items;     // (Nothing added: nothing shown, not even the text)
     const firstText = list.find ((i) => i.k === "text" && ! i.other);     // (The other text numbers its own verses: notes go under this one's)
