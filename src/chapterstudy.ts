@@ -67,6 +67,7 @@ import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
+import { printSplit } from "./layout";
 
 /** An item of the printout. from / to: a verse range (0: the section's first / last). A text's under: its helps only for
  *  words coming fewer times than this in the testament (0 or none: every word's), helps saying which (both at first),
@@ -372,7 +373,10 @@ onScreen ("Study printout", async (body) => {
   printEl = print;
   print.addEventListener ("click", () => { if (pdfReady) void sharePdf (pdfReady); else if (printIgnored ()) void makePdf (); else { prepare (); window.print (); } });
   editor.append (sectionsEl, more, print);
-  box.append (previewEl, editor);
+  const split = el ("div", "split");     // (Narrow: the preview's height dragged - layout.ts' printSplit)
+  Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" }); split.setAttribute ("aria-orientation", "horizontal");
+  printSplit (split, box);
+  box.append (previewEl, split, editor);
   body.append (box);
   drawSections ();
   render ();
