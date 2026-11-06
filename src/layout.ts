@@ -43,9 +43,12 @@ const ONE_PANE = matchMedia ("(max-width: 600px), (max-height: 500px), (pointer:
 const PAIR = matchMedia ("(min-width: 600.02px) and (min-height: 500.02px) and (pointer: coarse)");     // (style.css' PAIR media queries: keep them the same)
 /** PAIR upright: the notes and the search side by side (sideways - SIDE_BAR -, one over the other). */
 const sideBySide = () => PAIR.matches && ! SIDE_BAR.matches;
-/** The word's panel's columns now while one-pane: 1 on a phone and sideways, 2 upright on a touch screen wider than a
- *  phone's (an iPad's); null otherwise - as many as fit (panel.ts' columns). */
-export const wordColumns = (): 1 | 2 | null => ! ONE_PANE.matches ? null : PHONE.matches || SIDE_BAR.matches ? 1 : 2;
+/** The word's panel's columns now while one-pane: 1 on a phone, 2 on a touch screen bigger than a phone's (an iPad's:
+ *  PAIR); null otherwise - as many as fit (panel.ts' columns). */
+export const wordColumns = (): 1 | 2 | null => ! ONE_PANE.matches ? null : PAIR.matches ? 2 : 1;
+/** PAIR sideways: the word's panel's two parts one over the other, as the search over the notes - the word's info on
+ *  top, the lexicon under it (style.css), #wordSplit at the search's share of the height (--searchH). */
+export const wordStacked = () => PAIR.matches && SIDE_BAR.matches;
 const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: keep the two the same)
 /** Whether the page is laid out wide now. */
 export const isWide = () => WIDE.matches;
@@ -106,8 +109,16 @@ function rightShareTo (box: HTMLElement, x: number) {
 /** A word's panel's divider between its two columns (the panel's scroller, scroll): dragged, --rightShare; relayout ()
  *  lays this panel out by it. */
 export function wordSplit (split: HTMLElement, scroll: HTMLElement, relayout: () => void) {
-  drag (split, (x) => { rightShareTo (scroll, x); relayout (); });
+  wordSplits.push (split); pairSplit ();
+  drag (split, (x, y) => {
+    if (! wordStacked ()) { rightShareTo (scroll, x); relayout (); return; }
+    const r = scroll.getBoundingClientRect (), gap = parseFloat (getComputedStyle (scroll).rowGap) || 0, half = split.offsetHeight / 2;
+    const room = r.height - 2 * (half + gap);     // (The info's and the lexicon's heights together, as the search's and the notes')
+    sizes.searchH = Math.round (clamp ((y - r.top - half - gap) / room * 100, 20, 80) * 10) / 10;
+    root.setProperty ("--searchH", String (sizes.searchH));
+  });
 }
+const wordSplits: HTMLElement[] = [];
 const NOTES_W = 33.333;     // (The panes' column's width at first, % of the window: style.css' fallback the same)
 const notesEl = document.getElementById ("notes")!, searchEl = document.getElementById ("search")!;
 const notesSplit = document.getElementById ("notesSplit")!;
@@ -131,7 +142,7 @@ drag (notesSplit, (x, y) => {
 // from the search's top to the divider's middle, each pane keeping 120 px at least - PAIR sideways too. PAIR upright
 // (side by side, the search at the right): the divider's place, --rightShare (rightShareTo).
 const paneSplit = document.getElementById ("paneSplit")!;
-const pairSplit = () => paneSplit.setAttribute ("aria-orientation", sideBySide () ? "vertical" : "horizontal");
+function pairSplit () { for (const el of [paneSplit, ...wordSplits]) el?.setAttribute ("aria-orientation", sideBySide () || (el !== paneSplit && ! wordStacked ()) ? "vertical" : "horizontal"); }     // (The word's panels' too: vertical but sideways on an iPad)
 pairSplit (); PAIR.addEventListener ("change", pairSplit); SIDE_BAR.addEventListener ("change", pairSplit);
 drag (paneSplit, (x, y) => {
   if (sideBySide ()) { rightShareTo (paneSplit.parentElement!, x); return; }

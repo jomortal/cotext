@@ -892,6 +892,15 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body:has(#notes:not([hidden])) #paneCol > #search { flex-grow: var(--searchH, 50); } #paneCol > #notes { flex-grow: calc(100 - var(--searchH, 50)); }
   body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
 }
+/* The word's panel in two parts sideways too, one over the other as the search over the notes: the word's info on top,
+   the lexicon (or a section opened from the info) under it, #wordSplit (horizontal) between them at --searchH. */
+@media (orientation: landscape) and (min-width: 600.02px) and (min-height: 500.02px) and (pointer: coarse) {
+  .sheet.twoCol:not([hidden]) { padding-block: 0; } .sheet.twoCol .panelScroll { flex-direction: column; gap: 0; }     /* (The divider at the very place of the search's: no margins round the two) */
+  :is(#sheet, #besideSheet).twoCol > .panelScroll { padding-top: 0; } .sheet.twoCol .panelScroll > .infoBox { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The clock's room inside the info, not over the two) */
+  .sheet.twoCol .panelScroll > .infoBox { order: -2; width: auto; max-width: none; flex: none; box-sizing: border-box; height: calc((100% - var(--split-w)) * var(--searchH, 50) / 100); padding-right: var(--pad); }     /* (The search's height, exactly: the room less the divider, at its share) */
+  .sheet.twoCol .panelScroll > :is(.lexBox, .gInline) { order: 0; flex: 1 1 0px; padding-right: var(--pad); }     /* (The rest) */
+  .sheet.twoCol .panelScroll > .wordSplit { order: -1; }     /* (The info, the divider, the lexicon - top to bottom) */
+}
 
 @media print {
   @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }

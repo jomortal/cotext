@@ -11,7 +11,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord, rightShare, wordSplit, wordColumns, addDock } from "./layout";
+import { isSideWord, rightShare, wordSplit, wordStacked, wordColumns, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -164,6 +164,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
     sheet.classList.remove ("twoCol");
     const fixed = wordColumns ();
     if (fixed === 1 || (sheet.id === "sheet" && isSideWord ())) return;     // (One column - layout.ts: the lexicon under the word)
+    if (wordStacked ()) { sheet.classList.add ("twoCol"); info.style.width = info.style.maxWidth = ""; return; }     // (An iPad sideways: the two one over the other, by style.css)
     info.style.width = "";
     heads.style.width = "max-content";
     const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
