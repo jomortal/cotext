@@ -758,6 +758,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Upright: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
 .cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
 .cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor) { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
+.csEditHead { align-items: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: var(--rule); } .csEditHead .gTitle { margin: 0; }     /* (The editor's title row: EDIT, its ✕ closing it - at the right, as a pane's) */
 .csGhost { visibility: hidden; grid-column: var(--c); grid-row: 1; } .csToggle { grid-column: 4; grid-row: 1; justify-self: center; }     /* (The printout's bar: its one button where the Bible's search is - between the middle and the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }

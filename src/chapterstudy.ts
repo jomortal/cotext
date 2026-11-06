@@ -417,7 +417,11 @@ onScreen ("Study printout", async (body) => {
   dlRow.append (dl);
   const out = el ("div", "csOut");
   out.append (dlRow, print);
-  editor.append (sectionsEl, more, out);
+  // (Its title row: EDIT and a ✕ closing the editor - as the bar's pencil does -, apart from the passages' own ✕s)
+  const head = el ("div", "top csEditHead"), close = el ("button", "pill icon", "✕");
+  close.setAttribute ("aria-label", "Close the editor");
+  head.append (el ("h2", "gTitle", "Edit"), close);
+  editor.append (head, sectionsEl, more, out);
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
@@ -430,7 +434,9 @@ onScreen ("Study printout", async (body) => {
   let shown = true;
   try { shown = localStorage.getItem (EDITOR_KEY) !== "0"; } catch { /* private mode */ }
   const show = (on: boolean) => { shown = on; box.classList.toggle ("csNoEditor", ! on); toggle.setAttribute ("aria-pressed", String (on)); };
-  toggle.addEventListener ("click", () => { show (! shown); try { localStorage.setItem (EDITOR_KEY, shown ? "1" : "0"); } catch { /* private mode */ } });
+  const set = (on: boolean) => { show (on); try { localStorage.setItem (EDITOR_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
+  toggle.addEventListener ("click", () => set (! shown));
+  close.addEventListener ("click", () => set (false));
   show (shown);
   // (Unseen stand-ins for the Bible's ‹, ▶ and ›, so the bar's room is shared out as the play bar's: the pencil exactly where its search is)
   const ghost = (g: string, c: number, r: number) => { const x = el ("span", "pill icon csGhost" + (g === "▶" ? "" : " arrow"), g); x.setAttribute ("aria-hidden", "true"); x.style.setProperty ("--c", String (c)); x.style.setProperty ("--r", String (r)); return x; };
