@@ -45,7 +45,8 @@
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
   --x-top: calc(var(--pad) - var(--head-y) - 4px);     /* (A resources panel's ✕ from the panel's top: up by its button's padding and the icon's own room above its ink (~4px), so its ink sits as far down as in from the side) */
-  --head-h: calc(var(--icon-box) + 4 * var(--head-y));     /* (The heading's height, under the clock: its row - an icon's box, --head-y above and below it - and --head-y above and below that; the side bar's width too) */
+  --head-h: calc(var(--fs-m) + 2 * var(--margin));     /* (The heading's height, under the clock - every top bar's and bottom bar's, the side bar's width: the title's text (its 1em) with the side margin above and below it, so the text sits as far from the bar's edges as from the screen's side) */
+  --row-h: calc(var(--head-h) - 2 * var(--head-y));     /* (A top row's own height inside its bar's --head-y above and below: the heading's, the screens' top rows, the drawer's ✕ row - their buttons and titles centered on it) */
   --vnum-gap: 12px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The margin above and below: every panel's, menu's and screen's top and bottom edges) */
@@ -141,7 +142,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(var(--winH, 100dvh) - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
-.head .row { height: calc(var(--head-h) - 2 * var(--head-y)); display: grid; grid-template-columns: var(--icon-box) minmax(0, 1fr) var(--icon-box); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
+.head .row { height: var(--row-h); display: grid; grid-template-columns: var(--icon-box) minmax(0, 1fr) var(--icon-box); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
 .head .row > :first-child { justify-self: start; } .head .row > :last-child { justify-self: end; }
 .head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; width: 100%; max-width: var(--page); justify-self: center; }     /* (A heading's title never wider than the text: at most --page, centered as the text is - the top rows' too, .topRow) */
 .head .place { flex: 1 1 auto; }     /* (The passage: a title - .title's kind, below - on an icon pill, the row's room between ☰ and ⋯) */
@@ -328,7 +329,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: calc(var(--winW, 100vw) * .8); background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
                border-right: var(--rule); display: grid; align-content: start; gap: var(--gap); overflow-y: auto;
                padding: var(--head-top) calc(3 * var(--pad)) var(--pad) var(--safe-l); }     /* (Its ✕ at the top rows' height: --head-top) */
-#drawerPanel .top { align-items: center; justify-content: flex-end; margin-right: calc(-2 * var(--pad)); }     /* (Just its ✕, at the right - into the panel's right padding: as far from its edge as every ✕ from its edge, --pad) */
+#drawerPanel .top { min-height: var(--row-h); align-items: center; justify-content: flex-end; margin-right: calc(-2 * var(--pad)); }     /* (Just its ✕, at the right - into the panel's right padding: as far from its edge as every ✕ from its edge, --pad) */
 .src .langPick { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--soft); padding: 0; margin-right: 10px; }     /* (The book list's Old Testament heading: HEBREW and GREEK LXX in its own small capitals, the one picked in the accent - .pill[aria-pressed]) */
 .src .langPick[aria-pressed="true"] { color: var(--accent); }
 #drawerPanel > .pill { display: flex; align-items: center; gap: var(--gap); text-align: left; padding: 10px 0; font-size: var(--fs-l); }
@@ -352,7 +353,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
    window's top and foot. */
 #screen { position: fixed; inset: 0; top: var(--topH, calc(48px + env(safe-area-inset-top, 0px))); background: var(--bg); overflow-y: auto; z-index: 30;
           padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); box-shadow: 0 0 0 100vmax var(--bg); }     /* (Its background on past its box - behind its own bars, as a drop-down opens -: the Bible's page never showing through) */
-#screenMenu { position: fixed; z-index: 32; top: var(--head-top); }
+#screenMenu { position: fixed; z-index: 32; top: calc(var(--head-top) + var(--row-h) / 2); translate: 0 -50%; }     /* (Centered on the top row, as the heading's ☰) */
 #screenMenu { left: var(--col-l); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
 
 /* The strip under the clock (the top safe area) painted solid in the page's color, over whatever scrolls beneath:
@@ -508,7 +509,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
 .topRow > * { max-width: var(--page); }     /* (Its title within the content's width, as the Bible's heading: .head .nav) */
-.topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
+.topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: var(--row-h); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as the Bible's heading - --head-h -, the name centered in it, clear of ☰ and +) */
+:is(.head, .topRow, .bottomBar, #drawerPanel .top) .pill.icon { margin-block: calc(-1 * var(--head-y)); }     /* (A bar's icon buttons: their tap room past the bar's text room, never making the bar taller - --head-h sets it) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
 .topArrow { display: inline-block; vertical-align: middle; margin-left: .4em; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
