@@ -106,7 +106,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
 /* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
-#options, .chooseList, .csOutPop, .csMenu { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
+#options, .chooseList, .csMenu { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(100dvh - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
@@ -218,7 +218,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .vnum.playing { color: var(--accent); }
 #voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; background: var(--bg); color: var(--fg); max-width: 100%; }
 /* A box (a picker, its list, the printout's preview and options): a kept line round it, rounded. */
-#voicePick, .choose, .chooseList, .csMenu, .csOutPop { border: var(--rule); border-radius: var(--radius); }
+#voicePick, .choose, .chooseList, .csMenu { border: var(--rule); border-radius: var(--radius); }
 #audioSettings { flex: 1 1 100%; }
 
 /* The panes (.pane: the notes panel, notes.ts, and the search pane, search.ts - built alike, layout.ts' paneFrame):
@@ -692,7 +692,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); row-gap: 0; grid-template-areas: "preview" "split" "editor";
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Upright: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
 .cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
-.cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor) { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
+.cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor), .cstudy > .csEditor[hidden] { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
 .csEditHead { align-items: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: var(--rule); position: sticky; top: 0; z-index: 2; background: var(--bg); } .csEditHead .gTitle { margin: 0; }     /* (The editor's title row: EDIT, its ✕ closing it - at the right, as a pane's - frozen over what scrolls) */
 .csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); } .csEditor::-webkit-scrollbar-track { margin-top: 48px; }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
 .csToggle { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (The printout's bar: its one button where the Bible's search is - between the middle and the right end) */
@@ -722,7 +722,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csPrint { color: var(--accent); }
 .csMemoBox { width: 100%; box-sizing: border-box; resize: vertical; font-size: var(--fs-m); margin: 0 0 8px; } .csMemo { white-space: pre-wrap; margin: 0; color: var(--fg); font-size: var(--fs-m); line-height: var(--lh); }     /* (A note of the reader's own: its box in the editor, typed in; in the printout, as typed - its lines kept) */
 .csOut { display: grid; justify-items: start; gap: var(--gap); }     /* (DOWNLOAD's picker, then Print under it) */
-.csOutPop { position: fixed; z-index: 32; right: var(--safe-r); bottom: calc(var(--barH) + var(--gap-s)); padding: var(--pad); }     /* (The bar's download icon's menu: over the screen, above the icon - beside it sideways, below) */
 .csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); position: fixed; z-index: 33; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's menu: an overlay as a menu is, over the screen under its button - showMenu places it: in by its margin, its choices' names over the lines' names; nothing moved -; a tap elsewhere closes it) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
@@ -803,7 +802,6 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
   .csToggle { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (As the Bible's: upright's right side at the top sideways - the download icon at the top end, the pencil under it) */     /* (The printout's bar down the side: its one button where the Bible's search is) */
-  .csOutPop { right: calc(var(--sideBar) + var(--gap-s)); bottom: auto; top: var(--head-top); }     /* (Beside the icon at the bar's top) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
@@ -873,7 +871,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .csOutPop, .chooseList { display: none !important; }
+  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .csOutPane, .chooseList { display: none !important; }
   #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
   .csPreview { overflow: visible; border: 0; padding: 0; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;

@@ -443,35 +443,42 @@ onScreen ("Study printout", async (body) => {
   // (Sideways the editor and the divider run the screen's full height, as the Bible's side panel, the top bar over the
   // preview alone: its right end kept at the divider's left - --csTopR, style.css)
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - split.getBoundingClientRect ().left}px`)).observe (split);
-  box.append (previewEl, split, editor);
+  // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
+  const outPane = el ("div", "csEditor csOutPane"), outHead = el ("div", "top csEditHead"), outClose = el ("button", "pill icon", "✕");
+  outClose.setAttribute ("aria-label", "Close the download pane");
+  outHead.append (el ("h2", "gTitle", "Download"), outClose);
+  outPane.append (outHead, out);
+  box.append (previewEl, split, editor, outPane);
   // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): a pencil where the Bible's search is,
-  // showing or hiding the editor (shown: pressed) - hidden, the preview the whole room; kept on the device.
-  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle");
+  // showing or hiding the editor, and at its right end (sideways its top end, as the Bible's right side goes to the
+  // top) a download icon showing or hiding the download pane - one pane at a time, in the same place (the one shown:
+  // its icon pressed); none, the preview the whole room. Which is shown kept on the device.
+  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle"), dlBtn = el ("button", "pill icon csOutBtn");
   toggle.setAttribute ("aria-label", "Show or hide the editor");
   toggle.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>`;     // (A pencil: editing)
-  let shown = true;
-  try { shown = localStorage.getItem (EDITOR_KEY) !== "0"; } catch { /* private mode */ }
-  const show = (on: boolean) => { shown = on; box.classList.toggle ("csNoEditor", ! on); toggle.setAttribute ("aria-pressed", String (on)); };
-  const set = (on: boolean) => { show (on); try { localStorage.setItem (EDITOR_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
-  toggle.addEventListener ("click", () => set (! shown));
-  close.addEventListener ("click", () => set (false));
-  show (shown);
-  // A download icon at the bar's right end (sideways its top end, as the Bible's right side goes to the top): DOWNLOAD's picker and PRINT in a menu over the screen,
-  // opened and closed by it; a tap elsewhere closes it
-  const dlBtn = el ("button", "pill icon csOutBtn"), pop = el ("div", "csOutPop");
-  dlBtn.setAttribute ("aria-label", "Download or print");
+  dlBtn.setAttribute ("aria-label", "Show or hide the download pane");
   dlBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>`;     // (An arrow down to a line)
-  pop.append (out);
-  const openOut = (on: boolean) => { pop.hidden = ! on; dlBtn.setAttribute ("aria-expanded", String (on)); dlBtn.setAttribute ("aria-pressed", String (on)); };
-  openOut (false);
-  dlBtn.addEventListener ("click", () => openOut (pop.hidden));
-  document.addEventListener ("pointerdown", (e) => { if (! pop.hidden && ! pop.contains (e.target as Node) && ! dlBtn.contains (e.target as Node)) openOut (false); });
+  type Pane = "edit" | "out" | "";
+  let pane: Pane = "edit";
+  try { const k = localStorage.getItem (EDITOR_KEY); pane = k === "0" ? "" : k === "out" ? "out" : "edit"; } catch { /* private mode */ }
+  const show = (p: Pane) => {
+    pane = p;
+    box.classList.toggle ("csNoEditor", ! p);
+    editor.hidden = p !== "edit"; outPane.hidden = p !== "out";
+    toggle.setAttribute ("aria-pressed", String (p === "edit")); dlBtn.setAttribute ("aria-pressed", String (p === "out"));
+    try { localStorage.setItem (EDITOR_KEY, p === "edit" ? "1" : p || "0"); } catch { /* private mode */ }
+  };
+  toggle.addEventListener ("click", () => show (pane === "edit" ? "" : "edit"));
+  dlBtn.addEventListener ("click", () => show (pane === "out" ? "" : "out"));
+  close.addEventListener ("click", () => show (""));
+  outClose.addEventListener ("click", () => show (""));
+  show (pane);
   bar.append (toggle, dlBtn);
-  body.append (box, bar, pop);
+  body.append (box, bar);
   drawSections ();
   render ();
 });
-const EDITOR_KEY = "cotext.study.editor";     // ("0": the editor hidden - the bar's toggle)
+const EDITOR_KEY = "cotext.study.editor";     // (The pane shown: "1" the editor, "out" the download pane, "0" none)
 
 /** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
  *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
