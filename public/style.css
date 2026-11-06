@@ -493,13 +493,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
-.topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name and +, a drop-down open in it, growing with it) */
+.topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name and +, the Study printout's its printout's name, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
-#screen[data-screen="Verse cards"] { padding-top: calc(var(--vcTopH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --vcTopH, versecards.ts) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"]) { padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 .vcTopBtns { position: absolute; top: var(--head-top); right: var(--col-r); display: flex; gap: 18px; align-items: center; }     /* (+ where the Bible view's ⋯ is: the top row's right end) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
+.topArrow { position: relative; top: -.25em; margin-left: .3em; color: var(--soft); font-weight: 400; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
 @media (min-width: 700px) { .vcTopBtns { right: var(--safe-r); } }     /* (Wide: + at the screen's edge, as the Bible view's ⋯) */
 /* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
@@ -719,7 +720,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen[data-screen="Verse cards"] #screenTop { display: none; }     /* (Verse cards: its own top bar, the deck's name in it and + - the same kind, .topBar) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"]) #screenTop { display: none; }     /* (Verse cards, Study printout: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
 /* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
 #cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); max-height: none; border-top: var(--rule) !important; }
@@ -922,7 +923,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, #screenTop, .csEditor, .chooseList { display: none !important; }
+  #screenMenu, .topBar, .csEditor, .chooseList { display: none !important; }
   #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
   .csPreview { overflow: visible; border: 0; padding: 0; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;

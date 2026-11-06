@@ -1,10 +1,14 @@
-// Study printout (☰ > Study printout): a printout made for a chapter - its text and any of the resources that have
-// something for it, arranged by the reader - and for any other passages added to it, printed or saved as a PDF
-// through the browser's own print.
-// - SECTIONS: the printout is a list of sections, each a reference - BOOK, CHAPTER and VERSES (All, or a range from -
-//   to) - with its own items. The first is what's studied: picked at the editor's top, apart from the reading (the
-//   chapter read only the first time; then the last studied, kept on the device: "cotext.study.at"); it can't be
-//   removed. "+ Add another reference" (under the last section) adds one - at first the first's chapter, all its
+// Study printout (☰ > Study printout): printouts made for passages - their text and any of the resources that have
+// something for them, arranged by the reader - printed or saved as a PDF through the browser's own print.
+// - PRINTOUTS: any number, each named, with its own sections. The screen's top row (no title of its own, no ✕ - back to
+//   the Bible by ☰) shows the open one's name centered with a drop-down arrow beside it; tapped, its drop-down
+//   (topbar.ts, the Verse cards' own): SELECT PRINTOUT (+ NEW PRINTOUT first; picking one opens it), DELETE PRINTOUT
+//   (the open one, asked first), NAME (edited in place). The last used opens. A new printout starts as the chapter read
+//   (one section, all its verses); until renamed (or its name left blank) it's named after its first reference.
+// - SECTIONS: a printout is a list of sections, each a reference - BOOK, CHAPTER and VERSES (All, or a range from -
+//   to) - with its own items, picked at its top, a ✕ removing it (any of them, the first too: every one removed, the
+//   printout is empty until "+ Add another reference" - the chapter read - starts it again; named "Untitled" meanwhile
+//   unless renamed). "+ Add another reference" (under the last section) adds one - at first the first's chapter, all its
 //   verses -, its own pickers at its top with a ✕ removing it and its items. A section's verse range limits each of
 //   its items to those verses (an item's own range within it); every item works for its section's reference as it
 //   would for the first's.
@@ -50,10 +54,10 @@
 //   Save to Files. A Home Screen web app on an iPhone or iPad ignores window.print: there the button makes the PDF
 //   itself (makePdf - the preview drawn page by page as pictures, in the same print rules) and opens the share sheet
 //   with it (Print, Save to Files, Messages...).
-// - KEPT on the device per chapter studied - the first section's - (localStorage, "cotext.study.<book>.<chapter>":
-//   { sections: [{ id, book (its code), chapter, from, to, items }] }, the first's reference taken from the place
-//   studied): leaving and coming back keeps it; another chapter starts blank. An older printout (a list of items) is
-//   read as its first section; anything else unreadable starts blank.
+// - KEPT on the device, every printout under one key (localStorage "cotext.study": { at: the open one's id, printouts:
+//   [{ id, name ("" until renamed), sections: [{ id, book (its code), chapter, from, to, items }] }] }). The earlier
+//   per-chapter printouts ("cotext.study.<book>.<chapter>") are brought in once as printouts of their own, their keys
+//   removed; anything unreadable is skipped.
 
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
@@ -62,6 +66,7 @@ import { sourcesFor, openSource, noteElement, drawDiagram, FOLDED, type Source, 
 import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
+import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 
 /** An item of the printout. from / to: a verse range (0: the section's first / last). A text's under: its helps only for
  *  words coming fewer times than this in the testament (0 or none: every word's), helps saying which (both at first),
@@ -76,7 +81,7 @@ type Item = { id: string } & (
   | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean });
 
 /** A section of the printout: a reference - book, chapter, verses from - to (0: the chapter's first / last) - and its
- *  items in order. The first is the chapter studied (the place picked at the editor's top). */
+ *  items in order. The first names the printout until it's renamed. */
 type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[] };
 
 export const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
@@ -98,7 +103,7 @@ const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "")
 };
 
 //==== THE CHAPTER'S DATA ====
-// Read once a chapter, whichever sections show it (dropped when another chapter is studied): its words, each notes
+// Read once a chapter, whichever sections show it (dropped when another printout is opened): its words, each notes
 // source's notes, the word list's lexicon rows, each dictionary's entries, the other text's words. Each notes source's
 // file, each article and each item's map (elements kept, moved into each redraw) once, for every chapter.
 type Entry = { id: string; title: string; line: string };
@@ -184,34 +189,79 @@ function drawNotes (s: Source, ns: Note[], text: Map<string, [string, string]>, 
 }
 
 //==== THE ITEMS ====
-let sections: Section[] = [];
+/** A printout: its name ("" until renamed: shown as its first section's reference - nameShown) and its sections. */
+type Printout = { id: string; name: string; sections: Section[] };
+let printouts: Printout[] = [];
+let at = "";     // (The printout open: its id - the last used)
+let loaded = false;
+/** The printout open (the first if the one kept is gone). */
+const now = () => printouts.find ((p) => p.id === at) ?? printouts[0];
+let sections: Section[] = [];     // (The open printout's sections: now ().sections, kept in step by openPrintout)
 const first = () => sections[0];
-const KEY = () => `cotext.study.${first ().book.code}.${first ().chapter}`;
+const KEY = "cotext.study";
+/** The name shown for a printout: its own, or, until renamed, its first section's reference ("John 3", "John 3:1-16"). */
+function nameShown (p: Printout): string {
+  if (p.name.trim ()) return p.name;
+  const m = p.sections[0];
+  return m ? `${m.book.name} ${m.chapter}` + (m.from ? `:${m.from}` + (m.to > m.from ? `-${m.to}` : "") : "") : "Untitled";
+}
+/** A new printout, as the reader's chapter: one section, the chapter read, all its verses, nothing added. */
+const newPrintout = (): Printout => { const [b, c] = where (); return { id: newId (), name: "", sections: [{ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }] }; };
+/** Opens a printout (id): it becomes the open one, the last used. */
+function openPrintout (id: string) { at = id; sections = now ().sections; openOpts.clear (); chapters.clear (); }
 const KINDS = new Set (["text", "note", "dict", "map", "time", "words"]);
 /** A saved list's items: those of a kind there is (anything else dropped: a list not a list, an older kind). */
 const itemsOf = (x: unknown): Item[] => Array.isArray (x)
   ? x.filter ((i): i is Item => !! i && typeof i === "object" && typeof (i as Item).id === "string" && KINDS.has ((i as Item).k)) : [];
-/** The printout kept for a chapter studied (b, c; from, to: the first section's verses, the place studied's) read back:
- *  its sections; an older printout (a list of items) its first section's items; a section whose book isn't among
- *  bookList's dropped; anything unreadable, blank. */
-function load (b: Book, c: number, from: number, to: number) {
-  let got: unknown = null;
-  try { got = JSON.parse (localStorage.getItem (`cotext.study.${b.code}.${c}`) ?? "null"); } catch { /* unreadable, or private mode: blank */ }
-  const kept = got && typeof got === "object" && Array.isArray ((got as { sections?: unknown }).sections) ? (got as { sections: unknown[] }).sections : [];
-  const firstItems = Array.isArray (got) ? got : (kept[0] as { items?: unknown } | undefined)?.items;
-  sections = [{ id: "first", book: b, chapter: c, from, to, items: itemsOf (firstItems) }];
-  for (const x of kept.slice (1)) {
-    if (! x || typeof x !== "object") continue;
-    const r = x as Record<string, unknown>;
-    const bk = bookList ().find ((y) => y.code === r.book);
+/** A saved printout's sections (none: an empty printout, kept): each whose book is among bookList's (its chapter kept within the book), the rest dropped. */
+function sectionsOf (x: unknown): Section[] {
+  const out: Section[] = [];
+  for (const y of Array.isArray (x) ? x : []) {
+    if (! y || typeof y !== "object") continue;
+    const r = y as Record<string, unknown>;
+    const bk = bookList ().find ((z) => z.code === r.book);
     if (! bk) continue;
-    sections.push ({ id: typeof r.id === "string" ? r.id : newId (), book: bk, chapter: Math.min (Math.max (Number (r.chapter) || 1, 1), bk.chapters),
-                     from: Number (r.from) || 0, to: Number (r.to) || 0, items: itemsOf (r.items) });
+    out.push ({ id: typeof r.id === "string" ? r.id : newId (), book: bk, chapter: Math.min (Math.max (Number (r.chapter) || 1, 1), bk.chapters),
+                from: Number (r.from) || 0, to: Number (r.to) || 0, items: itemsOf (r.items) });
   }
+  return out;
+}
+/** The printouts kept, read back once (the first time the screen opens or something is added to it); an earlier one-per-chapter printout ("cotext.study.<book>.<chapter>") brought
+ *  in as a printout of its own and its key removed; anything unreadable skipped; none at all, a new one (newPrintout). */
+function load () {
+  if (loaded) return;
+  loaded = true;
+  let got: unknown = null;
+  try { got = JSON.parse (localStorage.getItem (KEY) ?? "null"); } catch { /* unreadable, or private mode: none */ }
+  const kept = got && typeof got === "object" ? got as { printouts?: unknown; at?: unknown } : {};
+  for (const x of Array.isArray (kept.printouts) ? kept.printouts : []) {
+    if (! x || typeof x !== "object") continue;
+    const r = x as Record<string, unknown>, secs = sectionsOf (r.sections);
+    printouts.push ({ id: typeof r.id === "string" ? r.id : newId (), name: typeof r.name === "string" ? r.name : "", sections: secs });
+  }
+  try {     // (The earlier kind: one printout per chapter studied, its first section the chapter)
+    for (const k of Object.keys (localStorage)) {
+      const m = /^cotext\.study\.([^.]+)\.(\d+)$/.exec (k);
+      if (! m) continue;
+      let old: unknown = null;
+      try { old = JSON.parse (localStorage.getItem (k) ?? "null"); } catch { /* unreadable: dropped */ }
+      const secs = sectionsOf ((old as { sections?: unknown } | null)?.sections);
+      const b = bookList ().find ((z) => z.code === m[1]);
+      if (b && (! secs.length || secs[0].book !== b)) secs.unshift ({ id: newId (), book: b, chapter: Math.min (Number (m[2]) || 1, b.chapters), from: 0, to: 0, items: [] });
+      if (secs.some ((x) => x.items.length) || secs.length > 1) printouts.push ({ id: newId (), name: "", sections: secs });     // (One with nothing added: not kept)
+      localStorage.removeItem (k);
+    }
+    localStorage.removeItem ("cotext.study.at");
+  } catch { /* private mode */ }
+  if (! printouts.length) printouts.push (newPrintout ());
+  openPrintout (typeof kept.at === "string" && printouts.some ((p) => p.id === kept.at) ? kept.at : printouts[0].id);
+  save ();
 }
 const save = () => {
-  try { localStorage.setItem (KEY (), JSON.stringify ({ sections: sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items })) })); }
-  catch { /* private mode: not kept */ }
+  try {
+    localStorage.setItem (KEY, JSON.stringify ({ at: now ().id, printouts: printouts.map ((p) => ({ id: p.id, name: p.name,
+      sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items })) })) }));
+  } catch { /* private mode: not kept */ }
 };
 let nextId = 0;
 const newId = () => `${Date.now ().toString (36)}${(nextId++).toString (36)}`;
@@ -237,21 +287,9 @@ let previewEl: HTMLElement, sectionsEl: HTMLElement, printEl: HTMLButtonElement;
 const openOpts = new Set<string> ();     // (The lines whose options are open)
 const linesOf = new Map<Section, HTMLElement> ();     // (Each section's lines, as drawn)
 
-// (The place studied, kept: "<book code>.<chapter>.<from>.<to>")
-const AT = "cotext.study.at";
-/** The place studied: the one kept, else the reader's (all its verses): book, chapter, from, to. */
-function placeNow (): [Book, number, number, number] {
-  try {
-    const [code, c, f, t] = (localStorage.getItem (AT) ?? "").split (".");
-    const b = bookList ().find ((x) => x.code === code);
-    if (b && Number (c) >= 1 && Number (c) <= b.chapters) return [b, Number (c), Number (f) || 0, Number (t) || 0];
-  } catch { /* none kept */ }
-  return [...where (), 0, 0];
-}
-const keepPlace = () => { const m = first (); try { localStorage.setItem (AT, `${m.book.code}.${m.chapter}.${m.from}.${m.to}`); } catch { /* private mode */ } };
-
-/** A section's reference at its top: BOOK, CHAPTER and VERSES (from - to); a later section's also a ✕ removing it.
- *  The first's book or chapter changed studies that chapter (its printout read back); a later one's just moves it. */
+/** A section's reference at its top: BOOK, CHAPTER and VERSES (from - to), changed in place, and a ✕ removing it (the
+ *  first too; the last removed, the printout empty until + Add another reference). The first's changed or removed, the
+ *  printout's name follows while it has none of its own. */
 async function drawPlace (placeEl: HTMLElement, sec: Section) {
   const isFirst = sec === first ();
   const pick = (label: string, options: [string, string][], value: string, set: (v: string) => void) => {
@@ -265,41 +303,68 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
   };
   const vs = await allVerses (dataOf (sec));
   const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, i) => String (from + i));
-  const go = (b: Book, c: number) => {
-    if (isFirst) { chapters.clear (); load (b, c, 0, 0); keepPlace (); openOpts.clear (); }
-    else { sec.book = b; sec.chapter = c; sec.from = sec.to = 0; save (); }
-    drawSections (); render ();
-  };
-  const range = (from: number, to: number) => { sec.from = from; sec.to = to; save (); if (isFirst) keepPlace (); render (); };
+  const go = (b: Book, c: number) => { sec.book = b; sec.chapter = c; sec.from = sec.to = 0; save (); drawSections (); render (); if (isFirst) nameFollows (); };
+  const range = (from: number, to: number) => { sec.from = from; sec.to = to; save (); render (); if (isFirst) nameFollows (); };
   const kids: HTMLElement[] = [
     pick ("Book", bookList ().map ((b) => [b.code, b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
     pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
     pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.from), (v) => range (Number (v), sec.to)),
     pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.to), (v) => range (sec.from, Number (v)))];
-  if (! isFirst) {
-    const x = el ("button", "pill icon csRemove", "✕");
-    x.setAttribute ("aria-label", "Remove this reference");
-    x.addEventListener ("click", () => {
-      sections = sections.filter ((s) => s !== sec);
-      for (const it of sec.items) openOpts.delete (it.id);
-      save (); drawSections (); render ();
-    });
-    kids.push (x);
-  }
+  const x = el ("button", "pill icon csRemove", "✕");
+  x.setAttribute ("aria-label", "Remove this reference");
+  x.addEventListener ("click", () => {
+    now ().sections = sections = sections.filter ((s) => s !== sec);
+    for (const it of sec.items) openOpts.delete (it.id);
+    save (); drawSections (); render ();
+    if (isFirst) nameFollows ();     // (The next one first now: the name following it)
+  });
+  kids.push (x);
   placeEl.replaceChildren (...kids);
 }
 
+//==== THE TOP ROW ====
+// The open printout's name centered, its drop-down arrow beside it, tapped opening its drop-down (topbar.ts, as the
+// Verse cards' deck's name): SELECT PRINTOUT (+ NEW PRINTOUT first), DELETE PRINTOUT (asked first), NAME. No title of
+// its own and no ✕: back to the Bible by ☰ (style.css hides #screenTop here, as for the Verse cards).
+let topEl: HTMLElement | null = null;
+let topOpen = "";     // (Its drop-down open: "more", or "" - kept across redraws)
+/** The top bar drawn (again) into topEl: the name and its drop-down. */
+function drawTop () {
+  if (! topEl) return;
+  const named = nameMenu<Printout> ({
+    noun: "Printout", all: () => printouts, open: now, shown: nameShown, blank: "",
+    select: (id) => { openPrintout (id); again (); },
+    make: () => { const p = newPrintout (); printouts.push (p); openPrintout (p.id); again (); },
+    ask: (x) => `Delete the printout "${nameShown (x)}"?`,
+    remove: (x) => { printouts = printouts.filter ((p) => p !== x); if (! printouts.length) printouts.push (newPrintout ()); openPrintout (printouts[0].id); again (); },
+    renamed: () => save () });
+  const row = el ("div", "topRow"), menu = el ("div", "vcMenu");
+  row.append (named.title);
+  menu.append (...named.rows);
+  topEl.replaceChildren (row, menu);
+  dropDowns ([{ key: "more", button: named.button, menu, icon: "" }], topOpen, (k) => { topOpen = k; });
+}
+/** Another printout opened, made or deleted: kept, everything drawn again (its drop-down left open). */
+function again () { save (); drawTop (); drawSections (); render (); }
+/** The first section's reference changed: the top row redrawn while the printout's name is its reference. */
+const nameFollows = () => { if (! now ().name.trim ()) drawTop (); };
+
 onScreen ("Study printout", async (body) => {
-  const [b, c, from, to] = placeNow ();
-  load (b, c, from, to);
+  load ();
+  sections = now ().sections;
+  topEl = el ("div", "topBar");
+  drawTop ();
+  watchTopBar (topEl);
+  body.append (topEl);
   const box = el ("div", "cstudy");
   previewEl = el ("div", "csPreview");
   const editor = el ("div", "csEditor");
   sectionsEl = el ("div", "csSections");
   const more = el ("button", "pill csAdd", "+ Add another reference");
   more.addEventListener ("click", () => {
-    const m = first ();
-    sections.push ({ id: newId (), book: m.book, chapter: m.chapter, from: 0, to: 0, items: [] });
+    const [b, c] = first () ? [first ().book, first ().chapter] : where ();     // (The first's chapter; none, the chapter read)
+    sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] });
+    if (sections.length === 1) nameFollows ();
     save (); drawSections (); render ();
     sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" });
   });
@@ -315,9 +380,8 @@ onScreen ("Study printout", async (body) => {
 
 /** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
  *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
- *  no items, as "+ Add another reference" adds one, kept. Added to the printout shown, or the one the screen would
- *  open on (placeNow: the chapter studied last, else the reader's) when it isn't open - read back, added to, saved -,
- *  and redrawn if it's open. False for a book not among bookList's. */
+ *  no items, as "+ Add another reference" adds one, kept. Added to the open printout (the last used, whether
+ *  the screen is open or not), redrawn if it's shown. False for a book not among bookList's. */
 export function addStudyReference (code: string, chapter: number, from: number, to: number): boolean {
   return addStudy (code, chapter, from, to, "");
 }
@@ -339,23 +403,23 @@ function sourceItem (s: Source, from: number, to: number): Item {
     : { id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from, to };
 }
 
-/** addStudyReference's and addStudyResource's work: the printout shown, or the one the screen would open on (placeNow:
- *  the chapter studied last, else the reader's) when it isn't open - read back, added to, saved -, redrawn if open. */
+/** addStudyReference's and addStudyResource's work: in the open printout (the last used: the printouts read back
+ *  first if they haven't been), saved, redrawn if shown. */
 function addStudy (code: string, chapter: number, from: number, to: number, src: string): boolean {
   const b = bookList ().find ((x) => x.code === code);
   const s = src && b ? sourceOf (b, src) : null;
   if (! b || (src && ! s)) return false;
   const open = !! sectionsEl?.isConnected;
-  if (! open) load (...placeNow ());
+  load ();
   const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
   const f = Math.max (from || 0, 0), t = f && (to || 0) > f ? to : f;
   // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)
   const holds = (x: Section) => x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
-  const sec = s ? sections.find (holds) : undefined;
+  const sec = s ? now ().sections.find (holds) : undefined;
   const item = sec && sourceItem (s!, f === sec.from ? 0 : f, t === sec.to ? 0 : t);
   const same = (x: Item) => JSON.stringify ({ ...x, id: "" }) === JSON.stringify ({ ...item, id: "" });
   if (sec && item) { if (! sec.items.some (same)) sec.items.push (item); }     // (Already there, the same: not again)
-  else sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [sourceItem (s, 0, 0)] : [] });
+  else now ().sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [sourceItem (s, 0, 0)] : [] });
   save ();
   if (open) { drawSections (); render (); sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" }); }
   return true;
@@ -1113,7 +1177,7 @@ async function makePdf () {
       shots.push ({ jpeg: new Uint8Array (await blob.arrayBuffer ()), pw, ph, h: h / px });
       top = cut;
     }
-    const name = `${first ().book.name} ${first ().chapter} study.pdf`;     // (Named by the chapter studied)
+    const name = `${nameShown (now ()).replace (/[\\/:*?"<>|]/g, "-")}.pdf`;     // (Named as the printout, a file name's forbidden marks made dashes)
     pdfReady = new File ([pdfOf (shots, page, soft)], name, { type: "application/pdf" });
     printEl.textContent = PRINT;
     await sharePdf (pdfReady);

@@ -1,7 +1,8 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
 // flip, BACK / NEXT (arrows), FLIP, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
-//   the Bible view's heading, staying as the screen scrolls) and + at its right end, where the Bible view's ⋯ is, then
+//   the Bible view's heading, staying as the screen scrolls; a drop-down arrow ⌄ beside it - topbar.ts, the Study
+//   printout's the same) and + at its right end, where the Bible view's ⋯ is, then
 //   the deck and the credits. The name tapped shows the deck's options as part of the top bar - fixed, not scrolling
 //   with the card, the bar growing as it opens and the card's room under it (the Bible view's ⋯ menu overlays; here the
 //   card stays in view) -, tapped again closing them, in order: SELECT DECK, NAME (edited in place), the deck's settings (below), VERSE LIST; + shows
@@ -45,6 +46,7 @@ import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, addStudyResource } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { onSwipe } from "./bars";
+import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -243,12 +245,9 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="topBar"><div class="topRow"><h1><button class="pill icon topTitle" id="vcMore" aria-label="${esc (d.name)}: deck options" aria-expanded="${menuOpen === "more"}">${esc (d.name)}</button></h1>
-      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse" aria-expanded="${menuOpen === "add"}">${menuOpen === "add" ? "✕" : "+"}</button></span></div>
-    <div class="vcMenu" data-menu="more"${menuOpen === "more" ? "" : " hidden"}>
-    <div class="vcAdd"><label class="vcPick">Select deck<select class="choose" id="vcDeckPick"><option value="new">+ New Deck</option>${decks.map ((x) => `<option value="${x.id}"${x === d ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
-      <button class="pill" id="vcDelDeck">Delete deck</button></div>
-    <label class="vcPick vcName">Name<input class="choose" id="vcName" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false"></label>
+  body.innerHTML = `<div class="topBar"><div class="topRow"><span id="vcTitle"></span>
+      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse">+</button></span></div>
+    <div class="vcMenu" data-menu="more">
     <div class="vcAdd">
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
@@ -257,7 +256,7 @@ async function draw (body: HTMLElement) {
     <div class="vcHead" id="vcListHead">Verse list</div>
     <div class="bar vcList"></div>
     </div>
-    <div class="vcMenu" data-menu="add"${menuOpen === "add" ? "" : " hidden"}>
+    <div class="vcMenu" data-menu="add">
     <div class="vcAdd"><div class="vcNewHead">New Verse</div><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div>
     </div></div>
     <div class="deck vcDeck"></div>
@@ -265,15 +264,21 @@ async function draw (body: HTMLElement) {
   // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + at the top
   // row's right: NEW VERSE, adding cards; each a drop-down as the Bible view's ⋯ menu (+ a ✕ while open that closes
   // it; the title tapped again closes its own; one open at a time), the top row growing with it - the card's room
-  // under it (kept so between drawings)
-  const tops = { more: [body.querySelector<HTMLElement> ("#vcMore")!, ""], add: [body.querySelector<HTMLElement> ("#vcPlus")!, "+"] } as const;
-  const menus = [...body.querySelectorAll<HTMLElement> (".vcMenu")];
-  const openMenu = (k: typeof menuOpen) => {
-    menuOpen = k;
-    for (const m of menus) m.hidden = m.dataset.menu !== k;
-    for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); if (icon) btn.textContent = n === k ? "✕" : icon; }     // (The title keeps its name)
-  };
-  for (const [n, [btn]] of Object.entries (tops)) btn.addEventListener ("click", () => openMenu (menuOpen === n ? "" : n as typeof menuOpen));
+  // under it (kept so between drawings). The name, its arrow and the first rows of its drop-down - SELECT DECK, DELETE
+  // DECK, NAME - are topbar.ts' (the Study printout's the same)
+  const named = nameMenu<Deck> ({
+    noun: "Deck", all: () => decks, open: deckNow, shown: (x) => x.name || "Untitled", blank: "Untitled",
+    select: (id) => { at = id; save (); draw (body); },
+    make: () => { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; save (); draw (body); },
+    ask: (x) => `Delete the deck "${x.name}"${x.cards.length ? ` and its ${x.cards.length} card${x.cards.length > 1 ? "s" : ""}` : ""}?`,
+    remove: (x) => { decks = decks.filter ((y) => y !== x); if (! decks.length) decks = [newDeck ("My verses")]; at = decks[0].id; save (); draw (body); },
+    renamed: () => save () });
+  body.querySelector ("#vcTitle")!.replaceWith (named.title);
+  const moreMenu = body.querySelector<HTMLElement> ('.vcMenu[data-menu="more"]')!;
+  moreMenu.prepend (...named.rows);
+  dropDowns ([{ key: "more", button: named.button, menu: moreMenu, icon: "" },
+              { key: "add", button: body.querySelector<HTMLElement> ("#vcPlus")!, menu: body.querySelector<HTMLElement> ('.vcMenu[data-menu="add"]')!, icon: "+" }],
+             menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
   // A word tapped on a card: its panel at the screen's foot, as the reader's (tapped again, it closes); the card
@@ -290,28 +295,6 @@ async function draw (body: HTMLElement) {
   const langPick = body.querySelector<HTMLSelectElement> ("#vcLang")!;
   // Decks: SELECT DECK opens the one picked - its first choice, + NEW DECK, makes and opens one -, DELETE DECK beside
   // it deletes the open one (asked first); its name edited in place.
-  const deckPick = body.querySelector<HTMLSelectElement> ("#vcDeckPick")!;
-  deckPick.addEventListener ("change", () => {
-    if (deckPick.value === "new") { const x = newDeck (`Deck ${decks.length + 1}`); decks.push (x); at = x.id; }
-    else at = deckPick.value;
-    save (); draw (body);
-  });
-  const nameIn = body.querySelector<HTMLInputElement> ("#vcName")!;
-  nameIn.value = d.name;
-  nameIn.addEventListener ("input", () => {
-    d.name = nameIn.value; save ();
-    body.querySelector (".topTitle")!.textContent = d.name || "Untitled";
-    deckPick.selectedOptions[0].textContent = d.name || "Untitled";
-  });
-  nameIn.addEventListener ("change", () => { if (! d.name.trim ()) { d.name = "Untitled"; nameIn.value = d.name; save (); } });
-  body.querySelector ("#vcDelDeck")!.addEventListener ("click", () => {
-    const x = d;
-    if (! confirm (`Delete the deck "${x.name}"${x.cards.length ? ` and its ${x.cards.length} card${x.cards.length > 1 ? "s" : ""}` : ""}?`)) return;
-    decks = decks.filter ((y) => y !== x);
-    if (! decks.length) decks = [newDeck ("My verses")];
-    if (x === d) at = decks[0].id;
-    save (); draw (body);
-  });
   trPick.value = trs.some ((s) => s.id === settings.tr) ? settings.tr : "";
   // The deck, drawn afresh from the cards and settings as they are (a later drawing winning over one still arriving);
   // kept: a setting changed - the cards' backs redrawn in place, the card shown and whether it's turned over kept, so
@@ -383,10 +366,9 @@ async function draw (body: HTMLElement) {
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }
   });
   // The top row and a drop-down open under it act as one bar, growing as it opens: fixed, not scrolling with the card,
-  // the screen's room starting under it (--vcTopH: its height, the screen's padding - style.css)
-  const screenEl = document.getElementById ("screen")!, topEl = body.querySelector<HTMLElement> (".topBar")!;
-  const watch = new ResizeObserver (() => { screenEl.style.setProperty ("--vcTopH", topEl.offsetHeight + "px"); });
-  watch.observe (topEl);
+  // the screen's room starting under it (--topH: its height, the screen's padding - topbar.ts' watchTopBar, style.css)
+  const screenEl = document.getElementById ("screen")!;
+  watchTopBar (body.querySelector<HTMLElement> (".topBar")!);
   // The deck's room, measured: the screen's own height less its padding (the top row's room, the bar's - and the word
   // panel's, when open) and the credits under the deck (with the gap above them) - kept free above the card too: the
   // card centered on the screen, the credits at its foot, all on one screen without scrolling where they fit

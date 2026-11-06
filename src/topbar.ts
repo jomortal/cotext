@@ -1,0 +1,93 @@
+// A study screen's own top row for a set of named things (the Verse cards' decks, the Study printout's printouts): the
+// open one's name centered, a drop-down arrow beside it (⌄, the pickers' own: choose.ts' button), tapped opening its
+// drop-down under it - SELECT <NOUN> (its first choice + NEW <NOUN>, then each by name; picking one opens it), DELETE
+// <NOUN> beside it (the open one, asked first), then NAME (the open one's, edited in place, the title following as it's
+// typed). Both screens build it here, one way (style.css' .topBar, .topRow, .topTitle, .topArrow, .vcMenu, .vcAdd).
+// What each item is, and what opening, making, deleting and renaming do (saving, drawing the screen again), is the
+// screen's: passed in as NameMenu's functions.
+
+/** One of the set: its id and its name. */
+export interface Named { id: string; name: string; }
+
+/** A screen's set of named things, as the top row needs it. noun: "Deck", "Printout" (+ NEW DECK, SELECT deck);
+ *  shown: the name shown for one (its own, or what stands for it while it has none); select: open another by id;
+ *  make: a new one made and opened; ask: the question asked before deleting the open one; remove: delete it;
+ *  renamed: the open one's name just set (to keep it); blank: the name a blank one is given once NAME is left ("": none -
+ *  shown then stands for it). */
+export interface NameMenu<T extends Named> {
+  noun: string;
+  all: () => T[];
+  open: () => T;
+  shown: (x: T) => string;
+  select: (id: string) => void;
+  make: () => void;
+  ask: (x: T) => string;
+  remove: (x: T) => void;
+  renamed: (x: T) => void;
+  blank: string;
+}
+
+const make = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "") => {
+  const e = document.createElement (tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+};
+
+/** The top row's title (an h1: its button, the name and the arrow) and the name's drop-down's first rows (SELECT and
+ *  DELETE, then NAME), for the screen to place: the title in its .topRow, the rows at the top of its .vcMenu. */
+export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement; button: HTMLButtonElement; rows: HTMLElement[] } {
+  const x = o.open (), noun = o.noun.toLowerCase ();
+  const title = make ("h1"), button = make ("button", "pill icon topTitle"), name = make ("span", "topName", o.shown (x));
+  const arrow = make ("span", "topArrow", "⌄");
+  arrow.setAttribute ("aria-hidden", "true");
+  button.setAttribute ("aria-label", `${o.shown (x)}: ${noun} options`);
+  button.setAttribute ("aria-expanded", "false");
+  button.append (name, arrow);
+  title.append (button);
+  // SELECT <NOUN> (+ NEW <NOUN> first) and DELETE <NOUN>
+  const pickRow = make ("div", "vcAdd"), pickLabel = make ("label", "vcPick", `Select ${noun}`), pick = make ("select", "choose");
+  pick.append (new Option (`+ New ${o.noun}`, "new"), ...o.all ().map ((y) => new Option (o.shown (y), y.id, false, y === x)));
+  pick.addEventListener ("change", () => { if (pick.value === "new") o.make (); else o.select (pick.value); });
+  pickLabel.append (pick);
+  const del = make ("button", "pill", `Delete ${noun}`);
+  del.addEventListener ("click", () => { if (confirm (o.ask (x))) o.remove (x); });
+  pickRow.append (pickLabel, del);
+  // NAME: typed, the title and SELECT's choice follow; left blank, the blank name (or what's shown for none)
+  const nameRow = make ("label", "vcPick vcName", "Name"), input = make ("input", "choose");
+  Object.assign (input, { type: "text", value: x.name || o.shown (x), autocomplete: "off", spellcheck: false });
+  input.setAttribute ("enterkeyhint", "done");
+  const follow = () => {
+    o.renamed (x);
+    name.textContent = o.shown (x);
+    button.setAttribute ("aria-label", `${o.shown (x)}: ${noun} options`);
+    pick.selectedOptions[0].textContent = o.shown (x);
+  };
+  input.addEventListener ("input", () => { x.name = input.value.trim () ? input.value : ""; follow (); });
+  input.addEventListener ("change", () => { if (! x.name.trim ()) { x.name = o.blank; input.value = o.shown (x); follow (); } });
+  nameRow.append (input);
+  return { title, button, rows: [pickRow, nameRow] };
+}
+
+/** The top row's drop-downs, one open at a time: each its button and its menu (icon: the button's own glyph - a ✕ while
+ *  its menu is open -, or "" for the title, which keeps its name); open: the one open at first ("" none); each change
+ *  told to changed (the screen keeping which is open across redraws). */
+export function dropDowns (tops: { key: string; button: HTMLElement; menu: HTMLElement; icon: string }[], open: string, changed: (k: string) => void = () => {}) {
+  const show = (k: string) => {
+    for (const t of tops) {
+      t.menu.hidden = t.key !== k;
+      t.button.setAttribute ("aria-expanded", String (t.key === k));
+      if (t.icon) t.button.textContent = t.key === k ? "✕" : t.icon;
+    }
+    open = k; changed (k);
+  };
+  for (const t of tops) t.button.addEventListener ("click", () => show (open === t.key ? "" : t.key));
+  show (open);
+}
+
+/** The top bar's height kept as the screen's --topH (its room starting under the bar, however tall a drop-down open in
+ *  it makes it: style.css). */
+export function watchTopBar (bar: HTMLElement) {
+  const screen = document.getElementById ("screen")!;
+  new ResizeObserver (() => screen.style.setProperty ("--topH", bar.offsetHeight + "px")).observe (bar);
+}
