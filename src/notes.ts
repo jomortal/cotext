@@ -43,7 +43,7 @@ import { barRoom } from "./bars";
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
-import { isWide, onWideChange, paneFrame, toFront } from "./layout";
+import { isWide, onWideChange, paneFrame } from "./layout";
 import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./dictionary";
 import { passageMap } from "./atlas";
 import { timelinePane } from "./timeline";
@@ -175,7 +175,6 @@ pick.addEventListener ("change", () => {
 });
 
 btn.addEventListener ("click", () => {
-  if (toFront (panel)) return;     // (A phone, open behind another card: brought to the front - layout.ts)
   panel.hidden = ! panel.hidden;
   btn.setAttribute ("aria-pressed", String (! panel.hidden));
   shownVerse = ""; shownIds = null;

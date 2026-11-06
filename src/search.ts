@@ -34,7 +34,7 @@
 
 import type { Db, Row } from "./db";
 import type { Book } from "./reader";
-import { paneFrame, toFront } from "./layout";
+import { paneFrame } from "./layout";
 import { textSources, sourceGroups, openSource, type Source } from "./notes";
 import { currentLanguage } from "./study";
 import { searchArticles, entry } from "./dictionary";
@@ -90,13 +90,12 @@ bar.addEventListener ("keydown", (e) => {
   search ();
 });
 
-/** Opened or closed (the icon, its ✕) - opened, in front (a phone's cards: layout.ts). */
+/** Opened or closed (the icon, its ✕). */
 function setOpen (open: boolean) {
   pane.hidden = ! open;
-  if (open) toFront (pane);
   btn.setAttribute ("aria-pressed", String (open));
 }
-btn.addEventListener ("click", () => { if (! toFront (pane)) setOpen (pane.hidden); });     // (A phone, open behind another card: only brought to the front)
+btn.addEventListener ("click", () => setOpen (pane.hidden));
 document.getElementById ("searchClose")!.addEventListener ("click", () => setOpen (false));
 
 /** A word's panel's Search (panel.ts): the pane opened on ROOT WORD, lemma in the bar, the Bible's verses with a word

@@ -11,7 +11,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord, addDock, toFront } from "./layout";
+import { isSideWord, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -354,7 +354,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
               extra, hebrew, place: [w.book, w.chapter, w.verse, w.word] };     // (Where the word stands: the reader's text, or one beside it in the notes)
     const pick = lexChoice[hebrew ? "H" : "G"];
     showEntry (extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word - or "concise", from before: the brief one)
-    sheet.hidden = false; toFront (sheet);     // (A new word: its card in front - a phone's cards, layout.ts)
+    sheet.hidden = false;
     sheetScroll.scrollTop = 0;
     columns ();
     // Keep the word in view above the panels - a word of the text read only (one in the notes panel stays where it is).

@@ -835,15 +835,14 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: var(--sideBar); }     /* (The Verse cards beside their bar) */
 }
 
-/* A PHONE (layout.ts' PHONE: keep the two the same), upright or sideways: the panels a stack of three cards - the word
-   card (#sheet, or #besideSheet for a word of the notes), the notes, the search -, only the front one shown (.front:
-   layout.ts keeps the stack), the others open under it. One divider between the text and the front card, its middle --cardShare % of
+/* A PHONE (layout.ts' PHONE: keep the two the same), upright or sideways: one panel at a time - the word's (#sheet,
+   or #besideSheet for a word of the notes), the notes or the search (layout.ts closes the one open as another opens).
+   One divider between the text and the panel, its middle --cardShare % of
    the screen's long side (--long) up from the foot upright, in from the right edge sideways - so the same place both
    ways (layout.ts; 40 % at first): upright #sheetSplit, the card under the
    text; sideways #notesSplit, the card at the text's right the full height, the heading over the text only. No card
    open: no divider, the text the full room. The add-verse box (#verseSheet) not a card: its own height under the text. */
 @media (max-width: 600px), (max-height: 500px) {
-  :is(#sheet, #besideSheet, #search, #notes):not(.front) { display: none !important; }
   :is(#sheet, #besideSheet, #search, #notes).dock { border-top: 0 !important; max-height: none; min-height: 0; }     /* (The divider is its line) */
   :is(#sheetSplit, #notesSplit, #paneSplit, #besideSplit) { display: none !important; }
 }

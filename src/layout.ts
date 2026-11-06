@@ -19,9 +19,9 @@
 //   off, while either pane is open: placeWord, body.sideWord in style.css): the text's word's panel a column of its
 //   own between the text and the panes - text | word | panes -, its width (--sheetW, a percentage, unitless: 15 % up -
 //   as wide as the text keeping 30 % of the window allows) set by #sheetSplit, now a vertical divider on its left edge.
-// - A phone (PHONE: style.css' phone media query, the same), upright or sideways - a stack of three cards (below):
-//   the word card (the word's panel, #sheet - or #besideSheet, for a word tapped in the notes), the notes and the
-//   search. Only the front card shows, beside the text: upright under it, sideways at its right
+// - A phone (PHONE: style.css' phone media query, the same), upright or sideways - one panel at a time (below):
+//   the word's panel (#sheet - or #besideSheet, for a word tapped in the notes), the notes or the
+//   search, beside the text: upright under it, sideways at its right
 //   the full height (the heading over the text only), one divider between them (#sheetSplit upright, #notesSplit
 //   sideways). The divider is at the same place on the screen both ways, measured from the screen's foot upright and
 //   its right edge sideways (the ends the card is at - not the top, where the clock and the heading are) against the
@@ -84,7 +84,7 @@ const panesShare = () => notesEl.hidden && searchEl.hidden ? 0 : sizes.notesW ??
 // The panes' column's width: from its divider to the window's right edge, as a share of the width, 22-60 % (the
 // text keeping 40 % at least).
 // Narrow (not a phone), the same divider lies between the word's panel and the panes under it (both open): the panes'
-// height (sizeBelow). A phone held sideways: the divider between the text and the front card (phoneShare).
+// height (sizeBelow). A phone held sideways: the divider between the text and the panel (phoneShare).
 const narrowSplit = () => notesSplit.setAttribute ("aria-orientation", WIDE.matches || SIDE_BAR.matches ? "vertical" : "horizontal");
 narrowSplit (); WIDE.addEventListener ("change", narrowSplit); SIDE_BAR.addEventListener ("change", narrowSplit);
 drag (notesSplit, (x, y) => {
@@ -128,40 +128,23 @@ for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (
 
 // Narrow (not a phone), the panels open share the room with the text (style.css): their number set on the root as
 // --docks, and body.docks while two or more are open (one alone keeps its own height limit).
-// A phone: the cards' stack - the open cards in the order they came to the front, the front last, marked .front
-// (style.css shows only it). One word at a time: a word's panel opening closes the other (by its ✕, as if tapped).
-// Opening a card, or tapping its button while it's open, puts it in front; its ✕ closes it, showing the card in front
-// before it; all closed, the divider goes and the text takes the screen.
+// A phone: one panel at a time - the word's (#sheet, or #besideSheet), the notes or the search: one opening closes
+// the one open (by its ✕, as if tapped, so all it does on closing is done); its ✕ closes it, the divider going and
+// the text taking the screen.
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
-const KINDS = [["sheet", "besideSheet"], ["notes"], ["search"]];     // (The word card - either word's panel -, the notes, the search)
-const kindOf = (d: HTMLElement) => KINDS.find ((k) => k.includes (d.id));
-const stack: HTMLElement[] = [];
-const restack = () => { for (const d of docks) d.classList.toggle ("front", d === stack.at (-1)); };
+const ONE = ["sheet", "besideSheet", "notes", "search"];     // (The panels a phone shows one at a time)
+let shown: HTMLElement[] = [];     // (Those of them open, as last seen - so one just opened is told from the rest)
 const countDocks = () => {
   const n = docks.filter ((d) => ! d.hidden).length;
   root.setProperty ("--docks", String (n));
   document.body.classList.toggle ("docks", n >= 2);
-  for (const d of docks) {
-    const kind = kindOf (d), at = stack.indexOf (d);
-    if (! kind) continue;
-    if (d.hidden) { if (at >= 0) stack.splice (at, 1); continue; }
-    if (at >= 0) continue;
-    stack.push (d);     // (Just opened: in front)
-    if (PHONE.matches) for (const o of stack) if (o !== d && kind.includes (o.id)) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The other of its kind closed - its own ✕, so all it does on closing is done)
-  }
-  restack ();
+  const open = docks.filter ((d) => ONE.includes (d.id) && ! d.hidden), opened = open.filter ((d) => ! shown.includes (d));
+  shown = open;
+  if (PHONE.matches && opened.length) for (const o of open) if (! opened.includes (o)) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕)
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
-/** A card brought to the front (its button tapped while it's open, a new word in its panel): true when, on a phone, it
- *  was open behind another - so its button only brings it forward, not closing it. */
-export function toFront (d: HTMLElement): boolean {
-  const at = stack.indexOf (d);
-  if (d.hidden || at < 0 || at === stack.length - 1) return false;
-  stack.splice (at, 1); stack.push (d); restack ();
-  return PHONE.matches;
-}
-// A phone: the divider dragged between the text and the front card - its middle d px from the window's foot
+// A phone: the divider dragged between the text and the panel - its middle d px from the window's foot
 // (upright) or right edge (sideways), as a share of the screen's long side, 20-80 %, kept for both orientations
 // (--cardShare: style.css).
 function phoneShare (d: number) {
@@ -216,7 +199,7 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
     }
     const bar = innerHeight - barRoom (document.getElementById ("playBar"));     // (The play bar's top - the window's foot while it's down the side)
     const head = document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom, mid = bar - head;
-    if (id === "sheetSplit" && PHONE.matches) { phoneShare (innerHeight - y); return; }     // (A phone upright: the divider between the text and the front card)
+    if (id === "sheetSplit" && PHONE.matches) { phoneShare (innerHeight - y); return; }     // (A phone upright: the divider between the text and the panel)
     if (id === "sheetSplit" && ! WIDE.matches) { sizeBelow (sheetSplit, y); return; }
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
