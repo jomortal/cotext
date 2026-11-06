@@ -506,7 +506,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
-#screen[data-screen="Study printout"] { top: 0; padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
@@ -540,9 +539,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
-/* A deck's panel of its own - the Verse cards' NEW VERSE (+), Flashcards' word list (its list icon) - opened from the
-   bar: at the screen's foot over the bar, the card's room above it (--deckPaneH: its height, versecards.ts / vocab.ts);
-   sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.paneHead). */
+/* A screen's panel (.deckPane, layout.ts' deckPaneSplit) - the Verse cards' VERSE LIST, Flashcards' WORD LIST, the
+   Study printout's EDIT and DOWNLOAD - opened from the bar: at the screen's foot over the bar, the screen's room above
+   it (--deckPaneH: its height); sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its
+   title row a .paneHead with its ✕, its divider a .deckSplit. */
 .deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(calc(var(--winH, 100dvh) * .4), var(--deckH, 0px)); box-sizing: border-box;
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
 .deckPane:not([hidden]) { gap: var(--gap); }
@@ -612,7 +612,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* A divider (layout.ts' drag): its line in the middle, a grip over it, the rest room to drag - drawn by its
    orientation (aria-orientation): vertical sets a width, horizontal a height; never scrolls the page when dragged
    (touch-action). Shown where each is used: the panel's (ONE PANE, below), the word's panel's and the panes' (SPLIT),
-   the decks' panels' (.deckSplit) and the Study printout's (.cstudy). */
+   and the screens' panels' (.deckSplit). */
 .split { flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
 .split::before { content: ""; position: absolute; background: var(--edge); }
 .split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
@@ -621,7 +621,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    horizontal one to the left, a vertical one up - so the two join with no gap; elsewhere (--meet 0) it starts at its
    own edge. Set where a divider starts at another: #paneSplit (beside #notesSplit sideways, under #sheetSplit upright),
    a word's panel's .wordSplit (the same places). The heading's line and the top bars' run on to a divider the same
-   way (.head::after, --csTopR). */
+   way (.head::after). */
 .split { --meet: 0px; }
 #paneSplit, :is(#sheet, #besideSheet) .wordSplit { --meet: var(--split-half); z-index: 1; }     /* (z 1: its line over the other divider it runs on to, whichever comes first in the page) */
 .split[aria-orientation="horizontal"] { height: var(--split-w); cursor: row-resize; }
@@ -711,41 +711,26 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .timelinePane + .timelineNote { margin-top: 4px; } .timelineNote:empty { display: none; }
 @media (min-width: 700px) { .timeline.timelinePane { height: max(300px, calc(var(--winH, 100dvh) * .6)); } }
 
-/* Study printout (chapterstudy.ts): the screen's whole width and height - the editor (its lines, + Add item, Print)
-   and the preview (the printout as it prints), each scrolling on its own: narrow the preview the top half, the editor
-   the bottom half; wide side by side, the editor at the left. */
+/* Study printout (chapterstudy.ts): the preview (the printout as it prints) the screen's room, scrolling in it, the top
+   bar over it alone; the editor (its lines, + Add item, Print) and the download pane, one at a time, each a screen's
+   panel (.deckPane: at the foot upright, at the right sideways, beside the bar - as the decks'). */
 #studyBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M6 3h9l4 4v14H6z'/%3E%3Cpath d='M9 10h7M9 13.5h7M9 17h4'/%3E%3Cpath d='M9 7h3' stroke-linecap='round'/%3E%3C/svg%3E"); }     /* (A page of text) */
-#screen[data-screen="Study printout"] { overflow: hidden; padding-bottom: max(var(--pad), env(safe-area-inset-bottom, 0px)); }
-#screen[data-screen="Study printout"] .pickerCard { max-width: none; height: 100%; grid-template-rows: minmax(0, 1fr); }
-#screen[data-screen="Study printout"] #screenBody { min-height: 0; grid-template-rows: minmax(0, 1fr); }
-.cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); row-gap: 0; grid-template-areas: "preview" "split" "editor";
-          grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Upright: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
-.cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
-.cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor), .cstudy > .csEditor[hidden] { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
+#screen[data-screen="Study printout"] .pickerCard { max-width: none; }     /* (The preview the screen's whole width) */
 /* A panel's title row (.paneHead: the printout's EDIT and DOWNLOAD, the decks' VERSE LIST and WORD LIST): its title, its ✕
    at the right - as a pane's -, frozen over what scrolls; no line under it, as the Bible's side panels. */
 .paneHead { flex: none; align-items: center; margin-bottom: var(--gap-s); padding-bottom: var(--gap-s); }
-/* A panel with a title row (.deckPane, .csEditor - layout.ts' headFrame): the title outside its scroller (.paneBody), so
+/* A panel with a title row (.deckPane - layout.ts' headFrame): the title outside its scroller (.paneBody), so
    the scroll bar spans only what scrolls; the scroller out to the panel's right edge, its scroll bar there, its
    contents as far in as the title's. */
-:is(.deckPane, .csEditor):not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
+.deckPane:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
 .paneBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: inherit;
             margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); }
-.csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
 .barMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
-@media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
-                                      grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
-                            .csEditor { padding-left: var(--safe-l); } .csPreview { margin-right: 0; padding-right: var(--margin); }     /* (Either side of the divider: --margin from it) */
-                            #screen[data-screen="Study printout"]:has(.bottomBar) .topBar { right: var(--csTopR, 0px); }
-                            #screen[data-screen="Study printout"]:has(.bottomBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
-                            .cstudy:not(.csNoEditor) > :is(.split, .csEditor) { margin-top: calc(-1 * (var(--topH, 48px) + var(--pad))); margin-bottom: calc(-1 * var(--pad)); }     /* (Top to bottom: through the screen's room above - the top bar's - and its margin below) */
-                            .cstudy > .csEditor { padding-top: var(--head-top); } .cstudy > .csEditor > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
-.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; margin-right: calc(-1 * var(--safe-r)); padding: var(--pad) var(--safe-r) var(--pad) 0; }     /* (Its contents at the screen's margin as the editor's (MARGINS), its scroll bar out at the screen's edge) */
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
 .csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
 .csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
-.csEditor { grid-area: editor; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
+.csEditor { gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
 .csLine { border-bottom: var(--rule); background: var(--bg); }
 .csLine.dragged { background: var(--tint-solid); }
 .csRow { display: flex; align-items: center; gap: var(--gap-m); min-height: 40px; }
@@ -832,7 +817,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   /* MARGINS: the bar keeps the notch's room at the right, so whatever stands beside it (the Bible's page; a screen with
      a bar) has just --margin there; and a panel's left side meets the divider, not the screen's edge. */
   body > :not(#screen, #drawer), #screen:has(.bottomBar), .deckPane { --safe-r: var(--margin); }
-  .dock, .deckPane, .csEditor { --safe-l: var(--margin); }
+  .dock, .deckPane { --safe-l: var(--margin); }
   .bottomBar { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across its row: as much space at their left as at their right, the inset after) */ border-top: 0 !important; border-left: var(--rule); }
@@ -924,9 +909,8 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .csOutPane, .chooseList { display: none !important; }
-  #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
-  .csPreview { overflow: visible; border: 0; padding: 0; }
+  #screenMenu, .topBar, .deckPane, .deckSplit, .csEditBar, .chooseList { display: none !important; }
+  #screen .pickerCard, #screenBody { display: block !important; height: auto !important; max-width: none; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;
            --bg: #fff; --fg: #1d1c1a; --soft: #6b6862; --edge: #dedad2; --accent: oklch(0.56 0.13 250);
            --qal: oklch(0.56 0.13 25); --niphal: oklch(0.56 0.13 205); --piel: oklch(0.56 0.13 70); --pual: oklch(0.56 0.13 115);

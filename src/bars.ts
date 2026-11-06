@@ -1,6 +1,8 @@
 // The bottom bars (the play bar, the Verse cards' bar; ‹ and › at their ends, stepping - a swipe does the same: onSwipe): at the screen's foot - or, sideways
 // (the window wider than tall: a phone held sideways, a tablet's or a desktop's window wider than a phone's - layout.ts),
 // a vertical bar down its right side (style.css' SIDE BAR media query: keep the two the same), taking no room at the foot.
+// One size on every device: a row the heading's height, under it (or, down the side, at its right) only the device's
+// own inset as plain room, no button in it (style.css' BOTTOM BAR).
 
 import { box } from "./zoom";
 

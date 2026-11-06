@@ -17,8 +17,9 @@
 //   up or down within the section, by touch or mouse; Options, opening that item's own settings under it; ✕ removing
 //   it), "+ Add item" under the last -, then "+ Add passage", Download and Print under it - and the PREVIEW, the
 //   printout as it will print: the sections in order, each headed with its reference, redrawn as anything is added,
-//   moved, changed or removed (not edited itself). Narrow (under 700 px) the preview the top half, the editor the
-//   bottom half, each scrolling on its own; wide side by side, the editor at the left (style.css' .cstudy).
+//   moved, changed or removed (not edited itself). The preview the screen's room, scrolling in it; the editor (and the
+//   download pane, in its place) a screen's panel as the decks' - at the foot upright, at the right sideways, its title
+//   row, divider and scroller (layout.ts' deckPaneSplit).
 // - WHAT CAN BE ADDED to a section ("+ Add item": a list of everything there is for its chapter):
 //   TEXT - the Hebrew or Greek, its options Interlinear (the English under each word), Parsing, Transliteration, a
 //     verse range and HELPS ONLY FOR RARER WORDS (Off, or 10 / 25 / 50 / 100 / 200 / 500: the interlinear, the parsing
@@ -86,7 +87,7 @@ import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 import { nativeName } from "./booknames";
 import { nativeRef, refPair } from "./refs";
-import { printSplit, headFrame } from "./layout";
+import { deckPaneSplit } from "./layout";
 import { box as cssBox, px, winW, winH } from "./zoom";
 import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
 import type { FileKind } from "./printfiles";
@@ -397,9 +398,8 @@ onScreen ("Study printout", async (body) => {
   drawTop ();
   watchTopBar (topEl);
   body.append (topEl);
-  const box = el ("div", "cstudy");
   previewEl = el ("div", "csPreview");
-  const editor = el ("div", "csEditor");
+  const editor = el ("div", "deckPane csEditor");
   sectionsEl = el ("div", "csSections");
   const more = el ("button", "pill action", "+ Add passage");
   more.addEventListener ("click", () => {
@@ -442,24 +442,16 @@ onScreen ("Study printout", async (body) => {
   close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
   editor.append (head, sectionsEl, more, memo);
-  headFrame (editor).addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
-  const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
-  Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
-  printSplit (split, box);
-  // (Sideways the editor and the divider run the screen's full height, as the Bible's side panel, the top bar over the
-  // preview alone: its right end kept at the divider's line - --csTopR, style.css)
-  // (To the divider's line, its middle: the top bar's border meeting it - worked out again whenever the divider or the
-  // printout's box changes size, a window resized moving it too)
-  const topR = () => { const r = cssBox (split); document.getElementById ("screen")!.style.setProperty ("--csTopR", `${winW () - (r.left + r.right) / 2}px`); };     // (CSS px, whatever the UI's scale: zoom.ts)
-  const watchTop = new ResizeObserver (topR);
-  watchTop.observe (split); watchTop.observe (box);
   // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
-  const outPane = el ("div", "csEditor csOutPane"), outHead = el ("div", "top paneHead"), outClose = el ("button", "pill icon", "", "x");
+  const outPane = el ("div", "deckPane csEditor csOutPane"), outHead = el ("div", "top paneHead"), outClose = el ("button", "pill icon", "", "x");
   outClose.setAttribute ("aria-label", "Close the download pane");
   outHead.append (el ("h2", "title", "Download"), outClose);
   outPane.append (outHead, out);
-  headFrame (outPane);     // (Each pane's title over its scroller: layout.ts)
-  box.append (previewEl, split, editor, outPane);
+  body.append (previewEl, editor, outPane);
+  // (Each a screen's panel, as the decks': at the foot upright, at the right sideways, its title over its scroller, its
+  // divider - layout.ts' deckPaneSplit; the preview the screen's room left, scrolling in the screen)
+  deckPaneSplit (editor).addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
+  deckPaneSplit (outPane);
   // The bottom bar (the Verse cards' - .bottomBar: down the right side sideways, the right side at the top): a pencil in
   // its middle showing or hiding the editor, a printer next printing (as PRINT), and at its right end a download icon -
   // on a desktop (canSaveAs) the system's save dialog straight away, its types the formats; elsewhere showing or hiding
@@ -475,7 +467,6 @@ onScreen ("Study printout", async (body) => {
   try { const k = localStorage.getItem (EDITOR_KEY); pane = k === "0" ? "" : k === "out" ? "out" : "edit"; } catch { /* private mode */ }
   const show = (p: Pane) => {
     pane = p;
-    box.classList.toggle ("csNoEditor", ! p);
     editor.hidden = p !== "edit"; outPane.hidden = p !== "out";
     toggle.setAttribute ("aria-pressed", String (p === "edit")); dlBtn.setAttribute ("aria-pressed", String (p === "out"));
     try { localStorage.setItem (EDITOR_KEY, p === "edit" ? "1" : p || "0"); } catch { /* private mode */ }
@@ -486,7 +477,7 @@ onScreen ("Study printout", async (body) => {
   outClose.addEventListener ("click", () => show (""));
   show (pane);
   bar.append (toggle, printBtn, dlBtn);
-  body.append (box, bar);
+  body.append (bar);
   drawSections ();
   render ();
 });
@@ -1051,9 +1042,9 @@ async function render () {
   doc.append (bib);
   if (n !== drawing) return;
   if (ready) { ready = null; printEl.textContent = PRINT; }     // (A file made before this change is out of date)
-  const scroll = previewEl.scrollTop;
+  const screenEl = document.getElementById ("screen")!, scroll = screenEl.scrollTop;     // (The preview scrolls in the screen)
   previewEl.replaceChildren (doc);
-  previewEl.scrollTop = scroll;
+  screenEl.scrollTop = scroll;
   cited = used; sourcesEl = bib;
   drawSources ();
   // (A map drawn once it's in the page: it needs its size; its base map's and boundaries' credits then cited)

@@ -30,13 +30,11 @@ import { box, px, winW, winH, onScale } from "./zoom";     // (Every measurement
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { searchH?: number; cardShare?: number; rightShare?: number; printShare?: number; printW?: number; deckH?: number; deckW?: number } = {};
+const sizes: { searchH?: number; cardShare?: number; rightShare?: number; deckH?: number; deckW?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
 if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
 if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
-if (sizes.printShare) root.setProperty ("--printShare", String (sizes.printShare));
-if (sizes.printW) root.setProperty ("--printW", String (sizes.printW));
 if (sizes.deckH) root.setProperty ("--deckH", sizes.deckH + "px");
 if (sizes.deckW) root.setProperty ("--deckW", sizes.deckW + "px");
 /** The window's long side (CSS px), either way up: the panel divider's measure (--long). The window's, not the
@@ -72,10 +70,16 @@ function drag (el: HTMLElement, move: (x: number, y: number) => void) {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo, v));
 
-/** A deck's panel's divider (the Verse cards' NEW VERSE, Flashcards' word list: style.css' .deckPane), made and put
- *  after it: upright on its top edge, dragged its height (--deckH, px: 120 up, leaving the card a fifth of the window);
- *  sideways (SIDE_BAR) on its left edge, its width (--deckW: 240 up, leaving the card 240). Kept, each for every deck. */
-export function deckPaneSplit (pane: HTMLElement) {
+/** A screen's panel (style.css' .deckPane: the Verse cards' VERSE LIST, Flashcards' WORD LIST, the Study printout's EDIT
+ *  and DOWNLOAD) - the screens' one panel, as the Bible's: at the foot over the bar upright, at the right beside the bar
+ *  sideways, the screen's room giving way to it (its height kept on the screen as --deckPaneH while it's shown). Its
+ *  title row (.paneHead) over its own scroller (headFrame, returned), and its divider, made and put after it: upright on
+ *  its top edge, dragged its height (--deckH, px: 120 up, leaving the room a fifth of the window); sideways on its left
+ *  edge, its width (--deckW: 240 up, leaving the room 240). Kept, one size for every screen's panel. */
+export function deckPaneSplit (pane: HTMLElement): HTMLElement {
+  const scroller = headFrame (pane);
+  const screen = document.getElementById ("screen")!;
+  new ResizeObserver (() => { if (pane.offsetHeight) screen.style.setProperty ("--deckPaneH", `${pane.offsetHeight}px`); }).observe (pane);     // (A hidden one - the printout's other - left out)
   const split = document.createElement ("div");
   split.className = "split deckSplit"; split.setAttribute ("role", "separator"); split.setAttribute ("aria-label", "Resize the panel");
   const turn = () => split.setAttribute ("aria-orientation", SIDE_BAR.matches ? "vertical" : "horizontal");
@@ -86,25 +90,7 @@ export function deckPaneSplit (pane: HTMLElement) {
     if (SIDE_BAR.matches) { sizes.deckW = Math.round (clamp (r.right - x, 240, r.right - 240)); root.setProperty ("--deckW", sizes.deckW + "px"); }
     else { sizes.deckH = Math.round (clamp (r.bottom - y, 120, r.bottom - winH () / 5)); root.setProperty ("--deckH", sizes.deckH + "px"); }
   });
-}
-
-/** The Study printout's divider (chapterstudy.ts; style.css' .cstudy) - upright, horizontal, the preview over the
- *  editor: the preview's share of the room's height, % (--printShare, 15-85; half until dragged); sideways, vertical,
- *  the preview at the left: its share of the width (--printW, 30-80; two thirds until dragged). Each kept. */
-const SIDEWAYS = matchMedia ("(orientation: landscape)");     // (style.css' .cstudy query: keep the two the same)
-export function printSplit (split: HTMLElement, frame: HTMLElement) {
-  const turn = () => split.setAttribute ("aria-orientation", SIDEWAYS.matches ? "vertical" : "horizontal");
-  turn (); SIDEWAYS.addEventListener ("change", turn);
-  drag (split, (x, y) => {
-    const r = box (frame);
-    if (SIDEWAYS.matches) {
-      sizes.printW = Math.round (clamp ((x - r.left) / r.width * 100, 30, 80));
-      root.setProperty ("--printW", String (sizes.printW));
-    } else {
-      sizes.printShare = Math.round (clamp ((y - r.top) / r.height * 100, 15, 85));
-      root.setProperty ("--printShare", String (sizes.printShare));
-    }
-  });
+  return scroller;
 }
 
 // One place for two side-by-side dividers (SPLIT "row"): the word's panel's, between its two parts (the lexicon at the
@@ -230,7 +216,7 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
 /** A panel's frame with a title row (.paneHead: the decks' VERSE LIST and WORD LIST, the printout's EDIT and DOWNLOAD -
  *  style.css): everything after the title moved into a scroller of its own (.paneBody), returned - so the title stays
  *  outside it and the scroll bar spans only what scrolls. */
-export function headFrame (pane: HTMLElement): HTMLElement {
+function headFrame (pane: HTMLElement): HTMLElement {
   const body = document.createElement ("div");
   body.className = "paneBody";
   const head = pane.querySelector (":scope > .paneHead");
