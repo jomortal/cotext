@@ -44,13 +44,16 @@ let chapter = 1;
 // of the room left) - the Greek at the left, the Hebrew (read from the right) at the right: "GENESIS 1 | בְּרֵאשִׁית א"
 // (style.css' #place .refPair). The two too wide for the heading together: the English abbreviated first, to its SBL
 // abbreviation (booknames.ts' ABBR) with a full stop (1 THESS. 1), then the Greek, without its leading ΚΑΤΑ or ΠΡΟΣ
-// (ΘΕΣΣΑΛΟΝΙΚΕΙΣ Α΄ Εʹ), then its long words cut short (ΘΕΣ. Α΄ Εʹ); still too wide, both made smaller to fit.
+// (ΘΕΣΣΑΛΟΝΙΚΕΙΣ Α΄ Εʹ), then its long words cut short (ΘΕΣ. Α΄ Εʹ); still too wide, both made smaller to fit. Between
+// the two (after the English alone), the drop-down arrow ⌄: tapped, the passage opens the book list.
 const crowded = () => [...placeBtn.querySelectorAll (".refPair > *")].some ((e) => e.scrollWidth > e.clientWidth + 0.5);
 function showPlace () {
   if (! book) return;
   const lang = nativeName (book.code)?.[1], native = lang ? nativeRef (book.code, lang, chapter) : "";
-  placeBtn.innerHTML = refPair (`${book.name} ${chapter}`, native);
-  if (crowded () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`, native);
+  // (Between the two, the drop-down arrow - the top rows' own, topbar.ts' - saying the passage opens the book list)
+  const draw = (en: string) => { placeBtn.innerHTML = refPair (en, native); placeBtn.querySelector (".refPair")!.append (Object.assign (document.createElement ("span"), { className: "topArrow", textContent: "⌄", ariaHidden: "true" })); };
+  draw (`${book.name} ${chapter}`);
+  if (crowded () && ABBR[book.name]) draw (`${ABBR[book.name]}. ${chapter}`);
   const n = placeBtn.querySelector (".refNative.gr");
   if (n && crowded ()) n.textContent = n.textContent!.replace (/^(ΚΑΤΑ|ΠΡΟΣ) /, "");
   if (n && crowded ()) {     // (Still too wide: the name's long words cut to three letters - ΨΑΛ. ΣΟΛ. ΙΗʹ - the chapter kept whole)
