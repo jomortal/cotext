@@ -263,6 +263,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) 
   padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
+:where(.sheet:not(.twoCol)) > .panelScroll > * { margin-inline: 0 auto; }     /* (A word's panel in one column: at the panel's left, any room beyond --page at its right) */
 .pane > .panelScroll { padding-top: 0; }     /* (Under the frozen top row: its own margin above) */
 .pane > .top { flex: none; margin: 0; padding: var(--pad) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge) */
 @media (max-width: 600px), (max-height: 500px) { .pane > .panelScroll { padding-inline: var(--text-edge); } .pane > .top { padding-left: var(--text-edge); padding-right: calc(var(--pad) + var(--x-w) + var(--text-edge)); } }     /* (A phone: the resources' side margins as small as the text's, upright as sideways - the picker as far from the ✕ as from the left) */
