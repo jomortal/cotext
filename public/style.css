@@ -55,6 +55,7 @@
      12 px, the verse numbers as much room at their left as at their right; else 16 px), everything with it. The notch:
      one rule - a side at the screen's edge keeps the device's own room there if that's more (--safe-l / -r); a side
      meeting a bar or a divider (sideways: SIDE BAR's) just --margin. */
+  --z-menu: 40;     /* (Every drop-down list and menu open: over everything - panels, their dividers and bars too) */
   --margin: 16px;
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
@@ -590,7 +591,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
 .chooseBtn::after { content: ""; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
 .chooseBtn::after, .topArrow { width: .7em; height: .45em; background: var(--soft); -webkit-mask: var(--chevron) center / contain no-repeat; mask: var(--chevron) center / contain no-repeat; }     /* (The drop-down arrow: --chevron, in the soft color) */
-.chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
+.chooseList { display: grid; position: fixed; min-width: 10em; z-index: var(--z-menu); box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
               -webkit-overflow-scrolling: touch;
               background: var(--bg); }     /* (A box, an overlay: #voicePick's and #options' rules) */
 .chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
@@ -735,6 +736,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csEditor { gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
 .csLine { border-bottom: var(--rule); background: var(--bg); }
 .csLine.dragged { background: var(--tint-solid); }
+.csGap { min-height: 40px; border: 1px dashed var(--soft); border-radius: var(--radius); }     /* (A free item dragged: the places it can go between passages, each a line's height) */
 .csRow { display: flex; align-items: center; gap: var(--gap-m); min-height: 40px; }
 .csHandle { width: var(--x-w); touch-action: none; cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
 .csName { flex: 1; min-width: 0; font-size: var(--fs-s); }
@@ -746,7 +748,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 :is(.csMemo, .csMemoBox) .memoS { font-size: var(--fs-s); } :is(.csMemo, .csMemoBox) .memoL { font-size: var(--fs-xl); } :is(.csMemo, .csMemoBox) ul { margin: 0; padding-left: 1.4em; white-space: normal; }     /* (Its sizes - small, large - and its list) */
 .memoBar { margin-bottom: 4px; } .memoB { font-weight: 700; } .memoI { font-style: italic; } .memoU { text-decoration: underline; }     /* (The note's formatting bar: B, I, U shown as what they do) */
 .csOut { display: grid; justify-items: start; gap: var(--gap); }     /* (DOWNLOAD's picker, then Print under it) */
-.csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); position: fixed; z-index: 33; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's menu: an overlay as a menu is, over the screen under its button - showMenu places it: in by its margin, its choices' names over the lines' names; nothing moved -; a tap elsewhere closes it) */
+.csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); position: fixed; z-index: var(--z-menu); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's menu: an overlay as a menu is, over the screen under its button - showMenu places it: in by its margin, its choices' names over the lines' names; nothing moved -; a tap elsewhere closes it) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }

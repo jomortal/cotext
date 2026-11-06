@@ -12,10 +12,13 @@
 //   unless renamed). "+ Add passage" (under the last section) adds one - at first the first's chapter, all its
 //   verses -, its own pickers at its top with a ✕ removing it and its items. A section's verse range limits each of
 //   its items to those verses (an item's own range within it); every item works for its section's reference as it
-//   would for the first's.
+//   would for the first's. Between passages (before the first, after the last) the reader's FREE items may sit on
+//   their own - notes and single entries, tied to no verses: a loose run, no heading.
 // - TWO PANES: the EDITOR - each section: its reference, a line per item added (its name; a drag handle ⠿ to move it
-//   up or down within the section, by touch or mouse; Options, opening that item's own settings under it; ✕ removing
-//   it), "+ Add item" under the last -, then "+ Add passage", Download and Print under it - and the PREVIEW, the
+//   up or down within the section, by touch or mouse - a free item's anywhere: into any passage or the drop places
+//   shown before, between and after them; Options, opening that item's own settings under it - a note's Edit, opening
+//   its editor -; ✕ removing it), "+ Add item" under the last (its menu over everything, the panel's divider too) -,
+//   then "+ Add passage", "+ Add note" (a note at the printout's end), Download and Print under it - and the PREVIEW, the
 //   printout as it will print: the sections in order, each headed with its reference, redrawn as anything is added,
 //   moved, changed or removed (not edited itself). The preview the screen's room, scrolling in it; the editor (and the
 //   download pane, in its place) a screen's panel as the decks' - at the foot upright, at the right sideways, its title
@@ -50,6 +53,9 @@
 //   pane's + (draftResource) - the Hebrew OT beside a Septuagint book as the other text.
 //   THE TIMELINE - the chapter's year (Theographic, as ☰ Timeline) and the lanes' items within 150 years of it, each a
 //     bar, the chapter's own in the accent.
+//   SINGLE ENTRIES - "An entry from <dictionary>" for each dictionary: one entry, free, looked up in its Options (the
+//     dictionary searched as it's typed, at least 2 letters; one tapped picked) - nothing printed until one is; the
+//     resources pane's + by an entry adds that one at the printout's end.
 //   WORD LIST - the chapter's words (every word, those under a frequency in the testament, or ones picked from the
 //     chapter's list), rarest first, each its dictionary form, transliteration (an option), definition - SHORT (the
 //     vocab gloss) or LONG (the brief lexicon's full entry: abridged BDB or Abbott-Smith) - and how often it comes in
@@ -72,7 +78,7 @@
 //   the PDF is (handOver): a Home Screen iPhone or iPad's share sheet, elsewhere a download.
 // - KEPT on the device, every printout under one key (localStorage "cotext.study": { at: the open one's id, printouts:
 //   [{ id, name ("" until renamed), bib (its bibliography style; none: SBL), sections: [{ id, book (its code), chapter,
-//   from, to, items }] }] }). The earlier
+//   from, to, items, loose (a run of free items) }] }] }). The earlier
 //   per-chapter printouts ("cotext.study.<book>.<chapter>") are brought in once as printouts of their own, their keys
 //   removed; anything unreadable is skipped.
 
@@ -81,7 +87,7 @@ import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
 import { onScreen } from "./study";
 import { sourcesFor, placesOf, openSource, noteElement, drawDiagram, FOLDED, type Source, type Note, type Sentence, setEntryAdd } from "./notes";
-import { passageArticles, bookArticles, articleBlock } from "./dictionary";
+import { passageArticles, bookArticles, articleBlock, searchArticles } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
@@ -108,8 +114,13 @@ type Item = { id: string } & (
   | { k: "memo"; text: string; html?: string });     // (memo: the reader's own note, typed in its line - printed as typed; html its formatting, memoHtml's few tags)
 
 /** A section of the printout: a reference - book, chapter, verses from - to (0: the chapter's first / last) - and its
- *  items in order. The first names the printout until it's renamed. */
-type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[] };
+ *  items in order. The first passage names the printout until it's renamed. loose: no passage - a run of the reader's
+ *  free items (FREE: notes and single entries) between passages, before the first or after the last; no heading, its
+ *  book only what its entries' sources are looked up by. Never empty: emptied, it's gone (settle). */
+type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[]; loose?: boolean };
+/** The items tied to no verses - a note, a single entry -, so dragged anywhere: within any passage or between them. */
+const FREE = new Set<Item["k"]> (["memo", "article"]);
+const isFree = (it: Item) => FREE.has (it.k);
 
 export const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
 const UNDER = [5, 10, 25, 50, 100, 200, 500];     // (WORD LIST's frequencies: words coming fewer times than this in the testament)
@@ -234,12 +245,12 @@ let loaded = false;
 /** The printout open (the first if the one kept is gone). */
 const now = () => printouts.find ((p) => p.id === at) ?? printouts[0];
 let sections: Section[] = [];     // (The open printout's sections: now ().sections, kept in step by openPrintout)
-const first = () => sections[0];
+const first = () => sections.find ((s) => ! s.loose);     // (The first passage)
 const KEY = "cotext.study";
 /** The name shown for a printout: its own, or, until renamed, its first section's reference ("John 3", "John 3:1-16"). */
 function nameShown (p: Printout): string {
   if (p.name.trim ()) return p.name;
-  const m = p.sections[0];
+  const m = p.sections.find ((s) => ! s.loose);
   return m ? `${m.book.name} ${m.chapter}` + (m.from ? `:${m.from}` + (m.to > m.from ? `-${m.to}` : "") : "") : "Untitled";
 }
 /** A new printout, as the reader's chapter: one section, the chapter read, all its verses, nothing added. */
@@ -258,8 +269,10 @@ function sectionsOf (x: unknown): Section[] {
     const r = y as Record<string, unknown>;
     const bk = bookList ().find ((z) => z.code === r.book);
     if (! bk) continue;
+    const loose = r.loose === true, items = itemsOf (r.items).filter ((i) => ! loose || isFree (i));     // (A loose run: its free items alone)
+    if (loose && ! items.length) continue;
     out.push ({ id: typeof r.id === "string" ? r.id : newId (), book: bk, chapter: Math.min (Math.max (Number (r.chapter) || 1, 1), bk.chapters),
-                from: Number (r.from) || 0, to: Number (r.to) || 0, items: itemsOf (r.items) });
+                from: Number (r.from) || 0, to: Number (r.to) || 0, items, ...(loose ? { loose } : {}) });
   }
   return out;
 }
@@ -297,7 +310,7 @@ function load () {
 const save = () => {
   try {
     localStorage.setItem (KEY, JSON.stringify ({ at: now ().id, printouts: printouts.map ((p) => ({ id: p.id, name: p.name, bib: p.bib,
-      sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items })) })) }));
+      sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items, loose: s.loose })) })) }));
   } catch { /* private mode: not kept */ }
 };
 let nextId = 0;
@@ -313,11 +326,11 @@ function nameOf (sec: Section, it: Item): string {
     case "note": return (sourceOf (book, it.src)?.name ?? it.src) + (it.beside ? ", beside each verse" : "") + range
                         + (it.noFathers?.length ? ", some fathers" : "") + (it.skip?.length ? `, ${it.skip.length} left out` : "");
     case "dict": return (sourceOf (book, it.src)?.name ?? it.src) + range + (it.skip?.length ? `, ${it.skip.length} left out` : "");
-    case "article": return `${it.title} (${sourceOf (book, it.src)?.name ?? it.src})`;
+    case "article": return it.title ? `${it.title} (${sourceOf (book, it.src)?.name ?? it.src})` : `An entry from ${sourceOf (book, it.src)?.name ?? it.src} (none picked)`;
     case "map": return "Atlas map" + range;
     case "time": return "Timeline";
     case "words": return "Word list" + (it.which === "rare" ? ` (under ${it.under}×)` : it.which === "picked" ? ` (${it.picked.length} picked)` : "");
-    case "memo": return "Note";
+    case "memo": { const t = it.text.trim ().replace (/\s+/g, " "); return t ? `Note: ${t.length > 40 ? t.slice (0, 40) + "…" : t}` : "Note"; }     // (Its first words: known closed)
   }
 }
 
@@ -406,21 +419,21 @@ onScreen ("Study printout", async (body) => {
   sectionsEl = el ("div", "csSections");
   const more = el ("button", "pill action", "+ Add passage");
   more.addEventListener ("click", () => {
-    const [b, c] = first () ? [first ().book, first ().chapter] : where ();     // (The first's chapter; none, the chapter read)
+    const f = first (), [b, c] = f ? [f.book, f.chapter] : where ();     // (The first's chapter; none, the chapter read)
     sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] });
-    if (sections.length === 1) nameFollows ();
+    if (! f) nameFollows ();
     save (); drawSections (); render ();
     sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" });
   });
-  // + ADD NOTE: a note of the reader's own at the end of the last passage (none: a passage first, the chapter read), its
-  // box ready to type in
+  // + ADD NOTE: a note of the reader's own at the printout's end, after the last passage (looseEnd), its box ready to
+  // type in - dragged anywhere from there
   const memo = el ("button", "pill action", "+ Add note");
   memo.addEventListener ("click", () => {
-    if (! sections.length) { const [b, c] = where (); sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }); nameFollows (); }
     const it: Item = { id: newId (), k: "memo", text: "" };
-    sections[sections.length - 1].items.push (it);
+    looseEnd (sections).items.push (it);
+    openOpts.add (it.id);     // (Opened, to type in)
     save (); drawSections (); render ();
-    sectionsEl.querySelector<HTMLTextAreaElement> (`.csLine[data-id="${it.id}"] textarea`)?.focus ();
+    sectionsEl.querySelector<HTMLElement> (`.csLine[data-id="${it.id}"] .csMemoBox`)?.focus ();
   });
   const print = el ("button", "pill action", PRINT);
   printEl = print;
@@ -487,17 +500,37 @@ onScreen ("Study printout", async (body) => {
 const EDITOR_KEY = "cotext.study.editor";     // (The pane shown: "1" the editor, "out" the download pane, "0" none)
 
 /** A dictionary's entry added from the resources pane (its + by the entry: notes.ts' setEntryAdd) to the open printout:
- *  an item of its own (article) - not tied to verses, so moved anywhere as it is -, at the end of the last passage (none:
- *  a passage made, the chapter read); nothing where that entry's in already. False for a book or source not there. */
+ *  an item of its own (article) - free, not tied to verses, so dragged anywhere -, at the printout's end, after the
+ *  last passage (looseEnd); nothing where that entry's in already. False for a book or source not there. */
+/** The loose run at the end of a printout's sections, made if the last is a passage (its book the last passage's, else
+ *  b / chapter, else the chapter read): where a new note or entry goes. */
+function looseEnd (secs: Section[], b?: Book, chapter = 1): Section {
+  const last = secs[secs.length - 1];
+  if (last?.loose) return last;
+  const p = [...secs].reverse ().find ((s) => ! s.loose), [bk, c] = p ? [p.book, p.chapter] : b ? [b, chapter] : where ();
+  const run: Section = { id: newId (), book: bk, chapter: c, from: 0, to: 0, items: [], loose: true };
+  secs.push (run);
+  return run;
+}
+
+/** A printout's sections tidied after a move or a removal: empty loose runs dropped, runs side by side made one. */
+function settle (secs: Section[]): Section[] {
+  const out: Section[] = [];
+  for (const s of secs) {
+    if (s.loose && ! s.items.length) continue;
+    const prev = out[out.length - 1];
+    if (s.loose && prev?.loose) prev.items.push (...s.items); else out.push (s);
+  }
+  return out;
+}
+
 export function addStudyEntry (b: Book, chapter: number, src: string, id: string, title: string): boolean {
   const bk = bookList ().find ((x) => x.code === b.code);
   if (! bk || ! sourceOf (bk, src)) return false;
   const open = !! sectionsEl?.isConnected;
   load ();
   if (now ().sections.some ((x) => x.items.some ((i) => i.k === "article" && i.src === src && i.entry === id))) return true;
-  if (! now ().sections.length) now ().sections.push ({ id: newId (), book: bk, chapter, from: 0, to: 0, items: [] });
-  const secs = now ().sections;
-  secs[secs.length - 1].items.push ({ id: newId (), k: "article", src, entry: id, title: title.replace (/\*/g, "") });
+  looseEnd (now ().sections, bk, chapter).items.push ({ id: newId (), k: "article", src, entry: id, title: title.replace (/\*/g, "") });
   save ();
   if (open) { drawSections (); render (); }
   return true;
@@ -579,7 +612,7 @@ function addStudy (code: string, chapter: number, from: number, to: number, src:
   const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
   const f = Math.max (from || 0, 0), t = f && (to || 0) > f ? to : f;
   // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)
-  const holds = (x: Section) => x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
+  const holds = (x: Section) => ! x.loose && x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
   const sec = s || made ? now ().sections.find (holds) : undefined;
   const item = sec && { ...(made ?? sourceItem (s!, 0, 0)), id: newId (), from: f === sec.from ? 0 : f, to: t === sec.to ? 0 : t } as Item;
   const same = (x: Item) => JSON.stringify ({ ...x, id: "" }) === JSON.stringify ({ ...item, id: "" });
@@ -590,18 +623,33 @@ function addStudy (code: string, chapter: number, from: number, to: number, src:
   return true;
 }
 
-// + Add item's menu open, closed by a tap anywhere but in it or on its button - as a menu is
+// + Add item's menu: open, it's in the page itself, over everything - the panel's divider too, as choose.ts' lists -;
+// closed (a tap anywhere but in it or on its button, as a menu is; a choice picked), back under its button
+const menuButtons = new WeakMap<HTMLElement, HTMLElement> ();     // (Each menu's + Add item)
+function closeMenu (m: HTMLElement) {
+  m.hidden = true;
+  const b = menuButtons.get (m);
+  if (b?.isConnected) b.after (m); else m.remove ();
+}
 document.addEventListener ("pointerdown", (e) => {
   const t = e.target as Element;
   for (const m of document.querySelectorAll<HTMLElement> (".csMenu:not([hidden])"))
-    if (! m.contains (t) && ! m.previousElementSibling?.contains (t)) m.hidden = true;
+    if (! m.contains (t) && ! menuButtons.get (m)?.contains (t)) closeMenu (m);
 });
 
 /** The editor's sections, each its reference, its lines, + Add item and its menu (hidden until that's tapped). */
 function drawSections () {
   linesOf.clear ();
+  for (const m of document.querySelectorAll<HTMLElement> (".csMenu:not([hidden])")) closeMenu (m);
   sectionsEl.replaceChildren (...sections.map ((sec) => {
-    const box = el ("div", "csSection");
+    const box = el ("div", sec.loose ? "csSection csLoose" : "csSection");
+    box.dataset.sec = sec.id;
+    if (sec.loose) {     // (A loose run: its lines alone - no reference, no + Add item)
+      const lines = el ("div", "csLines");
+      linesOf.set (sec, lines);
+      box.append (lines);
+      return box;
+    }
     const place = el ("div", "csPlace");
     void drawPlace (place, sec);
     const lines = el ("div", "csLines");
@@ -609,7 +657,8 @@ function drawSections () {
     const add = el ("button", "pill action", "+ Add item");
     const menu = el ("div", "csMenu");
     menu.hidden = true;
-    add.addEventListener ("click", () => { if (menu.hidden) showMenu (sec, menu); else menu.hidden = true; });
+    menuButtons.set (menu, add);
+    add.addEventListener ("click", () => { if (menu.hidden) showMenu (sec, menu); else closeMenu (menu); });
     box.append (place, lines, add, menu);
     return box;
   }));
@@ -625,22 +674,26 @@ function drawLines () {
       const row = el ("div", "csRow");
       const handle = el ("button", "pill icon csHandle", "⠿");
       handle.setAttribute ("aria-label", "Drag to move");
-      const opts = el ("button", "pill csOptsBtn", "Options");
+      const opts = el ("button", "pill csOptsBtn", it.k === "memo" ? "Edit" : "Options");     // (A note's: Edit, opening its editor as Options opens an item's settings)
       opts.setAttribute ("aria-expanded", String (openOpts.has (it.id)));
       const x = el ("button", "pill icon csRemove", "", "x");
       x.setAttribute ("aria-label", "Remove");
-      row.append (handle, el ("span", "csName", nameOf (sec, it)), ...(it.k === "memo" ? [] : [opts]), x);
+      row.append (handle, el ("span", "csName", nameOf (sec, it)), opts, x);
       const panel = el ("div", "csOpts");
       panel.hidden = ! openOpts.has (it.id);
-      if (! panel.hidden) fillOptions (panel, sec, it);
+      if (! panel.hidden && it.k !== "memo") fillOptions (panel, sec, it);
       opts.addEventListener ("click", () => {
         if (openOpts.has (it.id)) openOpts.delete (it.id); else openOpts.add (it.id);
         drawLines ();
       });
-      x.addEventListener ("click", () => { sec.items = sec.items.filter ((i) => i !== it); openOpts.delete (it.id); changed (); });
-      dragging (handle, line, sec);
+      x.addEventListener ("click", () => {
+        sec.items = sec.items.filter ((i) => i !== it); openOpts.delete (it.id);
+        if (sec.loose && ! sec.items.length) { now ().sections = sections = settle (sections); save (); drawSections (); render (); }     // (Its run emptied: gone)
+        else changed ();
+      });
+      if (isFree (it)) draggingFree (handle, line); else dragging (handle, line, sec);
       line.append (row, panel);
-      if (it.k === "memo") line.append (...memoEditor (it));     // (A note: its formatting bar and box under its line)
+      if (it.k === "memo" && openOpts.has (it.id)) line.append (...memoEditor (it));     // (A note open: its formatting bar and box under its line)
       return line;
     }));
   }
@@ -681,6 +734,8 @@ function memoEditor (it: Item & { k: "memo" }): HTMLElement[] {
   box.contentEditable = "true"; box.dataset.placeholder = "Type a note"; box.innerHTML = memoView (it);
   const keep = () => {
     it.html = memoHtml (box.innerHTML); it.text = box.innerText; save ();
+    const name = sectionsEl.querySelector (`.csLine[data-id="${it.id}"] .csName`);
+    if (name) name.textContent = nameOf (sections[0], it);     // (Its line's name following what's typed)
     const b = previewEl.querySelector<HTMLElement> (`[data-item="${it.id}"]`);
     if (b) { b.querySelector (".csMemo")!.innerHTML = it.html; b.hidden = ! it.text.trim (); } else render ();
   };
@@ -753,6 +808,55 @@ function dragging (handle: HTMLElement, line: HTMLElement, sec: Section) {
   });
 }
 
+/** A free item's line dragged (a note, a single entry): anywhere - among any passage's lines, or into the gaps
+ *  before, between and after the passages (shown as drop places while it's dragged) -, put where the pointer is among
+ *  the lines it's over (or nearest); let go, each section's items read back from the lines, a line in a gap a loose
+ *  run of its own there (settle: emptied runs dropped, neighbors made one), the preview drawn again. */
+function draggingFree (handle: HTMLElement, line: HTMLElement) {
+  handle.addEventListener ("pointerdown", (e) => {
+    e.preventDefault ();
+    line.classList.add ("dragged");
+    // (A drop place before each passage and after the last, where no loose run is already)
+    const boxes = [...sectionsEl.children] as HTMLElement[];
+    for (const [i, b] of [...boxes, null].entries ()) {
+      const before = boxes[i - 1], after = b;
+      if (before?.classList.contains ("csLoose") || after?.classList.contains ("csLoose")) continue;
+      const gap = el ("div", "csLines csGap");
+      if (after) sectionsEl.insertBefore (gap, after); else sectionsEl.append (gap);
+    }
+    const move = (ev: PointerEvent) => {
+      const y = px (ev.clientY), lists = [...sectionsEl.querySelectorAll<HTMLElement> (".csLines")];
+      const dist = (x: HTMLElement) => { const r = cssBox (x); return y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0; };
+      const into = lists.reduce ((a, b) => dist (b) < dist (a) ? b : a);
+      const at = [...into.children].find ((c) => { if (c === line) return false; const r = cssBox (c as HTMLElement); return y < r.top + r.height / 2; }) ?? null;
+      if (line.parentElement !== into || line.nextElementSibling !== at) into.insertBefore (line, at);
+    };
+    const up = () => {
+      document.removeEventListener ("pointermove", move);
+      document.removeEventListener ("pointerup", up);
+      document.removeEventListener ("pointercancel", up);
+      line.classList.remove ("dragged");
+      const byId = new Map (sections.flatMap ((s) => s.items.map ((i) => [i.id, i] as const)));
+      const was = JSON.stringify (sections.map ((s) => [s.id, s.items.map ((i) => i.id)]));
+      const out: Section[] = [];
+      for (const b of sectionsEl.children as HTMLCollectionOf<HTMLElement>) {
+        const ids = [...b.querySelectorAll<HTMLElement> (":scope .csLine")].map ((l) => l.dataset.id!);
+        const sec = sections.find ((s) => s.id === b.dataset.sec);
+        if (sec) { sec.items = ids.map ((id) => byId.get (id)!); out.push (sec); continue; }
+        if (! ids.length) continue;     // (An unused drop place)
+        const p = [...out].reverse ().find ((s) => ! s.loose) ?? first (), [bk, c] = p ? [p.book, p.chapter] : where ();     // (Its sources' book: the passage before it's)
+        out.push ({ id: newId (), book: bk, chapter: c, from: 0, to: 0, items: ids.map ((id) => byId.get (id)!), loose: true });
+      }
+      now ().sections = sections = settle (out);
+      if (JSON.stringify (sections.map ((s) => [s.id, s.items.map ((i) => i.id)])) !== was) { save (); render (); }
+      drawSections ();     // (The drop places gone)
+    };
+    document.addEventListener ("pointermove", move);
+    document.addEventListener ("pointerup", up);
+    document.addEventListener ("pointercancel", up);
+  });
+}
+
 // ---- Options ----
 /** What an option's change does where its panel is: the editor's (kept, its lines - the panel with them - and the
  *  preview redrawn; a tick, quietly), or a resource's line in the Bible's add box (draftResource: its panel redrawn). */
@@ -820,6 +924,25 @@ async function fillOptions (panel: HTMLElement, sec: Section, it: Item, o: Opts 
       }
       panel.append (list);
     }
+  } else if (it.k === "article") {     // (Its entry looked up: the dictionary searched as it's typed - titles first, as the search pane -, one tapped picked)
+    const find = el ("input", "choose");
+    Object.assign (find, { type: "search", placeholder: `Look up an entry in ${sourceOf (book, it.src)?.name ?? it.src}`, autocomplete: "off" });
+    const found = el ("div", "csNoteList");
+    let n = 0;
+    find.addEventListener ("input", async () => {
+      const q = find.value.trim (), k = ++n;
+      if (q.length < 2) { found.replaceChildren (); return; }
+      const hits = await searchArticles (db, q, () => {}, it.src);
+      if (k !== n) return;
+      found.replaceChildren (...hits.slice (0, 30).map ((h) => {
+        const b = el ("button", "hit csChoice");
+        b.append (el ("span", "csChoiceName", h.title), el ("span", "src", h.text.slice (0, 80)));
+        b.addEventListener ("click", () => { it.entry = h.id; it.title = h.title; o.changed (); });
+        return b;
+      }));
+      if (! hits.length) found.append (el ("p", "", "No entries found."));
+    });
+    panel.append (el ("div", "src", it.title ? `Entry: ${it.title}` : "No entry picked yet"), find, found);
   } else panel.append (el ("p", "", "No options."));
 }
 
@@ -938,7 +1061,7 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
     return b;
   };
   const head = (t: string) => el ("div", "src", t);
-  const push = (it: Item) => { sec.items.push (it); menuEl.hidden = true; changed (); };
+  const push = (it: Item) => { sec.items.push (it); closeMenu (menuEl); changed (); };
   const sources = sourcesFor (book);
   menuEl.append (head ("Original text"), choice (`${textName (book)} text of ${book.name} ${chapter}`,
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0 })));
@@ -958,9 +1081,14 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   group ("Time", sources.filter ((s) => s.kind === "timeline").map ((s) => choice ("Timeline", () => push (sourceItem (s, 0, 0)), "The chapter's place in time")));
   menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
+  // (Items not tied to the passage's verses: one entry of a dictionary, looked up in its Options - opened at once)
+  group ("Single entries", sources.filter ((s) => s.kind === "dictionary").map ((s) => choice (`An entry from ${s.name}`, () => {
+    const it: Item = { id: newId (), k: "article", src: s.id, entry: "", title: "" };
+    openOpts.add (it.id); push (it);
+  }, "Any entry, looked up by name")));
   // (Over the screen by its button, as wide as the lines' names, within the screen's room - nothing scrolled or moved)
   // (CSS px, whatever the UI's scale: zoom.ts)
-  const r = cssBox (menuEl.previousElementSibling as HTMLElement), box = cssBox (menuEl.parentElement!);
+  const r = cssBox (menuButtons.get (menuEl)!), box = cssBox (menuEl.parentElement!);
   const room = openRoom (), foot = room.bottom;     // (Down to the bar at the foot, or the screen's foot with the bar down the side - never over it: bars.ts)
   // (As far as there's room: under the button down to the foot - or, more room above it, over the button up to the top
   // bar, as a menu opens upward)
@@ -968,6 +1096,7 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   const up = above > below;
   Object.assign (menuEl.style, { top: up ? "auto" : `${r.bottom}px`, bottom: up ? `${winH () - r.top}px` : "auto", left: `${box.left}px`, right: `${winW () - Math.min (box.right, room.right)}px`,     // (In from the left by its margin: style.css)
                                  maxHeight: `${Math.max (120, up ? above : below)}px` });
+  document.body.append (menuEl);
 }
 
 /** A dictionary item's entries for its verses (sec: its section), each once, in order: the Tyndale's by verse (those
@@ -1012,13 +1141,14 @@ async function render () {
     const { book, chapter } = sec, ch = dataOf (sec);
     const part = el ("div", "csPart");
     part.dataset.sec = sec.id;     // (Its blocks found by their items' ids - data-item -, moved in place when a line's dragged: reorder)
-    part.append (el ("h1", "csTitle", refName (sec)));
-    const vs = await verses (sec);
+    if (! sec.loose) part.append (el ("h1", "csTitle", refName (sec)));     // (A loose run: no heading - its notes and entries alone)
+    else part.classList.add ("csLoose");
+    const vs = sec.loose ? [] : await verses (sec);
     const list: Item[] = sec.items;     // (Nothing added: nothing shown, not even the text)
     const firstText = list.find ((i) => i.k === "text" && ! i.other);     // (The other text numbers its own verses: notes go under this one's)
     const beside = firstText ? list.filter ((i): i is Item & { k: "note" } => i.k === "note" && i.beside) : [];
     const text = new Map<string, [string, string]> ();     // (A diagram's words: "ref:n" -> [text, gloss])
-    for (const w of await ch.words) text.set (`${chapter * 1000 + w.verse}:${w.word}`, [w.text, w.gloss]);
+    if (! sec.loose) for (const w of await ch.words) text.set (`${chapter * 1000 + w.verse}:${w.word}`, [w.text, w.gloss]);
     for (const it of list) {
       if (it.k === "note" && beside.includes (it as Item & { k: "note" })) continue;     // (Drawn under the text's verses)
       const block = el ("section", "csBlock");
@@ -1100,7 +1230,8 @@ async function render () {
             block.append (el ("h3", "csArticle", got.title), ...got.body);
           }
           if (! list.length) block.append (el ("p", "", "Nothing for these verses."));
-        } else if (it.k === "article") {     // (One entry, as the dictionary item prints each - its title, then the article)
+        } else if (it.k === "article") {     // (One entry, as the dictionary item prints each - its title, then the article; none picked yet, nothing)
+          if (! it.entry) { block.hidden = true; part.append (block); continue; }
           cite (it.src);
           const key = `${it.src}:${it.entry}`;
           let a = articles.get (key);
