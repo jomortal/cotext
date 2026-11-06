@@ -757,6 +757,8 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); row-gap: 0; grid-template-areas: "preview" "split" "editor";
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Upright: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
 .cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
+.cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor) { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
+.csToggle { grid-column: 3; }     /* (The printout's bar: its one button in the middle) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
                             .csEditor { padding-left: var(--gap-m); } }     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
@@ -858,6 +860,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto 1fr auto; justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
+  .csToggle { grid-column: 1; grid-row: 3; }     /* (The printout's bar down the side: its one button in the middle) */
   #prev { grid-column: 1; grid-row: 1; } #next { grid-column: 1; grid-row: 5; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
@@ -932,7 +935,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, .topBar, .csEditor, .cstudy > .split, .chooseList { display: none !important; }
+  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .chooseList { display: none !important; }
   #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
   .csPreview { overflow: visible; border: 0; padding: 0; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;

@@ -422,10 +422,22 @@ onScreen ("Study printout", async (body) => {
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
   box.append (previewEl, split, editor);
-  body.append (box);
+  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): its one button, in the middle, showing or
+  // hiding the editor (shown: pressed) - hidden, the preview the whole room. Kept on the device.
+  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle");
+  toggle.setAttribute ("aria-label", "Show or hide the editor");
+  toggle.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>`;     // (A pencil: editing)
+  let shown = true;
+  try { shown = localStorage.getItem (EDITOR_KEY) !== "0"; } catch { /* private mode */ }
+  const show = (on: boolean) => { shown = on; box.classList.toggle ("csNoEditor", ! on); toggle.setAttribute ("aria-pressed", String (on)); };
+  toggle.addEventListener ("click", () => { show (! shown); try { localStorage.setItem (EDITOR_KEY, shown ? "1" : "0"); } catch { /* private mode */ } });
+  show (shown);
+  bar.append (toggle);
+  body.append (box, bar);
   drawSections ();
   render ();
 });
+const EDITOR_KEY = "cotext.study.editor";     // ("0": the editor hidden - the bar's toggle)
 
 /** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
  *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
