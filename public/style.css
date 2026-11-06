@@ -908,6 +908,19 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 :root[data-split="column"] .sheet.twoCol .panelScroll > .wordSplit { order: -1; }     /* (The info, the divider, the lexicon - top to bottom) */
 :root[data-split="column"] :is(#sheet, #besideSheet).twoCol .panelScroll > .wordSplit { margin-left: calc(-1 * var(--safe-l)); }     /* (From the panel's left edge, not its margin: sideways its line then runs on to #notesSplit's, --meet) */
 
+/* iPhone and iPad (Safari on iOS, which alone has -webkit-touch-callout): a fixed bar inside a scrolling box is cut away
+   by that box once it scrolls (a card turned over, taller than the room) - so there the screen's box is the whole
+   window, its bars and panels inside it, the room they take kept by its padding instead. Its scroll bar shows only
+   while scrolling there, so where it runs doesn't matter. Elsewhere the screen's box is the room between its bars, as above. */
+@supports (-webkit-touch-callout: none) {
+  #screen { top: 0; padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }
+  #screen:has(.bottomBar) { bottom: 0; padding-bottom: calc(var(--barH) + var(--gap-s)); }
+  #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: 0; padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
+  @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {
+    #screen:has(.bottomBar) { right: 0; padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--margin)); }
+    #screen:has(.bottomBar):has(.deckPane:not([hidden])) { right: 0; padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--deckPaneW) + var(--margin)); }
+  }
+}
 @media print {
   @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }
   html, body { position: static; overflow: visible; height: auto; display: block; background: #fff; }
