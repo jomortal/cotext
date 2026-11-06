@@ -66,7 +66,7 @@
   --col-r: max(var(--safe-r), calc((100% - var(--page)) / 2));
   --x-room: 52px;
   --x-w: var(--icon-box);     /* (A ✕ button's width: an icon's box) */
-  --split-w: 14px; --split-half: calc(var(--split-w) / 2);     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
+  --split-w: 14px; --split-half: calc(var(--split-w) / 2); --pane-top: calc(var(--margin) - var(--split-half));     /* (--pane-top: a panel's room above its first line - from the divider's line as much as its side margin) */     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
   --grip: 36px; --grip-w: 4px;     /* (A divider's grip, over its line: its length and thickness) */
   --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
   /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
@@ -262,6 +262,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
    .gBody), the source's credit. */
 .pane { flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); }
 .pane .top { align-items: center; position: relative; z-index: 3; }     /* (The resources' top row: its picker, frozen over the scroller - .pane > .top) */
+.pane > .top > .pill.icon, .pane > .top .chooseWrap + .pill.icon { padding-block: 0; }     /* (Its icons no taller than the picker: the row as tall as the picker, its top --pane-top below the divider's line) */
 #notes > .top { padding-right: var(--safe-r) !important; } #notesClose { margin-left: var(--gap-m); }     /* (The resources' picker, + and ✕ on one line - the ✕ in the row (notes.ts), at the edge every ✕ is, twice the gap from the + -) */
 #notes .chooseWrap { flex: 1; min-width: 0; }
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
@@ -279,24 +280,22 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); }
 /* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
    what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
-:is(.sheet, .pane) > .xRow { position: absolute; z-index: 4; top: var(--pad); right: var(--safe-r); }     /* (z 4: over the pane's top row, z 3 - else it takes the ✕'s tap) */
-.pane > .xRow { top: var(--x-top); }     /* (The resources' ✕ as far below the panel's top as in from its side: --x-top) */
+:is(.sheet, .pane) > .xRow { position: absolute; z-index: 4; top: var(--pane-top); right: var(--safe-r); }     /* (z 4: over the pane's top row, z 3 - else it takes the ✕'s tap) */
+.pane > .xRow { top: var(--pane-top); }     /* (The resources' ✕ as far below the panel's top as in from its side: --x-top) */
 /* Each panel a frame that doesn't scroll, its ✕ placed in it (above), and inside it the scroller (panel.ts / notes.ts
    wrap the panel's contents in .panelScroll): so the ✕ never moves, not even with the bounce at a scroll's end. */
 :is(.sheet, .pane):not([hidden]) { display: flex; flex-direction: column; position: relative; }
 :is(.sheet, .pane) > .panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
   padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
-:is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
+:is(#sheet, #besideSheet) > .panelScroll { padding-top: var(--pane-top); } :is(#sheet, #besideSheet) > .xRow { top: var(--pane-top); }     /* (The word's panels: half the top margin, the ✕ with it - by id, to outweigh the rules above) */
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 :where(.sheet:not(.twoCol)) > .panelScroll > * { margin-inline: 0 auto; }     /* (A word's panel in one column: at the panel's left, any room beyond --page at its right) */
 .pane > .panelScroll { padding-top: 0; }     /* (Under the frozen top row: its own margin above) */
-.pane > .top { flex: none; margin: 0; padding: var(--pad) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge) */
+.pane > .top { flex: none; margin: 0; padding: var(--pane-top) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
-:is(.sheet, .pane):not([hidden]) { padding-block: 4px; }
-:is(.sheet, .pane) > .panelScroll { padding-top: calc(var(--pad) - 4px); padding-bottom: calc(var(--pad) - 4px); }
-:is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 - 4px); }
+:is(.sheet, .pane) > .panelScroll { padding-top: var(--pane-top); padding-bottom: var(--margin); }     /* (A panel's room: --pane-top above - the divider's line to its first line as far as its sides -, --margin at its sides and foot: one set for every panel) */
 }
 .gInline .top, .gInline .field { padding-right: var(--x-room); }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-m); }
@@ -546,7 +545,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    it (--deckPaneH: its height); sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its
    title row a .paneHead with its ✕, its divider a .deckSplit. */
 .deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(calc(var(--winH, 100dvh) * .4), var(--deckH, 0px)); box-sizing: border-box;
-              background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
+              background: var(--bg); border-top: var(--rule); padding: var(--margin) var(--safe-r) var(--margin) var(--safe-l); }     /* (The panels' one margin all round: its divider's line on its top edge, so --margin from it) */
 .deckPane:not([hidden]) { gap: var(--gap); }
 #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: calc(var(--barH) + var(--deckPaneH, 0px)); }
 .split.deckSplit { display: none; background: none; }     /* (The panel's divider see-through, the top bar's line meeting it) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - var(--split-half)); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
