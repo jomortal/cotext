@@ -171,14 +171,22 @@ function draw (body: HTMLElement) {
 }
 
 /** The Greek letters as a guide gives them (kind: modern or Erasmian): each its cell (upper and lower case, as its
- *  row shows them), its name and how it sounds - ☰ Learn's letters lesson asks them (learn.ts), in its own PRONUNCIATION's
+ *  row shows them), its name, IPA and how it sounds - ☰ Learn's letters lessons ask them (learn.ts), in its own PRONUNCIATION's
  *  kind, not this screen's pick. */
-export function greekLetters (kind: Kind): { cell: string; name: string; how: string }[] {
-  return kind === "erasmian" ? ERASMIAN.map (([up, lo, en, , how]) => ({ cell: `${up} ${lo}`, name: en, how }))
-                             : LETTERS.map (([up, lo, , en, , how]) => ({ cell: `${up} ${lo}`, name: en, how }));
+export function greekLetters (kind: Kind): { cell: string; name: string; ipa: string; how: string }[] {
+  return kind === "erasmian" ? ERASMIAN.map (([up, lo, en, ipa, how]) => ({ cell: `${up} ${lo}`, name: en, ipa, how }))
+                             : LETTERS.map (([up, lo, , en, ipa, how]) => ({ cell: `${up} ${lo}`, name: en, ipa, how }));
 }
 
-/** A guide's tables (kind) drawn into body, their speakers live - here, and in ☰ Learn's letters lesson (READ THE GUIDE,
+/** The letters said together as a guide gives them (kind: modern or Erasmian) - modern's pairs, Erasmian's diphthongs
+ *  and nasal γ, without its breathings and iota subscript (marks, not letters) -: each its cell (as its row shows it),
+ *  IPA and how it sounds - ☰ Learn's LETTERS TOGETHER asks them (learn.ts). */
+export function greekPairs (kind: Kind): { cell: string; ipa: string; how: string }[] {
+  return kind === "erasmian" ? ERASMIAN_PAIRS.filter (([pair]) => ! pair.includes ("(")).map (([cell, ipa, how]) => ({ cell, ipa, how }))
+                             : PAIRS.map (([cell, , ipa, how]) => ({ cell, ipa, how }));
+}
+
+/** A guide's tables (kind) drawn into body, their speakers live - here, and in ☰ Learn's letters lessons (READ THE GUIDE,
  *  its kind Learn's own PRONUNCIATION). */
 export function drawGuide (body: HTMLElement, kind: Kind) {
   const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${ICONS.speak}</button>`;

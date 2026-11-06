@@ -203,7 +203,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
 .w { display: grid; justify-items: center; gap: 2px; min-width: 0; cursor: pointer; border-radius: var(--radius); padding: 2px 4px; }
-.w.on, .chooseItem.on { background: var(--tint); }     /* (A word tapped; a matching round's item picked, waiting for its pair: learn.ts) */
+.w.on { background: var(--tint); }
 .orig { font-size: var(--word-he); line-height: var(--lh); }
 .he .orig { font-family: var(--heb); }
 .gr .orig { font-family: var(--grk); font-size: var(--word-gr); }
@@ -516,15 +516,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* Learn (learn.ts): the path a list of plain buttons (.hit), a question on a card (the flashcards' look, not turned:
    no pointer), its choices the book picker's inline list (.chooseList.inline) - the right one in the accent
    (aria-pressed), a wrong pick in --wrong, struck through; SHOW IN THE GRAMMAR in the line under them a link, as the
-   parsing's terms (.term). A matching round (.learnMatch) the same list in two columns side by side on every device,
-   its items laid left, right, left... (a row's two equally tall), a line between the columns; a pair matched in the
-   accent, a wrong pair --wrong for a moment, an item picked the tapped word's tint (.chooseItem.on). */
+   parsing's terms (.term). */
 .card.learnCard { cursor: default; }
 .learnQuiz { display: grid; gap: var(--gap); }
-.chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }
-.learnMatch { grid-template-columns: 1fr 1fr; min-width: 0; }
-.learnMatch .chooseItem:nth-child(2) { border-top: 0; }
-.learnMatch .chooseItem:nth-child(odd) { border-right: var(--hair); }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
+.chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the

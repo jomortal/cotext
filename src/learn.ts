@@ -16,23 +16,18 @@
 //   that section opened and scrolled to, the passage marked in the tapped word's tint (style.css' .gSec mark), kept
 //   marked until another link is followed - and NEXT. At the end the score: PASSED at PASS (80%) or more - the next lesson opens - else NOT YET; NEXT LESSON
 //   (once passed) and TRY AGAIN (ALL LESSONS above, as throughout).
-// - A MATCHING ROUND (a Match - a general kind, any lesson's): its prompt on the card, then its pairs as two columns side
-//   by side in one list, the left items in one column, the right in the other, each shuffled; one tapped is marked in
-//   the tint (as a tapped word), then one tapped in the other column pairs them: a right pair turns the accent and is
-//   done, a wrong one flashes --wrong (struck through, a moment) and counts as a miss. All paired: how many misses, NEXT.
-//   SCORING: a lesson's score is points over the points possible - a question 1 (right or not), a round one per pair
-//   less one per miss (never below 0) -, PASS of them passing.
-// - A GUIDE LESSON (learncourses.ts' guide - unfoldingWord's letters): PRONUNCIATION (Greek - Modern, Greek - Erasmian:
-//   Learn's own setting, modern at first, not ☰ Pronunciation's pick) beside READ THE GUIDE, which shows ☰
-//   Pronunciation's tables for it in the grammar's place; its items made from them (letterItems) - matching rounds,
-//   then transliteration both ways -, no words. Changing PRONUNCIATION restarts the lesson in it.
+// - A GUIDE LESSON (learncourses.ts' guide and letters - unfoldingWord's two letters lessons): PRONUNCIATION (Greek -
+//   Modern, Greek - Erasmian: Learn's own setting, modern at first, not ☰ Pronunciation's pick) beside READ THE GUIDE,
+//   which shows ☰ Pronunciation's tables for it in the grammar's place; its questions made from them (letterQuestions) -
+//   each of its letters (or, LETTERS TOGETHER, its letter pairs), then a few words to read (wordQuestions) -, SHOW IN THE GUIDE marking a letter's row; no
+//   vocabulary. Changing PRONUNCIATION restarts the lesson in it.
 // Kept on the device ("cotext.learn"): the course picked, the letters' pronunciation and each lesson's best score - a
 // lesson passed stays passed.
 // Hebrew and Greek in a question or choice are set in their own fonts (marked).
 
 import { onScreen, currentTestament } from "./study";
 import { readSections, sectionCaption, grammarCredit, folding, setFold } from "./grammar";
-import { drawGuide, greekLetters } from "./pronounce";
+import { drawGuide, greekLetters, greekPairs } from "./pronounce";
 import { modernGreek, erasmianGreek } from "./translit";
 import { shuffle } from "./cards";
 import { frequentWords, greekCounts } from "./vocab";
@@ -47,11 +42,6 @@ interface Kept { course?: string; greek?: Greek; best: Record<string, number>; }
 /** A guide lesson's Greek: as modern Greek says it, or as Erasmian Greek (pronounce.ts' guides). */
 type Greek = "modern" | "erasmian";
 const greek = (): Greek => kept.greek === "erasmian" ? "erasmian" : "modern";
-/** A matching round: its prompt and its pairs ([left, right] - a letter and its name...); right items all different. */
-interface Match { prompt: string; pairs: [string, string][]; }
-/** A lesson's item: a multiple-choice question or a matching round. */
-type Item = Question | Match;
-const isMatch = (x: Item): x is Match => "pairs" in x;
 let kept: Kept = { best: {} };
 try { kept = { ...kept, ...JSON.parse (localStorage.getItem (KEY) ?? "{}") }; kept.best ??= {}; } catch { /* none kept, or private mode */ }
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (kept)); } catch { /* private mode: not kept */ } };
@@ -123,54 +113,40 @@ async function draw (body: HTMLElement) {
      *  (q.find, else the whole section) marked - kept marked until another question's link (or the lesson left). */
     const showIn = async (q: Question) => {
       await ready;
-      const sec = gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
+      const sec = l.guide ? gram : gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
       if (! sec) return;
       showGram (true);
-      setFold (sec.closest (".fold")!, true);
+      if (! l.guide) setFold (sec.closest (".fold")!, true);
       for (const m of gram.querySelectorAll ("mark")) m.replaceWith (...m.childNodes);     // (An earlier mark gone)
       gram.querySelector (".gSec.found")?.classList.remove ("found");
       const marks = q.find ? markText (sec, q.find) : [];
       const shown = marks.length ? marks : [sec];
-      if (! marks.length) sec.classList.add ("found");
+      if (! marks.length && ! l.guide) sec.classList.add ("found");
       shown[0].scrollIntoView ({ block: "center" });
     };
     quiz (c, i, body.querySelector<HTMLElement> (".learnQuiz")!, showIn);
   };
 
   /** The quiz itself, into el: every question and the lesson's words (vocabQuestions), in a new order - a guide
-   *  lesson's items (letterItems) in their own order -, then the score (points: see SCORING above). */
+   *  lesson's letters and words (letterQuestions) instead -, then the score. */
   const quiz = async (c: Course, i: number, el: HTMLElement, showIn: (q: Question) => void) => {
     const l = c.lessons[i];
-    const qs: Item[] = l.guide ? letterItems (greek ())
+    const qs = l.guide ? letterQuestions (c, i, greek ())     // (A guide lesson: its letters, then its words, each part in a new order)
       : shuffle ([...l.questions, ...await vocabQuestions (c, i).catch (() => [] as Question[])]);     // (No database: the grammar's questions alone)
     if (! el.isConnected) return;     // (Another view drawn meanwhile)
-    let at = 0, right = 0, total = 0;
-    /** The item's frame: its card (big: a short word alone, as a card's front), "3 of 12", the place for its choices,
-     *  the note and NEXT (hidden till answered); returns them. */
-    const frame = (prompt: string, list: string) => {
-      el.innerHTML = `<div class="card learnCard"><div class="${wordOnly (prompt) ? "cardFront" : "cardBack"}"><div>${marked (prompt)}</div></div></div>
+    let at = 0, right = 0;
+    const ask = (q: Question) => {
+      const big = wordOnly (q.q);
+      el.innerHTML = `<div class="card learnCard"><div class="${big ? "cardFront" : "cardBack"}"><div>${marked (q.q)}</div></div></div>
         <div class="src cardCount">${at + 1} of ${qs.length}</div>
-        <div class="${list}"></div><p class="learnNote" hidden></p>
+        <div class="chooseList inline learnChoices"></div><p class="learnNote" hidden></p>
         <button class="pill action" hidden>${at + 1 < qs.length ? "Next" : "See the score"}</button>`;
-      const next = el.querySelector<HTMLButtonElement> (".pill.action")!, note = el.querySelector<HTMLElement> (".learnNote")!;
-      next.addEventListener ("click", () => { at++; if (at < qs.length) ask (qs[at]); else score (); scrollUp (); });
-      /** Answered: the note shown (its HTML), NEXT with it. */
-      const done = (html: string) => { note.innerHTML = html; note.hidden = next.hidden = false; next.scrollIntoView ({ block: "nearest" }); };
-      return { list: el.querySelector<HTMLElement> (".learnChoices")!, note, done };
-    };
-    const button = (text: string) => {
-      const b = document.createElement ("button");
-      b.type = "button"; b.className = "chooseItem"; b.innerHTML = marked (text);
-      return b;
-    };
-    const ask = (item: Item) => isMatch (item) ? match (item) : choose (item);
-    /** A multiple-choice question: one point. */
-    const choose = (q: Question) => {
-      const { list, note, done } = frame (q.q, "chooseList inline learnChoices");
-      total++;
+      const choices = el.querySelector<HTMLElement> (".learnChoices")!, note = el.querySelector<HTMLElement> (".learnNote")!;
+      const next = el.querySelector<HTMLButtonElement> (".pill.action")!;
       let answered = false, rightBtn: HTMLElement;
       for (const text of shuffle ([q.a, ...q.x])) {
-        const b = button (text);
+        const b = document.createElement ("button");
+        b.type = "button"; b.className = "chooseItem"; b.innerHTML = marked (text);
         if (text === q.a) rightBtn = b;
         b.addEventListener ("click", () => {
           if (answered) return;
@@ -179,55 +155,23 @@ async function draw (body: HTMLElement) {
           if (ok) right++;
           rightBtn.setAttribute ("aria-pressed", "true");     // (The right answer in the accent: a picker's choice's look)
           if (! ok) b.classList.add ("wrong");
-          done ((ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "")
-            + (q.s !== undefined ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>` : ""));
+          note.innerHTML = (ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "")
+            + (q.s !== undefined ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>`
+               : c.lessons[i].guide && q.find ? ` <span class="term" role="link" tabindex="0">Show in the guide</span>` : "");
           note.querySelector (".term")?.addEventListener ("click", () => showIn (q));
+          note.hidden = next.hidden = false;
+          next.scrollIntoView ({ block: "nearest" });
         });
-        list.append (b);
+        choices.append (b);
       }
-    };
-    /** A matching round: one point a pair, less one a miss (never below 0). The two columns are one list, its items
-     *  laid left, right, left... so a row's two are as tall as each other. */
-    const match = (m: Match) => {
-      const { list, done } = frame (m.prompt, "chooseList inline learnChoices learnMatch");
-      total += m.pairs.length;
-      const left = shuffle (m.pairs.map ((_, k) => k)), rightCol = shuffle (m.pairs.map ((_, k) => k));
-      let picked: HTMLElement | undefined, misses = 0, paired = 0;
-      left.forEach ((k, row) => {
-        for (const [side, n] of [[0, k], [1, rightCol[row]]] as const) {
-          const b = button (m.pairs[n][side]);
-          b.dataset.side = String (side); b.dataset.pair = String (n);
-          b.addEventListener ("click", () => {
-            if (b.getAttribute ("aria-pressed") === "true") return;     // (Paired already)
-            if (! picked || picked.dataset.side === b.dataset.side) {     // (The first of a pair, or another in its column)
-              picked?.classList.remove ("on");
-              picked = b === picked ? undefined : b;
-              picked?.classList.add ("on");
-              return;
-            }
-            const other = picked;
-            picked = undefined; other.classList.remove ("on");
-            if (other.dataset.pair === b.dataset.pair) {
-              for (const x of [other, b]) x.setAttribute ("aria-pressed", "true");
-              if (++paired < m.pairs.length) return;
-              const got = Math.max (0, m.pairs.length - misses);
-              right += got;
-              done (misses ? `${misses} ${misses === 1 ? "miss" : "misses"}: ${got} of ${m.pairs.length}.` : "All matched.");
-            } else {
-              misses++;
-              for (const x of [other, b]) { x.classList.add ("wrong"); setTimeout (() => x.classList.remove ("wrong"), 600); }     // (A flash: --wrong, a moment)
-            }
-          });
-          list.append (b);
-        }
-      });
+      next.addEventListener ("click", () => { at++; if (at < qs.length) ask (qs[at]); else score (); scrollUp (); });
     };
     const score = () => {
-      const s = total ? right / total : 0, ok = s >= PASS, more = i + 1 < c.lessons.length;
+      const s = right / qs.length, ok = s >= PASS, more = i + 1 < c.lessons.length;
       kept.best[l.id] = Math.max (kept.best[l.id] ?? 0, s);
       save ();
       el.innerHTML = `<div class="card learnCard"><div class="cardFront">${pct (s)}</div>
-        <div class="cardBack">${right} of ${total} right. ${ok ? (more ? `Passed: lesson ${i + 2} is open.` : "Passed: the course's last lesson.") : `Not yet: ${pct (PASS)} passes. Read the ${l.guide ? "guide" : "grammar"} and try again.`}</div></div>
+        <div class="cardBack">${right} of ${qs.length} right. ${ok ? (more ? `Passed: lesson ${i + 2} is open.` : "Passed: the course's last lesson.") : `Not yet: ${pct (PASS)} passes. Read the ${c.lessons[i].guide ? "guide" : "grammar"} and try again.`}</div></div>
         <div class="bar">${ok && more ? `<button class="pill action" data-k="next">Next lesson</button>` : ""}<button class="pill action" data-k="again">Try again</button></div>`;
       el.querySelector ("[data-k=next]")?.addEventListener ("click", () => { lesson (c, i + 1); scrollUp (); });
       el.querySelector ("[data-k=again]")!.addEventListener ("click", () => { quiz (c, i, el, showIn); });
@@ -255,26 +199,32 @@ const verbal = (m: string) => /^(to|I) /.test (m);
  *  picked, or the meaning shown and the word picked; the three wrong choices other words of the course's (verbs' for a
  *  verb, others' for the rest, where there are enough), never one meaning the same. No grammar link; after answering,
  *  the word, its meaning and how often it occurs. */
-/** A round's pairs at most (Duolingo's match: about 6). */
-const ROUND = 6;
-/** Common NT words for transliteration, [word, meaning]. */
-const TRANSLIT_WORDS: [string, string][] = [
+/** Words read in the letters lessons, [word, meaning]: common NT words, enough of them spelled with the first lesson's
+ *  letters alone (Α-Μ) - each lesson takes those spelled with the letters taught so far - and enough with letters said
+ *  together (LETTERS TOGETHER takes those). */
+const READ_WORDS: [string, string][] = [
+  ["καί", "and"], ["ἀλλά", "but"], ["γῆ", "earth"], ["αἷμα", "blood"], ["θέλημα", "will"], ["δέκα", "ten"], ["ἡλικία", "age"],
+  ["Γαλιλαία", "Galilee"], ["ἰδέ", "look!"], ["μή", "not"], ["δίκαια", "just things"], ["μέλι", "honey"],
   ["λόγος", "word"], ["θεός", "God"], ["κύριος", "lord"], ["ἄνθρωπος", "man"], ["Χριστός", "Christ"], ["πνεῦμα", "spirit"],
   ["ἀγάπη", "love"], ["οὐρανός", "heaven"], ["ἡμέρα", "day"], ["πατήρ", "father"], ["υἱός", "son"], ["ζωή", "life"],
   ["δόξα", "glory"], ["ἀλήθεια", "truth"], ["βασιλεία", "kingdom"], ["ἔργον", "work"], ["ψυχή", "soul"], ["χάρις", "grace"],
   ["πίστις", "faith"], ["φῶς", "light"], ["ἐκκλησία", "church"], ["εὐαγγέλιον", "gospel"], ["καρδία", "heart"], ["εἰρήνη", "peace"],
+  ["αὐτός", "he"], ["ἄγγελος", "angel"], ["οἶκος", "house"], ["πάντα", "all things"], ["οὐ", "not"], ["ἐγκαίνια", "dedication"],
 ];
-/** Transliteration items, each way: TRANSLIT_EACH. */
-const TRANSLIT_EACH = 3;
+/** Words read a letters lesson, each way (Greek shown, its Latin letters picked; and the other way). */
+const READ_EACH = 3;
+/** A word's letters, its marks gone (lower case, ς as σ). */
+const bare = (w: string) => w.normalize ("NFD").replace (/\p{M}/gu, "").toLowerCase ().replace (/ς/g, "σ");
 /** Each lower-case letter's near misses: letters it's misread as (ρ as p, ν as v, η as n, χ as x...) or near in sound. */
-const CONFUSE: Record<string, string> = { ρ: "π", π: "ρ", ν: "βυ", η: "νε", χ: "ξκ", γ: "κ", δ: "τ", θ: "τδ", φ: "π", ψ: "σ",
-  ξ: "χ", ε: "η", ι: "η", ο: "ω", ω: "ο", κ: "χ", τ: "θ", α: "ε", σ: "ζ", ζ: "σ", μ: "ν", β: "μ", υ: "ν", λ: "δ" };
-/** A word's near misses: the word with one letter swapped for one of its CONFUSE (marks kept), each spelled
- *  differently from it in Latin letters (spell) - so a wrong choice is never also right -, all different, shuffled. */
-function nearMisses (word: string, spell: (w: string) => string): string[] {
-  const d = [...word.normalize ("NFD")], own = spell (word), seen = new Set ([own]), out: string[] = [];
+const CONFUSE: Record<string, string> = { ρ: "π", π: "ρ", ν: "βυ", η: "νει", χ: "ξκ", γ: "κ", δ: "τθ", θ: "τδ", φ: "π", ψ: "σ",
+  ξ: "χ", ε: "ηα", ι: "η", ο: "ω", ω: "ο", κ: "χγ", τ: "θ", α: "ε", σ: "ζ", ζ: "σδ", μ: "ν", β: "μ", υ: "ν", λ: "δ" };
+/** A word's near misses: the word with one letter swapped for one of its CONFUSE within the letters taught (marks
+ *  kept), each spelled differently from it in Latin letters (spell) - so a wrong choice is never also right -, shuffled. */
+function nearMisses (word: string, spell: (w: string) => string, taught: string): string[] {
+  const d = [...word.normalize ("NFD")], seen = new Set ([spell (word)]), out: string[] = [];
   d.forEach ((ch, k) => {
     for (const to of CONFUSE[ch] ?? "") {
+      if (! taught.includes (to)) continue;
       const w = [...d.slice (0, k), to, ...d.slice (k + 1)].join ("").normalize ("NFC"), t = spell (w);
       if (! seen.has (t)) { seen.add (t); out.push (w); }
     }
@@ -282,28 +232,46 @@ function nearMisses (word: string, spell: (w: string) => string): string[] {
   return shuffle (out);
 }
 
-/** A guide lesson's items, in Learn's PRONUNCIATION (kind: pronounce.ts' greekLetters): matching rounds - every letter
- *  matched to its name (ROUND at a time, 4 rounds for the 24), then to its sound ("a as in father"; no two letters said
- *  the same - modern η, ι, υ - in one round) -, then transliteration (translit.ts, the kind's: modern as the reader
- *  shows, or Erasmian's), TRANSLIT_EACH each way - a common word's Greek shown and its Latin letters picked, or the
- *  other way -, the wrong choices the word with a letter misread (nearMisses). In that order, each part's own shuffled. */
-function letterItems (kind: Greek): Item[] {
-  const ls = greekLetters (kind), rounds = Math.ceil (ls.length / ROUND);
-  const names: Match[] = [], sounds: Match[] = [];
-  const named = shuffle ([...ls]);
-  for (let r = 0; r < rounds; r++)
-    names.push ({ prompt: "Match each letter to its name", pairs: named.slice (r * ROUND, (r + 1) * ROUND).map ((l) => [l.cell, l.name]) });
-  const groups: (typeof ls)[] = Array.from ({ length: rounds }, () => []);
-  for (const l of shuffle ([...ls])) (groups.find ((g) => g.length < ROUND && ! g.some ((o) => o.how === l.how)) ?? groups.find ((g) => g.length < ROUND)!).push (l);
-  for (const g of groups) sounds.push ({ prompt: "Match each letter to its sound", pairs: g.map ((l) => [l.cell, l.how]) });
+/** A guide lesson's questions, in Learn's PRONUNCIATION (kind: pronounce.ts' greekLetters, greekPairs): first each of
+ *  its letters (Lesson.letters; LETTERS TOGETHER, Lesson.pairs: every pair) once, in a new order, asked one of two ways
+ *  at random - the letter shown ("Ψ ψ") and its name and sound picked ("psi - [ps] as in lips"; a pair, its sound
+ *  alone: "[u] oo as in food"), or those shown and the letter picked -, the wrong choices others (the lesson's own
+ *  first), never one said the same (modern η, ι, υ; ει, οι, υι), SHOW IN THE GUIDE marking its row; then READ_EACH words
+ *  each way (wordQuestions): spelled with the letters taught so far, or for the pairs, each with one of them. */
+function letterQuestions (c: Course, i: number, kind: Greek): Question[] {
+  const l = c.lessons[i], letters = greekLetters (kind), [from, to] = l.letters ?? [0, letters.length];
+  const all: { cell: string; name?: string; ipa: string; how: string }[] = l.pairs ? greekPairs (kind) : letters;
+  const mine = l.pairs ? all : all.slice (from, to);
+  const say = (x: typeof all[number]) => `${x.name ? `${x.name} - ` : ""}[${x.ipa}] ${x.how}`;
+  const asked = shuffle (mine.map ((x): Question => {
+    const others = all.filter ((o) => o.how !== x.how && o.ipa !== x.ipa);
+    const wrong = [...shuffle (others.filter ((o) => mine.includes (o))), ...shuffle (others.filter ((o) => ! mine.includes (o)))].slice (0, 3);
+    return Math.random () < 0.5 ? { q: x.cell, a: say (x), x: wrong.map (say), find: x.cell }
+                                : { q: say (x), a: x.cell, x: wrong.map ((o) => o.cell), find: x.cell };
+  }));
+  const taught = letters.slice (0, l.pairs ? letters.length : to).map ((x) => bare (x.cell)).join ("");
+  const pairs = l.pairs ? mine.flatMap ((x) => x.cell.split (", ").map (bare)) : undefined;
+  return [...asked, ...wordQuestions (kind, taught, pairs)];
+}
+
+/** The words read in a letters lesson: READ_EACH of READ_WORDS spelled only with the letters taught (marks ignored) - and
+ *  where pairs are given (LETTERS TOGETHER), with one of them in it - one
+ *  way - the Greek shown, its Latin letters picked (translit.ts, the kind's: modern as the reader shows it, or
+ *  Erasmian's) - and READ_EACH the other way. The three wrong choices: another such word as long as it (in Latin letters
+ *  or Greek, as the choices are; the nearest length where none is), then near misses of the word itself (one letter
+ *  misread: nearMisses), then other words to make three. */
+function wordQuestions (kind: Greek, taught: string, pairs?: string[]): Question[] {
   const spell = kind === "erasmian" ? erasmianGreek : modernGreek;
-  const words = shuffle ([...TRANSLIT_WORDS]).slice (0, 2 * TRANSLIT_EACH);
-  const translit: Question[] = words.map (([w, mean], k) => {
-    const miss = nearMisses (w, spell).slice (0, 3), why = `${w} (${mean}) is ${spell (w)}.`;
-    return k < TRANSLIT_EACH ? { q: `Which spells ${w} in English letters?`, a: spell (w), x: miss.map (spell), why }
-                             : { q: `Which is ${spell (w)} in Greek letters?`, a: w, x: miss, why };
+  const can = READ_WORDS.filter (([w]) => [...bare (w)].every ((ch) => taught.includes (ch)) && (! pairs || pairs.some ((p) => bare (w).includes (p))));
+  return shuffle ([...can]).slice (0, 2 * READ_EACH).map (([w, mean], k) => {
+    const latin = k < READ_EACH, show = (x: string) => latin ? spell (x) : x, len = (x: string) => latin ? spell (x).length : bare (x).length;
+    const others = shuffle (can.map (([o]) => o).filter ((o) => show (o) !== show (w))).sort ((a, b) => Math.abs (len (a) - len (w)) - Math.abs (len (b) - len (w)));
+    const near = nearMisses (w, spell, taught);
+    const wrong = [...new Set ([...others.slice (0, 1), ...near.slice (0, 2), ...near.slice (2), ...others.slice (1)].map (show))].slice (0, 3);
+    const why = `${w} (${mean}) is ${spell (w)}.`;
+    return latin ? { q: `Which spells ${w} in English letters?`, a: spell (w), x: wrong, why }
+                 : { q: `Which is ${spell (w)} in Greek letters?`, a: w, x: wrong, why };
   });
-  return [...names, ...sounds, ...translit];
 }
 
 async function vocabQuestions (c: Course, i: number): Promise<Question[]> {

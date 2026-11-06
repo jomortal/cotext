@@ -23,10 +23,13 @@ export interface Question { q: string; a: string; x: string[]; why?: string; s?:
 /** A lesson: id (kept with its score on the device - never reused for another lesson), its title, the grammar's
  *  sections it's from (seq ranges, [first, last] each, shown in that order: grammar.ts' readSections), its questions;
  *  guide: a lesson of its own on the letters - their names and sounds -, taught from COTEXT's ☰ Pronunciation guide's
- *  Greek tables (modern or Erasmian: Learn's own PRONUNCIATION) shown as its grammar, its items - matching rounds and
- *  transliteration both ways - made from them when it's taken (learn.ts' letterItems), no words of its own; words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
+ *  Greek tables (modern or Erasmian: Learn's own PRONUNCIATION) shown as its grammar, its questions - each of its
+ *  letters (letters: [first, past the last] in the alphabet's order, 0-24), then a few words spelled with the letters
+ *  taught so far, read both ways - made from them when it's taken (learn.ts' letterQuestions), no words of its own;
+ *  pairs: the guide's letters said together instead (αι, ου, μπ... - Erasmian's diphthongs and nasal γ), the words
+ *  read each with one of them; words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
  *  book's order), quizzed with its questions (learn.ts' vocabQuestions). */
-export interface Lesson { id: string; title: string; sections: [number, number][]; questions: Question[]; words?: [string, string][]; guide?: "greek"; }
+export interface Lesson { id: string; title: string; sections: [number, number][]; questions: Question[]; words?: [string, string][]; guide?: "greek"; letters?: [number, number]; pairs?: true; }
 /** A course: the grammar it follows (grammars.id), its name in the picker, its lessons in order. vocab "freq": its
  *  lessons' words are the testament's most frequent (Hebrew the OT's, Greek the NT's), VOCAB_PER_LESSON a lesson -
  *  lesson 1 the most frequent, lesson 2 the next... (learn.ts); none: each lesson's own words. */
@@ -291,8 +294,11 @@ const SMYTH: Course = { id: "smyth", name: "Greek (Smyth)", lang: "G", vocab: "f
 
 const UGG: Course = { id: "ugg", name: "Greek (unfoldingWord)", lang: "G", vocab: "freq", lessons: [
   // (The alphabet: unfoldingWord's grammar has no page on it - its topics begin with the adjective -, so the letters'
-  // names and sounds are a lesson of their own, from COTEXT's Pronunciation guide)
-  { id: "ugg-alphabet", title: "The Letters: Names and Sounds", sections: [], guide: "greek", questions: [] },
+  // names and sounds are two lessons of their own, 12 letters each, then the letters said together, from COTEXT's
+  // Pronunciation guide)
+  { id: "ugg-alphabet", title: "The Letters (1): Α–Μ", sections: [], guide: "greek", letters: [0, 12], questions: [] },
+  { id: "ugg-letters-2", title: "The Letters (2): Ν–Ω", sections: [], guide: "greek", letters: [12, 24], questions: [] },
+  { id: "ugg-letters-together", title: "Letters Together", sections: [], guide: "greek", pairs: true, questions: [] },
   { id: "ugg-noun", title: "Nouns: Gender and Number", sections: [[45, 45], [28, 28], [50, 50]], questions: [
     { q: "A noun is a word that refers to", a: "a person, a thing, a place or an idea", x: ["an action or a state", "a noun's quality", "how an action is done"], s: 45, find: "A noun is a word that refers to a person, a thing, a place, or an idea" },
     { q: "Every Koiné Greek noun has", a: "case, gender and number", x: ["tense, mood and voice", "person and number", "case only"], s: 45, find: "all nouns contain case, gender, and number" },
