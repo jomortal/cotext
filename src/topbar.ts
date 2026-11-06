@@ -2,7 +2,7 @@
 // open one's name centered, a drop-down arrow beside it (the pickers' own: style.css' --chevron), tapped opening its
 // drop-down under it - SELECT <NOUN> (each by name; picking one opens it), DELETE <NOUN> beside it (the open one, asked
 // first) and + NEW <NOUN> at its right, then NAME (the open one's, edited in place, the title following as it's
-// typed). Both screens build it here, one way (style.css' .topBar, .topRow, .topTitle, .topArrow, .vcMenu, .vcAdd).
+// typed). Both screens build it here, one way (style.css' .topBar, .topRow, .topTitle, .topArrow, .vcMenu, .fieldRow).
 // What each item is, and what opening, making, deleting and renaming do (saving, drawing the screen again), is the
 // screen's: passed in as NameMenu's functions.
 
@@ -56,7 +56,7 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   const x = o.open (), noun = o.noun.toLowerCase ();
   const { title, button, set } = topTitle (o.shown (x), `${noun} options`);
   // SELECT <NOUN>, DELETE <NOUN> and + NEW <NOUN>
-  const pickRow = make ("div", "vcAdd"), pickLabel = make ("label", "vcPick", `Select ${noun}`), pick = make ("select", "choose");
+  const pickRow = make ("div", "fieldRow"), pickLabel = make ("label", "field", `Select ${noun}`), pick = make ("select", "choose");
   pick.append (...o.all ().map ((y) => new Option (o.shown (y), y.id, false, y === x)));
   pick.addEventListener ("change", () => o.select (pick.value));
   pickLabel.append (pick);
@@ -66,7 +66,7 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   add.addEventListener ("click", () => o.make ());
   pickRow.append (pickLabel, del, add);
   // NAME: typed, the title and SELECT's choice follow; left blank, the blank name (or what's shown for none)
-  const nameRow = make ("label", "vcPick vcName", "Name"), input = make ("input", "choose");
+  const nameRow = make ("label", "field vcName", "Name"), input = make ("input", "choose");
   Object.assign (input, { type: "text", value: x.name || o.shown (x), autocomplete: "off", spellcheck: false });
   input.setAttribute ("enterkeyhint", "done");
   const follow = () => {
@@ -80,15 +80,13 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   return { title, button, rows: [pickRow, nameRow] };
 }
 
-/** The top row's drop-downs, one open at a time: each its button and its menu (icon: the button's own glyph - a ✕ while
- *  its menu is open -, or "" for the title, which keeps its name); open: the one open at first ("" none); each change
- *  told to changed (the screen keeping which is open across redraws). */
-export function dropDowns (tops: { key: string; button: HTMLElement; menu: HTMLElement; icon: string }[], open: string, changed: (k: string) => void = () => {}) {
+/** The top row's drop-downs, one open at a time: each its button (the title, which keeps its name) and its menu; open:
+ *  the one open at first ("" none); each change told to changed (the screen keeping which is open across redraws). */
+export function dropDowns (tops: { key: string; button: HTMLElement; menu: HTMLElement }[], open: string, changed: (k: string) => void = () => {}) {
   const show = (k: string) => {
     for (const t of tops) {
       t.menu.hidden = t.key !== k;
       t.button.setAttribute ("aria-expanded", String (t.key === k));
-      if (t.icon) t.button.textContent = t.key === k ? "✕" : t.icon;
     }
     open = k; changed (k);
   };

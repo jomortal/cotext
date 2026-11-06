@@ -6,6 +6,7 @@
 // on a letter, with its name and sound. Each row's speaker says the letter's name, the pair in a word or the vowel's
 // syllable (sheva in a word, בְּרִית, as on its own a voice gives it a full vowel), in the device's Greek or Hebrew voice.
 
+import { ICONS } from "./icons";
 import { onScreen, currentTestament } from "./study";
 import { sayText } from "./audio";
 
@@ -95,9 +96,8 @@ const HEB_VOWELS: [string, string, string, string, string?][] = [
   ["חֳ", "hateph qamets", "o", "a short o, as in more"],
 ];
 
-const SPEAKER = document.querySelector ("#sheet .speakRoot")!.innerHTML;
 /** Hebrew inside English text: each run in the Hebrew font, isolated so it doesn't reorder the sentence around it. */
-const heIn = (t: string) => t.replace (/[\u0590-\u05FF]+/g, (m) => `<bdi class="heWord">${m}</bdi>`);     // (The word panel's speaker icon)
+const heIn = (t: string) => t.replace (/[\u0590-\u05FF]+/g, (m) => `<bdi class="heWord">${m}</bdi>`);
 const say = (t: string) => {
   if (! ("speechSynthesis" in window)) return;
   speechSynthesis.cancel ();
@@ -105,7 +105,7 @@ const say = (t: string) => {
 };
 
 function draw (body: HTMLElement) {
-  const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${SPEAKER}</button>`;
+  const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${ICONS.speak}</button>`;
   if (currentTestament () === "OT") {
     body.innerHTML = heIn (`<p>Hebrew as it's spoken in Israel today - the pronunciation COTEXT reads aloud in. Hebrew is read right to left; the vowels are dots and dashes under, over or beside the letters. Most words are stressed on the last syllable. Older and academic pronunciations keep a few sounds modern Hebrew has merged (ח apart from כ, ע and ק their own sounds, ת without the dot like th in think).</p>`) + `
       <div class="ref">The letters</div>

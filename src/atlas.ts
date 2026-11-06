@@ -309,14 +309,14 @@ function makeMap () {
   const canvas = el ("canvas");
   const status = el ("p", "atlasStatus");
   wrap.append (canvas, status);
-  const pickRow = el ("label", "sheetPick", "Base map");
+  const pickRow = el ("label", "field", "Base map");
   const picker = el ("select", "choose");
   pickRow.append (picker);
-  const eraRow = el ("label", "sheetPick", "Political boundaries");
+  const eraRow = el ("label", "field", "Political boundaries");
   const eraPick = el ("select", "choose");
   eraRow.append (eraPick);
   eraRow.hidden = true;
-  const routeRow = el ("label", "sheetPick", "Route");
+  const routeRow = el ("label", "field", "Route");
   const routePick = el ("select", "choose");
   routeRow.append (routePick);
   routeRow.hidden = true;

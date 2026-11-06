@@ -211,7 +211,7 @@ export function paneFrame (pane: HTMLElement, close: HTMLElement): HTMLElement {
 drag (document.getElementById ("sheetSplit")!, (_x, y) => cardShareTo (innerHeight - y));
 // A verse card's word's panel's height: from its divider down to the deck's bar.
 drag (document.getElementById ("cardSplit")!, (_x, y) => {
-  const bar = barRoom (document.querySelector<HTMLElement> (".vcBar"));     // (The panel stands on the deck's bar - at the foot)
+  const bar = barRoom (document.querySelector<HTMLElement> ("#screen .bottomBar"));     // (The panel stands on the deck's bar - at the foot)
   sizes.cardH = Math.round (clamp (innerHeight - bar - y, 120, Math.max (120, innerHeight - bar - 160)));
   root.setProperty ("--cardH", sizes.cardH + "px");
 });

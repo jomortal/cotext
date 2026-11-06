@@ -1,13 +1,22 @@
 /* COTEXT's look, after the approved mock-ups (design/): warm paper, one serif for each language, a sans for the rest;
    light and dark from the device's setting. Colors, fonts, sizes, spacing, corners and lines are tokens (:root), used by
-   name below. Each kind of thing has one rule, its cases listed in it - a pill and an icon pill (.pill, .pill.icon), a
-   caption (.ref, .src), a note, a field's label (.freq...), a box (.choose...), an overlay (#options, .chooseList), a
-   plain button (.chooseItem...), a list's row (.guideRow...), a title (.gTitle...), a bottom bar (#playBar, .vcBar),
-   things level with the pickers (.vcSep...) - and anything is hidden one way, by the hidden attribute. */
+   name below. Each kind of thing has one rule, its cases listed in it - a pill and an icon pill (.pill, .pill.icon; every
+   ✕ an icon pill), an action (.pill.action: a text button in the accent), a caption (.ref, .src), a note, a field (a
+   picker's or slider's label over it: .field; a row of them: .fieldRow), a box (.choose...), an overlay (#options,
+   .chooseList), a plain button (.chooseItem...), a list's row (.guideRow...), a title (.title) and a panel's title row
+   (.paneHead), a bottom bar (.bottomBar), a divider and the lines meeting it (.split, --meet), things level with the
+   pickers (.vcSep...) - and anything is hidden one way, by the hidden attribute. Where a screen differs, only its layout
+   is written beside the kind's rule, never its look. */
 
 @font-face { font-family: "Ezra SIL"; src: url("fonts/EzraSIL.woff") format("woff"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Regular.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Gentium"; src: url("fonts/Gentium-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+/* The page's own sans serif (--ui: every label, button, caption and title - Latin and the Greek capitals of the headings),
+   carried by the app so it looks the same on every device: Inter 4.1 (OFL), regular, semibold, bold and italic. */
+@font-face { font-family: "Inter"; src: url("fonts/Inter-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 
 /* The accent (links, picked buttons and choices, the tapped and read-aloud words' tints) and the seven verb colors
    (VERB COLORS: reader.ts's verbForm, the .vf- rules) as distinct as eight colors can be: their hues 45° apart around
@@ -25,15 +34,18 @@
      The text itself (the interlinear's words, a card's word) is sized on its own. */
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
   --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
-  --fs-icon: 25px;     /* (Every icon button - ☰ ✕ ⋯ + ‹ › ▶, the notes' and speakers' icons - one size: a ⋯ turning ✕ changes nothing but its glyph) */
-  --fs-arrow: calc(var(--fs-icon) * 1.4);
+  /* Icons (icons.ts' drawings - every icon button: ☰ ✕ ⋯ + ▶ ■, the bars', panes' and speakers'): one size on every
+     device and pointer, a box --icon-box square (--fs-icon's em, 1.1), every line --icon-stroke wide whatever the icon's
+     size; ‹ and › at --fs-arrow, larger, their lines as thin. */
+  --fs-icon: 25px; --fs-arrow: calc(var(--fs-icon) * 1.4);
+  --icon-box: calc(var(--fs-icon) * 1.1); --icon-stroke: calc(var(--icon-box) * 1.8 / 24);
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75l4.5 4.5 4.5-4.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");     /* (The drop-down arrow, one drawing everywhere - the pickers', the top rows', the Bible's heading's: .dropArrow) */
-  --bar-slot: calc(var(--fs-icon) * 1.1); --bar-slot-h: calc(var(--fs-arrow) + 2 * var(--head-y));     /* (A bottom bar's three set places - its ends and middle -: an icon's width; down the side, an arrow's height - so every bar's buttons stand alike, whatever is in them) */     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
+  --bar-slot: var(--icon-box); --bar-slot-h: calc(var(--fs-arrow) + 2 * var(--head-y));     /* (A bottom bar's three set places - its ends and middle -: an icon's width; down the side, an arrow's height - so every bar's buttons stand alike, whatever is in them) */     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
-  --x-top: calc(var(--pad) - var(--head-y) - 4px);     /* (A resources panel's ✕ from the panel's top: up by its button's padding and the glyph's own room above its ink (~4px), so its ink sits as far down as in from the side) */
-  --head-h: calc(var(--fs-icon) + 4 * var(--head-y));     /* (The heading's height, under the clock: its row - an icon's box, --head-y above and below it - and --head-y above and below that; the side bar's width too) */
+  --x-top: calc(var(--pad) - var(--head-y) - 4px);     /* (A resources panel's ✕ from the panel's top: up by its button's padding and the icon's own room above its ink (~4px), so its ink sits as far down as in from the side) */
+  --head-h: calc(var(--icon-box) + 4 * var(--head-y));     /* (The heading's height, under the clock: its row - an icon's box, --head-y above and below it - and --head-y above and below that; the side bar's width too) */
   --vnum-gap: 12px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
@@ -45,13 +57,15 @@
   --col-l: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2));
   --col-r: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2));
   --x-room: 52px;
-  --x-w: calc(var(--fs-icon) * .84);
-  --split-w: 14px;     /* (A divider's width: its line in the middle, the rest room to drag it) */     /* (A ✕ button's width: its glyph's, at --fs-icon) */
+  --x-w: var(--icon-box);     /* (A ✕ button's width: an icon's box) */
+  --split-w: 14px; --split-half: calc(var(--split-w) / 2);     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
+  --grip: 36px; --grip-w: 4px;     /* (A divider's grip, over its line: its length and thickness) */
   --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
   /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
-     columns; -l between buttons with no padding. */
-  --gap-s: 4px; --gap: 10px; --gap-m: 12px; --gap-l: 24px;
-  --field-h: calc(var(--fs-s) * 1.2 + 14px); --field-h-m: calc(var(--fs-m) * 1.2 + 14px);     /* (A picker's height, -m the larger's: a label or mark beside it set level by its line height) */
+     columns; -wide between fields side by side; -l between buttons with no padding. */
+  --gap-s: 4px; --gap: 10px; --gap-m: 12px; --gap-wide: 16px; --gap-l: 24px;     /* (wide: between fields or choices side by side in a wrapping row) */
+  --row-y: 8px;     /* (A list's row: above and below its text - .guideRow's kind, a result's, an editor's line) */
+  --field-h: calc(var(--fs-s) * 1.2 + 14px);     /* (A picker's height: a label or mark beside it set level by its line height) */
   /* Corners: --radius a box (the pickers and their lists, menus, the map, a printout's preview); -s a photo or a
      pattern's square; -xs a bar's ends, a scroll bar's, a divider's grip; card a flashcard's; round a pill's. */
   --radius: 8px; --radius-s: 4px; --radius-xs: 3px; --radius-card: 14px; --round: 999px;
@@ -65,9 +79,8 @@
   /* The atlas' maps (atlas.ts): water, land, roads, borders - muted, so the places' points (the accent) stand out;
      light in either mode (.atlasMap, above). */
   --map-water: #cfdde3; --map-land: #efeadf; --map-road: #b0745a; --map-border: #8a8478;
-  --heb: "Ezra SIL", "SBL Hebrew", serif; --serif: "Gentium", "Gentium Plus", serif; --grk: var(--serif); --ui: system-ui, -apple-system, sans-serif;
+  --heb: "Ezra SIL", "SBL Hebrew", serif; --serif: "Gentium", "Gentium Plus", serif; --grk: var(--serif); --ui: "Inter", sans-serif;
 }
-@media (pointer: fine) { :root { --fs-icon: 17px; --fs-arrow: calc(var(--fs-icon) * 1.8); } }     /* (A mouse's screen - a desktop: the icons at most two thirds a finger's size, everything sized from them - bars, heading - following; ‹ and › kept larger against them, their glyph thin) */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141412; --fg: #ecebe6; --soft: #9a978f; --line: transparent; --edge: #2c2b28;
   --accent: oklch(0.77 0.12 250); --qal: oklch(0.77 0.12 25); --niphal: oklch(0.77 0.12 205); --piel: oklch(0.77 0.12 70); --pual: oklch(0.77 0.12 115); --hithpael: oklch(0.77 0.12 295); --hiphil: oklch(0.77 0.12 160); --other: oklch(0.77 0.12 340); color-scheme: dark } }
@@ -111,13 +124,18 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(100dvh - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
-.head .row { height: calc(var(--head-h) - 2 * var(--head-y)); display: grid; grid-template-columns: var(--fs-icon) minmax(0, 1fr) var(--fs-icon); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
+.head .row { height: calc(var(--head-h) - 2 * var(--head-y)); display: grid; grid-template-columns: var(--icon-box) minmax(0, 1fr) var(--icon-box); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
 .head .row > :first-child { justify-self: start; } .head .row > :last-child { justify-self: end; }
 .head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; }
-.head .place { flex: 1 1 auto; }     /* (The passage: a title - .gTitle's kind, below - on an icon pill, the row's room between ☰ and ⋯) */
+.head .place { flex: 1 1 auto; }     /* (The passage: a title - .title's kind, below - on an icon pill, the row's room between ☰ and ⋯) */
 .bar { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; align-items: center; }     /* (24px between buttons: they have no padding of their own) */
-/* A field's label (.freq, .chartPick's, .vcPick, a panel's .sheetPick): its name small and muted over the field. */
-.freq, .chartPick label, .vcPick, :is(.sheet, .pane) .sheetPick { display: grid; gap: var(--gap-s); font-size: var(--fs-xs); color: var(--soft); }
+/* A field (.field - every picker's, slider's and text box's label: the ⋯ menu's sliders, the Verb chart's, the decks',
+   the printout's, a panel's LEXICON and GRAMMAR, the add-verse box's): its name small and muted over the field. A row of
+   fields (.fieldRow): side by side, wrapping, their feet level. */
+.field { display: grid; gap: var(--gap-s); font-size: var(--fs-xs); color: var(--soft); min-width: 0; }
+.fieldRow { display: flex; flex-wrap: wrap; gap: var(--gap) var(--gap-wide); align-items: end; min-width: 0; }
+.fieldRow input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
+.fieldRow > .field { flex: 0 1 auto; }     /* (As wide as its choices: the row on one line where it fits, wrapping where not) */
 .freq { flex: 1; min-width: 200px; }
 .freq b { color: var(--fg); }
 .freq input { width: 100%; accent-color: var(--accent); }
@@ -130,8 +148,10 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .pill::after { content: ""; position: absolute; inset: -8px -10px; }
 .pill:disabled, .chooseBtn:disabled { opacity: .4; cursor: default; }     /* (A choice not there: a voice or mood the tense hasn't) */
 .pill[aria-pressed="true"] { border-color: var(--line); color: var(--accent); }     /* (Picked: its text in the accent) */
-/* An icon pill (.icon: ☰ ✕ ⋯ ‹ › ▶, the speakers', the play bar's, the heading's): the icon's size, the heading's
-   height. */
+/* An action (.pill.action: + Add item, + Add passage, + Add note, Download, Print, + Add Verse, + Add, a deck's card's
+   + Known words): a text button in the accent, set apart from the plain pills beside it. */
+.pill.action { font-size: var(--fs-m); font-weight: 600; color: var(--accent); justify-self: start; }
+/* An icon pill (.icon: every icon button - icons.ts draws its icon): the icon's box (.ico, below), the heading's height. */
 .pill.icon { font-size: var(--fs-icon); line-height: 1; padding: var(--head-y) 0; }
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
@@ -195,16 +215,16 @@ body.noVerbColors .w .parse { color: inherit; }
    bottom - into the home indicator's room, keeping just clear of the indicator itself. */
 /* A bottom bar - the play bar, the verse cards' -: one height, its buttons' room under them clear of the iPad's and
    iPhone's swipe-up edge. */
-:root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--fs-icon) * 1.1 + 19px + var(--barFoot)); }
+:root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--icon-box) + 19px + var(--barFoot)); }
 @media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }
 @media (max-width: 600px), (max-height: 500px) {     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways -, the verse numbers as much room at their left as at their right: --vnum-gap) */
   :root { --text-edge: 6px; }
   main { padding-left: max(var(--vnum-gap), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }     /* (The verse numbers' left as much room as their right: --vnum-gap) */
 }     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
-:is(#playBar, .vcBar) { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
+.bottomBar { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
-#prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .vcBar > .arrow:first-child { justify-self: start; } .vcBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
+#prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .bottomBar > .arrow:first-child { justify-self: start; } .bottomBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
 .inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › centered in a column's margins - the Bible's text's, a deck's card's - bars.ts' marginArrows) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
@@ -266,7 +286,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 :is(.sheet, .pane) > .panelScroll { padding-top: calc(var(--pad) - 4px); padding-bottom: calc(var(--pad) - 4px); }
 :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 - 4px); }
 }
-.gInline .top, .gInline .sheetPick { padding-right: var(--x-room); }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
+.gInline .top, .gInline .field { padding-right: var(--x-room); }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-m); }
 .sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
 .sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
@@ -310,7 +330,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #timelineBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 12h18M6 9v6M12 7v10M18 10v4'/%3E%3C/svg%3E"); }     /* (A line with marks along it) */
 #pronounceBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.5h3.5L12 5.5v13l-4.5-4H4z'/%3E%3Cpath d='M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11'/%3E%3C/svg%3E"); }
 .colorKey { display: grid; gap: 0; margin: 6px 0 14px; }     /* (About verb colors: a row a color - the parsing's color and name, what it means) */
-.colorKey > div { grid-template-columns: 9.5em minmax(0, 1fr); padding: 8px 0; align-items: baseline; }     /* (A list's row: .guideRow's rule) */
+.colorKey > div { grid-template-columns: 9.5em minmax(0, 1fr); align-items: baseline; }     /* (A list's row: .guideRow's rule) */
 .colorKey .parse { font-size: var(--fs-s); }
 .steps { padding-left: 1.4em; line-height: var(--lh-loose); font-size: var(--fs-s); }     /* (Getting better voices' steps) */
 
@@ -325,8 +345,10 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; pointer-events: none; }
 
 .sheet .root, .card .root { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }     /* (Each with its speaker: the word panel's, a vocab card's) */
-/* A pill's line icon (the panel's speaker): in the text's color, one color. */
-.pill .ico { width: 1.1em; height: 1.1em; display: block; }
+/* An icon (icons.ts): in the text's color, its box 1.1em of its pill's size - --icon-box; ‹ and ›, --fs-arrow's -, its
+   lines --icon-stroke wide whatever its size (non-scaling), so every icon on every device is drawn alike. */
+.pill .ico { width: 1.1em; height: 1.1em; display: block; stroke-width: var(--icon-stroke); }
+.pill .ico * { vector-effect: non-scaling-stroke; }
 
 /* The word's panel, its head as two rows lined up: the word as written (✕ over its right, .xRow), then its root
    (dictionary form) with + Known words - each with its speaker; the buttons in a column at the right. */
@@ -351,7 +373,9 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen:not(.twoCol) .panelScroll > :not(.gInline), .sheet.grammarOpen:not(.twoCol) > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
-.gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }
+/* A title (.title - a panel's title row's, a grammar section's, the add-verse box's -, a top row's .topTitle, the
+   heading's passage): one size and weight. */
+.title, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; margin: 0; }
 .head .place .refPair { font-size: calc(var(--fs-m) / var(--ref-en-k)); }     /* (The heading's passage: its English the title's size - refs.ts) */
 #place { min-width: 0; overflow: hidden; } :is(#place, .csHead) .refPair { flex-wrap: nowrap; } :is(#place, .csHead) .refPair > * { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-align: center; }     /* (The Bible's heading and a Study printout's text, alike: one line, each centered in its side - its own width and an even share of the room left - the Greek at the left, the Hebrew (read from the right) at the right: .refPair's order -; too wide for it, main.ts' showPlace abbreviates) */
 .gInline .src { margin-top: 2px; }
@@ -371,7 +395,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .gBody sup { font-size: .7em; }
 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
-:is(.sheet, .pane) .sheetPick { margin: 10px 0; }     /* (A field's label: .freq's rule) */
+:is(.sheet, .pane) .field:not(.fieldRow *) { margin: var(--gap) 0; }     /* (A field on its own line in a panel - LEXICON, GRAMMAR, the atlas' BASE MAP -: room over and under, among the panel's text) */
 /* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
    column, the picker over the section's own scroller (.giScroll: its heading and text), so the text never runs up
    behind the picker. */
@@ -380,7 +404,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    parsing, vocab gloss and buttons - on the right, the lexicon - its picker, entry and credit -
    on the left, each scrolling on its own. A grammar section (or chart, or article) opened from the info takes the
    lexicon's column, the info beside it. */
-.sheet.twoCol .panelScroll { display: flex; gap: calc(var(--pad) - var(--split-w) / 2); overflow: hidden; padding-block: 0; }     /* (Either side of the divider: 2 --pad between the columns in all) */
+.sheet.twoCol .panelScroll { display: flex; gap: calc(var(--pad) - var(--split-half)); overflow: visible; padding-block: 0; }     /* (Either side of the divider: 2 --pad between the columns in all) */
 .sheet .wordSplit { order: 0; margin: 0; max-width: none; } .sheet .panelScroll > .infoBox { order: 1; }     /* (The divider between the two columns, panel.ts: dragged, the word's info's share - layout.ts' wordSplit) */
 .sheet:not(.twoCol) .wordSplit { display: none; }
 .sheet.twoCol.grammarOpen .panelScroll > .lexBox { display: none; }
@@ -395,7 +419,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet.grammarOpen .gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 .sheet.grammarOpen .gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
-.sheet.grammarOpen .gInline > .sheetPick { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
+.sheet.grammarOpen .gInline > .field { margin: 0 0 10px; padding-right: 0; grid-column: 1; grid-row: 1; }
 .sheet.grammarOpen .giScroll { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 .sheet.grammarOpen .gInline .top { padding-right: 0; }     /* (The ✕ has its own row: the heading the full width) */
 /* Something else in the box (grammar.ts' showOther: the Verb chart) has no GRAMMAR: its heading up in that row, beside
@@ -430,9 +454,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 #screen .pickerCard { grid-template-columns: minmax(0, 1fr); }
 #screenBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-m); }
 #screenBody > .screenPart { display: contents; }     /* (Each opening's own box, laid out as #screenBody's children: study.ts) */
-.chartPick { display: flex; flex-wrap: wrap; gap: var(--gap); align-items: start; }     /* (start: a picker's open list never stretches the one beside it) */
-.chartPick label { flex: 1 1 140px; min-width: 0; }     /* (A field's label: .freq's rule) */
-.chartPick .choose { width: 100%; box-sizing: border-box; }
+.chartPick > .field { flex: 1 1 140px; } .chartPick .choose { width: 100%; box-sizing: border-box; }     /* (The Verb chart's VERB: the screen's width) */
 .chartScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
 table.chart { border-collapse: collapse; width: 100%; }
 table.chart th { padding: 6px; font-size: var(--fs-xs); color: var(--soft); font-weight: 600; letter-spacing: .04em; }
@@ -447,7 +469,7 @@ table.chart .mean { font-size: var(--fs-s); color: var(--soft); }     /* (Its En
 table.chart .count { display: block; }     /* (It and .none, .same: notes - .vcHead's rule) */
 table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in by the regular pattern) */
 
-/* Flashcards (cards.ts - Flashcards' and the Verse cards'): a card, its front large, its back under it once turned (or alone: .single); "3 of 20" under it, its buttons in the bar at the screen's foot (.vcBar). */
+/* Flashcards (cards.ts - Flashcards' and the Verse cards'): a card, its front large, its back under it once turned (or alone: .single); "3 of 20" under it, its buttons in the bar at the screen's foot (.bottomBar). */
 .card { border: var(--rule); border-radius: var(--radius-card); padding: 28px 16px; text-align: center; cursor: pointer;
         display: grid; gap: var(--gap); justify-items: center; min-height: 160px; align-content: center; }
 .cardFront { font-size: var(--fs-card); line-height: 1.3; }
@@ -462,21 +484,18 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .card .meaning { font-size: var(--fs-3xl); line-height: 1.25; }     /* (A vocab card's English) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: var(--fs-l); }
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", under the card) */
-.cardAction { align-self: center; justify-self: center; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
+.pill.cardAction { align-self: center; justify-self: center; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
    start of the line - then the list, a line per card (reference, original picker, ✕). */
-.vcAdd { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; }
-.vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
-.vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
 #screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) { padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
-.topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
+.topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
 .topArrow { display: inline-block; vertical-align: middle; margin-left: .4em; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
 #place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; align-self: center; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; }     /* (The Bible's heading: its arrow between the original and the English - the Greek at the left, the Hebrew at the right -, after the English where there's no original) */
 /* A deck (cards.ts - Flashcards', the Verse cards'): the card centered in the screen's room between the top row and the foot's bar (the Verse cards' credits below, Flashcards' list scrolled
@@ -486,47 +505,42 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: cards.ts' fitDeck) */
   min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, cards.ts' fitDeck) */
 .deck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
-.vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
-.vcBar .pill { padding: var(--head-y) 0; line-height: 1; } .vcBar .pill:not(.arrow) { font-size: var(--fs-icon); }     /* (Shuffle, Start over and the middle's as icons, the play bar's size - their words read only by a screen reader: aria-label) */
-.vcBar > [data-k] { grid-row: 1; } .vcBar > [data-k=back] { grid-column: 1; } .vcBar > [data-k=shuffle] { grid-column: 2; } .vcBar > [data-k=over] { grid-column: 4; } .vcBar > [data-k=next] { grid-column: 5; }     /* (A deck's buttons in their places - the middle's empty where a deck has no button of its own: cards.ts) */
-.vcBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and the middle, START OVER between the middle and ›) */
+:where(#screen) .bottomBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A screen's bottom bar: over the screen's foot - the play bar's own place is in the page's column) */
+.bottomBar > [data-k] { grid-row: 1; } .bottomBar > [data-k=back] { grid-column: 1; } .bottomBar > [data-k=shuffle] { grid-column: 2; } .bottomBar > [data-k=over] { grid-column: 4; } .bottomBar > [data-k=next] { grid-column: 5; }     /* (A deck's buttons in their places - the middle's empty where a deck has no button of its own: cards.ts) */
+:where(#screen) .bottomBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and the middle, START OVER between the middle and ›) */
 /* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (12px), its text kept
    clear of the arrows. */
-#screen:has(.vcBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
+#screen:has(.bottomBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
 .vcHead { margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 /* Level with the pickers (the add row's ":" and "-", + ADD VERSE, NEW VERSE): at the row's foot, a picker's height. */
 .vcSep, .pill.addVerse { align-self: end; line-height: var(--field-h); }
 .vcSep { margin-inline: -8px; font-weight: 600; }     /* (":" between CHAPTER and FROM VERSE, "-" between the verses: level with the pickers, closer to them) */
-#vcPlace .vcPick .chooseWrap, .avPlace .vcPick .chooseWrap { display: block; } #vcPlace .vcPick .chooseBtn, .avPlace .vcPick .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
-.vcPickName { white-space: nowrap; width: 0; overflow: visible; }     /* (A picker's name not widening it: FROM VERSE's box as narrow as its numbers, the name running on over the gap) */
-.vcVerses .vcVerseRow { display: flex; gap: 16px; align-items: end; color: var(--fg); font-size: var(--fs-m); } .vcVerseRow .vcPickName { display: none; }     /* (VERSES: one name over FROM VERSE - TO VERSE, the boxes' own names hidden) */
+#vcPlace .field .chooseWrap, .avPlace .field .chooseWrap { display: block; } #vcPlace .field .chooseBtn, .avPlace .field .chooseBtn { width: 100%; }     /* (Each picker as wide as its label: ":" and "-" centered between the boxes) */
+.fieldName { white-space: nowrap; width: 0; overflow: visible; }     /* (A picker's name not widening it: FROM VERSE's box as narrow as its numbers, the name running on over the gap) */
+.vcVerses .vcVerseRow { display: flex; gap: var(--gap-wide); align-items: end; color: var(--fg); font-size: var(--fs-m); } .vcVerseRow .fieldName { display: none; }     /* (VERSES: one name over FROM VERSE - TO VERSE, the boxes' own names hidden) */
 /* The Bible's add-verse box (versecards.ts' ADD VERSE): the word's panel's width, under it; its heading, then the row. */
 #verseSheet { border-top: var(--rule) !important; }
-.avHead { font-size: var(--fs-l); font-weight: 600; margin: 0 0 10px; padding-right: var(--x-room); }     /* (Clear of the ✕) */
-/* Its text the word's panel's sizes: the labels as its parsing line (--fs-s), the choices and marks as its entry (--fs-m). */
-#verseSheet .vcPick { font-size: var(--fs-s); }
-#verseSheet .choose, #verseSheet .vcSep { font-size: var(--fs-m); }
-#verseSheet .vcSep, #verseSheet .pill.addVerse { line-height: var(--field-h-m); }
-.pill.addVerse { font-size: var(--fs-l); font-weight: 600; padding: 0; }     /* (+ ADD VERSE, the Verse cards' and the Bible's: larger, level with the pickers) */
-.vcAdd.vcStacked > :first-child, .vcAdd.vcStacked > .addVerse { flex-basis: 100%; text-align: start; }     /* (The row not fitting on one line: NEW VERSE (or DECK) and + ADD VERSE each on a line of their own) */
+.avHead { margin-bottom: var(--gap); padding-right: var(--x-room); }     /* (A title: .title's rule - clear of the ✕) */
+.pill.addVerse { padding: 0; }     /* (+ ADD VERSE, the Verse list's and the Bible's box's: an action, level with the pickers) */
+.fieldRow.fieldStacked > :first-child, .fieldRow.fieldStacked > .addVerse { flex-basis: 100%; text-align: start; }     /* (The row not fitting on one line: NEW VERSE (or DECK) and + ADD VERSE each on a line of their own) */
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
 /* A deck's panel of its own - the Verse cards' NEW VERSE (+), Flashcards' word list (its list icon) - opened from the
    bar: at the screen's foot over the bar, the card's room above it (--deckPaneH: its height, versecards.ts / vocab.ts);
-   sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.csEditHead). */
+   sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.paneHead). */
 .deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(40dvh, var(--deckH, 0px)); overflow-y: auto; box-sizing: border-box;
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
 .deckPane:not([hidden]) { display: grid; gap: var(--gap); }
-#screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
-.split.deckSplit { display: none; background: none; } .deckPane > .csEditHead { border-bottom: 0; }     /* (The panel's divider see-through, the top bar's line meeting it; its title row without a line, as the Bible's side panels) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - 7px); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
+#screen:has(.bottomBar):has(.deckPane:not([hidden])) { padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
+.split.deckSplit { display: none; background: none; }     /* (The panel's divider see-through, the top bar's line meeting it) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - var(--split-half)); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
   max-height: calc(100dvh - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
-#vcPlace, .avPlace { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line where they fit - BOOK narrowing first, its name cut short, to its least -, else wrapping) */
-#vcPlace .vcPick, .avPlace .vcPick { flex: none; } .vcAdd > :is(#vcPlace, .avPlace), .avTarget > .vcPick { flex: 1 1 100%; }     /* (The add row a line of its own, the full width - and PRINTOUT over it - so it wraps only where the line is too short) */ #vcPlace .vcBook, .avPlace .vcBook { flex: 1 1 calc(5em + 38px); max-width: calc(11em + 38px); min-width: 0; }     /* (BOOK narrowing first, to a short name's width at least - then the row wraps, nothing laid over another) */
+#vcPlace, .avPlace { display: flex; flex-wrap: wrap; gap: var(--gap) var(--gap-wide); align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line where they fit - BOOK narrowing first, its name cut short, to its least -, else wrapping) */
+#vcPlace .field, .avPlace .field { flex: none; } .fieldRow > :is(#vcPlace, .avPlace), .avTarget > .field { flex: 1 1 100%; }     /* (The add row a line of its own, the full width - and PRINTOUT over it - so it wraps only where the line is too short) */ #vcPlace .vcBook, .avPlace .vcBook { flex: 1 1 calc(5em + 38px); max-width: calc(11em + 38px); min-width: 0; }     /* (BOOK narrowing first, to a short name's width at least - then the row wraps, nothing laid over another) */
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
@@ -546,12 +560,12 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
 /* A list's row (the Parsing guide's, Flashcards', the Pronunciation guide's, About verb colors'): columns, a line over it. */
-.guideRow, .vocabRow, .sayRow, .colorKey > div { display: grid; gap: var(--gap-m); border-top: var(--hair); font-size: var(--fs-s); }
-.guideRow { grid-template-columns: minmax(0, 8em) minmax(0, 1fr); padding-top: 6px; }
+.guideRow, .vocabRow, .sayRow, .colorKey > div { display: grid; gap: var(--gap-m); border-top: var(--hair); font-size: var(--fs-s); padding: var(--row-y) 0; }
+.guideRow { grid-template-columns: minmax(0, 8em) minmax(0, 1fr); }
 .guideRow .parse { font-size: var(--fs-s); overflow-wrap: anywhere; }
 
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
-.vocabRow { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: baseline; padding-top: 6px; } .vocabRow:not(:has(.vocabMark)) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.vocabRow { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: baseline; } .vocabRow:not(:has(.vocabMark)) { grid-template-columns: auto minmax(0, 1fr) auto; }
 .vocabKnown > :not(.vocabMark) { opacity: .45; } .vocabMark { font-size: var(--fs-l); padding: 0 4px; align-self: center; }     /* (A word list's row: its mark - − make known, + learn again -; a known word greyed) */     /* (A list's row: .guideRow's rule) */
 /* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (over it near
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
@@ -577,7 +591,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseItem:first-child { border-top: 0; }
 .chooseItem[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
 /* The Pronunciation guide (pronounce.ts): a row a letter - the letter, its name and sound, its speaker. */
-.sayRow { grid-template-columns: 3.2em minmax(0, 1fr) auto; align-items: center; padding: 8px 0; }     /* (A list's row: .guideRow's rule) */
+.sayRow { grid-template-columns: 3.2em minmax(0, 1fr) auto; align-items: center; }     /* (A list's row: .guideRow's rule) */
 .sayRow .sayLetter { font-size: var(--fs-2xl); }
 .sayRow .ipa { color: var(--soft); font-size: var(--fs-s); }     /* (The sound in IPA: as written, never upper-cased) */
 
@@ -590,12 +604,19 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .split::before { content: ""; position: absolute; background: var(--edge); }
 .split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
 .split.on::after { background: var(--accent); opacity: 1; }
-.split[aria-orientation="horizontal"] { height: 14px; cursor: row-resize; }
-.split[aria-orientation="horizontal"]::before { left: 0; right: 0; top: 6.5px; height: 1px; }
-.split[aria-orientation="horizontal"]::after { left: 50%; top: 5px; height: 4px; width: 36px; margin-left: -18px; }
+/* Lines meet: a divider starting at another divider (--meet: --split-half) runs its line on to that one's line - a
+   horizontal one to the left, a vertical one up - so the two join with no gap; elsewhere (--meet 0) it starts at its
+   own edge. Set where a divider starts at another: #paneSplit (beside #notesSplit sideways, under #sheetSplit upright),
+   a word's panel's .wordSplit (the same places). The heading's line and the top bars' run on to a divider the same
+   way (.head::after, --csTopR). */
+.split { --meet: 0px; }
+#paneSplit, :is(#sheet, #besideSheet) .wordSplit { --meet: var(--split-half); z-index: 1; }     /* (z 1: its line over the other divider it runs on to, whichever comes first in the page) */
+.split[aria-orientation="horizontal"] { height: var(--split-w); cursor: row-resize; }
+.split[aria-orientation="horizontal"]::before { left: calc(-1 * var(--meet)); right: 0; top: calc((var(--split-w) - var(--rule-w)) / 2); height: var(--rule-w); }
+.split[aria-orientation="horizontal"]::after { left: 50%; top: calc((var(--split-w) - var(--grip-w)) / 2); height: var(--grip-w); width: var(--grip); margin-left: calc(var(--grip) / -2); }
 .split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }
-.split[aria-orientation="vertical"]::before { top: 0; bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
-.split[aria-orientation="vertical"]::after { top: 50%; left: 5px; width: 4px; height: 36px; margin-top: -18px; }
+.split[aria-orientation="vertical"]::before { top: calc(-1 * var(--meet)); bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
+.split[aria-orientation="vertical"]::after { top: 50%; left: calc((var(--split-w) - var(--grip-w)) / 2); width: var(--grip-w); height: var(--grip); margin-top: calc(var(--grip) / -2); }
 /* 700 px wide or more (layout.ts' isWide the same): the text's line at its foot the play bar's (always there), the
    dividers shown, the heading and the ⋯ menu their full width inside the --pad margins - ☰ and ⋯ at its edges; the
    text, the panels' contents and the screens still at most --page. */
@@ -623,7 +644,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
 #searchCount { margin-top: 0; }
 #searchCount:empty { display: none; }
-.hit { display: grid; gap: 2px; width: 100%; padding: 8px 0; border-top: var(--hair); color: var(--fg); }     /* (A plain button: .chooseItem's rule) */
+.hit { display: grid; gap: 2px; width: 100%; padding: var(--row-y) 0; border-top: var(--hair); color: var(--fg); }     /* (A plain button: .chooseItem's rule) */
 .hit .src { margin-top: 0; }
 .hitText { font-size: var(--fs-m); line-height: var(--lh-loose); }
 .hitText.he { font-family: var(--heb); font-size: 1.25em; }     /* (The text's fonts, a size between the panel's and the text's) */
@@ -702,19 +723,20 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Upright: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
 .cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
 .cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor), .cstudy > .csEditor[hidden] { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
-.csEditHead { align-items: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: var(--rule); position: sticky; top: 0; z-index: 2; background: var(--bg); } .csEditHead .gTitle { margin: 0; }     /* (The editor's title row: EDIT, its ✕ closing it - at the right, as a pane's - frozen over what scrolls) */
+/* A panel's title row (.paneHead: the printout's EDIT and DOWNLOAD, the decks' VERSE LIST and WORD LIST): its title, its ✕
+   at the right - as a pane's -, frozen over what scrolls; no line under it, as the Bible's side panels. */
+.paneHead { align-items: center; margin-bottom: var(--gap-s); padding-bottom: var(--gap-s); position: sticky; top: 0; z-index: 2; background: var(--bg); }
 .csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); } .csEditor::-webkit-scrollbar-track { margin-top: 48px; }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
-.csToggle, .vcMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
+.barMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
-                            .csEditor { padding-left: var(--gap-m); } .csEditHead { margin-inline: calc(-1 * (var(--gap-m) + var(--split-w) / 2)) calc(-1 * var(--safe-r)); padding-inline: calc(var(--gap-m) + var(--split-w) / 2) var(--safe-r); }     /* (Sideways: the title row's line from the divider to the bar, as the top bar's meets it) */
-                            #screen[data-screen="Study printout"]:has(.vcBar) .topBar { right: var(--csTopR, 0px); }
-                            #screen[data-screen="Study printout"]:has(.vcBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
+                            .csEditor { padding-left: var(--gap-m); }
+                            #screen[data-screen="Study printout"]:has(.bottomBar) .topBar { right: var(--csTopR, 0px); }
+                            #screen[data-screen="Study printout"]:has(.bottomBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
                             .cstudy:not(.csNoEditor) > :is(.split, .csEditor) { margin-top: calc(-1 * (var(--topH, 48px) + var(--pad))); margin-bottom: calc(-1 * var(--pad)); }     /* (Top to bottom: through the screen's room above - the top bar's - and its margin below) */
-                            .cstudy > .csEditor { padding-top: var(--head-top); } .cstudy > .csEditor > .csEditHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); padding-bottom: 0; } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
+                            .cstudy > .csEditor { padding-top: var(--head-top); } .cstudy > .csEditor > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
-.csPlace .sheetPick { margin: 0; }
 .csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
 .csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
 .csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
@@ -727,8 +749,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csOptsBtn { font-size: var(--fs-xs); color: var(--soft); }
 .csOptsBtn[aria-expanded="true"] { color: var(--accent); }
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
-.csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
-.csPrint { color: var(--accent); }
 .csMemoBox { width: 100%; box-sizing: border-box; resize: vertical; font-size: var(--fs-m); margin: 0 0 8px; } .csMemoBox:focus { outline: none; border-color: var(--soft); }     /* (Typed in: its border a shade darker, not the browser's bright ring) */ .csMemo { white-space: pre-wrap; margin: 0; color: var(--fg); font-size: var(--fs-m); line-height: var(--lh); }     /* (A note of the reader's own: its box in the editor, typed in; in the printout, as typed - its lines kept) */
 .csOut { display: grid; justify-items: start; gap: var(--gap); }     /* (DOWNLOAD's picker, then Print under it) */
 .csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); position: fixed; z-index: 33; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's menu: an overlay as a menu is, over the screen under its button - showMenu places it: in by its margin, its choices' names over the lines' names; nothing moved -; a tap elsewhere closes it) */
@@ -736,11 +756,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
 .csChoiceName { font-size: var(--fs-s); color: var(--fg); }
-.csPickList { display: flex; flex-wrap: wrap; gap: 6px 16px; max-height: 40vh; overflow-y: auto; }
+.csPickList { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-wide); max-height: 40vh; overflow-y: auto; }
 .csPickWord { font-size: var(--fs-s); }
 .csPickWord[aria-pressed="true"] .csPickGloss { color: var(--accent); }
 .csPickGloss { color: var(--soft); }
-.csFathers { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.csFathers { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-wide); }
 .csNoteList { display: grid; gap: 2px; max-height: 40vh; overflow-y: auto; }
 .csNoteList .verseHead { margin-top: 6px; }
 .csCheck { display: flex; align-items: center; gap: 8px; font-size: var(--fs-s); min-height: 32px; }
@@ -775,7 +795,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 .csDoc .verseHead { margin-top: 0; }
 .csSnap { display: none; }
 .csPdf { position: fixed; left: -100000px; top: 0; pointer-events: none; }     /* (The PDF's frame, the printout laid out in it at the page's width off screen: chapterstudy.ts' makePdf) */
-.csDoc .sheetPick, .csDoc .chooseWrap { display: none; }     /* (An article's map's BASE MAP: not in the printout - an Atlas item's pickers are on its line) */
+.csDoc .field, .csDoc .chooseWrap { display: none; }     /* (An article's map's BASE MAP: not in the printout - an Atlas item's pickers are on its line) */
 .csWords { display: grid; }
 .csWord { padding: 6px 0; border-bottom: var(--rule); }
 .csWordHead { display: flex; align-items: baseline; gap: var(--gap-m); flex-wrap: wrap; }
@@ -806,23 +826,23 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body { right: var(--sideBar); }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
   :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
-  :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
+  .bottomBar { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
-  .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
+  #screen .bottomBar { z-index: 31; } #screen .bottomBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
   :root { --deckPaneW: var(--deckW, min(420px, 45vw)); }
   .deckPane { top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--deckPaneW); height: auto; max-height: none; align-content: start;
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
-  #screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--deckPaneW)); }
+  #screen:has(.bottomBar):has(.deckPane:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--deckPaneW)); }
   #screen:has(.deckPane:not([hidden])) .topBar { right: calc(var(--sideBar) + var(--deckPaneW)); }
-  .deckPane > .csEditHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; }     /* (Sideways: its title row's line level with the top bar's - their feet both at --topH) */
-  .deckPane:not([hidden]) + .deckSplit { top: 0; bottom: 0; left: auto; right: calc(var(--sideBar) + var(--deckPaneW) - var(--split-w) / 2); }
-  .csToggle, .vcMid { grid-column: 1; grid-row: 3; } .vcBar > [data-k] { grid-column: 1; } .vcBar > [data-k=back] { grid-row: 1; } .vcBar > [data-k=shuffle] { grid-row: 2; } .vcBar > [data-k=over] { grid-row: 4; } .vcBar > [data-k=next] { grid-row: 5; } .vcBar > .vcMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
+  .deckPane > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; }     /* (Sideways: its title row's line level with the top bar's - their feet both at --topH) */
+  .deckPane:not([hidden]) + .deckSplit { top: 0; bottom: 0; left: auto; right: calc(var(--sideBar) + var(--deckPaneW) - var(--split-half)); }
+  .barMid { grid-column: 1; grid-row: 3; } .bottomBar > [data-k] { grid-column: 1; } .bottomBar > [data-k=back] { grid-row: 1; } .bottomBar > [data-k=shuffle] { grid-row: 2; } .bottomBar > [data-k=over] { grid-row: 4; } .bottomBar > [data-k=next] { grid-row: 5; } .bottomBar > .barMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
-  #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
+  #playBar > .credit { overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
-  #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: var(--sideBar); }     /* (The Verse cards beside their bar) */
+  #screen:has(.bottomBar), #screen:has(.bottomBar) .topBar, #cardSheet, #cardSplit { right: var(--sideBar); }     /* (The Verse cards beside their bar) */
 }
 
 /* ONE PANE - every screen (layout.ts), upright or sideways: one panel at a time - the word's (#sheet, or #besideSheet
@@ -838,17 +858,17 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body { display: flex; flex-direction: column; } .col { display: contents; }     /* (One column: the columns' boxes not there - index.html) */
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) main { flex: 1 1 0px; min-height: 0; border-bottom: 0; }
-  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { flex: none; height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (From the divider's middle down to the play bar) */
+  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { flex: none; height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--barH)); }     /* (From the divider's middle down to the play bar) */
 }
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {     /* (Sideways: SIDE BAR's) */
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--cardW, 0px); grid-template-rows: auto minmax(0, 1fr) auto; }
-  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
   .col { display: contents; }
   .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; }
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }
   :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { grid-column: 3; grid-row: 1 / -1; height: auto; flex: none; }
   :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); } :is(#sheet, #besideSheet, #verseSheet) > .xRow { top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The word's panel reaches the screen's top: clear of the clock, as the panes) */
-  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc(var(--split-half) + var(--rule-w) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
 }
 
 /* PAIR - anything bigger than a phone (a tablet, a desktop window: layout.ts' PAIR, keep them the same): the notes and the search
@@ -858,9 +878,9 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    divider's place too. */
 @media (orientation: portrait) and (min-width: 600.02px) and (min-height: 500.02px) {
   #paneCol:has(.dock:not([hidden])) { display: flex; flex-direction: row-reverse; flex: none; min-height: 0;
-    height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (The panel's height: ONE PANE's) */
+    height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--barH)); }     /* (The panel's height: ONE PANE's) */
   #paneCol > .dock { flex: 1 1 0px; height: auto; min-width: 0; }
-  body:has(#notes:not([hidden])) #paneCol > #search { flex: none; width: calc(var(--rightShare, 50) * 1% - var(--split-w) / 2); }     /* (With the notes: the notes the rest; alone, the full width) */
+  body:has(#notes:not([hidden])) #paneCol > #search { flex: none; width: calc(var(--rightShare, 50) * 1% - var(--split-half)); }     /* (With the notes: the notes the rest; alone, the full width) */
   body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
 }
 /* Sideways, in the panel's column at the right, one over the other - the search on top (index.html's order), #paneSplit
@@ -879,6 +899,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   .sheet.twoCol .panelScroll > .infoBox { order: -2; width: auto; max-width: none; flex: none; box-sizing: border-box; height: calc((100% - var(--split-w)) * var(--searchH, 50) / 100); padding-right: var(--pad); }     /* (The search's height, exactly: the room less the divider, at its share) */
   .sheet.twoCol .panelScroll > :is(.lexBox, .gInline) { order: 0; flex: 1 1 0px; padding-right: var(--pad); }     /* (The rest) */
   .sheet.twoCol .panelScroll > .wordSplit { order: -1; }     /* (The info, the divider, the lexicon - top to bottom) */
+  :is(#sheet, #besideSheet).twoCol .panelScroll > .wordSplit { margin-left: calc(-1 * var(--pad)); }     /* (From the panel's left edge - the divider beside it -, not its margin: its line then runs on to #notesSplit's, --meet) */
 }
 
 @media print {

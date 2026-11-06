@@ -257,8 +257,8 @@ async function render (body: HTMLElement, t: Testament) {
   if (! (hebrew ? formsOf (st.stem) : moodsOf (st.stem))[st.mood]) st.mood = "";     // (A mood or form the one shown hasn't: all)
   body.innerHTML = `
     ${hebrew ? hebrewRows (st, counts) : greekRows (st, counts)}
-    <div class="chartPick">
-      <label>Verb<select class="choose chartVerb">${options.join ("")}</select></label>
+    <div class="fieldRow chartPick">
+      <label class="field">Verb<select class="choose chartVerb">${options.join ("")}</select></label>
     </div>
     <p>${verb.kind === "text"
       ? `<b class="${hebrew ? "he" : "gr"}Word">${esc (verb.lemma)}</b> ${esc (verb.gloss)} - its forms as the ${hebrew ? "Hebrew Bible" : t === "LXX" ? "Septuagint" : "New Testament"} has them: the commonest spelling of each, and how often it occurs; the rest, faded, filled in by the regular pattern where the verb allows it. Under each: its parsing and its meaning on "${esc ((englishOf (verb.gloss) ?? ["do"])[0])}".`

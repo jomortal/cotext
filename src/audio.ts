@@ -20,6 +20,7 @@
 //   main pause) then the rest. The word's panel's speakers keep the device's voice (the recordings have no word
 //   timings).
 
+import { setIcon } from "./icons";
 import type { Testament } from "./study";
 import { onScreen, openScreen } from "./study";
 
@@ -157,7 +158,7 @@ export function stopReading () {
   light ([]);
   control?.classList.remove ("playing");
   control = null;
-  playBtn.textContent = "▶";
+  setIcon (playBtn, "play");
   playBtn.setAttribute ("aria-label", "Read the chapter aloud");
 }
 
@@ -169,7 +170,7 @@ function start (from: HTMLElement, rows: HTMLElement[], word: HTMLElement | null
   fromWord = word;
   control = from;
   from.classList.add ("playing");
-  if (from === playBtn) { playBtn.textContent = "■"; playBtn.setAttribute ("aria-label", "Stop reading"); }
+  if (from === playBtn) { setIcon (playBtn, "stop"); playBtn.setAttribute ("aria-label", "Stop reading"); }
   queue = rows;
   synth.resume ();     // (iOS: a paused queue stays silent)
   // (A breath after cancel before speaking again: iOS can drop, or hold back, an utterance spoken straight after one.)
@@ -353,7 +354,7 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   if ((was === from && ! restart) || ! rows.length) return;
   control = from;
   from.classList.add ("playing");
-  if (from === playBtn) { playBtn.textContent = "■"; playBtn.setAttribute ("aria-label", "Stop reading"); }
+  if (from === playBtn) { setIcon (playBtn, "stop"); playBtn.setAttribute ("aria-label", "Stop reading"); }
   const id = recSession;
   if (! player) player = new Audio ();
   player.src = SILENCE;     // (iOS lets a page start sound only from a tap: silence played now, within it, lets this

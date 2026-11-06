@@ -41,7 +41,8 @@ import type { Db } from "./db";
 import { chapterWords, type Book, type Word } from "./reader";
 import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
-import { showDeck, fitDeck, BAR_ICONS, type Card, type DeckShown } from "./cards";
+import { showDeck, fitDeck, type Card, type DeckShown } from "./cards";
+import { ICONS } from "./icons";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
@@ -205,8 +206,8 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt,
   if (p.to <= p.from) p.to = 0;
   const BLANK: [string, string] = ["", "–"];     // (Blank: a dash - BOOK's says "Select Book")
   const pick = (label: string, options: [number | string, string][], value: number | string, set: (v: string) => void, off = false) => {
-    const l = document.createElement ("label"); l.className = "vcPick";
-    l.append (Object.assign (document.createElement ("span"), { className: "vcPickName", textContent: label }));     // (Its name: no wider than the box - running on over the gap)
+    const l = document.createElement ("label"); l.className = "field";
+    l.append (Object.assign (document.createElement ("span"), { className: "fieldName", textContent: label }));     // (Its name: no wider than the box - running on over the gap)
     const s = document.createElement ("select"); s.className = "choose"; s.disabled = off; s.setAttribute ("aria-label", label);
     s.append (...options.map (([v, t]) => new Option (t, String (v))));
     s.value = String (value);
@@ -217,14 +218,14 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt,
   const sep = (t: string) => Object.assign (document.createElement ("span"), { className: "vcSep", textContent: t });     // (As a reference reads: 3:16-18)
   // FROM VERSE, "-" and TO VERSE under one name, VERSES (each box named only for a screen reader)
   const verses = (...items: HTMLElement[]) => {
-    const g = document.createElement ("div"); g.className = "vcPick vcVerses";
+    const g = document.createElement ("div"); g.className = "field vcVerses";
     const row = document.createElement ("div"); row.className = "vcVerseRow"; row.append (...items);
-    g.append (Object.assign (document.createElement ("span"), { className: "vcPickName", textContent: "Verses" }), row);
+    g.append (Object.assign (document.createElement ("span"), { className: "fieldName", textContent: "Verses" }), row);
     return g;
   };
   el.replaceChildren (
     Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...list.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
-          (v) => { p.book = list.find ((x) => x.code === v) ?? null; }), { className: "vcPick vcBook" }),
+          (v) => { p.book = list.find ((x) => x.code === v) ?? null; }), { className: "field vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? mostChapters () }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; }),
     sep (":"),
@@ -241,17 +242,17 @@ async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
   body.innerHTML = `<div class="topBar"><div class="topRow"><span id="vcTitle"></span></div>
     <div class="vcMenu" data-menu="more">
-    <div class="vcAdd">
-      <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
-      <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
+    <div class="fieldRow">
+      <label class="field">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
+      <label class="field">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <button class="pill" data-o="translit">Transliteration</button><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button>
 </div>
     </div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>
-    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">Verse list</h2><button class="pill icon" id="vcAddClose" aria-label="Close">✕</button></div>
-    <div class="vcAdd"><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div>
+    <div class="deckPane" hidden><div class="top paneHead"><h2 class="title">Verse list</h2><button class="pill icon" id="vcAddClose" aria-label="Close">${ICONS.x}</button></div>
+    <div class="fieldRow"><div id="vcPlace"></div><button class="pill action addVerse" id="vcAddBtn">+ Add Verse</button></div>
     <div class="vcHead" id="vcListHead">Verses</div>
     <div class="bar vcList"></div></div>`;
   // The deck's name (the title, tapped): its options - the decks, the name, the settings - a drop-down under the top
@@ -270,8 +271,8 @@ async function draw (body: HTMLElement) {
   const moreMenu = body.querySelector<HTMLElement> ('.vcMenu[data-menu="more"]')!;
   moreMenu.prepend (...named.rows);
   const plus = document.createElement ("button");     // (The list icon: the bar's middle, with cards or without - deck)
-  Object.assign (plus, { className: "pill icon vcMid", id: "vcPlus", innerHTML: BAR_ICONS.list }); plus.setAttribute ("aria-label", "Verse list");
-  dropDowns ([{ key: "more", button: named.button, menu: moreMenu, icon: "" }], menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
+  Object.assign (plus, { className: "pill icon barMid", id: "vcPlus", innerHTML: ICONS.list }); plus.setAttribute ("aria-label", "Verse list");
+  dropDowns ([{ key: "more", button: named.button, menu: moreMenu }], menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
   // The list icon: VERSE LIST in a panel of its own - at the foot over the bar upright, at the right beside the bar
   // sideways (as the Bible's panels) -, NEW VERSE at its top (Book, Chapter, Verses, + ADD VERSE), the cards under it
   // (each its ✕); the card's room giving way to it (--deckPaneH, style.css); the icon pressed while it's open, its ✕ closing it
@@ -308,11 +309,11 @@ async function draw (body: HTMLElement) {
     for (const b of body.querySelectorAll<HTMLButtonElement> ("[data-o]")) {     // (English Only: no original - its lines greyed out)
       b.setAttribute ("aria-pressed", String (settings[b.dataset.o as "gloss"])); b.disabled = settings.lang === "en";
     }
-    listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
+    listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">${ICONS.x}</button></span>`).join ("");
     listHead.hidden = listEl.hidden = ! d.cards.length;     // (VERSE LIST only with cards)
     if (! d.cards.length) {     // (No cards: the bar with + alone)
       deckEl.innerHTML = "<p>Open the verse list to add a verse.</p>"; credits.textContent = ""; shown = null;
-      const bar = document.createElement ("div"); bar.className = "vcBar"; bar.append (plus); deckEl.append (bar);
+      const bar = document.createElement ("div"); bar.className = "bottomBar"; bar.append (plus); deckEl.append (bar);
       return;
     }
     const used = new Map<string, string> ();
@@ -367,14 +368,14 @@ async function draw (body: HTMLElement) {
 
 /** An add row (the Verse cards' NEW VERSE row, the Bible's ADD TO VERSE CARDS) on one line where it all fits; where
  *  not, stacked: its first item (NEW VERSE, or DECK) on its own line, the pickers, then + ADD VERSE on its own line
- *  (.vcStacked) - checked laid out unstacked, on every resize and every redraw of the pickers (place: the row's
+ *  (.fieldStacked) - checked laid out unstacked, on every resize and every redraw of the pickers (place: the row's
  *  drawPick element, its items the row's). */
 function stackWhenWrapped (place: HTMLElement) {
   const row = place.parentElement!;
   const fit = () => {
-    row.classList.remove ("vcStacked");
+    row.classList.remove ("fieldStacked");
     const ends = [row.firstElementChild!, ...place.children, row.querySelector (":scope > .addVerse")!].map ((x) => x.getBoundingClientRect ().bottom);
-    row.classList.toggle ("vcStacked", ends.some ((t) => Math.abs (t - ends[0]) > 2));
+    row.classList.toggle ("fieldStacked", ends.some ((t) => Math.abs (t - ends[0]) > 2));
   };
   new ResizeObserver (fit).observe (row);
   new MutationObserver (fit).observe (place, { childList: true });
@@ -413,7 +414,7 @@ let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last p
  *  Study printout (as DECK for the Verse cards). */
 function printoutPick (): HTMLLabelElement {
   const { list, open } = printoutChoices ();
-  const l = document.createElement ("label"); l.className = "vcPick"; l.textContent = "Printout";
+  const l = document.createElement ("label"); l.className = "field"; l.textContent = "Printout";
   const sel = document.createElement ("select"); sel.className = "choose";
   sel.append (...list.map ((x) => new Option (x.name, x.id, false, x.id === open)));
   l.append (sel);
@@ -427,8 +428,8 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
   fromNotes = !! src;
   if (src) {
-    body.innerHTML = `<h2 class="avHead">Add to Study Printout</h2><div class="vcAdd avTarget"><div class="avPlace"></div></div><div class="avItem"></div>
-      <button class="pill addVerse" id="avAdd">+ Add</button>`;
+    body.innerHTML = `<h2 class="title avHead">Add to Study Printout</h2><div class="fieldRow avTarget"><div class="avPlace"></div></div><div class="avItem"></div>
+      <button class="pill action addVerse" id="avAdd">+ Add</button>`;
     const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!, itemEl = body.querySelector<HTMLElement> (".avItem")!;
     drawPick (place, add, p, allBooks);     // (Every book, the Septuagint's too; alone on its row: nothing to stack - stackWhenWrapped)
     // (The resource's line for the passage picked: made again for another book or chapter, its verses changed in place)
@@ -453,10 +454,10 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
     verseSheet.hidden = false;
     return;
   }
-  body.innerHTML = `<h2 class="avHead"><select class="choose" id="avTo" aria-label="Add to"><option value="cards">Add to Verse Cards</option>
-    <option value="study">Add to Study Printout</option></select></h2><div class="vcAdd"><label class="vcPick" id="avDeckRow">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
+  body.innerHTML = `<h2 class="title avHead"><select class="choose" id="avTo" aria-label="Add to"><option value="cards">Add to Verse Cards</option>
+    <option value="study">Add to Study Printout</option></select></h2><div class="fieldRow"><label class="field" id="avDeckRow">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
       `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
-    <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
+    <div class="avPlace"></div><button class="pill action addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
   drawPick (place, add, p); stackWhenWrapped (place);
   const to = body.querySelector<HTMLSelectElement> ("#avTo")!, deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!, into = printoutPick ();

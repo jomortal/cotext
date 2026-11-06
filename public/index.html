@@ -22,11 +22,11 @@
      picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
-    <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
+    <button class="pill icon" id="drawerBtn" aria-label="Study tools" data-icon="menu"></button>
     <span class="nav">
       <button class="pill icon place" id="place">COTEXT</button>
     </span>
-    <button class="pill icon" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Helps">⋯</button>
+    <button class="pill icon" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Helps" data-icon="more"></button>
   </div>
   <div class="bar" id="options" hidden>
     <button class="pill" id="showGloss" aria-pressed="true">Interlinear</button>
@@ -37,10 +37,10 @@
     <button class="pill" id="mine" aria-pressed="true">Hide known words</button>
     <button class="pill" id="showVocab" aria-pressed="true">Show my vocab</button>
     <button class="pill" id="scope" aria-pressed="false">Frequency: whole OT</button>
-    <label class="freq" for="freq"><span id="freqOut"></span><input id="freq" type="range" min="0" max="50" value="0"></label>
+    <label class="field freq" for="freq"><span id="freqOut"></span><input id="freq" type="range" min="0" max="50" value="0"></label>
     <span class="bar" id="audioSettings">
-      <label class="freq" for="rate">Reading speed <b id="rateOut"></b><input id="rate" type="range" min="10" max="100" value="80"></label>
-      <label class="freq" for="gap">Space between words <b id="gapOut"></b><input id="gap" type="range" min="0" max="10" value="0"></label>
+      <label class="field freq" for="rate">Reading speed <b id="rateOut"></b><input id="rate" type="range" min="10" max="100" value="80"></label>
+      <label class="field freq" for="gap">Space between words <b id="gapOut"></b><input id="gap" type="range" min="0" max="10" value="0"></label>
       <button class="pill" id="otVoice" aria-pressed="false">Voice: Device voice</button>
       <button class="pill" id="voiceHelp">Getting other voices</button>
     </span>
@@ -56,26 +56,26 @@
 <!-- The dividers (layout.ts): between the text and the panel - #sheetSplit upright, #notesSplit sideways -, and #paneSplit between the search and the notes while both share the panel's place. -->
 <div id="sheetSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the word's panel"></div>
 <div id="sheet" class="sheet dock" hidden>
-  <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
+  <div class="xRow"><button class="pill icon close" aria-label="Close" data-icon="x"></button></div>
   <div class="heads">
-    <span class="root"><span class="lemma form"></span><button class="pill icon speakBtn" aria-label="Say the word"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span>
-    <span class="root"><span class="lemma lemmaEl"></span><button class="pill icon speakRoot" aria-label="Say the dictionary form"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span><span class="btns"><button class="pill addVocab">+ My vocab</button><button class="pill knowIt">+ Known words</button></span>
+    <span class="root"><span class="lemma form"></span><button class="pill icon speakBtn" aria-label="Say the word" data-icon="speak"></button></span>
+    <span class="root"><span class="lemma lemmaEl"></span><button class="pill icon speakRoot" aria-label="Say the dictionary form" data-icon="speak"></button></span><span class="btns"><button class="pill addVocab">+ My vocab</button><button class="pill knowIt">+ Known words</button></span>
   </div>
   <div class="full"></div>
-  <label class="sheetPick lexRow">Lexicon<select class="choose lexPick"></select></label>
+  <label class="field lexRow">Lexicon<select class="choose lexPick"></select></label>
   <div class="def"></div>
   <p class="credit lexCredit" hidden></p>
   <div class="gInline" hidden>
-    <div class="xRow"><button class="pill icon giClose" aria-label="Back to the word">✕</button></div>
-    <label class="sheetPick">Grammar<select class="choose grammarPick"></select></label>
+    <div class="xRow"><button class="pill icon giClose" aria-label="Back to the word" data-icon="x"></button></div>
+    <label class="field">Grammar<select class="choose grammarPick"></select></label>
     <div class="giScroll">
-    <div class="top"><div><div class="gTitle"></div><div class="src giSec"></div></div></div>
+    <div class="top"><div><div class="title"></div><div class="src giSec"></div></div></div>
     <div class="gBody giBody"></div>
     </div>
   </div>
 </div>
 <div id="verseSheet" class="sheet dock" hidden>
-  <div class="xRow"><button class="pill icon close" aria-label="Close">✕</button></div>
+  <div class="xRow"><button class="pill icon close" aria-label="Close" data-icon="x"></button></div>
   <div class="panelScroll"><div class="verseBody"></div></div>
 </div>
 </div>
@@ -90,7 +90,7 @@
 </section>
 <div id="paneSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the search against the notes"></div>
 <section id="notes" class="dock pane" hidden>
-  <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesAdd" aria-label="Add to the Study printout">+</button><button class="pill icon" id="notesClose" aria-label="Close">✕</button></div>
+  <div class="top"><select id="notesPick" class="choose" aria-label="Commentary or apparatus"></select><button class="pill icon" id="notesAdd" aria-label="Add to the Study printout" data-icon="plus"></button><button class="pill icon" id="notesClose" aria-label="Close" data-icon="x"></button></div>
   <div class="notesScroll" id="notesScroll">
   <div class="src" id="notesRef"></div>
   <div class="gBody" id="notesBody"></div>
@@ -100,7 +100,7 @@
 <div id="besideSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the Hebrew word's panel"></div>
 </div>
 <!-- The play bar: ▶ centered, the search's icon centered in the room at its left, the notes' in the room at its right. -->
-<div id="playBar"><button class="pill icon arrow" id="prev" aria-label="Previous chapter">‹</button><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg></button><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button><button class="pill icon arrow" id="next" aria-label="Next chapter">›</button></div>
+<div id="playBar" class="bottomBar"><button class="pill icon arrow" id="prev" aria-label="Previous chapter" data-icon="back"></button><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search" data-icon="search"></button><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud" data-icon="play"></button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes" data-icon="notes"></button><button class="pill icon arrow" id="next" aria-label="Next chapter" data-icon="next"></button></div>
 <div id="picker" hidden>
   <div class="pickerCard">
     <div id="pickerBody"></div>
@@ -108,7 +108,7 @@
 </div>
 <div id="drawer" hidden>
   <nav id="drawerPanel">
-    <div class="top"><button class="pill icon" id="drawerClose" aria-label="Close">✕</button></div>
+    <div class="top"><button class="pill icon" id="drawerClose" aria-label="Close" data-icon="x"></button></div>
     <button class="pill" id="bibleBtn">Bible</button>
     <button class="pill" id="verseCardsBtn" data-screen="Verse cards">Verse cards</button>
     <button class="pill" id="flashcardsBtn" data-screen="Flashcards">Flashcards</button>
@@ -120,7 +120,7 @@
   </nav>
 </div>
 <div id="screen" hidden>
-  <button class="pill icon" id="screenMenu" aria-label="Study tools">☰</button>
+  <button class="pill icon" id="screenMenu" aria-label="Study tools" data-icon="menu"></button>
   <div class="topBar" id="screenTop"><div class="topRow"><h1 class="topTitle" id="screenTitle"></h1></div></div>
   <div class="pickerCard"><div id="screenBody"></div></div>
   <div id="cardSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the word's panel"></div>

@@ -1,6 +1,6 @@
 // Flashcards: one card at a time, centered in the screen's room (fitDeck) - its front, tapped to turn it over (its back
 // shown under it, or alone: backOnly), tapped again to turn it back (no Flip button). Its buttons in one bar at the
-// screen's foot - the Bible view's play bar's kind (.vcBar; down the right side sideways: bars.ts' SIDE_BAR) -: BACK and
+// screen's foot - the Bible view's play bar's kind (.bottomBar; down the right side sideways: bars.ts' SIDE_BAR) -: BACK and
 // NEXT as ‹ and › at its ends (wrapping round; a swipe across the card does the same: bars.ts' onSwipe), SHUFFLE
 // (mixes it) and START OVER (back in its first order at the first card) as icons between them, and in its middle the
 // screen's own button: the Verse cards' + (NEW VERSE), or Flashcards' card action (REMOVE FROM LIST or + KNOWN WORDS:
@@ -10,16 +10,10 @@
 
 import { sayText } from "./audio";
 import { onSwipe, marginArrows } from "./bars";
+import { ICONS } from "./icons";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
-/** The bar's icons (shown in place of their words - each kept as its aria-label for a screen reader). */
-const svg = (d: string) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
-export const BAR_ICONS = {
-  shuffle: svg ("M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.6M13.1 9.6C14.2 8 15.4 7 17 7h4M18 4l3 3-3 3M18 14l3 3-3 3"),     // (Two paths crossing)
-  over: svg ("M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"),     // (Back to the start: an arrow round to its beginning)
-  list: svg ("M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"),     // (Lines: a list - Flashcards' word list)
-};
 
 /** How a deck is shown. remove: a button under the card taking the card shown out (its words - + KNOWN WORDS, REMOVE
  *  FROM LIST - and done, told each card taken out); middle: the screen's own button for the bar's middle (the Verse
@@ -34,12 +28,12 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOp
   let deck = [...cards], at = 0;
   const btn = (k: string, label: string, inner: string, cls = "pill icon") => `<button class="${cls}" data-k="${k}" aria-label="${label}">${inner}</button>`;
   el.innerHTML = `<div class="card${o.backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
-    <div class="src cardCount"></div>${o.remove ? btn ("remove", o.remove.label, o.remove.label, "pill csAdd cardAction") : ""}
-    <div class="vcBar">${btn ("back", "Back", "‹", "pill icon arrow")}${btn ("shuffle", "Shuffle", BAR_ICONS.shuffle)}${btn ("over", "Start over", BAR_ICONS.over)}${btn ("next", "Next", "›", "pill icon arrow")}</div>`;
+    <div class="src cardCount"></div>${o.remove ? btn ("remove", o.remove.label, o.remove.label, "pill action cardAction") : ""}
+    <div class="bottomBar">${btn ("back", "Back", ICONS.back, "pill icon arrow")}${btn ("shuffle", "Shuffle", ICONS.shuffle)}${btn ("over", "Start over", ICONS.over)}${btn ("next", "Next", ICONS.next, "pill icon arrow")}</div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!, count = el.querySelector<HTMLElement> (".cardCount")!;
-  const bar = el.querySelector<HTMLElement> (".vcBar")!;
-  if (o.middle) { o.middle.classList.add ("vcMid"); bar.querySelector ("[data-k=over]")!.before (o.middle); }
+  const bar = el.querySelector<HTMLElement> ("#screen .bottomBar")!;
+  if (o.middle) { o.middle.classList.add ("barMid"); bar.querySelector ("[data-k=over]")!.before (o.middle); }
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
@@ -92,7 +86,7 @@ export function fitDeck (deckEl: HTMLElement, under?: HTMLElement) {
     deckEl.style.setProperty ("--vcCreditsH", c + "px");
     const room = screenEl.clientHeight - parseFloat (cs.paddingTop) - parseFloat (cs.paddingBottom) - c;
     deckEl.style.setProperty ("--vcRoom", room + "px");
-    const kids = [...deckEl.children].filter ((x) => ! x.classList.contains ("vcBar")) as HTMLElement[];
+    const kids = [...deckEl.children].filter ((x) => ! x.classList.contains ("bottomBar")) as HTMLElement[];
     const content = kids.length ? kids[kids.length - 1].getBoundingClientRect ().bottom - kids[0].getBoundingClientRect ().top : 0;
     deckEl.classList.toggle ("vcTall", content > room - c);
   };

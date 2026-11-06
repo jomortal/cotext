@@ -11,6 +11,7 @@
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
 // Settings and choices are kept on the device (localStorage).
 
+import { setIcon } from "./icons";
 import type { Db } from "./db";
 import type { Book } from "./reader";
 import { onScreen, openScreen } from "./study";
@@ -223,7 +224,7 @@ optionsBtn.addEventListener ("click", () => {
   const open = options.hidden;
   options.hidden = ! open;
   optionsBtn.setAttribute ("aria-expanded", String (open));
-  optionsBtn.textContent = open ? "✕" : "⋯";     // ⋯ opens the menu; ✕ while open closes it (every icon one size: --fs-icon)
+  setIcon (optionsBtn, open ? "x" : "more");     // ⋯ opens the menu; ✕ while open closes it (icons.ts: every icon one size)
 });
 // INTERLINEAR, PARSING and TRANSLITERATION: each shows or hides that line of every word (the body's noGloss, noParse,
 // showTranslit: style.css), over what the slider and the hand choices hide.

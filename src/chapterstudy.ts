@@ -75,6 +75,7 @@
 //   per-chapter printouts ("cotext.study.<book>.<chapter>") are brought in once as printouts of their own, their keys
 //   removed; anything unreadable is skipped.
 
+import { setIcon, type IconName } from "./icons";
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
 import { onScreen } from "./study";
@@ -117,10 +118,11 @@ let bookList: () => Book[] = () => [];
  *  to pick from (the Old Testament as read, Hebrew or Septuagint, and the New). */
 export function initChapterStudy (theDb: Db, place: () => [Book, number], list: () => Book[]) { db = theDb; where = place; bookList = list; }
 
-const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "") => {
+const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "", icon?: IconName) => {     // (icon: an icon button's drawing - icons.ts)
   const e = document.createElement (tag);
   if (cls) e.className = cls;
   if (text) e.textContent = text;
+  if (icon) setIcon (e, icon);
   return e;
 };
 
@@ -325,7 +327,7 @@ const linesOf = new Map<Section, HTMLElement> ();     // (Each section's lines, 
 async function drawPlace (placeEl: HTMLElement, sec: Section) {
   const isFirst = sec === first ();
   const pick = (label: string, options: [string, string][], value: string, set: (v: string) => void) => {
-    const l = el ("label", "sheetPick", label);
+    const l = el ("label", "field", label);
     const s = el ("select", "choose");
     s.append (...options.map (([v, t]) => new Option (t, v)));
     s.value = value;
@@ -342,7 +344,7 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
     pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
     pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.from), (v) => range (Number (v), sec.to)),
     pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.to), (v) => range (sec.from, Number (v)))];
-  const x = el ("button", "pill icon csRemove", "✕");
+  const x = el ("button", "pill icon csRemove", "", "x");
   x.setAttribute ("aria-label", "Remove this reference");
   x.addEventListener ("click", () => {
     now ().sections = sections = sections.filter ((s) => s !== sec);
@@ -373,14 +375,14 @@ function drawTop () {
     renamed: () => save () });
   const row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   row.append (named.title);
-  const bibRow = el ("label", "vcPick", "Bibliography style"), bib = el ("select", "choose");
+  const bibRow = el ("label", "field", "Bibliography style"), bib = el ("select", "choose");
   bib.append (...BIB_STYLES.map (([k, t]) => new Option (t, k)));
   bib.value = now ().bib ?? "sbl";
   bib.addEventListener ("change", () => { now ().bib = bib.value as BibStyle; save (); drawSources (); });
   bibRow.append (bib);
   menu.append (...named.rows, bibRow);
   topEl.replaceChildren (row, menu);
-  dropDowns ([{ key: "more", button: named.button, menu, icon: "" }], topOpen, (k) => { topOpen = k; });
+  dropDowns ([{ key: "more", button: named.button, menu }], topOpen, (k) => { topOpen = k; });
 }
 /** Another printout opened, made or deleted: kept, everything drawn again (its drop-down left open). */
 function again () { save (); drawTop (); drawSections (); render (); }
@@ -398,7 +400,7 @@ onScreen ("Study printout", async (body) => {
   previewEl = el ("div", "csPreview");
   const editor = el ("div", "csEditor");
   sectionsEl = el ("div", "csSections");
-  const more = el ("button", "pill csAdd", "+ Add passage");
+  const more = el ("button", "pill action", "+ Add passage");
   more.addEventListener ("click", () => {
     const [b, c] = first () ? [first ().book, first ().chapter] : where ();     // (The first's chapter; none, the chapter read)
     sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] });
@@ -408,7 +410,7 @@ onScreen ("Study printout", async (body) => {
   });
   // + ADD NOTE: a note of the reader's own at the end of the last passage (none: a passage first, the chapter read), its
   // box ready to type in
-  const memo = el ("button", "pill csAdd", "+ Add note");
+  const memo = el ("button", "pill action", "+ Add note");
   memo.addEventListener ("click", () => {
     if (! sections.length) { const [b, c] = where (); sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }); nameFollows (); }
     const it: Item = { id: newId (), k: "memo", text: "" };
@@ -416,7 +418,7 @@ onScreen ("Study printout", async (body) => {
     save (); drawSections (); render ();
     sectionsEl.querySelector<HTMLTextAreaElement> (`.csLine[data-id="${it.id}"] textarea`)?.focus ();
   });
-  const print = el ("button", "pill csPrint", PRINT);
+  const print = el ("button", "pill action", PRINT);
   printEl = print;
   print.addEventListener ("click", () => {
     if (ready) void handOver (ready);
@@ -425,7 +427,7 @@ onScreen ("Study printout", async (body) => {
   });
   // FORMAT: a picker of the formats - PDF at first, then the one last picked (kept on the device) -, picking only; the
   // DOWNLOAD button under it makes and hands over the file (it says while it's being made); PRINT under that
-  const dlRow = el ("label", "vcPick", "Format"), dl = el ("select", "choose"), go = el ("button", "pill csPrint", DOWNLOAD);     // (As PRINT: an action, in the accent)
+  const dlRow = el ("label", "field", "Format"), dl = el ("select", "choose"), go = el ("button", "pill action", DOWNLOAD);     // (As PRINT: an action - .pill.action)
   downloadEl = go;
   dl.append (...FORMATS.map (([k, t]) => new Option (t, k)));
   try { const k = localStorage.getItem (FORMAT_KEY); dl.value = FORMATS.some (([f]) => f === k) ? k! : "pdf"; } catch { dl.value = "pdf"; }
@@ -435,9 +437,9 @@ onScreen ("Study printout", async (body) => {
   const out = el ("div", "csOut");
   out.append (dlRow, go, print);
   // (Its title row: EDIT and a ✕ closing the editor - as the bar's pencil does -, apart from the passages' own ✕s)
-  const head = el ("div", "top csEditHead"), close = el ("button", "pill icon", "✕");
+  const head = el ("div", "top paneHead"), close = el ("button", "pill icon", "", "x");
   close.setAttribute ("aria-label", "Close the editor");
-  head.append (el ("h2", "gTitle", "Edit"), close);
+  head.append (el ("h2", "title", "Edit"), close);
   editor.append (head, sectionsEl, more, memo);
   editor.addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
@@ -451,24 +453,21 @@ onScreen ("Study printout", async (body) => {
   const watchTop = new ResizeObserver (topR);
   watchTop.observe (split); watchTop.observe (box);
   // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
-  const outPane = el ("div", "csEditor csOutPane"), outHead = el ("div", "top csEditHead"), outClose = el ("button", "pill icon", "✕");
+  const outPane = el ("div", "csEditor csOutPane"), outHead = el ("div", "top paneHead"), outClose = el ("button", "pill icon", "", "x");
   outClose.setAttribute ("aria-label", "Close the download pane");
-  outHead.append (el ("h2", "gTitle", "Download"), outClose);
+  outHead.append (el ("h2", "title", "Download"), outClose);
   outPane.append (outHead, out);
   box.append (previewEl, split, editor, outPane);
-  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways, the right side at the top): a pencil in
+  // The bottom bar (the Verse cards' - .bottomBar: down the right side sideways, the right side at the top): a pencil in
   // its middle showing or hiding the editor, a printer next printing (as PRINT), and at its right end a download icon -
   // on a desktop (canSaveAs) the system's save dialog straight away, its types the formats; elsewhere showing or hiding
   // the download pane. One pane at a time, in the same place (the one shown: its icon pressed); none, the preview the
   // whole room. Which is shown kept on the device.
-  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle"), dlBtn = el ("button", "pill icon csOutBtn"), printBtn = el ("button", "pill icon csPrintBtn");
+  const bar = el ("div", "bottomBar csEditBar"), toggle = el ("button", "pill icon barMid", "", "pencil"), dlBtn = el ("button", "pill icon csOutBtn", "", "download"), printBtn = el ("button", "pill icon csPrintBtn", "", "printer");
   printBtn.setAttribute ("aria-label", "Print");
-  printBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>`;     // (A printer)
   printBtn.addEventListener ("click", () => print.click ());
   toggle.setAttribute ("aria-label", "Show or hide the editor");
-  toggle.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>`;     // (A pencil: editing)
   dlBtn.setAttribute ("aria-label", "Show or hide the download pane");
-  dlBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>`;     // (An arrow down to a line)
   type Pane = "edit" | "out" | "";
   let pane: Pane = "edit";
   try { const k = localStorage.getItem (EDITOR_KEY); pane = k === "0" ? "" : k === "out" ? "out" : "edit"; } catch { /* private mode */ }
@@ -594,7 +593,7 @@ function drawSections () {
     void drawPlace (place, sec);
     const lines = el ("div", "csLines");
     linesOf.set (sec, lines);
-    const add = el ("button", "pill csAdd", "+ Add item");
+    const add = el ("button", "pill action", "+ Add item");
     const menu = el ("div", "csMenu");
     menu.hidden = true;
     add.addEventListener ("click", () => { if (menu.hidden) showMenu (sec, menu); else menu.hidden = true; });
@@ -615,7 +614,7 @@ function drawLines () {
       handle.setAttribute ("aria-label", "Drag to move");
       const opts = el ("button", "pill csOptsBtn", "Options");
       opts.setAttribute ("aria-expanded", String (openOpts.has (it.id)));
-      const x = el ("button", "pill icon csRemove", "✕");
+      const x = el ("button", "pill icon csRemove", "", "x");
       x.setAttribute ("aria-label", "Remove");
       row.append (handle, el ("span", "csName", nameOf (sec, it)), ...(it.k === "memo" ? [] : [opts]), x);
       const panel = el ("div", "csOpts");
@@ -684,7 +683,7 @@ const toggle = (o: Opts, label: string, on: boolean, set: (v: boolean) => void) 
   return b;
 };
 const picker = (o: Opts, label: string, choices: [string, string][], value: string, set: (v: string) => void) => {
-  const row = el ("label", "sheetPick", label);
+  const row = el ("label", "field", label);
   const s = el ("select", "choose");
   s.append (...choices.map (([v, t]) => new Option (t, v)));
   s.value = value;
@@ -1088,7 +1087,7 @@ function mapOf (it: Item) {
   let m = maps.get (it.id);
   if (! m) {
     const view = passageMap (db);
-    const opts = [...view.el.querySelectorAll<HTMLElement> (":scope > label.sheetPick")];
+    const opts = [...view.el.querySelectorAll<HTMLElement> (":scope > label.field")];
     for (const o of opts) { o.remove (); o.addEventListener ("change", () => drawSources ()); }     // (Another base map or boundaries: their credits cited)
     m = { view, opts, key: "", range: [] as number[] };
     maps.set (it.id, m);

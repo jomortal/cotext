@@ -3,6 +3,7 @@
 // books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
 // the two icons at the play bar's right open the notes panel (notes.ts) and the search pane (search.ts).
 
+import "./icons";     // (First: the page's own icon buttons drawn before any module reads or copies them - icons.ts)
 import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";

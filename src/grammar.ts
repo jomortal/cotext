@@ -49,7 +49,7 @@ const keysOf = (grammar: string): Set<string> => mapped.get (grammar) ?? new Set
 export function grammarIn (sheet: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement> (c: string) => sheet.querySelector<T> ("." + c)!;
   const pick = q<HTMLSelectElement> ("grammarPick");
-  const box = q ("gInline"), titleEl = q ("gTitle"), secEl = q ("giSec"), bodyEl = q ("giBody"), scroll = q ("giScroll");
+  const box = q ("gInline"), titleEl = q ("title"), secEl = q ("giSec"), bodyEl = q ("giBody"), scroll = q ("giScroll");
   const otherEl = document.createElement ("div");     // (showOther's body: beside the section's, without its text styles - .gBody)
   otherEl.className = "giOther"; otherEl.hidden = true;
   bodyEl.after (otherEl);

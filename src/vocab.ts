@@ -32,7 +32,8 @@
 
 import type { Db } from "./db";
 import { onScreen, currentTestament, type Testament } from "./study";
-import { showDeck, fitDeck, shuffle, BAR_ICONS, type Card } from "./cards";
+import { showDeck, fitDeck, shuffle, type Card } from "./cards";
+import { ICONS } from "./icons";
 import { topTitle, dropDowns, watchTopBar } from "./topbar";
 import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, spellCode, type Form } from "./paradigm";
 import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook, setLearning, applyHelps } from "./helps";
@@ -95,14 +96,12 @@ async function details (strongs: string[], bookId = whole ()): Promise<Map<strin
   return out;
 }
 
-/** The speaker icon, as the word panel's (index.html). */
-const SPEAKER = document.querySelector ("#sheet .speakRoot")!.innerHTML;
 
 async function cardsFor (strongs: string[]): Promise<WordCard[]> {
   const d = await details (strongs), hebrew = lang () === "H";
   return strongs.filter ((k) => d.has (k)).map ((k) => {
     const w = d.get (k)!;
-    const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><button class="pill icon" data-say="${esc (w.lemma)}" aria-label="Say the word">${SPEAKER}</button></span>`, meaning = `<div class="meaning">${esc (w.meaning)}</div>`;
+    const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><button class="pill icon" data-say="${esc (w.lemma)}" aria-label="Say the word">${ICONS.speak}</button></span>`, meaning = `<div class="meaning">${esc (w.meaning)}</div>`;
     return reversed ? { strong: k, front: meaning, back: word } : { strong: k, front: word, back: meaning };
   });
 }
@@ -111,7 +110,7 @@ async function cardsFor (strongs: string[]): Promise<WordCard[]> {
  *  said), its English - ENGLISH TO HEBREW / GREEK the other way round. */
 function basicCard (x: { word: string; say: string; meaning: string }): Card {
   const hebrew = lang () === "H";
-  const say = x.say ? `<button class="pill icon" data-say="${esc (x.say)}" aria-label="Say the word">${SPEAKER}</button>` : "";
+  const say = x.say ? `<button class="pill icon" data-say="${esc (x.say)}" aria-label="Say the word">${ICONS.speak}</button>` : "";
   const word = `<span class="root"><span class="${hebrew ? "heWord" : "grWord"}">${esc (x.word)}</span>${say}</span>`, meaning = `<div class="meaning">${esc (x.meaning)}</div>`;
   return reversed ? { front: meaning, back: word } : { front: word, back: meaning };
 }
@@ -180,21 +179,21 @@ async function draw (body: HTMLElement) {
   const freqs = (hebrew ? ["OT"] : ["NT", "LXX"]).map ((x) => `<button class="pill" data-list="freq" data-t="${x}">${x} frequency</button>`).join ("");
   body.innerHTML = `<div class="topBar"><div class="topRow"><span id="fcTitle"></span></div>
     <div class="vcMenu" data-menu="more">
-      <div class="vcAdd"><label class="vcPick">Language<select class="choose" id="fcLang"><option value="H">Hebrew</option><option value="G">Greek</option></select></label></div>
+      <div class="fieldRow"><label class="field">Language<select class="choose" id="fcLang"><option value="H">Hebrew</option><option value="G">Greek</option></select></label></div>
       <div class="bar">${freqs}${["book", "learn", "known", "alpha", "nums", "names", "verbs"].map ((k) => `<button class="pill" data-list="${k}">${NAMES[k]}</button>`).join ("")}</div>
-      <div class="vcAdd" id="freqRow"><label class="vcPick" id="bookRow">Book<select class="choose" id="bookPick"></select></label><label class="vcPick">Words<select class="choose" id="freqPick"></select></label></div>
-      <div class="vcAdd" id="verbRow"><label class="vcPick">${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="stemPick">${opts (stems)}</select></label>
-        <label class="vcPick">Fill in<select class="choose" id="fillPick"><option value="-1">Pattern</option>${opts (models)}</select></label></div>
+      <div class="fieldRow" id="freqRow"><label class="field" id="bookRow">Book<select class="choose" id="bookPick"></select></label><label class="field">Words<select class="choose" id="freqPick"></select></label></div>
+      <div class="fieldRow" id="verbRow"><label class="field">${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="stemPick">${opts (stems)}</select></label>
+        <label class="field">Fill in<select class="choose" id="fillPick"><option value="-1">Pattern</option>${opts (models)}</select></label></div>
       <p id="verbNote">Each card a form - its pattern, or on the verb picked in Fill in; turned over, its parsing and meaning (on a pattern, also the form on ${hebrew ? "קָטַל" : "λύω"}).</p>
       <div class="bar" id="toggles"><button class="pill" id="reverse">English to ${hebrew ? "Hebrew" : "Greek"}</button></div>
     </div></div>
     <div class="deck"></div>
-    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">Word list</h2><button class="pill icon" id="fcListClose" aria-label="Close">✕</button></div>
+    <div class="deckPane" hidden><div class="top paneHead"><h2 class="title">Word list</h2><button class="pill icon" id="fcListClose" aria-label="Close">${ICONS.x}</button></div>
     <div class="vocabLists"></div></div>`;
   // The top row: the list studied as its title, its drop-down the screen's choices (topbar.ts, as the Verse cards')
   const top = topTitle ("", "flashcard options");
   body.querySelector ("#fcTitle")!.replaceWith (top.title);
-  dropDowns ([{ key: "more", button: top.button, menu: body.querySelector<HTMLElement> (".vcMenu")!, icon: "" }], menuOpen, (k) => { menuOpen = k; });
+  dropDowns ([{ key: "more", button: top.button, menu: body.querySelector<HTMLElement> (".vcMenu")! }], menuOpen, (k) => { menuOpen = k; });
   watchTopBar (body.querySelector<HTMLElement> (".topBar")!);
   const deckEl = body.querySelector<HTMLElement> (".deck")!;
   fitDeck (deckEl);     // (The card centered on the screen; the list, shown, scrolled to under it)
@@ -206,7 +205,7 @@ async function draw (body: HTMLElement) {
   // to it (--deckPaneH, style.css)
   const listEl = body.querySelector<HTMLElement> (".vocabLists")!, pane = body.querySelector<HTMLElement> (".deckPane")!;
   const listBtn = document.createElement ("button");
-  Object.assign (listBtn, { className: "pill icon", innerHTML: BAR_ICONS.list }); listBtn.setAttribute ("aria-label", "Word list");
+  Object.assign (listBtn, { className: "pill icon", innerHTML: ICONS.list }); listBtn.setAttribute ("aria-label", "Word list");
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${pane.offsetHeight}px`)).observe (pane);
   deckPaneSplit (pane);     // (Its divider: dragged, its size - layout.ts)
   body.querySelector ("#fcListClose")!.addEventListener ("click", () => { listShown = false; refresh (); });
