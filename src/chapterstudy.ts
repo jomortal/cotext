@@ -443,7 +443,7 @@ onScreen ("Study printout", async (body) => {
   toggle.addEventListener ("click", () => set (! shown));
   close.addEventListener ("click", () => set (false));
   show (shown);
-  // A download icon at the bar's right end (sideways its foot): DOWNLOAD's picker and PRINT in a menu over the screen,
+  // A download icon at the bar's right end (sideways its top end, as the Bible's right side goes to the top): DOWNLOAD's picker and PRINT in a menu over the screen,
   // opened and closed by it; a tap elsewhere closes it
   const dlBtn = el ("button", "pill icon csOutBtn"), pop = el ("div", "csOutPop");
   dlBtn.setAttribute ("aria-label", "Download or print");
