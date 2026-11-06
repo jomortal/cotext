@@ -22,7 +22,7 @@
 //   as wide as the text keeping 30 % of the window allows) set by #sheetSplit, now a vertical divider on its left edge.
 // - One pane (ONE_PANE: style.css' ONE PANE media query, the same): a phone (PHONE), or any touch screen - an iPad,
 //   its narrow Split View windows too (pointer: coarse) -, upright or sideways - one panel at a time (below):
-//   the word's panel (#sheet - or #besideSheet, for a word tapped in the notes), the notes or the
+//   the word's panel (#sheet - or #besideSheet, for a word tapped in the notes), the add-verse box, the notes or the
 //   search, beside the text: upright under it, sideways (bars.ts' SIDE_BAR, the play bar then down the right side) at
 //   its right the full height (the heading over the text only), one divider between them (#sheetSplit upright,
 //   #notesSplit sideways). The divider is at the same place on the screen both ways, measured from the screen's foot upright and
@@ -30,7 +30,7 @@
 //   screen's long side (--long): --cardShare, % - 40 is 40 % of the long side up from the foot upright, the same in
 //   from the right sideways -, so dragging in one sets the other. The word's panel one column on a phone and sideways,
 //   two upright on a touch screen wider than a phone's (wordColumns).
-//   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
+//   The add-verse box (#verseSheet) a card as the rest, in the same place.
 //   An iPad (PAIR: a touch screen bigger than a phone's) lets the notes and the search share the panel's place:
 //   upright side by side - the notes at the left, the search at the right, #paneSplit (vertical) between them at
 //   --rightShare (rightShareTo), the same place as the divider between the word's panel's two columns -; sideways one
@@ -176,14 +176,14 @@ for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (
 
 // Narrow (not one-pane), the panels open share the room with the text (style.css): their number set on the root as
 // --docks, and body.docks while two or more are open (one alone keeps its own height limit).
-// One-pane: one panel at a time - the word's (#sheet, or #besideSheet), the notes or the search: one opening closes
+// One-pane: one panel at a time - the word's (#sheet, or #besideSheet), the add-verse box, the notes or the search: one opening closes
 // the one open (by its ✕, as if tapped, so all it does on closing is done); its ✕ closes it, the divider going and
 // the text taking the screen. PAIR: the notes and the search open together, sharing one place - and both closed for
 // a word (paired), either opened again brings back the other too.
 const PANES = ["notes", "search"];
 const together = (a: HTMLElement, b: HTMLElement) => PAIR.matches && PANES.includes (a.id) && PANES.includes (b.id);
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
-const ONE = ["sheet", "besideSheet", "notes", "search"];     // (The panels one-pane shows one at a time)
+const ONE = ["sheet", "besideSheet", "verseSheet", "notes", "search"];     // (The panels one-pane shows one at a time)
 let shown: HTMLElement[] = [];     // (Those of them open, as last seen - so one just opened is told from the rest)
 let paired = false;     // (PAIR: the notes and the search both open when a word's panel closed them)
 const countDocks = () => {

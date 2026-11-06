@@ -831,7 +831,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   :root { --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
   body { right: var(--sideBar); }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
-  :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
+  :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
   :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
@@ -844,32 +844,33 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 
 /* ONE PANE - a phone, or any touch screen such as an iPad's, its narrow Split View windows too (layout.ts' ONE_PANE:
    keep the two the same), upright or sideways: one panel at a time - the word's (#sheet,
-   or #besideSheet for a word of the notes), the notes or the search (layout.ts closes the one open as another opens).
+   or #besideSheet for a word of the notes), the add-verse box (#verseSheet), the notes or the search (layout.ts closes
+   the one open as another opens).
    One divider between the text and the panel, its middle --cardShare % of
    the screen's long side (--long) up from the foot upright, in from the right edge sideways - so the same place both
    ways, so it stays put as the device turns (layout.ts; 40 % at first): upright #sheetSplit, the card under the
    text (a wide touch screen's wide grid undone: one column); sideways (SIDE BAR's) #notesSplit, the card at the
    text's right the full height, the heading over the text only, the play bar down the right side. No card
-   open: no divider, the text the full room. The add-verse box (#verseSheet) not a card: its own height under the text. */
+   open: no divider, the text the full room. */
 @media (max-width: 600px), (max-height: 500px), (pointer: coarse) {
-  :is(#sheet, #besideSheet, #search, #notes).dock { border-top: 0 !important; max-height: none; min-height: 0; }     /* (The divider is its line) */
+  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { border-top: 0 !important; max-height: none; min-height: 0; }     /* (The divider is its line) */
   :is(#sheetSplit, #notesSplit, #paneSplit, #besideSplit) { display: none !important; }
 }
 @media (max-width: 600px) and (orientation: portrait), (max-width: 600px) and (min-height: 500.02px), (orientation: portrait) and (pointer: coarse) {     /* (Upright: one-pane not held sideways - SIDE BAR) */
   body { display: flex; flex-direction: column; } .col { display: contents; }     /* (One column, as narrow: a touch screen's wide grid undone) */
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) main { flex: 1 1 0px; min-height: 0; border-bottom: 0; }
-  :is(#sheet, #besideSheet, #search, #notes).dock { flex: none; height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (From the divider's middle down to the play bar) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) main { flex: 1 1 0px; min-height: 0; border-bottom: 0; }
+  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { flex: none; height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (From the divider's middle down to the play bar) */
 }
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) and (pointer: coarse) {     /* (Sideways: SIDE BAR's) */
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--cardW, 0px); grid-template-rows: auto minmax(0, 1fr) auto; }
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
   .col { display: contents; }
-  .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; } #verseSheet { grid-column: 1; grid-row: 3; }
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }
-  :is(#sheet, #besideSheet, #search, #notes).dock { grid-column: 3; grid-row: 1 / -1; height: auto; flex: none; }
-  :is(#sheet, #besideSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); } :is(#sheet, #besideSheet) > .xRow { top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The word's panel reaches the screen's top: clear of the clock, as the panes) */
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
+  .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; }
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }
+  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { grid-column: 3; grid-row: 1 / -1; height: auto; flex: none; }
+  :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); } :is(#sheet, #besideSheet, #verseSheet) > .xRow { top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The word's panel reaches the screen's top: clear of the clock, as the panes) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
 }
 
 /* PAIR - an iPad (a touch screen bigger than a phone's: layout.ts' PAIR, keep them the same): the notes and the search
