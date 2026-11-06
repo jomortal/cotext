@@ -32,6 +32,8 @@
 
 import { barRoom, SIDE_BAR } from "./bars";
 const PHONE = matchMedia ("(max-width: 600px), (max-height: 500px)");     // (style.css' phone media query: keep the two the same)
+/** Whether the screen is a phone's size now (upright or sideways). */
+export const isPhone = () => PHONE.matches;
 const WIDE = matchMedia ("(min-width: 700px)");     // (style.css's breakpoint: keep the two the same)
 /** Whether the page is laid out wide now. */
 export const isWide = () => WIDE.matches;
