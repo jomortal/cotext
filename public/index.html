@@ -15,17 +15,16 @@
 <link rel="stylesheet" href="diagram.css">
 </head>
 <body>
-<!-- The page: a heading (☰, ‹ passage ›, ⋯ and the helps' menu under it), the chapter's interlinear, the word's panel, the
+<!-- The page: a heading (☰, the passage, ⋯ and the helps' menu under it), the chapter's interlinear, the word's panel, the
      notes panel (commentaries and apparatus), a second word's panel under it (panel.ts: a word of the notes' Hebrew OT,
-     cloned from #sheet), the search pane, the play bar (▶ read aloud; the search icon and the notes' icon at its right), the passage
+     cloned from #sheet), the search pane, the play bar (‹ and › at its ends, the chapter before and after; ▶ read aloud in its
+     middle, the notes' icon and the search's either side), the passage
      picker, the study drawer and its screens. -->
 <header class="head">
   <div class="row">
     <button class="pill icon" id="drawerBtn" aria-label="Study tools">☰</button>
     <span class="nav">
-      <button class="pill icon" id="prev" aria-label="Previous chapter">‹</button>
       <button class="pill icon place" id="place">COTEXT</button>
-      <button class="pill icon" id="next" aria-label="Next chapter">›</button>
     </span>
     <button class="pill icon" id="optionsBtn" aria-expanded="false" aria-controls="options" aria-label="Helps">⋯</button>
   </div>
@@ -102,7 +101,7 @@
 <div id="besideSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the Hebrew word's panel"></div>
 </div>
 <!-- The play bar: ▶ centered, the search's icon centered in the room at its left, the notes' in the room at its right. -->
-<div id="playBar"><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg></button><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button></div>
+<div id="playBar"><button class="pill icon" id="prev" aria-label="Previous chapter">‹</button><button class="pill icon" id="searchBtn" aria-label="Search" aria-pressed="false" aria-controls="search"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg></button><button class="pill icon" id="playBtn" aria-label="Read the chapter aloud">▶</button><button class="pill icon" id="notesBtn" aria-label="Commentaries, apparatus and translations" aria-pressed="false" aria-controls="notes"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/></svg></button><button class="pill icon" id="next" aria-label="Next chapter">›</button></div>
 <div id="picker" hidden>
   <div class="pickerCard">
     <div id="pickerBody"></div>
