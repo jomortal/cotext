@@ -95,7 +95,7 @@ async function draw (body: HTMLElement) {
       const sec = gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
       if (! sec) return;
       showGram (true);
-      setFold (sec.closest (".gFold")!, true);
+      setFold (sec.closest (".fold")!, true);
       for (const m of gram.querySelectorAll ("mark")) m.replaceWith (...m.childNodes);     // (An earlier mark gone)
       gram.querySelector (".gSec.found")?.classList.remove ("found");
       const marks = q.find ? markText (sec, q.find) : [];

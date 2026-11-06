@@ -8,25 +8,33 @@
 //   share (Brenton's, in the Hebrew Bible's numbering and the Septuagint's own) is told apart by its testament. Open at
 //   first, until a resource has been picked.
 // - THE CHAPTERS, in the resource's order: a verse-keyed resource (commentary, translation, apparatus, ancient version)
-//   each Bible book and chapter it has notes in (a note on a range in its first verse's chapter), its notes read on as
-//   continuous text, each verse's under its reference (notes.ts' verseBlock, noteElement; the church fathers' folded to
-//   their father and work, foldedNote, as the pane's); a dictionary its articles alphabetically, a letter a chapter, each
-//   article whole under its title (dictionary.ts' articleBlock: photo, place's map, text) - drawn 20 at a time as the
-//   reading nears the end of what's drawn, a letter running to hundreds; a grammar its sections in order, a run of
-//   sections under one heading a chapter (grammar.ts' sectionHtml, as the word's panel shows a section: each folded
-//   to its § and first words, tapped open; a chapter of one section open). The resource's
-//   name over the chapter, its credit under it - once, not under every article.
+//   each Bible book and chapter it has notes in (a note on a range in its first verse's chapter); a dictionary its
+//   articles alphabetically, a letter a chapter (dictionary.ts' articleBlock: photo, place's map, text) - drawn 20 at a
+//   time as the reading nears the end of what's drawn, a letter running to hundreds; a grammar its sections in order, a
+//   run of sections under one heading a chapter (grammar.ts' sectionHtml). The resource's name over the chapter, its
+//   credit under it - once, not under every article.
+// - COMPACT, as a grammar's sections are everywhere: each unit folded to a row (grammar.ts' foldEl / sectionHtml - the
+//   church fathers' and the dictionary entries' row, .hit), tapped open under it, tapped again folded - a verse's notes
+//   under its reference ("Genesis 1:3" over their first words: notes.ts' noteElement), a dictionary's article under its
+//   title, a grammar's section under its § (a chapter of one section open). Not folded, the units too short for it to
+//   matter: a translation's or ancient version's verses, read on as continuous text, each under its reference
+//   (notes.ts' verseBlock); and the church fathers' verses, whose notes are folded already, each to its father and
+//   work (foldedNote, as the pane's).
+// - THE READING TEXT in the serif, larger (style.css' .readText - a grammar's text's own rule): the notes, the articles'
+//   text, the sections; the rows, captions, pickers and credits in the page's sans; Hebrew and Greek in their fonts.
+// - THE PLACE: the unit last opened in each resource is kept, and opened again (scrolled to) when its chapter is.
 // - ‹ and › at the bottom bar's ends (bars.ts; with a mouse and room, in the reading's margins: marginArrows) - and a
 //   swipe across the reading (onSwipe) - go to the previous and next chapter, across books; at the first or last
 //   nothing. Each chapter opens at its top.
 // - A scripture reference in an article (underlined) goes to its verse in the Bible, the screen closed.
-// Kept on the device (localStorage cotext.resreader): the resource last read and the chapter reached in each.
+// Kept on the device (localStorage cotext.resreader): the resource last read, the chapter reached in each and the
+// unit last opened in each.
 
 import type { Db, Row } from "./db";
 import { onScreen, closeScreen } from "./study";
 import { allSources, sourceGroups, openSource, verseBlock, noteElement, foldedNote, FOLDED, type Note, type Source } from "./notes";
 import { dictionary, articleBlock } from "./dictionary";
-import { sectionHtml, folding } from "./grammar";
+import { sectionHtml, folding, foldEl, setFold } from "./grammar";
 import { topTitle, dropDowns, watchTopBar } from "./topbar";
 import { onSwipe, marginArrows } from "./bars";
 import { ICONS } from "./icons";
@@ -37,12 +45,13 @@ import { ICONS } from "./icons";
  *  row's). */
 interface Chapter { key: string; group: string; label: string; title: string; }
 /** A resource as the reader opens it: its chapters, what the second picker calls one (unit: Chapter, Letter, Section),
- *  its credit, how to draw one into el (still: whether it's still the chapter asked for) and to close its file. */
-interface Opened { chapters: Chapter[]; unit: string; credit: string; draw: (c: Chapter, el: HTMLElement, still: () => boolean) => Promise<void>; close?: () => void; }
+ *  its credit, how to draw one into el (still: whether it's still the chapter asked for; target: the unit to reach - a
+ *  fold's data-unit, drawn even past the first batch) and to close its file. */
+interface Opened { chapters: Chapter[]; unit: string; credit: string; draw: (c: Chapter, el: HTMLElement, still: () => boolean, target?: string) => Promise<void>; close?: () => void; }
 
 const KEY = "cotext.resreader";
-const kept: { src: string; at: Record<string, string> } = { src: "", at: {} };
-try { Object.assign (kept, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
+const kept: { src: string; at: Record<string, string>; unit: Record<string, string> } = { src: "", at: {}, unit: {} };
+try { Object.assign (kept, JSON.parse (localStorage.getItem (KEY) ?? "{}")); kept.unit ??= {}; } catch { /* none kept, or private mode */ }
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (kept)); } catch { /* private mode: not kept */ } };
 
 let db: Db;
@@ -66,7 +75,8 @@ function nameOf (s: Source, all: Source[]) {
 
 //==== VERSE-KEYED ====
 /** A commentary's, translation's, apparatus' or ancient version's chapters (each book and chapter it has notes in) and
- *  their notes. */
+ *  their notes - each verse's folded under its reference (data-unit "book.start"), but where the verse is short or its
+ *  notes folded already (above). */
 async function openNotes (s: Source, progress: (f: number) => void): Promise<Opened> {
   const file = await openSource (s, progress);
   const rows = await file.all (`SELECT DISTINCT book, start / 1000 AS c FROM notes ORDER BY book, c`);
@@ -81,14 +91,20 @@ async function openNotes (s: Source, progress: (f: number) => void): Promise<Ope
       const notes = await file.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND start BETWEEN ? AND ?
                                      ORDER BY start, "end" DESC, ord`, [b, ch * 1000, ch * 1000 + 999]) as unknown as Note[];
       if (! still ()) return;
-      let at = -1, block: HTMLElement | null = null;
-      for (const n of notes) {
-        if (n.start !== at || ! block) {     // (Each verse's notes under its reference)
-          at = n.start;
-          block = verseBlock (`${c.group} ${ch}:${n.start % 1000}`);
-          el.append (block);
-        }
-        block.append (FOLDED.has (s.id) ? foldedNote (n) : noteElement (n));
+      const fold = ! FOLDED.has (s.id) && s.kind !== "translation" && s.kind !== "version";
+      const verses: Note[][] = [];
+      for (const n of notes) if (verses[verses.length - 1]?.[0].start === n.start) verses[verses.length - 1].push (n); else verses.push ([n]);
+      for (const vs of verses) {     // (Each verse's notes under its reference)
+        const ref = `${c.group} ${ch}:${vs[0].start % 1000}`;
+        const els = vs.map ((n) => FOLDED.has (s.id) ? foldedNote (n) : noteElement (n));
+        for (const e of els) (e.classList.contains ("note") ? e : e.querySelector (".note"))?.classList.add ("readText");
+        if (! fold) { const block = verseBlock (ref); block.append (...els); el.append (block); continue; }
+        const body = document.createElement ("div");
+        body.append (...els);
+        const line = els.map ((e) => [...e.childNodes].filter ((x) => ! (x instanceof Element && x.classList.contains ("src"))).map ((x) => x.textContent).join (" ")).join (" ");     // (A range's caption left out)
+        const f = foldEl (ref, line, body);
+        f.dataset.unit = `${b}.${vs[0].start}`;
+        el.append (f);
       }
     },
   };
@@ -96,7 +112,8 @@ async function openNotes (s: Source, progress: (f: number) => void): Promise<Ope
 
 //==== DICTIONARIES ====
 /** A dictionary's chapters (its articles' first letters, alphabetically: "#" for a title starting otherwise) and their
- *  articles, each whole - 20 drawn at a time, the next 20 as the reading nears the end of those drawn. */
+ *  articles, each folded under its title (data-unit its id) - 20 drawn at a time (the first time as many as reach the
+ *  target), the next 20 as the reading nears the end of those drawn. */
 const BATCH = 20;
 async function openDictionary (s: Source, progress: (f: number) => void): Promise<Opened> {
   const file = await dictionary (db, progress, s.id);
@@ -106,27 +123,27 @@ async function openDictionary (s: Source, progress: (f: number) => void): Promis
   const letters = [...new Set (all.map ((a) => a.l))];
   return {
     chapters: letters.map ((l) => ({ key: l, group: "", label: l, title: l })), unit: "Letter", credit: s.credit,
-    async draw (c, el, still) {
+    async draw (c, el, still, target) {
       const ids = all.filter ((a) => a.l === c.key).map ((a) => a.id);
       const sentinel = document.createElement ("div");
       let next = 0, busy = false;
-      const more = async () => {
+      const more = async (count = BATCH) => {
         if (! still ()) { watch.disconnect (); return; }
         if (busy || next >= ids.length) return;
         busy = true;
-        const part = await Promise.all (ids.slice (next, next + BATCH).map ((id) => articleBlock (db, id, s.id)));
-        next += BATCH;
+        const part = await Promise.all (ids.slice (next, next + count).map ((id) => articleBlock (db, id, s.id).then ((a) => [id, a] as const)));
+        next += count;
         busy = false;
         if (! still ()) return;
-        for (const a of part) {
+        for (const [id, a] of part) {
           if (! a) continue;
-          const art = document.createElement ("div");
-          art.className = "rrArticle";
-          const h = document.createElement ("div");
-          h.className = "gHead";
-          h.textContent = a.title;
-          art.append (h, ...a.body.filter ((e) => ! e.classList.contains ("lexCredit")));     // (The credit once, at the chapter's foot)
-          sentinel.before (art);
+          const body = document.createElement ("div");
+          body.append (...a.body.filter ((e) => ! e.classList.contains ("lexCredit")));     // (The credit once, at the chapter's foot)
+          const text = body.querySelector (".gBody");
+          text?.classList.add ("readText");     // (The article's text; its photo's and map's captions stay the page's)
+          const f = foldEl (a.title, text?.textContent ?? "", body);
+          f.dataset.unit = id;
+          sentinel.before (f);
         }
         if (next >= ids.length) { watch.disconnect (); sentinel.remove (); } else if (near ()) more ();
       };
@@ -135,7 +152,7 @@ async function openDictionary (s: Source, progress: (f: number) => void): Promis
       const watch = new IntersectionObserver ((es) => { if (es.some ((e) => e.isIntersecting)) more (); }, { root: scroller, rootMargin: "0px 0px 100% 0px" });
       el.append (sentinel);
       watch.observe (sentinel);
-      await more ();
+      await more (Math.max (BATCH, ids.indexOf (target ?? "") + 1));
     },
   };
 }
@@ -159,6 +176,7 @@ async function openGrammar (g: Row): Promise<Opened> {
       if (! still ()) return;
       const text = document.createElement ("div");
       text.innerHTML = secs.map ((r) => sectionHtml (r, secs.length === 1, false)).join ("");     // (One heading over them all: the chapter's title)
+      text.querySelectorAll<HTMLElement> (".fold").forEach ((f, k) => { f.dataset.unit = String (secs[k].seq); });
       el.append (...text.childNodes);
     },
   };
@@ -193,7 +211,15 @@ async function draw (body: HTMLElement) {
   watchTopBar (body.querySelector<HTMLElement> (".topBar")!);
   const groupPick = body.querySelector<HTMLSelectElement> ("#rrGroup")!, chapterPick = body.querySelector<HTMLSelectElement> ("#rrChapter")!;
   const read = body.querySelector<HTMLElement> (".rrRead")!, bookEl = body.querySelector<HTMLElement> (".rrBook")!;
-  folding (bookEl);     // (A grammar's sections open and fold: grammar.ts)
+  folding (bookEl);     // (Every unit's row opens and folds: grammar.ts)
+  // (The unit opened kept as the place in the resource - folded again, forgotten; folding's own listener runs first)
+  bookEl.addEventListener ("click", (e) => {
+    const f = (e.target as Element).closest (".fold > .hit")?.parentElement;
+    if (! f?.dataset.unit) return;
+    if (f.querySelector (":scope > .hit")!.getAttribute ("aria-expanded") === "true") kept.unit[openedId] = f.dataset.unit!;
+    else if (kept.unit[openedId] === f.dataset.unit) delete kept.unit[openedId];
+    keep ();
+  });
   const nameEl = body.querySelector<HTMLElement> ("#rrName")!, creditEl = body.querySelector<HTMLElement> ("#rrCredit")!;
   const prev = body.querySelector<HTMLElement> ("[data-k=back]")!, next = body.querySelector<HTMLElement> ("[data-k=next]")!;
   const screen = document.getElementById ("screen")!;
@@ -225,8 +251,11 @@ async function draw (body: HTMLElement) {
       const el = document.createElement ("div");
       el.className = "rrChapter";
       bookEl.replaceChildren (el);
-      await opened.draw (c, el, still);
+      const target = kept.unit[openedId];
+      await opened.draw (c, el, still, target);
       if (still () && ! el.childNodes.length) bookEl.innerHTML = "<p>Nothing in this chapter.</p>";
+      const f = target && still () ? [...el.querySelectorAll<HTMLElement> (".fold")].find ((x) => x.dataset.unit === target) : undefined;
+      if (f) { setFold (f, true); f.scrollIntoView ({ block: "start" }); }     // (The place kept: its unit opened and in view)
     } catch {
       if (still ()) bookEl.innerHTML = "<p>This chapter couldn't be read.</p>";
     }

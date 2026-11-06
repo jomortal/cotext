@@ -176,7 +176,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 
 /* The interlinear: each verse its reference, then its words; each word a column - original, gloss, parsing. */
 /* A caption (.ref a verse's reference, .src a source's or list's heading): small capitals, muted. */
-.ref, .src { font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
+.ref, .src { font-family: var(--ui); font-size: var(--fs-xs); color: var(--soft); letter-spacing: .08em; text-transform: uppercase; }
 .ref { margin-top: 8px; }
 /* A note (a count, a hint, a label over a list): small and muted. */
 .vcHead, .timelineNote, .vcNum, .vocabRow .n, table.chart .count, table.chart .none, table.chart .same, .csCount, .learnStatus { font-size: var(--fs-xs); color: var(--soft); }
@@ -272,7 +272,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
 .pane .chooseBtn { width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }     /* (A long resource name cut short on one line, not wrapped) */
 #notesRef { margin-top: 0; }
-.rrBook .vBlock + .vBlock { margin-top: 4px; }     /* (The Resource reader: a verse's notes under its reference, as the resources pane's - resreader.ts) */
+.rrBook .vBlock + .vBlock { margin-top: 4px; }     /* (The Resource reader: a verse's notes under its reference, as the resources pane's, or folded under it - resreader.ts) */
 :is(#notes, .rrBook) .note { border-top: var(--hair); padding-top: 8px; margin-top: 8px; }
 :is(#notes, .rrBook) .note:first-child { border-top: 0; margin-top: 0; }
 :is(#notes, .rrBook) .note .src { margin: 0 0 4px; }
@@ -404,13 +404,15 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .giOther > .choices { flex-direction: column; align-items: start; }     /* (The dictionary's articles on a word - dictionary.ts - one a line) */
 .gBody p { color: var(--fg); font-size: inherit; margin: 0 0 8px; }
 .gHead { font-weight: 600; margin: 14px 0 6px; }
-/* A grammar section (grammar.ts' sectionHtml - the word panel's GRAMMAR, the Resource reader's grammars, ☰ Learn's READ
-   THE GRAMMAR): folded to a row as a church father's note (.hit, its § and heading a caption, a line of its text cut
-   short: .dictLine), tapped, its text (.gSec) open under it as a dictionary's article (.dictBody). The text in the
-   serif, read as a book; the rows and headings (.gHead) in the page's sans; its Hebrew and Greek in their own fonts
-   (.he, .grc). Learn's SHOW IN THE GRAMMAR marks the passage (mark), or the whole section (.found), in the tapped
-   word's tint (.w.on's), kept until another link is followed. */
-.gSec { font-family: var(--serif); font-size: var(--fs-xl); }     /* (A grammar's text - Learn, the word panel's GRAMMAR, the Resource reader: the serif, larger than the notes' text) */
+/* A fold (grammar.ts' sectionHtml and foldEl - a grammar's section wherever shown, the Resource reader's verses and
+   articles): folded to a row as a church father's note (.hit, its § and heading, reference or title a caption, a line
+   of its text cut short: .dictLine), tapped, its text open under it as a dictionary's article (.dictBody).
+   A resource's reading text (.readText - a grammar's sections, .gSec, and the Resource reader's notes and articles'
+   text) in the serif, larger than the notes' text in the pane, read as a book; the rows, captions (.src) and headings
+   (.gHead) in the page's sans; its Hebrew and Greek in their own fonts (.he, .grc). Learn's SHOW IN THE GRAMMAR marks
+   the passage (mark), or the whole section (.found), in the tapped word's tint (.w.on's), kept until another link is
+   followed. */
+.readText { font-family: var(--serif); font-size: var(--fs-xl); }
 .gSec mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
