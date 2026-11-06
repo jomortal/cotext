@@ -768,7 +768,6 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csOptsBtn { font-size: var(--fs-xs); color: var(--soft); }
 .csOptsBtn[aria-expanded="true"] { color: var(--accent); }
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
-.csEmpty { padding: 4px 0; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); margin-top: 8px; }
 .csMenu { padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }

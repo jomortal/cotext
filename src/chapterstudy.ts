@@ -394,6 +394,35 @@ export function addStudyResource (code: string, chapter: number, from: number, t
   return addStudy (code, chapter, from, to, src);
 }
 
+/** A resource's line for the Bible's add box (versecards.ts, the resources pane's +), as the editor draws a line: its
+ *  name and Options - its settings under it, as the editor's (fillOptions), for the verses picked -, not yet in the
+ *  printout. range: the verses picked changed (from - to as addStudyReference's); add: it put in the printout with
+ *  its settings, as addStudyResource puts one. Null for a book or resource not there. */
+export function draftResource (code: string, chapter: number, from: number, to: number, src: string) {
+  const b = bookList ().find ((x) => x.code === code), s = b ? sourceOf (b, src) : null;
+  if (! b || ! s) return null;
+  const sec: Section = { id: "draft", book: b, chapter, from, to, items: [] };
+  const it = sourceItem (s, 0, 0);
+  const line = el ("div", "csLine"), row = el ("div", "csRow"), name = el ("span", "csName", nameOf (sec, it));
+  const opts = el ("button", "pill csOptsBtn", "Options"), panel = el ("div", "csOpts");
+  panel.hidden = true; opts.setAttribute ("aria-expanded", "false");
+  let drawing = 0;
+  const redraw = () => {     // (The panel drawn again for the item as it now is - the latest drawing alone kept)
+    const n = ++drawing, fresh = el ("div", "csOpts");
+    name.textContent = nameOf (sec, it);
+    if (panel.hidden) return;
+    void fillOptions (fresh, sec, it, o).then (() => { if (n === drawing) panel.replaceChildren (...fresh.childNodes); });
+  };
+  const o: Opts = { changed: redraw, quietly: () => { name.textContent = nameOf (sec, it); }, range: false };
+  opts.addEventListener ("click", () => { panel.hidden = ! panel.hidden; opts.setAttribute ("aria-expanded", String (! panel.hidden)); redraw (); });
+  row.append (name, opts); line.append (row, panel);
+  return {
+    line,
+    range (f: number, t: number) { sec.from = f; sec.to = t; it.from = it.to = 0; redraw (); },
+    add: () => addStudy (code, sec.chapter, sec.from, sec.to, src, it),
+  };
+}
+
 /** The item a resource makes, for the verses from - to (0: its section's first / last): a commentary's, an apparatus',
  *  a translation's or the syntax's notes (beside the text but for the syntax's diagrams), a dictionary's entries, the
  *  atlas' map. (The + Add item menu's, and the resources pane's +.) */
@@ -403,9 +432,9 @@ function sourceItem (s: Source, from: number, to: number): Item {
     : { id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from, to };
 }
 
-/** addStudyReference's and addStudyResource's work: in the open printout (the last used: the printouts read back
+/** addStudyReference's, addStudyResource's and draftResource's work (made: the item with its settings, draftResource's): in the open printout (the last used: the printouts read back
  *  first if they haven't been), saved, redrawn if shown. */
-function addStudy (code: string, chapter: number, from: number, to: number, src: string): boolean {
+function addStudy (code: string, chapter: number, from: number, to: number, src: string, made?: Item): boolean {
   const b = bookList ().find ((x) => x.code === code);
   const s = src && b ? sourceOf (b, src) : null;
   if (! b || (src && ! s)) return false;
@@ -416,10 +445,10 @@ function addStudy (code: string, chapter: number, from: number, to: number, src:
   // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)
   const holds = (x: Section) => x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
   const sec = s ? now ().sections.find (holds) : undefined;
-  const item = sec && sourceItem (s!, f === sec.from ? 0 : f, t === sec.to ? 0 : t);
+  const item = sec && { ...(made ?? sourceItem (s!, 0, 0)), id: newId (), from: f === sec.from ? 0 : f, to: t === sec.to ? 0 : t } as Item;
   const same = (x: Item) => JSON.stringify ({ ...x, id: "" }) === JSON.stringify ({ ...item, id: "" });
   if (sec && item) { if (! sec.items.some (same)) sec.items.push (item); }     // (Already there, the same: not again)
-  else now ().sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [sourceItem (s, 0, 0)] : [] });
+  else now ().sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [{ ...(made ?? sourceItem (s, 0, 0)), id: newId () } as Item] : [] });
   save ();
   if (open) { drawSections (); render (); sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" }); }
   return true;
@@ -470,7 +499,6 @@ function drawLines () {
       line.append (row, panel);
       return line;
     }));
-    if (! sec.items.length) linesEl.append (el ("p", "csEmpty", "Nothing added yet. Add the text with its options, notes, articles, the map, the timeline or a word list."));
   }
 }
 
@@ -508,54 +536,59 @@ function dragging (handle: HTMLElement, line: HTMLElement, sec: Section) {
 }
 
 // ---- Options ----
-const toggle = (label: string, on: boolean, set: (v: boolean) => void) => {
+/** What an option's change does where its panel is: the editor's (kept, its lines - the panel with them - and the
+ *  preview redrawn; a tick, quietly), or a resource's line in the Bible's add box (draftResource: its panel redrawn). */
+type Opts = { changed: () => void; quietly: (sec: Section, it: Item) => void; range: boolean };     // (range: its verses picked here - not in the add box, whose verses are picked above it)
+const EDITOR: Opts = { changed: () => changed (), quietly: (sec, it) => quietly (sec, it), range: true };
+const toggle = (o: Opts, label: string, on: boolean, set: (v: boolean) => void) => {
   const b = el ("button", "pill", label);
   b.setAttribute ("aria-pressed", String (on));
-  b.addEventListener ("click", () => { set (! on); changed (); });
+  b.addEventListener ("click", () => { set (! on); o.changed (); });
   return b;
 };
-const picker = (label: string, choices: [string, string][], value: string, set: (v: string) => void) => {
+const picker = (o: Opts, label: string, choices: [string, string][], value: string, set: (v: string) => void) => {
   const row = el ("label", "sheetPick", label);
   const s = el ("select", "choose");
   s.append (...choices.map (([v, t]) => new Option (t, v)));
   s.value = value;
-  s.addEventListener ("change", () => { set (s.value); changed (); });
+  s.addEventListener ("change", () => { set (s.value); o.changed (); });
   row.append (s);
   return row;
 };
 /** A verse range's two pickers, among its section's verses (0: the first / the last). */
-async function rangeRows (sec: Section, it: { from: number; to: number }): Promise<HTMLElement[]> {
+async function rangeRows (o: Opts, sec: Section, it: { from: number; to: number }): Promise<HTMLElement[]> {
+  if (! o.range) return [];
   const vs = await verses (sec);
-  return [picker ("From verse", [["0", "First"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.from), (v) => { it.from = +v; }),
-          picker ("To verse", [["0", "Last"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.to), (v) => { it.to = +v; })];
+  return [picker (o, "From verse", [["0", "First"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.from), (v) => { it.from = +v; }),
+          picker (o, "To verse", [["0", "Last"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.to), (v) => { it.to = +v; })];
 }
 
-/** An item's own settings, under its line (sec: its section). */
-async function fillOptions (panel: HTMLElement, sec: Section, it: Item) {
+/** An item's own settings, under its line (sec: its section; o: what a change does there). */
+async function fillOptions (panel: HTMLElement, sec: Section, it: Item, o: Opts = EDITOR) {
   const book = sec.book;
   const bar = el ("div", "bar");
   if (it.k === "text") {
-    bar.append (toggle ("Interlinear", it.gloss, (v) => { it.gloss = v; }), toggle ("Parsing", it.parse, (v) => { it.parse = v; }),
-                toggle ("Transliteration", it.translit, (v) => { it.translit = v; }));
-    panel.append (bar, ...await rangeRows (sec, it));
-    panel.append (picker ("Helps only for words coming fewer times than", [["0", "Off (every word)"], ...HELPS_UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (it.other ? otherTestament (book) : book.testament)}`])],
+    bar.append (toggle (o, "Interlinear", it.gloss, (v) => { it.gloss = v; }), toggle (o, "Parsing", it.parse, (v) => { it.parse = v; }),
+                toggle (o, "Transliteration", it.translit, (v) => { it.translit = v; }));
+    panel.append (bar, ...await rangeRows (o, sec, it));
+    panel.append (picker (o, "Helps only for words coming fewer times than", [["0", "Off (every word)"], ...HELPS_UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (it.other ? otherTestament (book) : book.testament)}`])],
                           String (it.under ?? 0), (v) => { it.under = +v; }));
-    if (it.under) panel.append (picker ("For", [["both", "Interlinear and parsing"], ["gloss", "Interlinear only"], ["parse", "Parsing only"]],
+    if (it.under) panel.append (picker (o, "For", [["both", "Interlinear and parsing"], ["gloss", "Interlinear only"], ["parse", "Parsing only"]],
                                         it.helps ?? "both", (v) => { it.helps = v as typeof it.helps; }));
   } else if (it.k === "note") {
-    bar.append (toggle ("Beside each verse", it.beside, (v) => { it.beside = v; }), toggle ("As its own section", ! it.beside, (v) => { it.beside = ! v; }));
-    panel.append (bar, ...await rangeRows (sec, it));
-    await noteChoices (panel, sec, it);
+    bar.append (toggle (o, "Beside each verse", it.beside, (v) => { it.beside = v; }), toggle (o, "As its own section", ! it.beside, (v) => { it.beside = ! v; }));
+    panel.append (bar, ...await rangeRows (o, sec, it));
+    await noteChoices (panel, sec, it, o);
   } else if (it.k === "dict") {
-    panel.append (...await rangeRows (sec, it));
-    await entryChoices (panel, sec, it);
+    panel.append (...await rangeRows (o, sec, it));
+    await entryChoices (panel, sec, it, o);
   } else if (it.k === "map") {
-    panel.append (...await rangeRows (sec, it), ...mapOf (it).opts);
+    panel.append (...await rangeRows (o, sec, it), ...mapOf (it).opts);
   } else if (it.k === "words") {
-    panel.append (picker ("Words", [["all", "Every word of the chapter"], ["rare", "Under a frequency"], ["picked", "Words picked"]], it.which, (v) => { it.which = v as typeof it.which; }));
-    if (it.which === "rare") panel.append (picker ("Coming fewer times than", UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (book.testament)}`]), String (it.under), (v) => { it.under = +v; }));
-    panel.append (picker ("Definitions", [["short", "Short (the gloss)"], ["long", "Long (the lexicon's entry)"]], it.long ? "long" : "short", (v) => { it.long = v === "long"; }));
-    bar.append (toggle ("Transliteration", it.translit, (v) => { it.translit = v; }));
+    panel.append (picker (o, "Words", [["all", "Every word of the chapter"], ["rare", "Under a frequency"], ["picked", "Words picked"]], it.which, (v) => { it.which = v as typeof it.which; }));
+    if (it.which === "rare") panel.append (picker (o, "Coming fewer times than", UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (book.testament)}`]), String (it.under), (v) => { it.under = +v; }));
+    panel.append (picker (o, "Definitions", [["short", "Short (the gloss)"], ["long", "Long (the lexicon's entry)"]], it.long ? "long" : "short", (v) => { it.long = v === "long"; }));
+    bar.append (toggle (o, "Transliteration", it.translit, (v) => { it.translit = v; }));
     panel.append (bar);
     if (it.which === "picked") {
       const list = el ("div", "csPickList");
@@ -564,7 +597,7 @@ async function fillOptions (panel: HTMLElement, sec: Section, it: Item) {
         const b = el ("button", "pill csPickWord");
         b.setAttribute ("aria-pressed", String (on));
         b.append (el ("span", hebrew (book) ? "heWord" : "grWord", String (r.lemma)), el ("span", "csPickGloss", ` ${meaning (r)}`));
-        b.addEventListener ("click", () => { it.picked = on ? it.picked.filter ((x) => x !== k) : [...it.picked, k]; changed (); });
+        b.addEventListener ("click", () => { it.picked = on ? it.picked.filter ((x) => x !== k) : [...it.picked, k]; o.changed (); });
         list.append (b);
       }
       panel.append (list);
@@ -592,20 +625,20 @@ function check (on: boolean, set: (v: boolean) => void, ...label: HTMLElement[])
 }
 
 /** A dictionary item's entries to tick, each its title over a line of it: unticked, left out. */
-async function entryChoices (panel: HTMLElement, sec: Section, it: Item & { k: "dict" }) {
+async function entryChoices (panel: HTMLElement, sec: Section, it: Item & { k: "dict" }, o: Opts) {
   let list: Entry[];
   try { list = await entriesOf (sec, it); }
   catch { panel.append (el ("p", "", `${sourceOf (sec.book, it.src)?.name ?? it.src} couldn't be loaded.`)); return; }
   const box = el ("div", "csNoteList");
   box.append (...list.map ((a) => check (! it.skip?.includes (a.id), (on) => {
     it.skip = on ? (it.skip ?? []).filter ((x) => x !== a.id) : [...(it.skip ?? []), a.id];
-    quietly (sec, it);
+    o.quietly (sec, it);
   }, el ("span", "csCheckName", a.title), el ("span", "csPickGloss", ` ${a.line}`))));
   if (! list.length) box.append (el ("p", "", "Nothing for these verses."));
   const top = el ("div", "bar");
   const all = el ("button", "pill", "All"), none = el ("button", "pill", "None");
-  all.addEventListener ("click", () => { it.skip = []; changed (); });
-  none.addEventListener ("click", () => { it.skip = list.map ((a) => a.id); changed (); });
+  all.addEventListener ("click", () => { it.skip = []; o.changed (); });
+  none.addEventListener ("click", () => { it.skip = list.map ((a) => a.id); o.changed (); });
   top.append (el ("span", "src", "Entries (unticked: left out)"), all, none);
   panel.append (top, box);
 }
@@ -614,13 +647,13 @@ async function entryChoices (panel: HTMLElement, sec: Section, it: Item & { k: "
  *  then the range's notes under their verses, a checkbox each (only the fathers ticked). A tick is kept and printed at
  *  once, the options left as they are (not redrawn: the list keeps its scroll) - but the line's name and, after a
  *  father's tick, the notes' list. */
-async function noteChoices (panel: HTMLElement, sec: Section, it: NoteItem) {
+async function noteChoices (panel: HTMLElement, sec: Section, it: NoteItem, o: Opts) {
   const s = sourceOf (sec.book, it.src);
   if (! s) return;
   let by: Map<number, Note[]>;
   try { by = await notesByVerse (dataOf (sec), s, inRange (await verses (sec), it.from, it.to)); }
   catch { panel.append (el ("p", "", `${s.name} couldn't be loaded.`)); return; }
-  const quiet = () => quietly (sec, it);
+  const quiet = () => o.quietly (sec, it);
   const fathers = FOLDED.has (s.id);
   const list = el ("div", "csNoteList");
   const drawList = () => {

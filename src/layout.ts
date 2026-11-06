@@ -202,7 +202,7 @@ const countDocks = () => {
   const closing = open.filter ((o) => ! opened.includes (o) && ! opened.some ((d) => together (d, o)));
   if (! pane && closing.filter ((o) => PANES.includes (o.id)).length === 2) paired = PAIR.matches;     // (A word closing both)
   else if (closing.length) paired = false;
-  for (const o of closing) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕ - unless the two share the place: PAIR)
+  for (const o of closing) o.querySelector<HTMLElement> (":scope > .xRow button, :scope > .top > #notesClose")?.click ();     // (The resources' ✕ on its picker's row: notes.ts)     // (The one open before closed by its own ✕ - unless the two share the place: PAIR)
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
