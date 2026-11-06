@@ -205,7 +205,7 @@ body.noVerbColors .w .parse { color: inherit; }
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
 #prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .vcBar > .arrow:first-child { justify-self: start; } .vcBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
-#vcPlus { font-size: var(--fs-arrow); }     /* (The Verse cards' + as large as the bar's ‹ and ›: its glyph as thin) */
+#vcPlus { font-size: var(--fs-arrow); } #vcPlus[aria-expanded="true"] { font-size: var(--fs-icon); }     /* (The Verse cards' + as large as the bar's ‹ and ›, its glyph as thin; turned ✕ while NEW VERSE is open, every ✕'s size) */
 .inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › centered in a column's margins - the Bible's text's, a deck's card's - bars.ts' marginArrows) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
