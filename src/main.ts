@@ -26,7 +26,7 @@ import { initTimeline } from "./timeline";
 import { initChapterStudy } from "./chapterstudy";
 import { initVerseCards } from "./versecards";
 import "./layout";     // (The layout's dividers)
-import { onSwipe } from "./bars";
+import { onSwipe, marginArrows } from "./bars";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -207,21 +207,8 @@ async function start () {
   document.getElementById ("prev")!.addEventListener ("click", () => step (-1));
   document.getElementById ("next")!.addEventListener ("click", () => step (1));
   onSwipe (document.querySelector ("main")!, step);     // (A swipe across the text turns the chapter, as ‹ and ›)
-  // With a mouse (a desktop), the text narrower than its room (--page) - margins either side at least ARROW_ROOM wide -:
-  // ‹ and › out of the bar, each centered in its margin, at the text's middle height (style.css' body.arrowsInMargins:
-  // --arrowL, --arrowR, --arrowY). Worked out again as the text's room or the window changes size.
-  const ARROW_ROOM = 64, FINE = matchMedia ("(pointer: fine)"), mainEl = document.querySelector<HTMLElement> ("main")!;
-  const placeArrows = () => {
-    const m = mainEl.getBoundingClientRect (), t = chapterEl.getBoundingClientRect ();
-    const left = t.left - m.left, right = m.right - t.right, on = FINE.matches && m.width > 0 && left >= ARROW_ROOM && right >= ARROW_ROOM;
-    document.body.classList.toggle ("arrowsInMargins", on);
-    if (! on) return;
-    const s = document.documentElement.style;
-    s.setProperty ("--arrowL", `${m.left + left / 2}px`); s.setProperty ("--arrowR", `${t.right + right / 2}px`); s.setProperty ("--arrowY", `${m.top + m.height / 2}px`);
-  };
-  const watchArrows = new ResizeObserver (placeArrows);
-  watchArrows.observe (mainEl); watchArrows.observe (chapterEl);
-  FINE.addEventListener ("change", placeArrows);
+  // With a mouse, the text narrower than its room (--page): ‹ and › in its margins, at the text's middle height (bars.ts)
+  marginArrows (document.querySelector<HTMLElement> ("main")!, chapterEl, document.getElementById ("prev")!, document.getElementById ("next")!);
   placeBtn.addEventListener ("click", () => togglePicker (groups (), go, chaptersOf));     // (Tapped again: closed)
   window.addEventListener ("hashchange", () => { const r = parseRef (location.hash.slice (1)); if (r) go (...r); });
 }

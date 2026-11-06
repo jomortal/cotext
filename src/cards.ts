@@ -9,7 +9,7 @@
 // paradigms) and the Verse cards (versecards.ts).
 
 import { sayText } from "./audio";
-import { onSwipe } from "./bars";
+import { onSwipe, marginArrows } from "./bars";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
@@ -61,6 +61,8 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOp
   on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
   el.querySelector ("[data-k=remove]")?.addEventListener ("click", () => { const [c] = deck.splice (at, 1); if (c) o.remove!.done (c); show (); });     // (Under the card, not in the bar)
   onSwipe (card, (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ());     // (A swipe across the card steps as ‹ and ›)
+  // (With a mouse, the card narrower than the screen's room: ‹ and › in its margins, at the card's middle height - bars.ts)
+  marginArrows (document.getElementById ("screen")!, card, bar.querySelector<HTMLElement> ("[data-k=back]")!, bar.querySelector<HTMLElement> ("[data-k=next]")!, "column");
   show ();
   return {
     update (next, same) {
