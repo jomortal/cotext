@@ -27,20 +27,25 @@
 //     the chapter or range: the main database's lxx_heb - Psalms and Jeremiah number differently, so it's headed with
 //     its own reference), for a Septuagint book the Hebrew it translates; drawn as the text is, the same options, Hebrew
 //     right to left, Greek left to right. Nothing shows until something is added - the text too.
-//   NOTES - each source the notes panel has for the book (translations, commentaries - the church fathers where there
-//     are some -, apparatus, ancient versions, the sentence diagram): the chapter's, or a verse range's, either
+//   NOTES - each source the resources pane offers for the book (translations, commentaries - the church fathers where
+//     there are some -, apparatus, ancient versions, the sentence diagram; beside the Septuagint the Hebrew book's too,
+//     each LXX verse's notes those of the Hebrew verses it translates, as the pane shows them - notes.ts' sourcesFor
+//     and placesOf): the chapter's, or a verse range's, either
 //     BESIDE EACH VERSE (under each verse of the section's first text item, study-Bible style, the source named) or AS
 //     ITS OWN SECTION (each verse's notes under its reference). Beside each verse with no text item in its section: as
 //     its own section. Its options list the range's notes under their verses, each by its first words (the church
 //     fathers' and the Catena's by father and work), a checkbox each - unticked, left out of the printout; the church
 //     fathers' sources also a checkbox per father in the range (All / None), so only the fathers ticked print.
 //   ARTICLES - a dictionary (Tyndale: the articles the verses cite or their words lead to; the Archaeology
-//     finds, the Ancient Parallels and the Ancient Historians: those bearing on the verses), one item: every entry for
+//     finds, the Ancient Parallels and the Ancient Historians: those bearing on the verses; beside the Septuagint by
+//     the Hebrew verses translated, as the pane's), one item: every entry for
 //     the chapter or its verse range, printed as the article opens in the app; its options list the entries, a
 //     checkbox each (all ticked at first) - unticked, left out.
 //   THE ATLAS - the map of the places the chapter names (or the range's), with the list of them and their verses; its
 //     options BASE MAP, POLITICAL BOUNDARIES and ROUTE (the book's journeys, where it has any) - the map's own
 //     pickers, moved onto its line. Printed as a picture of the map as it stands (it can be panned in the preview).
+//   Whatever the resources pane offers for the book is offered here (+ Add item, in the pane's groups) and by the
+//   pane's + (draftResource) - the Hebrew OT beside a Septuagint book as the other text.
 //   THE TIMELINE - the chapter's year (Theographic, as ☰ Timeline) and the lanes' items within 150 years of it, each a
 //     bar, the chapter's own in the accent.
 //   WORD LIST - the chapter's words (every word, those under a frequency in the testament, or ones picked from the
@@ -62,7 +67,7 @@
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
 import { onScreen } from "./study";
-import { sourcesFor, openSource, noteElement, drawDiagram, FOLDED, type Source, type Note, type Sentence } from "./notes";
+import { sourcesFor, placesOf, openSource, noteElement, drawDiagram, FOLDED, type Source, type Note, type Sentence } from "./notes";
 import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
@@ -110,7 +115,7 @@ const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "")
 type Entry = { id: string; title: string; line: string };
 type Chapter = {
   book: Book; chapter: number; words: Promise<Word[]>;
-  notesOf: Map<string, Promise<Note[]>>;     // (By source id)
+  notesOf: Map<string, Promise<Note[]>>;     // (By "<source id>|<book id>.<chapter>": its own chapter's, or beside the Septuagint the Hebrew's)
   lexicon: Promise<Row[]> | null;
   entries: Map<string, Promise<Entry[]>>;     // (A dictionary's entries for a range: "<src>|<verses>")
   others: Map<string, Promise<Word[]>>;     // (The other text's words by the verses: "<vs>")
@@ -138,29 +143,37 @@ const inRange = (vs: number[], from: number, to: number) => vs.filter ((v) => (!
 /** A section's reference as its heading says it: Romans 5, Romans 5:8–end, Romans 5:1–8, Romans 5:8 (one verse). */
 const refName = (sec: Section) => `${sec.book.name} ${sec.chapter}${! sec.from && ! sec.to ? "" : sec.from && sec.to === sec.from ? `:${sec.from}` : `:${sec.from || 1}–${sec.to || "end"}`}`;
 
-/** A source's notes touching a chapter, in the panel's order; a note from an earlier chapter (a range) among them. */
-function chapterNotes (ch: Chapter, s: Source): Promise<Note[]> {
-  let p = ch.notesOf.get (s.id);
+/** A source's notes touching a chapter - ch's own, or another's (bk, c: beside the Septuagint, a Hebrew chapter it
+ *  translates), kept with ch -, in the panel's order; a note from an earlier chapter (a range) among them. */
+function chapterNotes (ch: Chapter, s: Source, bk = ch.book.id, c = ch.chapter): Promise<Note[]> {
+  const key = `${s.id}|${bk}.${c}`;
+  let p = ch.notesOf.get (key);
   if (! p) {
     let f = files.get (s.id);
     if (! f) { f = openSource (s, () => {}); files.set (s.id, f); f.catch (() => files.delete (s.id)); }
     p = f.then ((d) => d.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND "end" >= ? AND start <= ?
-                               ORDER BY start, "end" DESC, ord`, [ch.book.id, ch.chapter * 1000, ch.chapter * 1000 + 999]) as unknown as Promise<Note[]>);
-    ch.notesOf.set (s.id, p);
-    p.catch (() => ch.notesOf.delete (s.id));
+                               ORDER BY start, "end" DESC, ord`, [bk, c * 1000, c * 1000 + 999]) as unknown as Promise<Note[]>);
+    ch.notesOf.set (key, p);
+    p.catch (() => ch.notesOf.delete (key));
   }
   return p;
 }
 
 /** A source's notes by the verse each is placed at - its first verse in the range (a note on 5:13-6:5 at 6:1); with
- *  an item, only those it keeps (keeps). */
+ *  an item, only those it keeps (keeps). Each verse's notes are its places' (notes.ts' placesOf, as the panel's):
+ *  beside the Septuagint, a Hebrew Bible source's those of the Hebrew verses it translates - none where the Hebrew
+ *  lacks it -, each note once. */
 async function notesByVerse (ch: Chapter, s: Source, vs: number[], it?: NoteItem): Promise<Map<number, Note[]>> {
   const out = new Map<number, Note[]> ();
-  for (const n of await chapterNotes (ch, s)) {
-    if (it && ! keeps (it, n)) continue;
-    const v = vs.find ((x) => ch.chapter * 1000 + x >= n.start && ch.chapter * 1000 + x <= n.end);
-    if (v === undefined) continue;
-    (out.get (v) ?? out.set (v, []).get (v)!).push (n);
+  const per = await placesOf (s, ch.book, ch.chapter, vs);
+  const seen = new Set<number> ();
+  for (const { v, where } of per) for (const [bk, c, hv] of where) {
+    const at = c * 1000 + hv;
+    for (const n of await chapterNotes (ch, s, bk, c)) {
+      if (seen.has (n.id) || at < n.start || at > n.end || (it && ! keeps (it, n))) continue;
+      seen.add (n.id);
+      (out.get (v) ?? out.set (v, []).get (v)!).push (n);
+    }
   }
   return out;
 }
@@ -431,10 +444,11 @@ export function draftResource (code: string, chapter: number, from: number, to: 
 
 /** The item a resource makes, for the verses from - to (0: its section's first / last): a commentary's, an apparatus',
  *  a translation's or the syntax's notes (beside the text but for the syntax's diagrams), a dictionary's entries, the
- *  atlas' map. (The + Add item menu's, and the resources pane's +.) */
+ *  atlas' map, the timeline. (The + Add item menu's, and the resources pane's +.) */
 function sourceItem (s: Source, from: number, to: number): Item {
   return s.kind === "dictionary" ? { id: newId (), k: "dict", src: s.id, from, to }
     : s.kind === "atlas" ? { id: newId (), k: "map", from, to }
+    : s.kind === "timeline" ? { id: newId (), k: "time" }
     : { id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from, to };
 }
 
@@ -743,7 +757,7 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   group ("Textual Studies", notes (["apparatus", "version"]));
   group ("Commentaries", notes (["commentary"]));
   group ("Translations", notes (["translation"]));
-  if (book.testament !== "LXX") group ("Time", [choice ("Timeline", () => push ({ id: newId (), k: "time" }), "The chapter's place in time")]);
+  group ("Time", sources.filter ((s) => s.kind === "timeline").map ((s) => choice ("Timeline", () => push (sourceItem (s, 0, 0)), "The chapter's place in time")));
   menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
   menuEl.scrollIntoView ({ block: "nearest" });
@@ -751,7 +765,8 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
 
 /** A dictionary item's entries for its verses (sec: its section), each once, in order: the Tyndale's by verse (those
  *  citing each, then those its words lead to - dictionary.ts' passageArticles), the finds', parallels' and historians'
- *  those bearing on the verses (bookArticles). */
+ *  those bearing on the verses (bookArticles). Beside the Septuagint, as the panel's, all by verse - a Hebrew Bible
+ *  dictionary's by the Hebrew verses each translates (placesOf). */
 async function entriesOf (sec: Section, it: Item & { k: "dict" }): Promise<Entry[]> {
   const { book, chapter } = sec, ch = dataOf (sec);
   const vs = inRange (await verses (sec), it.from, it.to);
@@ -759,9 +774,10 @@ async function entriesOf (sec: Section, it: Item & { k: "dict" }): Promise<Entry
   let p = ch.entries.get (key);
   if (! p) {
     p = (async () => {
-      const got: Entry[] = it.src === "finds" || it.src === "ane" || it.src === "historians"
+      const s = sourceOf (book, it.src);
+      const got: Entry[] = (it.src === "finds" || it.src === "ane" || it.src === "historians") && book.testament !== "LXX"
         ? (await bookArticles (db, book.id, it.src)).filter ((a) => a.verses.some ((x) => Math.floor (x / 1000) === chapter && vs.includes (x % 1000)))
-        : (await passageArticles (db, vs.map ((v) => [[book.id, chapter, v]]), it.src)).flat ();
+        : (await passageArticles (db, s ? (await placesOf (s, book, chapter, vs)).map ((p) => p.where) : vs.map ((v) => [[book.id, chapter, v]]), it.src)).flat ();
       const seen = new Set<string> ();
       return got.filter ((a) => ! seen.has (a.id) && !! seen.add (a.id)).map ((a) => ({ id: a.id, title: a.title.replace (/\*/g, ""), line: a.line }));
     }) ();
@@ -782,7 +798,7 @@ async function render () {
   doc.dir = "ltr";
   const used = new Map<string, string> ();     // (Each source credited, in any section: its name -> its credit)
   const credit = (name: string, text: string) => { if (text && ! used.has (name)) used.set (name, text); };
-  const mapsNow: { m: ReturnType<typeof mapOf>; sec: Section }[] = [];
+  const mapsNow: { m: ReturnType<typeof mapOf>; sec: Section; per: { v: number; where: number[][] }[] }[] = [];
   for (const [i, sec] of sections.entries ()) {
     const { book, chapter } = sec, ch = dataOf (sec);
     const part = el ("div", "csPart");
@@ -878,7 +894,8 @@ async function render () {
           block.append (m.view.el);
           const range = inRange (vs, it.from, it.to);
           const key = `${book.id}.${chapter}:${range.join (",")}`;
-          if (m.key !== key) { m.key = key; m.range = range; mapsNow.push ({ m, sec }); }
+          // (Its places' verses as the panel's: beside the Septuagint, the Hebrew verses translated - placesOf)
+          if (m.key !== key) { m.key = key; m.range = range; mapsNow.push ({ m, sec, per: s ? await placesOf (s, book, chapter, range) : range.map ((x) => ({ v: x, where: [[book.id, chapter, x]] })) }); }
         } else if (it.k === "time") {
           h ("Timeline");
           const t = await chapterTime (book.id, chapter);
@@ -910,8 +927,7 @@ async function render () {
   previewEl.replaceChildren (doc);
   previewEl.scrollTop = scroll;
   // (A map drawn once it's in the page: it needs its size)
-  for (const { m, sec } of mapsNow)
-    m.view.update (sec.book.id, sec.chapter, m.range.map ((x) => ({ v: x, where: [[sec.book.id, sec.chapter, x]] })), "No places named in these verses.");
+  for (const { m, sec, per } of mapsNow) m.view.update (sec.book.id, sec.chapter, per, "No places named in these verses.");
 }
 
 /** An Atlas item's map, made once (atlas.ts' passageMap): its pickers (BASE MAP, POLITICAL BOUNDARIES, ROUTE) moved

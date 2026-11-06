@@ -113,7 +113,7 @@ export async function initNotes (db: Db) {
 export function setNotesPassage (b: Book, c: number) {
   const was = book?.id, onTimeline = current ()?.kind === "timeline";
   book = b; chapter = c;
-  heb = b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
+  heb = hebrewOf (b);
   if (onTimeline && picked[scope ()] !== "timeline") {     // (The timeline, covering every book, stays picked into another testament: it follows the text)
     picked[scope ()] = "timeline";
     try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
@@ -164,9 +164,17 @@ const scope = () => book?.testament === "LXX" && heb ? "LXXH" : book?.testament 
 const offers = (s: Source, t: string) => s.testaments.split (" ").includes (t);
 /** Whether a source has notes for a book (none listed: every book). */
 const covers = (s: Source, b: Book | null) => !! b && (! s.books || s.books.split (" ").includes (String (b.id)));
-const mine = () => ! book ? [] : scope () === "LXXH"
-  ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id) && covers (s, heb)) || (offers (s, "LXX") && covers (s, book)))]
-  : sources.filter ((s) => offers (s, book!.testament) && covers (s, book));
+/** The Hebrew Bible book an LXX book translates (books.heb; null: none, or not an LXX book). */
+export const hebrewOf = (b: Book) => b.testament === "LXX" ? books.find ((x) => x.id === b.heb) ?? null : null;
+/** The sources offered for a book, in the notes' order: those with notes for it in its own testament - and, for an
+ *  LXX book with a Hebrew counterpart, the Hebrew OT first and the Hebrew book's sources beside its own (BESIDE THE
+ *  SEPTUAGINT). The picker's list (mine) and the Study printout's (sourcesFor). */
+function offeredFor (b: Book): Source[] {
+  const h = hebrewOf (b);
+  return h ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id) && covers (s, h)) || (offers (s, "LXX") && covers (s, b)))]
+    : sources.filter ((s) => offers (s, b.testament) && covers (s, b));
+}
+const mine = () => book ? offeredFor (book) : [];
 const current = () => mine ().find ((s) => s.id === picked[scope ()]) ?? mine ()[0];
 
 pick.addEventListener ("change", () => {
@@ -258,13 +266,8 @@ async function drawNotes () {
   const n = ++updating, still = () => n === updating;
   const many = wide || vs.length > 1;
   const blocky = wide || oneWay;     // (Each verse's notes in a block of their own: wide for TWO-WAY SCROLLING, else to follow one way)
-  // Each verse's places whose notes show: beside the Septuagint, a Hebrew-keyed source's the Hebrew verses it
-  // translates ([book, chapter, verse]; none: the Hebrew lacks it); otherwise its own.
-  const hebrewKeyed = !! heb && (src.kind === "original" || offers (src, "OT"));
-  const per = await Promise.all (vs.map (async (v) => ({ v, where: hebrewKeyed
-    ? (await textDb.all ("SELECT hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? AND verse = ? ORDER BY hchapter, hverse",
-                         [b.id, chapter, v])).map ((r) => [Number (r.hbook), Number (r.hchapter), Number (r.hverse)])
-    : [[b.id, chapter, v]] })));
+  const hebrewKeyed = hebrewSide (src, b);
+  const per = await placesOf (src, b, chapter, vs);
   if (! still ()) return;
   blocks = []; forget ();
   refEl.textContent = many ? `${b.name} ${chapter}` : `${b.name} ${chapter}:${vs[0]}`;
@@ -685,9 +688,40 @@ function foldedNote (n: Note): HTMLElement {
   return el;
 }
 
-/** The sources with notes for a book in its own testament (Study printout's list: chapterstudy.ts) - beside the
- *  Septuagint only its own (not the Hebrew's, as the picker offers them). */
-export const sourcesFor = (b: Book) => sources.filter ((s) => offers (s, b.testament) && covers (s, b));
+/** The sources the Study printout offers for a book (chapterstudy.ts): the picker's (offeredFor) - beside the
+ *  Septuagint the Hebrew book's too, each LXX verse's notes the Hebrew verses' (placesOf) - but the Hebrew OT, the
+ *  printout's other text. */
+export const sourcesFor = (b: Book) => offeredFor (b).filter ((s) => s !== HEBREW_OT);
+
+/** Whether a source's notes beside a book are keyed by the Hebrew verses it translates: an LXX book with a Hebrew
+ *  counterpart, and a source of the Hebrew Bible's (or the Hebrew OT itself). */
+export const hebrewSide = (s: Source, b: Book) => !! hebrewOf (b) && (s.kind === "original" || offers (s, "OT"));
+/** An LXX chapter's verses' Hebrew verses (the main database's lxx_heb: verse -> [book, chapter, verse][], in order),
+ *  read once a chapter. */
+const lxxHeb = new Map<string, Promise<Map<number, number[][]>>> ();
+function hebrewVerses (b: Book, chapter: number) {
+  const key = `${b.id}.${chapter}`;
+  let p = lxxHeb.get (key);
+  if (! p) {
+    p = textDb!.all ("SELECT verse, hbook, hchapter, hverse FROM lxx_heb WHERE book = ? AND chapter = ? ORDER BY verse, hchapter, hverse", [b.id, chapter])
+      .then ((rows) => {
+        const m = new Map<number, number[][]> ();
+        for (const r of rows) { const v = Number (r.verse); (m.get (v) ?? m.set (v, []).get (v)!).push ([Number (r.hbook), Number (r.hchapter), Number (r.hverse)]); }
+        return m;
+      });
+    lxxHeb.set (key, p);
+    p.catch (() => lxxHeb.delete (key));
+  }
+  return p;
+}
+/** Each verse's places whose notes show ([book, chapter, verse]): beside the Septuagint, a Hebrew-keyed source's
+ *  (hebrewSide) the Hebrew verses it translates (none: the Hebrew lacks it - the Septuagint only); otherwise its own.
+ *  The panel's and the Study printout's. */
+export async function placesOf (s: Source, b: Book, chapter: number, vs: number[]): Promise<{ v: number; where: number[][] }[]> {
+  if (! hebrewSide (s, b)) return vs.map ((v) => ({ v, where: [[b.id, chapter, v]] }));
+  const m = await hebrewVerses (b, chapter);
+  return vs.map ((v) => ({ v, where: m.get (v) ?? [] }));
+}
 
 /** A note's range as the panel labels it: 1:2–5, 1:1–2:3. */
 function range (start: number, end: number): string {
