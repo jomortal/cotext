@@ -32,7 +32,7 @@ export type Page = { w: number; h: number; side: number; top: number };
 //==== READING THE PRINTOUT ====
 /** A run of text and its look: size in points, font named where it's the Hebrew's or Greek's (else the document's
  *  own), color as RRGGBB where it isn't the text's own; rtl: Hebrew letters. "\n" alone: a line break. */
-type Run = { text: string; b?: boolean; i?: boolean; size: number; font?: string; color?: string; sup?: boolean; rtl?: boolean };
+type Run = { text: string; b?: boolean; i?: boolean; u?: boolean; size: number; font?: string; color?: string; sup?: boolean; rtl?: boolean };
 /** A paragraph: its runs; level 1-3 a heading; in points, indent where its first line starts (from the text's left),
  *  hang how much further in its other lines start (a hanging indent), before the space above it. */
 type Para = { k: "p"; runs: Run[]; level?: number; align?: "center" | "right"; rtl?: boolean; indent: number; hang: number; before: number };
@@ -111,10 +111,13 @@ function blocks (doc: HTMLElement, pics: Map<Element, Omit<Pic, "k" | "alt">>): 
     }
     para = null;
   };
-  const run = (text: string, cs: CSSStyleDeclaration): Run => {
+  const run = (text: string, cs: CSSStyleDeclaration, at?: Element | null): Run => {
     const c = hex (cs.color);
+    // (Underlined: an underline isn't inherited as a style - looked for on the element and those it's inside, to its block)
+    let u = false;
+    for (let x = at; x && ! u; x = x.parentElement) { const s = getComputedStyle (x); u = s.textDecorationLine.includes ("underline"); if (! s.display.startsWith ("inline")) break; }
     if (cs.textTransform === "uppercase") text = text.toUpperCase ();
-    return { text, size: Math.round (parseFloat (cs.fontSize) * PT * 2) / 2, b: Number (cs.fontWeight) >= 600 || undefined, i: cs.fontStyle === "italic" || undefined,
+    return { text, size: Math.round (parseFloat (cs.fontSize) * PT * 2) / 2, b: Number (cs.fontWeight) >= 600 || undefined, i: cs.fontStyle === "italic" || undefined, u: u || undefined,
              font: fontOf (cs.fontFamily), color: c !== base ? c : undefined, sup: cs.verticalAlign === "super" || undefined, rtl: HEBREW.test (text) || undefined };
   };
   const add = (r: Run) => {
@@ -129,7 +132,7 @@ function blocks (doc: HTMLElement, pics: Map<Element, Omit<Pic, "k" | "alt">>): 
       if (n instanceof Element) { if (getComputedStyle (n).display !== "none") inline (n, into); }
       else if (n.nodeType === Node.TEXT_NODE && n.textContent) {
         const t = n.textContent.replace (/\s+/g, " ");
-        if (t.trim ()) into.push (run (t, getComputedStyle (n.parentElement!)));
+        if (t.trim ()) into.push (run (t, getComputedStyle (n.parentElement!), n.parentElement));
       }
     }
     return into;
@@ -175,7 +178,7 @@ function blocks (doc: HTMLElement, pics: Map<Element, Omit<Pic, "k" | "alt">>): 
       if (cs.display === "list-item") add (run ("• ", cs));
       for (const n of e.childNodes) {
         if (n instanceof Element) walk (n);
-        else if (n.nodeType === Node.TEXT_NODE && n.textContent && (n.textContent.trim () || para)) add (run (n.textContent.replace (/\s+/g, " "), cs));
+        else if (n.nodeType === Node.TEXT_NODE && n.textContent && (n.textContent.trim () || para)) add (run (n.textContent.replace (/\s+/g, " "), cs, e));
       }
       flush ();
       stack.pop ();
@@ -183,7 +186,7 @@ function blocks (doc: HTMLElement, pics: Map<Element, Omit<Pic, "k" | "alt">>): 
     }
     for (const n of e.childNodes) {
       if (n instanceof Element) walk (n);
-      else if (n.nodeType === Node.TEXT_NODE && n.textContent && (n.textContent.trim () || para)) add (run (n.textContent.replace (/\s+/g, " "), cs));
+      else if (n.nodeType === Node.TEXT_NODE && n.textContent && (n.textContent.trim () || para)) add (run (n.textContent.replace (/\s+/g, " "), cs, e));
     }
   };
   walk (doc);
@@ -238,7 +241,7 @@ function docx (bs: Block[], title: string, page: Page): Uint8Array {
     const f = r.font ? `<w:rFonts w:ascii="${r.font}" w:hAnsi="${r.font}" w:cs="${r.font}"/>` : "";
     const sz = Math.round (r.size * 2);
     return `<w:rPr>${f}${r.b ? "<w:b/><w:bCs/>" : ""}${r.i ? "<w:i/><w:iCs/>" : ""}${r.color ? `<w:color w:val="${r.color}"/>` : ""}`
-         + `${sz ? `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>` : ""}${r.sup ? '<w:vertAlign w:val="superscript"/>' : ""}${r.rtl ? "<w:rtl/>" : ""}</w:rPr>`;
+         + `${sz ? `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>` : ""}${r.u ? '<w:u w:val="single"/>' : ""}${r.sup ? '<w:vertAlign w:val="superscript"/>' : ""}${r.rtl ? "<w:rtl/>" : ""}</w:rPr>`;
   };
   const runs = (rs: Run[]) => rs.map ((r) => r.text === "\n" ? "<w:r><w:br/></w:r>"
     : r.text.split ("\t").map ((t, i) => `<w:r>${rPr (r)}${i ? "<w:tab/>" : ""}<w:t xml:space="preserve">${xml (t)}</w:t></w:r>`).join ("")).join ("");
@@ -318,6 +321,7 @@ function odt (bs: Block[], title: string, page: Page): Uint8Array {
     const a = [`fo:font-size="${r.size}pt"`, `style:font-size-complex="${r.size}pt"`];
     if (r.b) a.push ('fo:font-weight="bold"', 'style:font-weight-complex="bold"');
     if (r.i) a.push ('fo:font-style="italic"', 'style:font-style-complex="italic"');
+    if (r.u) a.push ('style:text-underline-style="solid"', 'style:text-underline-width="auto"', 'style:text-underline-color="font-color"');
     if (r.color) a.push (`fo:color="#${r.color}"`);
     if (r.font) a.push (`style:font-name="${r.font}"`, `style:font-name-complex="${r.font}"`);
     if (r.sup) a.push ('style:text-position="super 58%"');
@@ -401,7 +405,7 @@ function rtf (bs: Block[], page: Page): string {
   const run = (r: Run) => {
     if (r.text === "\n") return "\\line ";
     const f = r.font ? F[r.font] ?? 0 : r.rtl ? 1 : 0, fs = Math.round (r.size * 2);
-    return `{${r.rtl ? "\\rtlch" : "\\ltrch"}\\f${f}\\af${f}${fs ? `\\fs${fs}\\afs${fs}` : ""}${r.b ? "\\b\\ab" : ""}${r.i ? "\\i\\ai" : ""}${r.color ? `\\cf${color (r.color)}` : ""}${r.sup ? "\\super" : ""} ${esc (r.text)}}`;
+    return `{${r.rtl ? "\\rtlch" : "\\ltrch"}\\f${f}\\af${f}${fs ? `\\fs${fs}\\afs${fs}` : ""}${r.b ? "\\b\\ab" : ""}${r.i ? "\\i\\ai" : ""}${r.u ? "\\ul" : ""}${r.color ? `\\cf${color (r.color)}` : ""}${r.sup ? "\\super" : ""} ${esc (r.text)}}`;
   };
   const tw = (x: number) => Math.round (x * TW);
   const par = (o: { level?: number; align?: string; rtl?: boolean; indent?: number; hang?: number; before?: number; after?: number }, inTable = false) =>
@@ -435,7 +439,7 @@ function rtf (bs: Block[], page: Page): string {
 // borderless tables (dir="rtl" for Hebrew), the fonts named.
 function wordHtml (bs: Block[], title: string, page: Page): string {
   const parts: { loc: string; type: string; data: Uint8Array }[] = [];
-  const css = (r: Run) => [`font-size:${r.size}pt`, r.font ? `font-family:'${r.font}'` : "", r.b ? "font-weight:bold" : "", r.i ? "font-style:italic" : "", r.color ? `color:#${r.color}` : "",
+  const css = (r: Run) => [`font-size:${r.size}pt`, r.font ? `font-family:'${r.font}'` : "", r.b ? "font-weight:bold" : "", r.i ? "font-style:italic" : "", r.u ? "text-decoration:underline" : "", r.color ? `color:#${r.color}` : "",
                            r.sup ? "vertical-align:super" : ""].filter (Boolean).join (";");
   const html = (rs: Run[]) => rs.map ((r) => r.text === "\n" ? "<br>" : `<span style="${css (r)}"${r.rtl ? ' dir="rtl"' : ""}>${xml (r.text)}</span>`).join ("");
   const pcss = (o: Para | { rtl?: boolean; indent?: number; hang?: number; before?: number; align?: string }) =>

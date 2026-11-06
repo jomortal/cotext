@@ -104,7 +104,7 @@ type Item = { id: string } & (
   | { k: "map"; from: number; to: number }
   | { k: "time" }
   | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean }
-  | { k: "memo"; text: string });     // (memo: the reader's own note, typed in its line - printed as typed)
+  | { k: "memo"; text: string; html?: string });     // (memo: the reader's own note, typed in its line - printed as typed; html its formatting, memoHtml's few tags)
 
 /** A section of the printout: a reference - book, chapter, verses from - to (0: the chapter's first / last) - and its
  *  items in order. The first names the printout until it's renamed. */
@@ -621,16 +621,7 @@ function drawLines () {
       x.addEventListener ("click", () => { sec.items = sec.items.filter ((i) => i !== it); openOpts.delete (it.id); changed (); });
       dragging (handle, line, sec);
       line.append (row, panel);
-      if (it.k === "memo") {     // (A note: its box under its line, kept and printed as it's typed - the lines not redrawn, so the box keeps its place)
-        const box = el ("textarea", "choose csMemoBox");
-        Object.assign (box, { value: it.text, rows: 3, placeholder: "Type a note" });
-        box.addEventListener ("input", () => {     // (Shown as it's typed: its block's text set in place - the preview not drawn again)
-          it.text = box.value; save ();
-          const b = previewEl.querySelector<HTMLElement> (`[data-item="${it.id}"]`);
-          if (b) { b.querySelector (".csMemo")!.textContent = it.text; b.hidden = ! it.text.trim (); } else render ();
-        });
-        line.append (box);
-      }
+      if (it.k === "memo") line.append (...memoEditor (it));     // (A note: its formatting bar and box under its line)
       return line;
     }));
   }
@@ -638,6 +629,68 @@ function drawLines () {
 
 /** The items changed: kept, the lines and the preview redrawn. */
 function changed () { save (); drawLines (); render (); }
+
+// ---- A note's editor ----
+/** A note's formatting, kept as a few tags only: bold, italic, underline, line breaks and paragraphs, a bulleted list,
+ *  and the three sizes (.memoS small, .memoL large - normal none); anything else pasted or typed is kept as its text. */
+function memoHtml (html: string): string {
+  const t = document.createElement ("template");
+  t.innerHTML = html;
+  const out = (n: Node): string => {
+    if (n.nodeType === Node.TEXT_NODE) return (n.textContent ?? "").replace (/[&<>]/g, (c) => `&#${c.charCodeAt (0)};`);
+    if (! (n instanceof Element)) return "";
+    const inner = [...n.childNodes].map (out).join (""), tag = n.tagName;
+    if (tag === "B" || tag === "STRONG") return `<b>${inner}</b>`;
+    if (tag === "I" || tag === "EM") return `<i>${inner}</i>`;
+    if (tag === "U") return `<u>${inner}</u>`;
+    if (tag === "BR") return "<br>";
+    if (tag === "UL" || tag === "OL") return `<ul>${inner}</ul>`;
+    if (tag === "LI") return `<li>${inner}</li>`;
+    if (tag === "DIV" || tag === "P") return `<div>${inner}</div>`;
+    const size = tag === "FONT" ? Number (n.getAttribute ("size")) : n.classList.contains ("memoS") ? 2 : n.classList.contains ("memoL") ? 5 : 3;
+    return size < 3 ? `<span class="memoS">${inner}</span>` : size > 3 ? `<span class="memoL">${inner}</span>` : inner;
+  };
+  return [...t.content.childNodes].map (out).join ("");
+}
+/** A note's look in the preview: its formatting (memoHtml), or - written before formatting - its text, lines kept. */
+const memoView = (it: Item & { k: "memo" }) => it.html ?? it.text.replace (/[&<>]/g, (c) => `&#${c.charCodeAt (0)};`).replace (/\n/g, "<br>");
+/** A note's editor: a formatting bar - B, I, U, SIZE (small, normal, large), a bulleted list - over its box, a box typed in
+ *  with that formatting (the browser's own editing: execCommand); each change kept and shown in the preview as it's made,
+ *  the preview not drawn again. */
+function memoEditor (it: Item & { k: "memo" }): HTMLElement[] {
+  const bar = el ("div", "fieldRow memoBar"), box = el ("div", "choose csMemoBox");
+  box.contentEditable = "true"; box.dataset.placeholder = "Type a note"; box.innerHTML = memoView (it);
+  const keep = () => {
+    it.html = memoHtml (box.innerHTML); it.text = box.innerText; save ();
+    const b = previewEl.querySelector<HTMLElement> (`[data-item="${it.id}"]`);
+    if (b) { b.querySelector (".csMemo")!.innerHTML = it.html; b.hidden = ! it.text.trim (); } else render ();
+  };
+  const cmd = (name: string, value?: string) => { box.focus (); document.execCommand (name, false, value); keep (); state (); };
+  const btn = (label: string, aria: string, name: string, cls = "") => {
+    const b = el ("button", `pill memoBtn ${cls}`, label);
+    b.setAttribute ("aria-label", aria);
+    b.addEventListener ("pointerdown", (e) => e.preventDefault ());     // (The box's selection kept as it's tapped)
+    b.addEventListener ("click", () => cmd (name));
+    return b;
+  };
+  const bold = btn ("B", "Bold", "bold", "memoB"), ital = btn ("I", "Italic", "italic", "memoI"), under = btn ("U", "Underline", "underline", "memoU");
+  const list = btn ("• List", "Bulleted list", "insertUnorderedList");
+  const size = el ("select", "choose");
+  size.setAttribute ("aria-label", "Text size");
+  size.append (new Option ("Small", "2"), new Option ("Normal", "3", true, true), new Option ("Large", "5"));
+  size.addEventListener ("change", () => cmd ("fontSize", size.value));
+  const state = () => {     // (The bar showing the formatting where the cursor is)
+    if (! box.contains (document.getSelection ()?.anchorNode ?? null)) return;
+    bold.setAttribute ("aria-pressed", String (document.queryCommandState ("bold")));
+    ital.setAttribute ("aria-pressed", String (document.queryCommandState ("italic")));
+    under.setAttribute ("aria-pressed", String (document.queryCommandState ("underline")));
+  };
+  box.addEventListener ("input", keep);
+  box.addEventListener ("blur", () => { box.innerHTML = it.html ?? box.innerHTML; });     // (Tidied to memoHtml's tags once left)
+  document.addEventListener ("selectionchange", state);
+  bar.append (bold, ital, under, size, list);
+  return [bar, box];
+}
 
 /** A section's preview blocks put in its items' order, in place (a line dragged); false where a block isn't there (still
  *  being drawn): the preview then drawn again. The notes beside the text have no block of their own (they're in the text's). */
@@ -1044,7 +1097,9 @@ async function render () {
           if (t) { cite ("timeline"); block.append (timelineBlock (t, book, chapter)); }
           else block.append (el ("p", "", "The timeline couldn't be loaded."));
         } else if (it.k === "memo") {     // (Nothing typed: nothing shown or printed - kept hidden, its text set as it's typed)
-          block.append (el ("p", "csMemo", it.text));
+          const memo = el ("div", "csMemo");
+          memo.innerHTML = memoView (it);
+          block.append (memo);
           block.hidden = ! it.text.trim ();
         } else if (it.k === "words") {
           h ("Word list");
