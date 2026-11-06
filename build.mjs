@@ -34,8 +34,10 @@ fs.cpSync ("public", "dist", { recursive: true, filter: (f) => path.resolve (f) 
 // starts it by its address with its content's hash (DB_WORKER) - so a new build's is never an old copy.
 const options = { bundle: true, format: "esm", minify: true, sourcemap: true, target: ["safari15", "chrome100", "firefox100"] };
 await esbuild.build ({ ...options, entryPoints: ["src/dbworker.ts"], outfile: "dist/dbworker.js" });
+// The app split: what it loads only when used (the Study printout's PDF maker, modern-screenshot) its own file, fetched
+// then, not with app.js.
 await esbuild.build ({
-  ...options, entryPoints: ["src/main.ts"], outfile: "dist/app.js",
+  ...options, entryPoints: { app: "src/main.ts" }, outdir: "dist", splitting: true, chunkNames: "chunk-[hash]",
   define: { DB_FILES: JSON.stringify (DB_FILES),
             DB_WORKER: JSON.stringify (`dbworker.js?v=${hash (fs.readFileSync ("dist/dbworker.js"))}`) },
 });

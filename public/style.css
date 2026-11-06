@@ -802,6 +802,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 .csVerse + .csVerse { margin-top: 10px; }
 .csDoc .verseHead { margin-top: 0; }
 .csSnap { display: none; }
+.csPdf { position: fixed; left: -100000px; top: 0; pointer-events: none; }     /* (The PDF's frame, the printout laid out in it at the page's width off screen: chapterstudy.ts' makePdf) */
 .csDoc .sheetPick, .csDoc .chooseWrap { display: none; }     /* (An article's map's BASE MAP: not in the printout - an Atlas item's pickers are on its line) */
 .csWords { display: grid; }
 .csWord { padding: 6px 0; border-bottom: var(--rule); }

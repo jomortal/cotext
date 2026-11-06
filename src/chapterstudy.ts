@@ -40,7 +40,10 @@
 // - PRINT / SAVE AS PDF: window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
 //   Hebrew right to left, a map as a picture (each canvas copied to an image first: prepare), verses, notes and
 //   entries kept whole where they fit, the chapter's reference as its title, page numbers where the browser allows
-//   (@page), and every source used credited at the end. On an iPhone: Share > Print > Save to Files.
+//   (@page), and every source used credited at the end. On an iPhone in Safari: Share > Print > Save to Files.
+//   A Home Screen web app on an iPhone or iPad ignores window.print: there the button makes the PDF itself (makePdf -
+//   the preview drawn page by page as pictures, in the same print rules) and opens the share sheet with it (Print,
+//   Save to Files, Messages...).
 // - KEPT on the device per chapter (localStorage, "cotext.study.<book>.<chapter>"): leaving and coming back keeps it;
 //   another chapter starts blank.
 
@@ -187,7 +190,7 @@ function nameOf (it: Item): string {
 }
 
 //==== THE SCREEN ====
-let previewEl: HTMLElement, linesEl: HTMLElement, menuEl: HTMLElement;
+let previewEl: HTMLElement, linesEl: HTMLElement, menuEl: HTMLElement, printEl: HTMLButtonElement;
 const openOpts = new Set<string> ();     // (The lines whose options are open)
 
 // (The place studied, kept: "<book code>.<chapter>.<from>.<to>")
@@ -239,9 +242,10 @@ onScreen ("Study printout", async (body) => {
   const add = el ("button", "pill csAdd", "+ Add item");
   menuEl = el ("div", "csMenu");
   menuEl.hidden = true;
-  const print = el ("button", "pill csPrint", "Print / Save as PDF");
+  const print = el ("button", "pill csPrint", PRINT);
   add.addEventListener ("click", () => { if (menuEl.hidden) showMenu (); else menuEl.hidden = true; });
-  print.addEventListener ("click", () => { prepare (); window.print (); });
+  printEl = print;
+  print.addEventListener ("click", () => { if (pdfReady) void sharePdf (pdfReady); else if (printIgnored ()) void makePdf (); else { prepare (); window.print (); } });
   editor.append (placeEl, linesEl, add, menuEl, print);
   box.append (previewEl, editor);
   body.append (box);
@@ -661,6 +665,7 @@ async function render () {
     doc.append (credits);
   }
   if (n !== drawing) return;
+  if (pdfReady) { pdfReady = null; printEl.textContent = PRINT; }     // (A PDF made before this change is out of date)
   const scroll = previewEl.scrollTop;
   previewEl.replaceChildren (doc);
   previewEl.scrollTop = scroll;
@@ -829,3 +834,220 @@ function prepare () {
   }
 }
 window.addEventListener ("beforeprint", () => { if (previewEl?.isConnected) prepare (); });
+
+// THE PDF MADE HERE: a Home Screen web app on an iPhone or iPad ignores window.print (Safari's tab and every other
+// browser print as above). There the button turns the preview into a PDF and opens the share sheet with it, from which
+// it prints, saves to Files or is sent. Its pages are pictures (the text not selectable): the preview laid out at the
+// page's width in the print rules themselves (printRules: style.css' @media print rules for the printout's own
+// classes, scoped to the PDF's frame - one set of rules, the light colors whatever the theme), cut into pages between
+// verses, notes and entries (the rules' break-inside: avoid and a heading's break-after: avoid, read back from the
+// page: pageCuts), the whole made one SVG picture by modern-screenshot (loaded only then: its own file, not in the
+// app's first load), each page drawn from its slice at the screen's sharpness and written as a JPEG into a PDF (pdfOf). A4, or Letter where the device's region uses it; @page's margins; the page
+// number at each foot. Named as "Genesis 1 study.pdf".
+const PRINT = "Print / Save as PDF";
+let pdfReady: File | null = null;     // (A PDF made but not yet shared: the share sheet refused it - see sharePdf)
+
+/** Whether window.print does nothing here: a Home Screen web app on iOS (an iPad says it's a Mac, but has touch),
+ *  which can share a PDF file instead. */
+function printIgnored (): boolean {
+  const ios = /iPhone|iPad|iPod/.test (navigator.userAgent) || (/Macintosh/.test (navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const standalone = (navigator as { standalone?: boolean }).standalone === true || matchMedia ("(display-mode: standalone)").matches;
+  try { return ios && standalone && navigator.canShare?.({ files: [new File ([""], "x.pdf", { type: "application/pdf" })] }) === true; }
+  catch { return false; }
+}
+
+/** The page in PDF points (72 an inch): Letter in the US, Canada and the Americas that use it, A4 elsewhere; the margins
+ *  @page's (16 mm top and foot, 14 mm the sides). */
+function paper () {
+  const letter = /-(US|CA|MX|PH|CL|CO|VE|GT|PR)\b/i.test (navigator.language);
+  const mm = 72 / 25.4;
+  return { w: letter ? 612 : 595.28, h: letter ? 792 : 841.89, side: 14 * mm, top: 16 * mm };
+}
+
+/** style.css' @media print rules for the printout's own classes (each of whose selectors names a .cs class), every
+ *  selector put under .csPdf: the PDF's frame gets the print look with no copy of the rules - the rest (the page's
+ *  own body, menus) left out, so the app on screen doesn't change while the PDF is made. */
+function printRules (): string {
+  let css = "";
+  const visit = (rules: CSSRuleList, print: boolean) => {
+    for (const r of rules) {
+      if (r instanceof CSSMediaRule) visit (r.cssRules, print || /\bprint\b/.test (r.conditionText));
+      else if (print && r instanceof CSSStyleRule) {
+        const sels = r.selectorText.split (",").map ((x) => x.trim ());
+        if (sels.every ((x) => /\.cs/.test (x))) css += `${sels.map ((x) => `.csPdf ${x}`).join (", ")} { ${r.style.cssText} }\n`;
+      }
+    }
+  };
+  for (const sheet of document.styleSheets) {
+    try { visit (sheet.cssRules, false); } catch { /* (A sheet that can't be read: another origin's) */ }
+  }
+  return css;
+}
+
+/** Where the pages end (CSS px from the printout's top), each at most height: at the top of a verse, note, entry or
+ *  line of text - never through one, nor between a heading and what follows it -, the latest that fits; a single
+ *  thing taller than a page cut at its last line that fits (or, with none in the page's lower half, at the page's foot). */
+function pageCuts (doc: HTMLElement, height: number): number[] {
+  const t0 = doc.getBoundingClientRect ().top;
+  const atoms: [number, number][] = [];     // (Spans no cut may go through: a whole thing kept together, a line of text, a picture)
+  const glued: number[] = [];     // (The feet of headings kept with what follows)
+  const lines: number[] = [];     // (Every line's top, inside kept things too: where a too-tall one is cut)
+  const range = document.createRange ();
+  const walk = (e: Element, kept: boolean) => {
+    const cs = getComputedStyle (e);
+    if (cs.display === "none") return;
+    const r = e.getBoundingClientRect ();
+    const keep = ! kept && /avoid/.test (cs.breakInside);
+    if (keep || (! kept && /^(img|canvas|svg|video)$/i.test (e.tagName))) atoms.push ([r.top - t0, r.bottom - t0]);
+    if (/avoid/.test (cs.breakAfter)) glued.push (r.bottom - t0);
+    for (const n of e.childNodes) {
+      if (n instanceof Element) walk (n, kept || keep);
+      else if (n.nodeType === Node.TEXT_NODE && n.textContent?.trim ()) {
+        range.selectNodeContents (n);
+        for (const q of range.getClientRects ()) {
+          lines.push (q.top - t0);
+          if (! kept && ! keep) atoms.push ([q.top - t0, q.bottom - t0]);
+        }
+      }
+    }
+  };
+  walk (doc, false);
+  const end = doc.getBoundingClientRect ().height;
+  const nextTop = (y: number) => Math.min (end, ...atoms.filter (([a]) => a >= y - 0.5).map (([a]) => a));
+  const glue = glued.map ((b) => [b, nextTop (b)]);
+  const clean = (y: number) => ! atoms.some (([a, b]) => a < y - 0.5 && b > y + 0.5) && ! glue.some (([b, n]) => y > b - 0.5 && y <= n + 0.5);
+  const cuts: number[] = [];
+  let y = 0;
+  while (end - y > 1) {
+    const limit = y + height;
+    if (limit >= end) { cuts.push (end); break; }
+    let cut = 0;
+    for (const [a] of atoms) if (a > y + 1 && a <= limit && a > cut && clean (a)) cut = a;
+    if (! cut) for (const a of lines) if (a > y + height / 2 && a <= limit && a > cut) cut = a;
+    cuts.push (y = cut || limit);
+  }
+  return cuts;
+}
+
+/** The PDF made from the preview and shared (the button saying so meanwhile; a second tap while it's made ignored). */
+async function makePdf () {
+  const doc = previewEl.querySelector<HTMLElement> (".csDoc");
+  if (! doc || printEl.disabled) return;
+  printEl.disabled = true;
+  printEl.textContent = "Making PDF…";
+  const style = el ("style", "", printRules ());
+  const host = el ("div", "csPdf");
+  try {
+    const { domToForeignObjectSvg, loadMedia } = await import ("modern-screenshot");
+    prepare ();     // (The maps as pictures)
+    const page = paper ();
+    const px = 96 / 72;     // (CSS px a point)
+    const width = (page.w - 2 * page.side) * px, height = (page.h - 2 * page.top) * px;
+    const copy = doc.cloneNode (true) as HTMLElement;
+    host.style.width = `${width}px`;
+    host.append (copy);
+    document.head.append (style);
+    document.body.append (host);
+    await document.fonts.ready;
+    const cuts = pageCuts (copy, height);
+    const scale = Math.min (window.devicePixelRatio || 1, 300 / 96);     // (The screen's sharpness, no finer than 300 dpi)
+    const look = getComputedStyle (copy), soft = look.getPropertyValue ("--soft"), paperColor = look.backgroundColor;
+    // The whole printout made one SVG picture (every element's look copied into it, the fonts embedded), loaded once;
+    // each page drawn from its slice - a vector picture, so drawn sharp at the canvas' scale.
+    const full = copy.getBoundingClientRect ().height;
+    const svg = await domToForeignObjectSvg (copy, { width, height: full });
+    const img = await loadMedia (`data:image/svg+xml;charset=utf-8,${encodeURIComponent (new XMLSerializer ().serializeToString (svg))}`) as HTMLImageElement;     // (A data URL: a blob's would taint the canvas)
+    const shots: Shot[] = [];
+    let top = 0;
+    for (const cut of cuts) {
+      const h = cut - top;
+      const canvas = el ("canvas");
+      canvas.width = Math.round (width * scale);
+      canvas.height = Math.round (h * scale);
+      const g = canvas.getContext ("2d")!;
+      const draw = () => { g.fillStyle = paperColor; g.fillRect (0, 0, canvas.width, canvas.height); g.drawImage (img, 0, top, width, h, 0, 0, canvas.width, canvas.height); };
+      draw ();
+      await new Promise ((done) => setTimeout (done, 100));     // (Drawn again a moment later: Safari may not have decoded an SVG's own pictures the first time)
+      draw ();
+      const blob = await new Promise<Blob | null> ((done) => canvas.toBlob (done, "image/jpeg", 0.9));
+      const [pw, ph] = [canvas.width, canvas.height];
+      canvas.width = canvas.height = 0;     // (Freed at once: an iPhone holds few big canvases)
+      if (! blob) throw new Error ("A page couldn't be drawn");
+      shots.push ({ jpeg: new Uint8Array (await blob.arrayBuffer ()), pw, ph, h: h / px });
+      top = cut;
+    }
+    const name = `${book.name} ${chapter} study.pdf`;
+    pdfReady = new File ([pdfOf (shots, page, soft)], name, { type: "application/pdf" });
+    printEl.textContent = PRINT;
+    await sharePdf (pdfReady);
+  } catch (e) {
+    console.warn ("Study printout: the PDF couldn't be made:", e);
+    printEl.textContent = PRINT;
+  } finally {
+    style.remove ();
+    host.remove ();
+    printEl.disabled = false;
+  }
+}
+
+/** The PDF shared (the share sheet: Print, Save to Files, Messages...). Cancelled: nothing more. Refused because the
+ *  making took too long after the tap (iOS shares only straight after one): the button turns to "Share PDF", a tap
+ *  sharing the PDF made. Any other failure: the PDF downloaded instead. */
+async function sharePdf (file: File) {
+  try {
+    await navigator.share ({ files: [file], title: file.name.replace (/\.pdf$/, "") });
+    pdfReady = null;
+    printEl.textContent = PRINT;
+  } catch (e) {
+    const why = (e as Error).name;
+    if (why === "AbortError") { pdfReady = null; return; }
+    if (why === "NotAllowedError" && printEl.textContent !== "Share PDF") { printEl.textContent = "Share PDF"; return; }
+    pdfReady = null;
+    printEl.textContent = PRINT;
+    const a = el ("a");
+    a.href = URL.createObjectURL (file);
+    a.download = file.name;
+    a.click ();
+    setTimeout (() => URL.revokeObjectURL (a.href), 60_000);
+  }
+}
+
+/** A page drawn: its JPEG, pw x ph pixels, h points tall on the page. */
+type Shot = { jpeg: Uint8Array; pw: number; ph: number; h: number };
+
+/** A PDF of the pages: each its JPEG at the page's top margin, the content's width, and its number at the foot's
+ *  middle in the printout's soft color (color: a CSS color). */
+function pdfOf (shots: Shot[], page: ReturnType<typeof paper>, color: string): Blob {
+  const parts: (string | Uint8Array)[] = [];
+  const offsets: number[] = [];
+  let at = 0;
+  const put = (x: string | Uint8Array) => { parts.push (x); at += typeof x === "string" ? x.length : x.length; };     // (The strings are ASCII: a char a byte)
+  const obj = (n: number, body: string, stream?: Uint8Array) => {
+    offsets[n] = at;
+    put (`${n} 0 obj\n${body}\n`);
+    if (stream) { put ("stream\n"); put (stream); put ("\nendstream\n"); }
+    put ("endobj\n");
+  };
+  const ink = document.createElement ("canvas").getContext ("2d")!;
+  ink.fillStyle = color.trim () || "gray";
+  const rgb = /^#([0-9a-f]{6})$/i.exec (ink.fillStyle)?.[1] ?? "808080";
+  const [r, g, b] = [0, 2, 4].map ((i) => (parseInt (rgb.slice (i, i + 2), 16) / 255).toFixed (3));
+  const n = shots.length;
+  put ("%PDF-1.4\n");
+  obj (1, "<< /Type /Catalog /Pages 2 0 R >>");
+  obj (2, `<< /Type /Pages /Count ${n} /Kids [${shots.map ((_, i) => `${4 + 3 * i} 0 R`).join (" ")}] >>`);
+  obj (3, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const w = page.w - 2 * page.side, ascii = new TextEncoder ();
+  shots.forEach ((s, i) => {
+    const p = 4 + 3 * i, num = String (i + 1);
+    const draw = `q ${w.toFixed (2)} 0 0 ${s.h.toFixed (2)} ${page.side.toFixed (2)} ${(page.h - page.top - s.h).toFixed (2)} cm /Im Do Q `
+               + `BT /F1 9 Tf ${r} ${g} ${b} rg ${(page.w / 2 - num.length * 2.5).toFixed (2)} ${(page.top / 2).toFixed (2)} Td (${num}) Tj ET`;
+    obj (p, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.w} ${page.h}] /Resources << /Font << /F1 3 0 R >> /XObject << /Im ${p + 2} 0 R >> >> /Contents ${p + 1} 0 R >>`);
+    obj (p + 1, `<< /Length ${draw.length} >>`, ascii.encode (draw));
+    obj (p + 2, `<< /Type /XObject /Subtype /Image /Width ${s.pw} /Height ${s.ph} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${s.jpeg.length} >>`, s.jpeg);
+  });
+  const xref = at, count = 4 + 3 * n;
+  put (`xref\n0 ${count}\n0000000000 65535 f \n` + offsets.slice (1).map ((o) => `${String (o).padStart (10, "0")} 00000 n \n`).join (""));
+  put (`trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob (parts, { type: "application/pdf" });
+}
