@@ -31,7 +31,7 @@
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range; its name only in the credits below), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
-//   edge; its words larger than a pill's): SHUFFLE, FLIP (turning it either way), START OVER; BACK and NEXT arrows either side of the card. A tap on it turns it over
+//   edge; its words larger than a pill's): BACK and NEXT as ‹ and › at its ends (as the chapters'; a swipe across the card does the same), SHUFFLE, FLIP (turning it either way), START OVER between them. A tap on it turns it over
 //   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
 //   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in the name's options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
@@ -44,7 +44,7 @@ import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
-import { barRoom } from "./bars";
+import { onSwipe } from "./bars";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -272,7 +272,6 @@ async function draw (body: HTMLElement) {
     menuOpen = k;
     for (const m of menus) m.hidden = m.dataset.menu !== k;
     for (const [n, [btn, icon]] of Object.entries (tops)) { btn.setAttribute ("aria-expanded", String (n === k)); if (icon) btn.textContent = n === k ? "✕" : icon; }     // (The title keeps its name)
-    placeArrows ();
   };
   for (const [n, [btn]] of Object.entries (tops)) btn.addEventListener ("click", () => openMenu (menuOpen === n ? "" : n as typeof menuOpen));
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
@@ -335,23 +334,21 @@ async function draw (body: HTMLElement) {
     else {
       shown = showDeck (deckEl, made, undefined, undefined, true, ".w", "Flip"); shownIds = ids;
       if (goTo) { shown.go ((c) => c.id === goTo); goTo = ""; }
-      // (SHUFFLE, FLIP and START OVER in one bar at the screen's foot, as the Bible view's play bar: SHUFFLE and START OVER in its corners)
+      // (One bar at the screen's foot, as the Bible view's play bar: BACK and NEXT as its ‹ and › at its ends - as the
+      // chapters' -, SHUFFLE, FLIP and START OVER between them)
       const bar = document.createElement ("div"); bar.className = "vcBar";
-      bar.append (...["shuffle", "flip", "over"].map ((k) => {
+      const arrow = (k: string, glyph: string, label: string) => {
+        const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
+        x.textContent = glyph; x.classList.add ("icon", "arrow"); x.setAttribute ("aria-label", label);
+        return x;
+      };
+      bar.append (arrow ("back", "‹", "Back"), ...["shuffle", "flip", "over"].map ((k) => {
         const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
         x.setAttribute ("aria-label", x.textContent!);
         x.innerHTML = `<span class="vcWord">${x.textContent}</span>${BAR_ICONS[k]}`;     // (Its icon shown, its word kept hidden: style.css)
         return x;
-      }));
-      // (BACK and NEXT as arrows inside the card's edges, as the Bible view's chapter arrows - fixed at the screen's middle: placeArrows)
-      const row = document.createElement ("div"); row.className = "vcCardRow";
-      const arrows = [["back", "‹", "Back"], ["next", "›", "Next"]].map (([k, arrow, label]) => {
-        const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
-        x.textContent = arrow; x.classList.add ("icon"); x.setAttribute ("aria-label", label);
-        return x;
-      });
-      const card = deckEl.querySelector<HTMLElement> (".card")!;
-      card.before (row); row.append (arrows[0], card, arrows[1]);
+      }), arrow ("next", "›", "Next"));
+      onSwipe (deckEl.querySelector<HTMLElement> (".card")!, (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ());     // (A swipe across the card steps as ‹ and ›)
       deckEl.querySelectorAll (".cardBar").forEach ((x) => x.remove ());
       deckEl.append (bar);
     }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
@@ -388,17 +385,8 @@ async function draw (body: HTMLElement) {
   // The top row and a drop-down open under it act as one bar, growing as it opens: fixed, not scrolling with the card,
   // the screen's room starting under it (--vcTopH: its height, the screen's padding - style.css)
   const screenEl = document.getElementById ("screen")!, topEl = body.querySelector<HTMLElement> (".topBar")!;
-  // BACK and NEXT fixed at the middle of the room (between the top - a drop-down open with it - and the bar), not
-  // moving with the card: at the card's edges, measured again as the deck, the top or the window changes size
-  const placeArrows = () => {
-    const row = deckEl.querySelector<HTMLElement> (".vcCardRow"), bar = deckEl.querySelector<HTMLElement> (".vcBar");
-    if (! row) return;
-    const r = row.getBoundingClientRect (), top = topEl.getBoundingClientRect ().bottom;
-    deckEl.style.setProperty ("--arrowL", r.left + "px"); deckEl.style.setProperty ("--arrowR", innerWidth - r.right + "px");
-    deckEl.style.setProperty ("--arrowY", (top + innerHeight - barRoom (bar)) / 2 + "px");
-  };
-  const watch = new ResizeObserver (() => { screenEl.style.setProperty ("--vcTopH", topEl.offsetHeight + "px"); placeArrows (); });
-  watch.observe (deckEl); watch.observe (topEl);
+  const watch = new ResizeObserver (() => { screenEl.style.setProperty ("--vcTopH", topEl.offsetHeight + "px"); });
+  watch.observe (topEl);
   // The deck's room, measured: the screen's own height less its padding (the top row's room, the bar's - and the word
   // panel's, when open) and the credits under the deck (with the gap above them) - kept free above the card too: the
   // card centered on the screen, the credits at its foot, all on one screen without scrolling where they fit

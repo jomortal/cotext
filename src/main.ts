@@ -27,6 +27,7 @@ import { initTimeline } from "./timeline";
 import { initChapterStudy } from "./chapterstudy";
 import { initVerseCards } from "./versecards";
 import "./layout";     // (The wide layout's dividers)
+import { onSwipe } from "./bars";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -38,35 +39,33 @@ let books: Book[] = [];
 let book: Book;
 let chapter = 1;
 
-// The heading's place, a reference pair (refs.ts: bold capitals): the book's name and chapter in English and in its
-// own language - "GENESIS 1 בְּרֵאשִׁית א" - for every book, or for none: both where every book's pair (at its last
-// chapter, its longest) fits the heading on one line, else the English alone for all (pairsFit: worked out once per
-// window size or book list, kept). The English that would wrap (a long name, a narrow screen): its SBL abbreviation
-// (booknames.ts' ABBR) with a full stop: 1 THESS. 1.
-let pairsFit: boolean | null = null;     // (null: to be worked out - a resize, the book list changed)
-const pair = (b: Book, c: number, native: boolean) => {
-  const lang = nativeName (b.code)?.[1];
-  placeBtn.innerHTML = refPair (`${b.name} ${c}`, native && lang ? nativeRef (b.code, lang, c) : "");
-};
-const enWraps = () => {
-  const e = placeBtn.querySelector<HTMLElement> (".refPair > :first-child")!;
-  return e.getBoundingClientRect ().height > parseFloat (getComputedStyle (e).fontSize) * 1.6;
-};
-/** The pair shown on one line: the original's on the English's line, and the English unwrapped. */
-const oneLine = () => {
-  const n = placeBtn.querySelector (".refNative")?.getBoundingClientRect (), e = placeBtn.querySelector (".refPair > :first-child")!.getBoundingClientRect ();
-  return ! enWraps () && (! n || Math.abs ((n.top + n.bottom) - (e.top + e.bottom)) / 2 < e.height * .6);
-};
+// The heading's place, a reference pair (refs.ts: bold capitals) on one line across the heading, never wrapped: the
+// book's name and chapter in English and in its own language, each centered in its side (its width and an even share
+// of the room left) - the Greek at the left, the Hebrew (read from the right) at the right: "GENESIS 1 | בְּרֵאשִׁית א"
+// (style.css' #place .refPair). The two too wide for the heading together: the English abbreviated first, to its SBL
+// abbreviation (booknames.ts' ABBR) with a full stop (1 THESS. 1), then the Greek, without its leading ΚΑΤΑ or ΠΡΟΣ
+// (ΘΕΣΣΑΛΟΝΙΚΕΙΣ Α΄ Εʹ), then its long words cut short (ΘΕΣ. Α΄ Εʹ); still too wide, both made smaller to fit.
+const crowded = () => [...placeBtn.querySelectorAll (".refPair > *")].some ((e) => e.scrollWidth > e.clientWidth + 0.5);
 function showPlace () {
   if (! book) return;
-  pairsFit ??= books.every ((b) => { pair (b, b.chapters, true); return oneLine (); });
-  pair (book, chapter, pairsFit);
-  if (enWraps () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`);
+  const lang = nativeName (book.code)?.[1], native = lang ? nativeRef (book.code, lang, chapter) : "";
+  placeBtn.innerHTML = refPair (`${book.name} ${chapter}`, native);
+  if (crowded () && ABBR[book.name]) placeBtn.innerHTML = refPair (`${ABBR[book.name]}. ${chapter}`, native);
+  const n = placeBtn.querySelector (".refNative.gr");
+  if (n && crowded ()) n.textContent = n.textContent!.replace (/^(ΚΑΤΑ|ΠΡΟΣ) /, "");
+  if (n && crowded ()) {     // (Still too wide: the name's long words cut to three letters - ΨΑΛ. ΣΟΛ. ΙΗʹ - the chapter kept whole)
+    const w = n.textContent!.split (" "), num = w.pop ()!;
+    n.textContent = [...w.map ((x) => x.length > 5 ? x.slice (0, 3) + "." : x), num].join (" ");
+  }
+  // (Still too wide - a very narrow screen: the pair made smaller, a pixel at a time, to fit - 12 px the least)
+  const pair = placeBtn.querySelector<HTMLElement> (".refPair")!;
+  for (let px = parseFloat (getComputedStyle (pair).fontSize); crowded () && px > 12; ) pair.style.fontSize = --px + "px";
 }
+document.fonts.addEventListener ("loadingdone", showPlace);     // (Measured again once a font arrives: the text's width changes with it)
 // (Worked out again whenever the heading's width changes - measured once laid out, so a phone turned upright from
 // sideways is measured at its new width, not mid-turn as the window's resize can be)
 let headW = 0;
-new ResizeObserver (([e]) => { const w = Math.round (e.contentRect.width); if (w === headW) return; headW = w; pairsFit = null; showPlace (); }).observe (document.querySelector (".head")!);
+new ResizeObserver (([e]) => { const w = Math.round (e.contentRect.width); if (w === headW) return; headW = w; showPlace (); }).observe (document.querySelector (".head")!);
 
 // (Each go numbered: a chapter still arriving from the database when another is picked isn't shown)
 let going = 0;
@@ -191,7 +190,7 @@ async function start () {
     return;
   }
   status.hidden = true;
-  books = rows as unknown as Book[]; pairsFit = null;
+  books = rows as unknown as Book[];
   initSearch (db, books, goVerse);
   initDictionary ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (An article's scripture references)
   initAtlas ((id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (A verse listed under the atlas' map)
@@ -205,21 +204,7 @@ async function start () {
   go (b, c);
   document.getElementById ("prev")!.addEventListener ("click", () => step (-1));
   document.getElementById ("next")!.addEventListener ("click", () => step (1));
-  // A swipe across the text turns the chapter as ‹ and › do: to the left the next, to the right the previous - one
-  // finger, at least 60 px across, more than twice as far across as down (not a scroll), within 0.8 s, nothing selected.
-  const text = document.querySelector ("main")!;
-  let from: { x: number; y: number; t: number } | null = null;
-  text.addEventListener ("touchstart", (e) => {
-    from = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp } : null;
-  }, { passive: true });
-  text.addEventListener ("touchcancel", () => { from = null; });
-  text.addEventListener ("touchend", (e) => {
-    const f = from, t = e.changedTouches[0];
-    from = null;
-    if (! f || e.touches.length || e.timeStamp - f.t > 800 || document.getSelection ()?.isCollapsed === false) return;
-    const dx = t.clientX - f.x, dy = t.clientY - f.y;
-    if (Math.abs (dx) >= 60 && Math.abs (dx) > 2 * Math.abs (dy)) step (dx < 0 ? 1 : -1);
-  }, { passive: true });
+  onSwipe (document.querySelector ("main")!, step);     // (A swipe across the text turns the chapter, as ‹ and ›)
   placeBtn.addEventListener ("click", () => togglePicker (groups (), go, chaptersOf));     // (Tapped again: closed)
   window.addEventListener ("hashchange", () => { const r = parseRef (location.hash.slice (1)); if (r) go (...r); });
 }
