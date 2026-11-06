@@ -232,6 +232,7 @@ async function show () {
     open?.db.close (); open = null;
     refEl.textContent = "";
     bodyEl.innerHTML = "<p>Loading…</p>";
+    bookShown = "";     // (The body no longer the book's list: drawn again once the file's open, not taken as still there)
     try {
       const db = await openNotesDb (src.id, src.file, src.version, (f) => {
         if (n === loading) bodyEl.innerHTML = `<p>Loading ${src.name}… ${Math.round (f * 100)}%</p>`;
@@ -406,6 +407,9 @@ let oneAt = -1;                                  // (The verse last followed to)
 let oneSay = "";                                 // (What the entries are, for the heading line - "notes"; "": the heading not changed - BY BOOK's)
 let oneScope = "chapter";                        // (What the list holds: "chapter" or "book")
 
+/** What a source's entries are called in the heading line ("Genesis 1:4 - no notes; next at 1:7"): a diagram, articles, text or notes. */
+const noneWord = (kind: string) => kind === "syntax" ? "diagram" : kind === "dictionary" ? "articles" : kind === "version" ? "text" : "notes";
+
 /** A drawing begun: following one way with nothing yet (say: what its entries are, as oneSay - "" for a drawing that
  *  doesn't follow one way, or keeps its heading; scope: what it holds). */
 function oneWayFrom (say: string, scope = "chapter") {
@@ -510,8 +514,9 @@ async function drawBookNotes (src: Source) {
     refEl.textContent = b.name;
     bodyEl.innerHTML = "<p>Loading…</p>";
     const [notes, vs] = await Promise.all ([open!.db.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ?
-                                                           ORDER BY start, "end" DESC, ord`, [b.id]) as unknown as Promise<Note[]>, versesOf (b.id)]);
-    if (n !== updating) return;
+                                                           ORDER BY start, "end" DESC, ord`, [b.id]) as unknown as Promise<Note[]>, versesOf (b.id)])
+      .catch ((e) => { unshown (key); throw e; });
+    if (n !== updating) { unshown (key); return; }
     bodyEl.replaceChildren ();
     let at = -1, box: HTMLElement | null = null, refsHere: number[] = [];
     for (const nt of notes) {
@@ -541,7 +546,10 @@ async function drawBookNotes (src: Source) {
 const BY_BOOK = new Set (["finds", "ane", "historians"]);
 const NONE_IN_BOOK: Record<string, string> = { finds: "No finds bear on this book.", ane: "No parallels for this book.",
                                                historians: "No historians' passages for this book." };
-let bookShown = "";     // (The book drawn - here or by SPOTTY: "<source> <book id>")
+let bookShown = "";     // (The book drawn - here or by SPOTTY: "<source> <book id>"; "" once anything else is in the body)
+/** A book's list not drawn after all (superseded, or its query failed - the body left saying "Loading…"): forgotten, so
+ *  it's drawn the next time it's asked for, not taken as already there. */
+const unshown = (key: string) => { if (bookShown === key) bookShown = ""; };
 async function drawBookFinds (id: string) {
   const b = book!;
   const key = `${id} ${b.id}`;
@@ -553,8 +561,8 @@ async function drawBookFinds (id: string) {
     clearInterlinear ();
     blocks = []; forget ();
     bodyEl.innerHTML = "<p>Loading…</p>";
-    const list = await bookArticles (textDb!, b.id, id);
-    if (n !== updating) return;
+    const list = await bookArticles (textDb!, b.id, id).catch ((e) => { unshown (key); throw e; });
+    if (n !== updating) { unshown (key); return; }
     bodyEl.replaceChildren ();
     for (const a of list) {
       const el = withAdd (entry (textDb!, a.id, a.title, a.line, "", id, a.photo), id, a.id, a.title);

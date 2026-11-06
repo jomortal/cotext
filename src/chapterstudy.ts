@@ -592,7 +592,7 @@ export function draftResource (code: string, chapter: number, from: number, to: 
   row.append (name, opts); line.append (row, panel);
   return {
     line,
-    range (f: number, t: number) { sec.from = f; sec.to = t; it.from = it.to = 0; redraw (); },
+    range (f: number, t: number) { sec.from = f; sec.to = t; if ("from" in it) it.from = it.to = 0; redraw (); },     // (A resource's item: a verse item, its own range back to the passage's whole)
     add: (into = "") => addStudy (code, sec.chapter, sec.from, sec.to, src, it, into),
   };
 }
