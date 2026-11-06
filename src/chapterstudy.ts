@@ -452,11 +452,15 @@ onScreen ("Study printout", async (body) => {
   outHead.append (el ("h2", "gTitle", "Download"), outClose);
   outPane.append (outHead, out);
   box.append (previewEl, split, editor, outPane);
-  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): a pencil where the Bible's search is,
-  // showing or hiding the editor, and at its right end (sideways its top end, as the Bible's right side goes to the
-  // top) a download icon showing or hiding the download pane - one pane at a time, in the same place (the one shown:
-  // its icon pressed); none, the preview the whole room. Which is shown kept on the device.
-  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle"), dlBtn = el ("button", "pill icon csOutBtn");
+  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways, the right side at the top): a pencil in
+  // its middle showing or hiding the editor, a printer next printing (as PRINT), and at its right end a download icon -
+  // on a desktop (canSaveAs) the system's save dialog straight away, its types the formats; elsewhere showing or hiding
+  // the download pane. One pane at a time, in the same place (the one shown: its icon pressed); none, the preview the
+  // whole room. Which is shown kept on the device.
+  const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle"), dlBtn = el ("button", "pill icon csOutBtn"), printBtn = el ("button", "pill icon csPrintBtn");
+  printBtn.setAttribute ("aria-label", "Print");
+  printBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>`;     // (A printer)
+  printBtn.addEventListener ("click", () => print.click ());
   toggle.setAttribute ("aria-label", "Show or hide the editor");
   toggle.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>`;     // (A pencil: editing)
   dlBtn.setAttribute ("aria-label", "Show or hide the download pane");
@@ -472,11 +476,11 @@ onScreen ("Study printout", async (body) => {
     try { localStorage.setItem (EDITOR_KEY, p === "edit" ? "1" : p || "0"); } catch { /* private mode */ }
   };
   toggle.addEventListener ("click", () => show (pane === "edit" ? "" : "edit"));
-  dlBtn.addEventListener ("click", () => show (pane === "out" ? "" : "out"));
+  dlBtn.addEventListener ("click", () => { if (canSaveAs ()) void saveAs (); else show (pane === "out" ? "" : "out"); });
   close.addEventListener ("click", () => show (""));
   outClose.addEventListener ("click", () => show (""));
   show (pane);
-  bar.append (toggle, dlBtn);
+  bar.append (toggle, printBtn, dlBtn);
   body.append (box, bar);
   drawSections ();
   render ();
@@ -1238,6 +1242,12 @@ window.addEventListener ("beforeprint", () => { if (previewEl?.isConnected) prep
 // number at each foot. Named as the printout ("John 3.pdf"). The same PDF is DOWNLOAD's PDF, on any device.
 const PRINT = "Print";
 const DOWNLOAD = "Download";     // (The button's word, while no file is being made)
+/** Each format's media type (printfiles.ts' files, the PDF, the desktop's save dialog's types). */
+export const MIME: Record<FileKind | "pdf", string> = {
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", doc: "application/msword",
+  odt: "application/vnd.oasis.opendocument.text", rtf: "application/rtf", txt: "text/plain;charset=utf-8",
+  html: "text/html;charset=utf-8", htm: "text/html;charset=utf-8", pdf: "application/pdf",
+};
 const FORMAT_KEY = "cotext.study.format";     // (The format last picked; none, PDF)
 /** DOWNLOAD's formats, as the picker lists them. */
 const FORMATS: [FileKind | "pdf", string][] = [
@@ -1410,18 +1420,46 @@ async function makePdf (): Promise<File | null> {
 async function download (kind: FileKind | "pdf") {
   downloadEl.textContent = `Making ${kind.toUpperCase ()}…`; downloadEl.disabled = true;
   try {
-    let file: File | null;
-    if (kind === "pdf") file = await makePdf ();
-    else {
-      const { printFile, MIME } = await import ("./printfiles");
-      file = await withPrintCopy (async (copy, page) => new File ([await printFile (kind, copy, nameShown (now ()), page)], fileName (kind), { type: MIME[kind] }));
-    }
+    const file = await makeFile (kind);
     if (file) await handOver (file);
   } catch (e) {
     console.warn (`Study printout: the ${kind} couldn't be made:`, e);
   } finally {
     downloadEl.textContent = DOWNLOAD; downloadEl.disabled = false;
   }
+}
+
+/** The printout made into a file of a format (the PDF: makePdf; the rest printfiles.ts, loaded only now); null when
+ *  it couldn't be made. */
+async function makeFile (kind: FileKind | "pdf"): Promise<File | null> {
+  if (kind === "pdf") return makePdf ();
+  const { printFile } = await import ("./printfiles");
+  return withPrintCopy (async (copy, page) => new File ([await printFile (kind, copy, nameShown (now ()), page)], fileName (kind), { type: MIME[kind] }));
+}
+
+/** Where the system's save dialog can be opened (a desktop's Chrome or Edge: showSaveFilePicker): the bar's download
+ *  icon opens it straight away, its file types the formats - the one last picked first (else PDF) -, the format the
+ *  type picked there (by the name's ending); the file made then written where it says. Cancelled, nothing. */
+export const canSaveAs = () => "showSaveFilePicker" in window;
+async function saveAs () {
+  let last = "pdf";
+  try { last = localStorage.getItem (FORMAT_KEY) ?? "pdf"; } catch { /* private mode */ }
+  const order = [...FORMATS].sort (([a], [b]) => Number (b === last) - Number (a === last));
+  type Picker = (o: object) => Promise<{ name: string; createWritable: () => Promise<{ write: (b: Blob) => Promise<void>; close: () => Promise<void> }> }>;
+  let handle;
+  try {
+    handle = await (window as unknown as { showSaveFilePicker: Picker }).showSaveFilePicker ({ suggestedName: fileName (order[0][0]),
+      types: order.map (([k, t]) => ({ description: t, accept: { [MIME[k].split (";")[0]]: [`.${k}`] } })) });
+  } catch { return; }     // (Cancelled)
+  const ext = handle.name.replace (/^.*\./, "").toLowerCase ();
+  const kind = (FORMATS.find (([k]) => k === ext)?.[0] ?? order[0][0]) as FileKind | "pdf";
+  try { localStorage.setItem (FORMAT_KEY, kind); } catch { /* private mode */ }
+  try {
+    const file = await makeFile (kind);
+    if (! file) return;
+    const w = await handle.createWritable ();
+    await w.write (file); await w.close ();
+  } catch (e) { console.warn (`Study printout: the ${kind} couldn't be saved:`, e); }
 }
 
 /** A file made handed over: on a Home Screen iPhone or iPad (printIgnored) the share sheet (Print, Save to Files,

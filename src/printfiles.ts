@@ -22,13 +22,10 @@
 
 import { zipSync, strToU8 } from "fflate";
 
+import { MIME } from "./chapterstudy";     // (Each kind's media type: kept with the formats' list, which the save dialog needs before this loads)
+
 export type FileKind = "docx" | "doc" | "odt" | "rtf" | "txt" | "html" | "htm";
-/** Each kind's media type. */
-export const MIME: Record<FileKind, string> = {
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", doc: "application/msword",
-  odt: "application/vnd.oasis.opendocument.text", rtf: "application/rtf", txt: "text/plain;charset=utf-8",
-  html: "text/html;charset=utf-8", htm: "text/html;charset=utf-8",
-};
+export { MIME };
 /** The page: its size and margins in points (chapterstudy.ts' paper). */
 export type Page = { w: number; h: number; side: number; top: number };
 
