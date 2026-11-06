@@ -762,7 +762,11 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csGhost { visibility: hidden; grid-column: var(--c); grid-row: 1; } .csToggle { grid-column: 4; grid-row: 1; justify-self: center; }     /* (The printout's bar: its one button where the Bible's search is - between the middle and the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
-                            .csEditor { padding-left: var(--gap-m); } }     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
+                            .csEditor { padding-left: var(--gap-m); }
+                            #screen[data-screen="Study printout"]:has(.vcBar) .topBar { right: var(--csTopR, 0px); }
+                            #screen[data-screen="Study printout"]:has(.vcBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
+                            .cstudy:not(.csNoEditor) > :is(.split, .csEditor) { margin-top: calc(-1 * (var(--topH, 48px) + var(--pad))); }
+                            .cstudy > .csEditor { padding-top: var(--head-top); } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }

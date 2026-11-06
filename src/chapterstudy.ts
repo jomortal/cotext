@@ -425,6 +425,9 @@ onScreen ("Study printout", async (body) => {
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
+  // (Sideways the editor and the divider run the screen's full height, as the Bible's side panel, the top bar over the
+  // preview alone: its right end kept at the divider's left - --csTopR, style.css)
+  new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - split.getBoundingClientRect ().left}px`)).observe (split);
   box.append (previewEl, split, editor);
   // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): its one button, in the middle, showing or
   // hiding the editor (shown: pressed) - hidden, the preview the whole room. Kept on the device.
