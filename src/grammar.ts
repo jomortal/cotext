@@ -9,7 +9,7 @@
 // choice shared.
 
 import type { Testament } from "./study";
-import type { Db } from "./db";
+import type { Db, Row } from "./db";
 
 type Lang = "H" | "G";
 const KEY = "cotext.grammar";
@@ -170,6 +170,16 @@ export function grammarIn (sheet: HTMLElement) {
   return { showParsing, hideGrammar, showOther };
 }
 
+/** A grammar section as the panel shows it (the Resource reader's too: resreader.ts): its heading first where headed,
+ *  its § run into its first paragraph, then its body - the pipeline's own light HTML (<p>, <b>, <i>, tables and
+ *  script spans, text escaped). */
+export function sectionHtml (r: Row, headed: boolean): string {
+  const head = headed ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
+  const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
+  const body = String (r.body);
+  return head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body);
+}
+
 /** A grammar's sections read in order - ranges of seqs, [first, last] each (grammar_sections) - as the word's panel and
  *  ☰ Learn (learn.ts) show them: the first section's heading as the title, each range's § numbers ("43–44"), how many
  *  sections, and their text as HTML - each section's number (and its heading, where it changes) before it; with one
@@ -186,11 +196,8 @@ export async function readSections (grammar: string, ranges: [number, number][])
     if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
     count += rows.length;
     for (const r of rows) {
-      const head = r.heading !== lastHeading && blocks.length ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
+      blocks.push (sectionHtml (r, r.heading !== lastHeading && blocks.length > 0));
       lastHeading = String (r.heading);
-      const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
-      const body = String (r.body);
-      blocks.push (head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body));
     }
   }
   return { title, labels, count, html: blocks.join ("") };

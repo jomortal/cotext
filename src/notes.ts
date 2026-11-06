@@ -154,6 +154,9 @@ export const textSources = (ot: "OT" | "LXX") => sources.filter ((s) => s.file &
  *  in the notes' order: the verse cards' TRANSLATION (versecards.ts). */
 export const translationSources = () => sources.filter ((s) => s.kind === "translation" && (offers (s, "OT") || offers (s, "NT")));
 
+/** Every source in the database (note_sources), as read at the start: the Resource reader's (resreader.ts). */
+export const allSources = () => sources;
+
 /** A source's file opened as the notes open it (db.ts' openNotesDb: downloaded the first time, then kept) - the
  *  search's own handle on it, so searching never closes the notes' open source. */
 export const openSource = (s: Source, onProgress: (fraction: number) => void) => openNotesDb (s.id, s.file, s.version, onProgress);
@@ -359,8 +362,8 @@ async function drawNotes () {
 }
 
 /** A verse's block: its reference (label) as a heading, then its notes - marked with its verse (v) for TWO-WAY
- *  SCROLLING. */
-function verseBlock (label: string, v?: number): HTMLElement {
+ *  SCROLLING. The Resource reader's too (resreader.ts). */
+export function verseBlock (label: string, v?: number): HTMLElement {
   const box = document.createElement ("div");
   box.className = "vBlock";
   if (v !== undefined) box.dataset.verse = String (v);
@@ -656,7 +659,7 @@ export function noteElement (n: Note): HTMLElement {
  *  are the body's lead (<b>father <span class="life">(dates)</span></b> <small>(work)</small>), taken off the quote;
  *  the dates keep their span, out of the heading's capitals (style.css' .life). */
 export const FOLDED = new Set (["catena", "fathers"]);     // (Study printout filters them by father too)
-function foldedNote (n: Note): HTMLElement {
+export function foldedNote (n: Note): HTMLElement {
   const full = noteElement (n);
   const lead = full.querySelector ("p > b");
   const work = lead?.nextElementSibling?.tagName === "SMALL" ? lead.nextElementSibling : null;

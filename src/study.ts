@@ -1,5 +1,5 @@
 // The study menu: ☰ opens a drawer from the left, above everything (design/mock-hebrew.html) - the study screens:
-// Verse cards, Flashcards, Verb chart, Parsing guide, Pronunciation, Learn, Timeline, Study printout. Each opens full screen under a top bar (style.css'
+// Verse cards, Flashcards, Verb chart, Parsing guide, Pronunciation, Learn, Timeline, Study printout, Resource reader. Each opens full screen under a top bar (style.css'
 // .topBar, the Verse cards' kind): its title centered, ☰ at its left (to move between them, and back to the Bible) - no ✕; its contents drawn by its own module (onScreen: vocab.ts, versecards.ts, cards.ts, chart.ts, guide.ts, pronounce.ts, learn.ts, timeline.ts, chapterstudy.ts), each for the
 // testament shown; one not built says it's coming. Picking an item, ✕ or tapping outside closes the drawer.
 // At its top, HEBREW / GREEK: the Old Testament read - Hebrew (the Hebrew Bible) or Greek (the Septuagint, its
