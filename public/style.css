@@ -271,11 +271,12 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #search .top { flex-wrap: wrap; } #search .chooseWrap { flex: 1 1 100%; min-width: 0; }     /* (What's searched, on its own line under the search bar) */
 .pane .chooseBtn { width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }     /* (A long resource name cut short on one line, not wrapped) */
 #notesRef { margin-top: 0; }
-#notes .note { border-top: var(--hair); padding-top: 8px; margin-top: 8px; }
-#notes .note:first-child { border-top: 0; margin-top: 0; }
-#notes .note .src { margin: 0 0 4px; }
-#notes .nQuote { font-weight: 600; }
-#notes .gBody small { font-size: .85em; color: var(--soft); }
+.rrBook .vBlock + .vBlock { margin-top: 4px; }     /* (The Resource reader: a verse's notes under its reference, as the resources pane's - resreader.ts) */
+:is(#notes, .rrBook) .note { border-top: var(--hair); padding-top: 8px; margin-top: 8px; }
+:is(#notes, .rrBook) .note:first-child { border-top: 0; margin-top: 0; }
+:is(#notes, .rrBook) .note .src { margin: 0 0 4px; }
+:is(#notes, .rrBook) .nQuote { font-weight: 600; }
+:is(#notes, .rrBook) .gBody small, .rrBook small { font-size: .85em; color: var(--soft); }
 #notes .credit { margin-top: 12px; }
 
 /* The word's panel (.sheet: the text's word's - and a verse card's word's: #sheet, .onCard -, and the notes' Hebrew OT
@@ -705,7 +706,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"], [data-screen="Resource reader"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
 .timelineNote { margin: 0; }     /* (A note: .vcHead's rule) */
 .timeline { position: relative;
             height: calc(var(--winH, 100dvh) - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
@@ -721,6 +722,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    bar over it alone; the editor (its lines, + Add item, Print) and the download pane, one at a time, each a screen's
    panel (.deckPane: at the foot upright, at the right sideways, beside the bar - as the decks'). */
 #studyBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M6 3h9l4 4v14H6z'/%3E%3Cpath d='M9 10h7M9 13.5h7M9 17h4'/%3E%3Cpath d='M9 7h3' stroke-linecap='round'/%3E%3C/svg%3E"); }     /* (A page of text) */
+#resReaderBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z'/%3E%3Cpath d='M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3'/%3E%3Cpath d='M14 3v7l-2-1.5-2 1.5V3'/%3E%3C/svg%3E"); }     /* (A closed book with a ribbon: the Resource reader) */
 #screen[data-screen="Study printout"] .pickerCard { max-width: none; }     /* (The preview the screen's whole width) */
 /* A panel's title row (.paneHead: the printout's EDIT and DOWNLOAD, the decks' VERSE LIST and WORD LIST): its title, its ✕
    at the right - as a pane's -, frozen over what scrolls; no line under it, as the Bible's side panels. */

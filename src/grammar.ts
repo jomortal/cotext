@@ -9,7 +9,7 @@
 // choice shared.
 
 import type { Testament } from "./study";
-import type { Db } from "./db";
+import type { Db, Row } from "./db";
 
 type Lang = "H" | "G";
 const KEY = "cotext.grammar";
@@ -135,11 +135,8 @@ export function grammarIn (sheet: HTMLElement) {
       if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
       count += rows.length;
       for (const r of rows) {
-        const head = r.heading !== lastHeading && blocks.length ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
+        blocks.push (sectionHtml (r, r.heading !== lastHeading && blocks.length > 0));
         lastHeading = String (r.heading);
-        const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
-        const body = String (r.body);
-        blocks.push (head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body));
       }
     }
     if (! blocks.length) return;
@@ -187,6 +184,16 @@ export function grammarIn (sheet: HTMLElement) {
 
   all.push ({ setLang, repick });
   return { showParsing, hideGrammar, showOther };
+}
+
+/** A grammar section as the panel shows it (the Resource reader's too: resreader.ts): its heading first where headed,
+ *  its § run into its first paragraph, then its body - the pipeline's own light HTML (<p>, <b>, <i>, tables and
+ *  script spans, text escaped). */
+export function sectionHtml (r: Row, headed: boolean): string {
+  const head = headed ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
+  const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
+  const body = String (r.body);
+  return head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body);
 }
 
 const esc = (s: string) => s.replace (/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
