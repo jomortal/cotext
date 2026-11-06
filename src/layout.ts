@@ -167,19 +167,31 @@ for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (
 // --docks, and body.docks while two or more are open (one alone keeps its own height limit).
 // One-pane: one panel at a time - the word's (#sheet, or #besideSheet), the notes or the search: one opening closes
 // the one open (by its ✕, as if tapped, so all it does on closing is done); its ✕ closes it, the divider going and
-// the text taking the screen. PAIR: the notes and the search open together, sharing one place.
+// the text taking the screen. PAIR: the notes and the search open together, sharing one place - and both closed for
+// a word (paired), either opened again brings back the other too.
 const PANES = ["notes", "search"];
 const together = (a: HTMLElement, b: HTMLElement) => PAIR.matches && PANES.includes (a.id) && PANES.includes (b.id);
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
 const ONE = ["sheet", "besideSheet", "notes", "search"];     // (The panels one-pane shows one at a time)
 let shown: HTMLElement[] = [];     // (Those of them open, as last seen - so one just opened is told from the rest)
+let paired = false;     // (PAIR: the notes and the search both open when a word's panel closed them)
 const countDocks = () => {
   const n = docks.filter ((d) => ! d.hidden).length;
   root.setProperty ("--docks", String (n));
   document.body.classList.toggle ("docks", n >= 2);
   const open = docks.filter ((d) => ONE.includes (d.id) && ! d.hidden), opened = open.filter ((d) => ! shown.includes (d));
   shown = open;
-  if (ONE_PANE.matches && opened.length) for (const o of open) if (! opened.includes (o) && ! opened.some ((d) => together (d, o))) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕ - unless the two share the place: PAIR)
+  if (! ONE_PANE.matches || ! opened.length) return;
+  const pane = opened.find ((d) => PANES.includes (d.id));
+  if (pane && paired) {     // (One of the pair opened again after a word: the other with it, by its own button)
+    paired = false;
+    const other = PANES.find ((id) => id !== pane.id)!;
+    if (PAIR.matches && document.getElementById (other)!.hidden) document.getElementById (other + "Btn")!.click ();
+  }
+  const closing = open.filter ((o) => ! opened.includes (o) && ! opened.some ((d) => together (d, o)));
+  if (! pane && closing.filter ((o) => PANES.includes (o.id)).length === 2) paired = PAIR.matches;     // (A word closing both)
+  else if (closing.length) paired = false;
+  for (const o of closing) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕ - unless the two share the place: PAIR)
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
