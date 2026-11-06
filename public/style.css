@@ -209,19 +209,18 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .col { display: contents; }     /* (The columns' boxes not there: their contents stack in the body's column) */
 body.docks :is(#sheet, #notes, #besideSheet, #search) { max-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }     /* (By id: to outweigh each panel's own limit) */
 body.docks main { min-height: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
-/* The divider under the text (#sheetSplit) while any panel is open: dragged, the text that tall (--textH, layout.ts) and
-   the panels sharing the rest evenly - its line the text's under it. */
+/* The divider under the text (#sheetSplit) while any panel is open - its line the text's under it -, and with the
+   word's panel and a pane both open a second between them (#notesSplit, horizontal here). Dragged, each sets the
+   height of the panel just under it (body.panesSized; layout.ts' sizeBelow: --sheetH, --paneH, --verseH, --besideH;
+   one not dragged its even share), kept as another is resized, opened or closed - the text taking the rest. */
 body:has(.dock:not([hidden])) #sheetSplit { display: block; } body:has(.dock:not([hidden])) main { border-bottom: 0; }
-body.textSized:has(.dock:not([hidden])) main { flex: none; height: var(--textH); min-height: 0; }
-body.textSized :is(#sheet, #notes, #besideSheet, #search, #verseSheet):not([hidden]) { flex: 1 1 0; max-height: none; }
-body.textSized:has(.dock:not([hidden])) #sheet:not([hidden]), body.textSized:has(.dock:not([hidden])) #search:not([hidden]) { border-top: 0; }
-/* With the word's panel and a pane both open, a second divider between them (#notesSplit, horizontal here): the word's
-   panel its own height (--sheetH, layout.ts; undragged, half the room below the text), kept as the text's divider moves
-   or a pane opens or closes - the panes take the rest, 120 px at least (the panel giving way only past that). */
+body.panesSized main { flex: 1 1 0; min-height: 120px; }
+body.panesSized :is(#sheet, #notes, #besideSheet, #search, #verseSheet):not([hidden]) { flex: none; max-height: none; --shareH: calc(var(--mid, 100dvh) / (var(--docks) + 1)); }
+body.panesSized #sheet { height: var(--sheetH, var(--shareH)); } body.panesSized :is(#notes, #search) { height: var(--paneH, var(--shareH)); }
+body.panesSized #verseSheet { height: var(--verseH, var(--shareH)); } body.panesSized #besideSheet { height: var(--besideH, var(--shareH)); }
+body:has(.dock:not([hidden])) #sheet:not([hidden]), body:has(.dock:not([hidden])) #search:not([hidden]) { border-top: 0; }
 body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) #notesSplit { display: block; }
 body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) :is(#notes, #search) { border-top: 0; }
-body.textSized:has(#notes:not([hidden]), #search:not([hidden])) #sheet:not([hidden]) { flex: 0 1 var(--sheetH, calc((var(--mid, 100dvh) - var(--textH) - 28px) / 2)); }
-body.textSized :is(#notes, #search):not([hidden]) { min-height: 120px; }
 }
 .w.reading { background: var(--tint-strong); }
 .vnum { cursor: pointer; }
