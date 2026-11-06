@@ -1,7 +1,7 @@
 // A study screen's own top row for a set of named things (the Verse cards' decks, the Study printout's printouts): the
 // open one's name centered, a drop-down arrow beside it (⌄, the pickers' own: choose.ts' button), tapped opening its
-// drop-down under it - SELECT <NOUN> (its first choice + NEW <NOUN>, then each by name; picking one opens it), DELETE
-// <NOUN> beside it (the open one, asked first), then NAME (the open one's, edited in place, the title following as it's
+// drop-down under it - SELECT <NOUN> (each by name; picking one opens it), DELETE <NOUN> beside it (the open one, asked
+// first) and + NEW <NOUN> at its right, then NAME (the open one's, edited in place, the title following as it's
 // typed). Both screens build it here, one way (style.css' .topBar, .topRow, .topTitle, .topArrow, .vcMenu, .vcAdd).
 // What each item is, and what opening, making, deleting and renaming do (saving, drawing the screen again), is the
 // screen's: passed in as NameMenu's functions.
@@ -45,14 +45,16 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   button.setAttribute ("aria-expanded", "false");
   button.append (name, arrow);
   title.append (button);
-  // SELECT <NOUN> (+ NEW <NOUN> first) and DELETE <NOUN>
+  // SELECT <NOUN>, DELETE <NOUN> and + NEW <NOUN>
   const pickRow = make ("div", "vcAdd"), pickLabel = make ("label", "vcPick", `Select ${noun}`), pick = make ("select", "choose");
-  pick.append (new Option (`+ New ${o.noun}`, "new"), ...o.all ().map ((y) => new Option (o.shown (y), y.id, false, y === x)));
-  pick.addEventListener ("change", () => { if (pick.value === "new") o.make (); else o.select (pick.value); });
+  pick.append (...o.all ().map ((y) => new Option (o.shown (y), y.id, false, y === x)));
+  pick.addEventListener ("change", () => o.select (pick.value));
   pickLabel.append (pick);
   const del = make ("button", "pill", `Delete ${noun}`);
   del.addEventListener ("click", () => { if (confirm (o.ask (x))) o.remove (x); });
-  pickRow.append (pickLabel, del);
+  const add = make ("button", "pill", `+ New ${o.noun}`);
+  add.addEventListener ("click", () => o.make ());
+  pickRow.append (pickLabel, del, add);
   // NAME: typed, the title and SELECT's choice follow; left blank, the blank name (or what's shown for none)
   const nameRow = make ("label", "vcPick vcName", "Name"), input = make ("input", "choose");
   Object.assign (input, { type: "text", value: x.name || o.shown (x), autocomplete: "off", spellcheck: false });
