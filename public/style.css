@@ -520,14 +520,14 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
 .deckPane:not([hidden]) { display: grid; gap: var(--gap); }
 #screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
-.split.deckSplit { display: none; } .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - 7px); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
+.split.deckSplit { display: none; background: none; } .deckPane > .csEditHead { margin-inline: calc(-1 * var(--safe-l)) calc(-1 * var(--safe-r)); padding-inline: var(--safe-l) var(--safe-r); }     /* (The panel's divider see-through - the top bar's line meeting its own -; its title row's line from edge to edge) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - 7px); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
   max-height: calc(100dvh - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
-#vcPlace, .avPlace { display: flex; gap: 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line, kept together - BOOK narrowing where it must, its name cut short) */
-#vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 0 1 auto; width: calc(11em + 38px); min-width: 0; }
+#vcPlace, .avPlace { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line where they fit - BOOK narrowing first, its name cut short, to its least -, else wrapping) */
+#vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 1 1 calc(5em + 38px); max-width: calc(11em + 38px); min-width: 0; }     /* (BOOK narrowing first, to a short name's width at least - then the row wraps, nothing laid over another) */
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
