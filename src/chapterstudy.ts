@@ -445,7 +445,11 @@ onScreen ("Study printout", async (body) => {
   printSplit (split, box);
   // (Sideways the editor and the divider run the screen's full height, as the Bible's side panel, the top bar over the
   // preview alone: its right end kept at the divider's line - --csTopR, style.css)
-  new ResizeObserver (() => { const r = split.getBoundingClientRect (); document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - (r.left + r.right) / 2}px`); }).observe (split);     // (To the divider's line, its middle: the top bar's border meeting it)
+  // (To the divider's line, its middle: the top bar's border meeting it - worked out again whenever the divider or the
+  // printout's box changes size, a window resized moving it too)
+  const topR = () => { const r = split.getBoundingClientRect (); document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - (r.left + r.right) / 2}px`); };
+  const watchTop = new ResizeObserver (topR);
+  watchTop.observe (split); watchTop.observe (box);
   // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
   const outPane = el ("div", "csEditor csOutPane"), outHead = el ("div", "top csEditHead"), outClose = el ("button", "pill icon", "✕");
   outClose.setAttribute ("aria-label", "Close the download pane");
