@@ -6,6 +6,7 @@
 // code is unchanged (setting value or selectedIndex updates the button too).
 
 import { box, px } from "./zoom";
+import { openRoom } from "./bars";
 
 const LABEL = (s: HTMLSelectElement) => s.selectedOptions[0]?.textContent ?? "";
 
@@ -37,11 +38,11 @@ function enhance (sel: HTMLSelectElement) {
   // a scrolling panel it's in. Scrolling it never scrolls what's behind (overscroll contained, style.css); anything
   // else scrolled closes it, as the button has moved from under it.
   const place = () => {
-    const r = box (btn), h = px (window.visualViewport?.height ?? innerHeight), gap = 12;     // (CSS px, whatever the UI's scale: zoom.ts)
-    const below = h - r.bottom - gap, above = r.top - gap, up = below < 240 && above > below;
+    const r = box (btn), h = px (window.visualViewport?.height ?? innerHeight), gap = 12, room = openRoom ();     // (CSS px, whatever the UI's scale: zoom.ts; never over the bars: bars.ts)
+    const below = Math.min (h, room.bottom) - r.bottom - gap, above = r.top - gap, up = below < 240 && above > below;
     // (As tall as the room there and as wide as its choices - at least its button's width, no further than the screen's
     // right edge: a choice on one line where it fits)
-    Object.assign (list.style, { left: `${r.left}px`, width: "max-content", minWidth: `${r.width}px`, maxWidth: `${px (innerWidth) - r.left - gap}px`,
+    Object.assign (list.style, { left: `${r.left}px`, width: "max-content", minWidth: `${r.width}px`, maxWidth: `${room.right - r.left - gap}px`,
       top: up ? "" : `${r.bottom}px`, bottom: up ? `${h - r.top}px` : "",
       maxHeight: `${up ? above : below}px`, marginTop: up ? "0" : "4px", marginBottom: up ? "4px" : "0" });
   };

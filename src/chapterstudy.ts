@@ -91,7 +91,7 @@ import { deckPaneSplit } from "./layout";
 import { box as cssBox, px, winW, winH } from "./zoom";
 import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
 import type { FileKind } from "./printfiles";
-import { SIDE_BAR } from "./bars";
+import { SIDE_BAR, openRoom } from "./bars";
 
 /** An item of the printout. from / to: a verse range (0: the section's first / last). A text's under: its helps only for
  *  words coming fewer times than this in the testament (0 or none: every word's), helps saying which (both at first),
@@ -942,12 +942,12 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   // (Over the screen by its button, as wide as the lines' names, within the screen's room - nothing scrolled or moved)
   // (CSS px, whatever the UI's scale: zoom.ts)
   const r = cssBox (menuEl.previousElementSibling as HTMLElement), box = cssBox (menuEl.parentElement!);
-  const bar = document.querySelector (".csEditBar"), foot = bar && ! SIDE_BAR.matches ? cssBox (bar).top : winH ();     // (Down to the bar at the foot; sideways the bar's down the side: to the screen's foot)
+  const room = openRoom (), foot = room.bottom;     // (Down to the bar at the foot, or the screen's foot with the bar down the side - never over it: bars.ts)
   // (As far as there's room: under the button down to the foot - or, more room above it, over the button up to the top
   // bar, as a menu opens upward)
   const below = Math.min (foot, winH ()) - r.bottom - 8, topBar = [...document.querySelectorAll (".topBar")].find ((t) => t.getBoundingClientRect ().width), above = r.top - (topBar ? cssBox (topBar).bottom : 0) - 8;
   const up = above > below;
-  Object.assign (menuEl.style, { top: up ? "auto" : `${r.bottom}px`, bottom: up ? `${winH () - r.top}px` : "auto", left: `${box.left}px`, right: `${winW () - box.right}px`,     // (In from the left by its margin: style.css)
+  Object.assign (menuEl.style, { top: up ? "auto" : `${r.bottom}px`, bottom: up ? `${winH () - r.top}px` : "auto", left: `${box.left}px`, right: `${winW () - Math.min (box.right, room.right)}px`,     // (In from the left by its margin: style.css)
                                  maxHeight: `${Math.max (120, up ? above : below)}px` });
 }
 

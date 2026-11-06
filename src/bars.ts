@@ -4,7 +4,7 @@
 // One size on every device: a row the heading's height, under it (or, down the side, at its right) only the device's
 // own inset as plain room, no button in it (style.css' BOTTOM BAR).
 
-import { box } from "./zoom";
+import { box, winW, winH } from "./zoom";
 
 export const SIDE_BAR = matchMedia ("(orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px)");
 
@@ -73,3 +73,13 @@ function notchSide () {
 }
 notchSide ();
 addEventListener ("orientationchange", notchSide); screen.orientation?.addEventListener ("change", notchSide);
+
+/** The room a menu or list laid over the screen may take: up to the bar shown - its top, at the foot; its left edge,
+ *  down the side - never over it (the pickers' lists, + Add item's menu). In CSS px, whatever the UI's scale. */
+export function openRoom (): { right: number; bottom: number } {
+  const bars = [...document.querySelectorAll<HTMLElement> (".bottomBar")].filter ((b) => b.getBoundingClientRect ().width);
+  const bar = bars.find ((b) => b.closest ("#screen")) ?? bars[0];     // (A ☰ screen's own over the Bible's play bar)
+  if (! bar) return { right: winW (), bottom: winH () };
+  const r = box (bar);
+  return SIDE_BAR.matches ? { right: r.left, bottom: winH () } : { right: winW (), bottom: r.top };
+}
