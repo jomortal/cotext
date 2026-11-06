@@ -5,11 +5,11 @@
 //   printout's the same) and + at its right end, where the Bible view's ⋯ is, then
 //   the deck and the credits. The name tapped shows the deck's options as part of the top bar - fixed, not scrolling
 //   with the card, the bar growing as it opens and the card's room under it (the Bible view's ⋯ menu overlays; here the
-//   card stays in view) -, tapped again closing them, in order: SELECT DECK, NAME (edited in place), the deck's settings (below), VERSE LIST; + shows
-//   the add row the same way (below), the bold heading NEW VERSE at its start, + a ✕ while open. One open at a time.
+//   card stays in view) -, tapped again closing them, in order: SELECT DECK (with DELETE DECK and + NEW DECK), NAME
+//   (edited in place), the deck's settings (below). The bar's list icon opens the VERSE LIST panel (below).
 // - DECKS: any number, each named ("Memory verses", "Greek NT") with its own cards and settings; first in the name's options
 //   the one open (the last one used when the screen opens; "My verses" at first) -
-//   SELECT DECK a drop-down of them, its first choice + NEW DECK, DELETE DECK beside it deleting the open one and its cards (asked first); the NAME edited in place.
+//   SELECT DECK a drop-down of them, DELETE DECK beside it deleting the open one and its cards (asked first), + NEW DECK at its right; the NAME edited in place.
 // - ADDING: picked on the add row (NEW VERSE, +'s drop-down) - BOOK (the Hebrew Bible's books and the NT's; an OT card numbered as the Hebrew),
 //   CHAPTER, ":", FROM VERSE (a verse), "-" and TO VERSE (blank: that verse alone, or one after it: a range within the
 //   chapter) - then + ADD VERSE. The pick starts blank, and is blank again after each card is added (picked in any order -
@@ -34,7 +34,7 @@
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
 //   edge; its words larger than a pill's): BACK and NEXT as ‹ and › at its ends (as the chapters'; a swipe across the card does the same), SHUFFLE, + (NEW VERSE) in its middle and START OVER between them (cards.ts' showDeck). A tap on it turns it over
 //   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
-//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). Under VERSE LIST (in the name's options, while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
+//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). The VERSE LIST panel (the bar's list icon): the add row at its top (BOOK, CHAPTER, VERSES, + ADD VERSE), then (while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
