@@ -421,7 +421,7 @@ function stackWhenWrapped (place: HTMLElement) {
 }
 
 //==== ADD VERSE (the Bible's) ====
-// A verse number tapped in the Bible: a box from the bottom, the word's panel's width (#verseSheet, under it in the
+// A verse's margin tapped in the Bible (its number and the + under it, the verse's height): a box from the bottom, the word's panel's width (#verseSheet, under it in the
 // text's column - index.html), headed ADD TO VERSE CARDS, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
 // BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD VERSE (adding it there, and
 // closing the box); its ✕ closes it. A Septuagint book's verse (not a book the cards take): the book left blank.

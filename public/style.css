@@ -144,6 +144,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .vnum { display: grid; justify-items: center; align-content: start; gap: 2px; padding: 2px 0; }     /* (The verse number in the margin, laid out as a word - .w's: in the text's letters on the words' line, its number on the interlinear's) */
 .vnumN { font-size: .75em; }     /* (Smaller than the words, not read as one of them - on their baseline, its line as tall as theirs) */
 .vnum .gloss { font-variant-numeric: tabular-nums; }
+.vadd { color: var(--soft); font-size: var(--fs-l); line-height: 1; } .csText .vadd { display: none; }     /* (Under the number, centered: the margin, the verse's height - tapped anywhere -, adds the verse to the Verse cards; not printed) */
 .verse { display: flex; flex-wrap: wrap; gap: 14px 12px; min-width: 0; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }
