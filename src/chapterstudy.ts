@@ -61,7 +61,7 @@
 //     chapter's list), rarest first, each its dictionary form, transliteration (an option), definition - SHORT (the
 //     vocab gloss) or LONG (the brief lexicon's full entry: abridged BDB or Abbott-Smith) - and how often it comes in
 //     the testament.
-// - PRINT (under DOWNLOAD): window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
+// - PRINT (the bar's printer): window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
 //   Hebrew right to left, a map as a picture (each canvas copied to an image first: prepare), verses, notes and
 //   entries kept whole where they fit, each section's reference as its title, page numbers where the browser allows
 //   (@page). On an iPhone in Safari: Share > Print > Save to Files. A Home Screen web app on an iPhone or iPad ignores
@@ -72,7 +72,7 @@
 //   prints it), the Atlas' places and the base map and boundaries its map shows, the timeline's sources -,
 //   alphabetized in the printout's BIBLIOGRAPHY STYLE (bibliography.ts: the works, taken from their credits, and the
 //   styles), then "Licenses": the licenses' notices (each license's works and address, what was changed).
-// - DOWNLOAD (over Print; its FORMAT picked over it - PDF at first, then the last picked): the printout as a file made on the device - Microsoft Word (.docx, .doc), OpenDocument
+// - DOWNLOAD (the bar's download icon: a desktop's save dialog, its types the formats; where there's none, the download pane - its FORMAT, PDF at first, then the last picked, and a Download button; no Print there): the printout as a file made on the device - Microsoft Word (.docx, .doc), OpenDocument
 //   (.odt), Rich Text Format (.rtf), Plain Text (.txt), Web Page (.html, .htm) or PDF (.pdf: makePdf's) - each made from
 //   the preview in the print rules (printfiles.ts, loaded only then): the same content, light colors, Hebrew and Greek
 //   as real text with their fonts named, the maps as pictures. Named as the printout ("John 3.docx"); handed over as
@@ -440,30 +440,24 @@ onScreen ("Study printout", async (body) => {
     save (); drawSections (); render ();
     sectionsEl.querySelector<HTMLElement> (`.csLine[data-id="${it.id}"] .csMemoBox`)?.focus ();
   });
-  const print = el ("button", "pill action", PRINT);
-  printEl = print;
-  print.addEventListener ("click", () => {
-    if (ready) void handOver (ready);
-    else if (printIgnored ()) void makePdf ().then ((f) => f && handOver (f));
-    else { prepare (); window.print (); }
-  });
   // FORMAT: a picker of the formats - PDF at first, then the one last picked (kept on the device) -, picking only; the
-  // DOWNLOAD button under it makes and hands over the file (it says while it's being made); PRINT under that
-  const dlRow = el ("label", "field", "Format"), dl = el ("select", "choose"), go = el ("button", "pill action", DOWNLOAD);     // (As PRINT: an action - .pill.action)
+  // DOWNLOAD button under it makes and hands over the file (it says while it's being made; "Share <FORMAT>" while a
+  // file made waits to be shared - handOver). No Print here: the bar's printer prints.
+  const dlRow = el ("label", "field", "Format"), dl = el ("select", "choose"), go = el ("button", "pill action", DOWNLOAD);     // (An action - .pill.action)
   downloadEl = go;
   dl.append (...FORMATS.map (([k, t]) => new Option (t, k)));
   try { const k = localStorage.getItem (FORMAT_KEY); dl.value = FORMATS.some (([f]) => f === k) ? k! : "pdf"; } catch { dl.value = "pdf"; }
   dl.addEventListener ("change", () => { try { localStorage.setItem (FORMAT_KEY, dl.value); } catch { /* private mode */ } });
-  go.addEventListener ("click", () => void download (dl.value as FileKind | "pdf"));
+  go.addEventListener ("click", () => void (ready ? handOver (ready) : download (dl.value as FileKind | "pdf")));
   dlRow.append (dl);
   const out = el ("div", "csOut");
-  out.append (dlRow, go, print);
+  out.append (dlRow, go);
   // (Its title row: EDIT and a ✕ closing the editor - as the bar's pencil does -, apart from the passages' own ✕s)
   const head = el ("div", "top paneHead"), close = el ("button", "pill icon", "", "x");
   close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
   editor.append (head, sectionsEl, more, memo);
-  // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
+  // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and DOWNLOAD
   const outPane = el ("div", "deckPane csEditor csOutPane"), outHead = el ("div", "top paneHead"), outClose = el ("button", "pill icon", "", "x");
   outClose.setAttribute ("aria-label", "Close the download pane");
   outHead.append (el ("h2", "title", "Download"), outClose);
@@ -474,13 +468,19 @@ onScreen ("Study printout", async (body) => {
   deckPaneSplit (editor).addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
   deckPaneSplit (outPane);
   // The bottom bar (the Verse cards' - .bottomBar: down the right side sideways, the right side at the top): a pencil in
-  // its middle showing or hiding the editor, a printer next printing (as PRINT), and at its right end a download icon -
-  // on a desktop (canSaveAs) the system's save dialog straight away, its types the formats; elsewhere showing or hiding
-  // the download pane. One pane at a time, in the same place (the one shown: its icon pressed); none, the preview the
+  // its middle showing or hiding the editor, a printer next printing (window.print; a Home Screen iPhone or iPad's the
+  // PDF made and shared - printIgnored -, the printer greyed meanwhile), and at its right end a download icon - on a
+  // desktop (canSaveAs) the system's save dialog straight away, its types the formats; where there's no such dialog,
+  // showing or hiding the download pane. One pane at a time, in the same place (the one shown: its icon pressed); none, the preview the
   // whole room. Which is shown kept on the device.
   const bar = el ("div", "bottomBar csEditBar"), toggle = el ("button", "pill icon barMid", "", "pencil"), dlBtn = el ("button", "pill icon csOutBtn", "", "download"), printBtn = el ("button", "pill icon csPrintBtn", "", "printer");
   printBtn.setAttribute ("aria-label", "Print");
-  printBtn.addEventListener ("click", () => print.click ());
+  printEl = printBtn;
+  printBtn.addEventListener ("click", () => {
+    if (ready) void handOver (ready);
+    else if (printIgnored ()) void makePdf ().then ((f) => f && handOver (f));
+    else { prepare (); window.print (); }
+  });
   toggle.setAttribute ("aria-label", "Show or hide the editor");
   dlBtn.setAttribute ("aria-label", "Show or hide the download pane");
   type Pane = "edit" | "out" | "";
@@ -494,6 +494,7 @@ onScreen ("Study printout", async (body) => {
   };
   toggle.addEventListener ("click", () => show (pane === "edit" ? "" : "edit"));
   dlBtn.addEventListener ("click", () => { if (canSaveAs ()) void saveAs (); else show (pane === "out" ? "" : "out"); });
+  showPane = show;
   close.addEventListener ("click", () => show (""));
   outClose.addEventListener ("click", () => show (""));
   show (pane);
@@ -1326,7 +1327,7 @@ async function render () {
   const bib = el ("section", "csBlock csBib");
   doc.append (bib);
   if (n !== drawing) return;
-  if (ready) { ready = null; printEl.textContent = PRINT; }     // (A file made before this change is out of date)
+  if (ready) { ready = null; downloadEl.textContent = DOWNLOAD; }     // (A file made before this change is out of date)
   const screenEl = document.getElementById ("screen")!, scroll = screenEl.scrollTop;     // (The preview scrolls in the screen)
   previewEl.replaceChildren (doc);
   screenEl.scrollTop = scroll;
@@ -1530,7 +1531,6 @@ window.addEventListener ("beforeprint", () => { if (previewEl?.isConnected) prep
 // page: pageCuts), the whole made one SVG picture by modern-screenshot (loaded only then: its own file, not in the
 // app's first load), each page drawn from its slice at the screen's sharpness and written as a JPEG into a PDF (pdfOf). A4, or Letter where the device's region uses it; @page's margins; the page
 // number at each foot. Named as the printout ("John 3.pdf"). The same PDF is DOWNLOAD's PDF, on any device.
-const PRINT = "Print";
 const DOWNLOAD = "Download";     // (The button's word, while no file is being made)
 /** Each format's media type (printfiles.ts' files, the PDF, the desktop's save dialog's types). */
 export const MIME: Record<FileKind | "pdf", string> = {
@@ -1544,6 +1544,7 @@ const FORMATS: [FileKind | "pdf", string][] = [
   ["docx", "Microsoft Word (.docx)"], ["doc", "Microsoft Word 97-2003 (.doc)"], ["odt", "OpenDocument (.odt)"], ["rtf", "Rich Text Format (.rtf)"],
   ["txt", "Plain Text (.txt)"], ["html", "Web Page (.html)"], ["htm", "Web Page (.htm)"], ["pdf", "PDF (.pdf)"]];
 let downloadEl: HTMLButtonElement;
+let showPane: (p: "edit" | "out" | "") => void = () => {};     // (The screen's: which pane shows)
 let ready: File | null = null;     // (A file made but not yet shared: the share sheet refused it - see handOver)
 
 /** Whether window.print does nothing here: a Home Screen web app on iOS (an iPad says it's a Mac, but has touch),
@@ -1655,12 +1656,11 @@ async function withPrintCopy<T> (fn: (copy: HTMLElement, page: ReturnType<typeof
 /** The printout's file name with an extension: its name as shown, a file name's forbidden marks made dashes. */
 const fileName = (ext: string) => `${nameShown (now ()).replace (/[\\/:*?"<>|]/g, "-")}.${ext}`;
 
-/** The PDF made from the preview (the Print button saying so meanwhile; a second tap while it's made ignored); null
+/** The PDF made from the preview (the bar's printer greyed meanwhile; a second tap while it's made ignored); null
  *  when it couldn't be made. */
 async function makePdf (): Promise<File | null> {
   if (printEl.disabled) return null;
-  printEl.disabled = true;
-  printEl.textContent = "Making PDF…";
+  printEl.disabled = true;     // (The bar's printer greyed while it's made)
   try {
     const { domToForeignObjectSvg, loadMedia } = await import ("modern-screenshot");
     return await withPrintCopy (async (copy, page, width) => {
@@ -1699,7 +1699,6 @@ async function makePdf (): Promise<File | null> {
     console.warn ("Study printout: the PDF couldn't be made:", e);
     return null;
   } finally {
-    printEl.textContent = PRINT;
     printEl.disabled = false;
   }
 }
@@ -1715,7 +1714,7 @@ async function download (kind: FileKind | "pdf") {
   } catch (e) {
     console.warn (`Study printout: the ${kind} couldn't be made:`, e);
   } finally {
-    downloadEl.textContent = DOWNLOAD; downloadEl.disabled = false;
+    downloadEl.textContent = ready ? `Share ${ready.name.replace (/^.*\./, "").toUpperCase ()}` : DOWNLOAD; downloadEl.disabled = false;
   }
 }
 
@@ -1754,7 +1753,7 @@ async function saveAs () {
 
 /** A file made handed over: on a Home Screen iPhone or iPad (printIgnored) the share sheet (Print, Save to Files,
  *  Messages...) - cancelled, nothing more; refused because the making took too long after the tap (iOS shares only
- *  straight after one), the Print button turns to "Share <FORMAT>", a tap sharing the file made; any other failure, it
+ *  straight after one), the download pane is shown, its Download button "Share <FORMAT>", a tap (or the printer's) sharing the file made; any other failure, it
  *  downloads. Elsewhere it downloads. */
 async function handOver (file: File) {
   const ext = file.name.replace (/^.*\./, "").toUpperCase ();
@@ -1762,16 +1761,16 @@ async function handOver (file: File) {
     try {
       await navigator.share ({ files: [file], title: file.name.replace (/\.[^.]*$/, "") });
       ready = null;
-      printEl.textContent = PRINT;
+      downloadEl.textContent = DOWNLOAD;
       return;
     } catch (e) {
       const why = (e as Error).name;
-      if (why === "AbortError") { ready = null; printEl.textContent = PRINT; return; }
-      if (why === "NotAllowedError" && ready !== file) { ready = file; printEl.textContent = `Share ${ext}`; return; }
+      if (why === "AbortError") { ready = null; downloadEl.textContent = DOWNLOAD; return; }
+      if (why === "NotAllowedError" && ready !== file) { ready = file; downloadEl.textContent = `Share ${ext}`; showPane ("out"); return; }     // (The download pane shown, its button sharing it)
     }
   }
   ready = null;
-  printEl.textContent = PRINT;
+  downloadEl.textContent = DOWNLOAD;
   const a = el ("a");
   a.href = URL.createObjectURL (file);
   a.download = file.name;
