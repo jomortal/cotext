@@ -41,8 +41,8 @@ let book: Book;
 let chapter = 1;
 
 // The heading's place, a reference pair (refs.ts: bold capitals) on one line across the heading, never wrapped: the
-// book's name and chapter in English and in its own language, each centered in its side (its width and an even share
-// of the room left) - the Greek at the left, the Hebrew (read from the right) at the right: "GENESIS 1 | בְּרֵאשִׁית א"
+// book's name and chapter in English and in its own language, either side of the drop-down arrow
+// in its middle, each against it - the Greek at the left, the Hebrew (read from the right) at the right: "GENESIS 1 | בְּרֵאשִׁית א"
 // (style.css' #place .refPair). The two too wide for the heading together: the English abbreviated first, to its SBL
 // abbreviation (booknames.ts' ABBR) with a full stop (1 THESS. 1), then the Greek, without its leading ΚΑΤΑ or ΠΡΟΣ
 // (ΘΕΣΣΑΛΟΝΙΚΕΙΣ Α΄ Εʹ), then its long words cut short (ΘΕΣ. Α΄ Εʹ); still too wide, both made smaller to fit. Between
