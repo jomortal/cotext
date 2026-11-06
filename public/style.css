@@ -763,14 +763,14 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csLine { border-bottom: var(--rule); background: var(--bg); }
 .csLine.dragged { background: var(--tint-solid); }
 .csRow { display: flex; align-items: center; gap: var(--gap-m); min-height: 40px; }
-.csHandle { touch-action: none; cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
+.csHandle { width: var(--x-w); touch-action: none; cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
 .csName { flex: 1; min-width: 0; font-size: var(--fs-s); }
 .csOptsBtn { font-size: var(--fs-xs); color: var(--soft); }
 .csOptsBtn[aria-expanded="true"] { color: var(--accent); }
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); margin-top: 8px; }
-.csMenu { padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }
+.csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's choices as a line's drop-down: their names over the lines' names - in by the handle's room, --x-w, and the gap) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
