@@ -410,7 +410,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    serif, read as a book; the rows and headings (.gHead) in the page's sans; its Hebrew and Greek in their own fonts
    (.he, .grc). Learn's SHOW IN THE GRAMMAR marks the passage (mark), or the whole section (.found), in the tapped
    word's tint (.w.on's), kept until another link is followed. */
-.gSec { font-family: var(--serif); }
+.gSec { font-family: var(--serif); font-size: var(--fs-xl); }     /* (A grammar's text - Learn, the word panel's GRAMMAR, the Resource reader: the serif, larger than the notes' text) */
 .gSec mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
