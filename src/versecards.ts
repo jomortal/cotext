@@ -1,5 +1,5 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built like My vocab's (cards.ts' showDeck - its
-// flip, BACK / NEXT (arrows), FLIP, SHUFFLE and START OVER; a card removed by its ✕ in the list, not a REMOVE CARD).
+// flip, BACK / NEXT (arrows), SHUFFLE and START OVER - no FLIP: a tap on the card turns it -; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
 //   the Bible view's heading, staying as the screen scrolls; a drop-down arrow ⌄ beside it - topbar.ts, the Study
 //   printout's the same) and + at its right end, where the Bible view's ⋯ is, then
@@ -181,7 +181,6 @@ const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebr
 const svg = (d: string) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
 const BAR_ICONS: Record<string, string> = {
   shuffle: svg ("M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.6M13.1 9.6C14.2 8 15.4 7 17 7h4M18 4l3 3-3 3M18 14l3 3-3 3"),     // (Two paths crossing)
-  flip: svg ("M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"),     // (Turned over: two arrows round)
   over: svg ("M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"),     // (Back to the start: an arrow round to its beginning)
 };
 let goTo = "";     // (A card just added - here or from the Bible's verse numbers -: shown first when its deck is next drawn)
@@ -245,8 +244,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt,
 
 async function draw (body: HTMLElement) {
   const trs = translationSources (), d = deckNow (), settings = d.settings;
-  body.innerHTML = `<div class="topBar"><div class="topRow"><span id="vcTitle"></span>
-      <span class="vcTopBtns"><button class="pill icon" id="vcPlus" aria-label="New verse">+</button></span></div>
+  body.innerHTML = `<div class="topBar"><div class="topRow"><span id="vcTitle"></span></div>
     <div class="vcMenu" data-menu="more">
     <div class="vcAdd">
       <label class="vcPick">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
@@ -261,10 +259,10 @@ async function draw (body: HTMLElement) {
     </div></div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>`;
-  // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + at the top
-  // row's right: NEW VERSE, adding cards; each a drop-down as the Bible view's ⋯ menu (+ a ✕ while open that closes
-  // it; the title tapped again closes its own; one open at a time), the top row growing with it - the card's room
-  // under it (kept so between drawings). The name, its arrow and the first rows of its drop-down - SELECT DECK, DELETE
+  // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + in the bar
+  // at the foot, in its middle (where the Bible view's ▶ is): NEW VERSE, adding cards; each a drop-down under the top
+  // row as the Bible view's ⋯ menu (+ a ✕ while open that closes it; the title tapped again closes its own; one open
+  // at a time), the top row growing with it - the card's room under it (kept so between drawings). The name, its arrow and the first rows of its drop-down - SELECT DECK, DELETE
   // DECK, NAME - are topbar.ts' (the Study printout's the same)
   const named = nameMenu<Deck> ({
     noun: "Deck", all: () => decks, open: deckNow, shown: (x) => x.name || "Untitled", blank: "Untitled",
@@ -276,8 +274,10 @@ async function draw (body: HTMLElement) {
   body.querySelector ("#vcTitle")!.replaceWith (named.title);
   const moreMenu = body.querySelector<HTMLElement> ('.vcMenu[data-menu="more"]')!;
   moreMenu.prepend (...named.rows);
+  const plus = document.createElement ("button");     // (+: the bar's middle, with cards or without - deck)
+  Object.assign (plus, { className: "pill icon vcPlus", id: "vcPlus", textContent: "+" }); plus.setAttribute ("aria-label", "New verse");
   dropDowns ([{ key: "more", button: named.button, menu: moreMenu, icon: "" },
-              { key: "add", button: body.querySelector<HTMLElement> ("#vcPlus")!, menu: body.querySelector<HTMLElement> ('.vcMenu[data-menu="add"]')!, icon: "+" }],
+              { key: "add", button: plus, menu: body.querySelector<HTMLElement> ('.vcMenu[data-menu="add"]')!, icon: "+" }],
              menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
@@ -307,7 +307,11 @@ async function draw (body: HTMLElement) {
     }
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
     listHead.hidden = listEl.hidden = ! d.cards.length;     // (VERSE LIST only with cards)
-    if (! d.cards.length) { deckEl.innerHTML = "<p>Click the + to add a verse.</p>"; credits.textContent = ""; shown = null; return; }
+    if (! d.cards.length) {     // (No cards: the bar with + alone)
+      deckEl.innerHTML = "<p>Tap + to add a verse.</p>"; credits.textContent = ""; shown = null;
+      const bar = document.createElement ("div"); bar.className = "vcBar"; bar.append (plus); deckEl.append (bar);
+      return;
+    }
     const used = new Map<string, string> ();
     const made: (Card & { id: string })[] = [];
     for (const c of d.cards) made.push ({ id: c.id, ...await sidesOf (c, used) });
@@ -318,19 +322,19 @@ async function draw (body: HTMLElement) {
       shown = showDeck (deckEl, made, undefined, undefined, true, ".w", "Flip"); shownIds = ids;
       if (goTo) { shown.go ((c) => c.id === goTo); goTo = ""; }
       // (One bar at the screen's foot, as the Bible view's play bar: BACK and NEXT as its ‹ and › at its ends - as the
-      // chapters' -, SHUFFLE, FLIP and START OVER between them)
+      // chapters' -, SHUFFLE, + (NEW VERSE) in the middle and START OVER between them; no FLIP - a tap on the card turns it)
       const bar = document.createElement ("div"); bar.className = "vcBar";
       const arrow = (k: string, glyph: string, label: string) => {
         const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
         x.textContent = glyph; x.classList.add ("icon", "arrow"); x.setAttribute ("aria-label", label);
         return x;
       };
-      bar.append (arrow ("back", "‹", "Back"), ...["shuffle", "flip", "over"].map ((k) => {
+      bar.append (arrow ("back", "‹", "Back"), ...["shuffle", "over"].map ((k) => {
         const x = deckEl.querySelector<HTMLElement> (`[data-k=${k}]`)!;
         x.setAttribute ("aria-label", x.textContent!);
         x.innerHTML = `<span class="vcWord">${x.textContent}</span>${BAR_ICONS[k]}`;     // (Its icon shown, its word kept hidden: style.css)
         return x;
-      }), arrow ("next", "›", "Next"));
+      }), plus, arrow ("next", "›", "Next"));     // (+ placed in the middle by style.css - .vcPlus)
       onSwipe (deckEl.querySelector<HTMLElement> (".card")!, (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ());     // (A swipe across the card steps as ‹ and ›)
       deckEl.querySelectorAll (".cardBar").forEach ((x) => x.remove ());
       deckEl.append (bar);
