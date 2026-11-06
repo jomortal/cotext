@@ -11,7 +11,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord, isPhone, addDock } from "./layout";
+import { isSideWord, wordColumns, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -139,8 +139,10 @@ function makePanel (sheet: HTMLElement, lean = false) {
   { const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
   // Two columns where there's room: once the panel is at least twice as wide as the word's info (everything but the
   // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
-  // style.css). Measured at the info's natural width whenever the panel resizes or shows another word. On a phone
-  // (layout.ts' isPhone), and the text's word's panel as a column beside the text (placeWord), always one column.
+  // style.css). Measured at the info's natural width whenever the panel resizes or shows another word. One-pane
+  // (layout.ts' wordColumns), as many as it says: one on a phone and sideways, two upright on a touch screen wider than
+  // a phone's (an iPad's) - the info then as measured, the lexicon beside it, however little room. The text's word's
+  // panel as a column beside the text (placeWord) always one column.
   const heads = q ("heads");
   const info = document.createElement ("div");
   {      // (The word's info in one box, the lexicon's parts in another: the two columns)
@@ -154,7 +156,8 @@ function makePanel (sheet: HTMLElement, lean = false) {
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
-    if (isPhone () || (sheet.id === "sheet" && isSideWord ())) return;     // (A phone, or a column beside the text - layout.ts: always one column, the lexicon under the word)
+    const fixed = wordColumns ();
+    if (fixed === 1 || (sheet.id === "sheet" && isSideWord ())) return;     // (One column - layout.ts: the lexicon under the word)
     info.style.width = "";
     heads.style.width = "max-content";
     const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
@@ -181,7 +184,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
       }
     }
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
-    const two = sheetScroll.clientWidth >= 2 * need;
+    const two = fixed === 2 || sheetScroll.clientWidth >= 2 * need;
     sheet.classList.toggle ("twoCol", two);
     if (two) {
       info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
