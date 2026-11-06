@@ -60,7 +60,8 @@
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
   /* The edges: a box's sides --margin in, clear of the notch (--safe-l / -r: MARGINS), and the heading's, centered on
      --page beyond it (--col-l / -r: the % the box's own where used); --x-room kept clear of a panel's ✕. */
-  --safe-l: max(var(--margin), env(safe-area-inset-left, 0px)); --safe-r: max(var(--margin), env(safe-area-inset-right, 0px));
+  --inset-l: env(safe-area-inset-left, 0px); --inset-r: env(safe-area-inset-right, 0px);     /* (The room the screen's sides need - the notch's: sideways, only its own side's - bars.ts' notchSide, an iPhone giving both sides the notch's room) */
+  --safe-l: max(var(--margin), var(--inset-l)); --safe-r: max(var(--margin), var(--inset-r));
   --col-l: max(var(--safe-l), calc((100% - var(--page)) / 2));
   --col-r: max(var(--safe-r), calc((100% - var(--page)) / 2));
   --x-room: 52px;
@@ -313,7 +314,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
    card's - no ✕ (the heading's passage tapped again closes it); the list as far from the edge as a verse card (12px). */
 #picker .pickerCard { height: 100%; display: flex; flex-direction: column; gap: 0; position: relative; }
 #pickerBody { flex: 1 1 auto; min-height: 0; overflow-y: auto;
-              padding: calc(var(--fs-icon) * .5) max(12px, env(safe-area-inset-right, 0px)) calc(var(--pad) + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+              padding: calc(var(--fs-icon) * .5) max(12px, var(--inset-r)) calc(var(--pad) + env(safe-area-inset-bottom, 0px)) max(12px, var(--inset-l)); }
 #pickerBody > .src { font-size: var(--fs-s); letter-spacing: .05em; margin-top: 20px; text-align: center; }     /* (OLD TESTAMENT, NEW TESTAMENT: larger than other headings, centered - one line on a phone) */
 #pickerBody > .src:first-child { margin-top: 0; }
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: var(--gap); }
@@ -816,7 +817,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    (--barH) none. Their buttons top to bottom: ‹, search, ▶, notes, › (left to right upright: ‹, notes, ▶, search, ›); ‹, Shuffle, Flip, Start over, ›. */
 :root { --sideBar: 0px; }     /* (Upright: no side bar) */
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {
-  :root { --barH: 0px; --sideBar: calc(var(--rule-w) + var(--head-h) + env(safe-area-inset-right, 0px)); }     /* (Its line, then as wide as the heading is tall (--head-h), its icons centered, then the device's right inset as plain room - as the bottom bar's: BOTTOM BAR) */
+  :root { --barH: 0px; --sideBar: calc(var(--rule-w) + var(--head-h) + var(--inset-r)); }     /* (Its line, then as wide as the heading is tall (--head-h), its icons centered, then the device's right inset as plain room - as the bottom bar's: BOTTOM BAR) */
   body { right: var(--sideBar); }
   /* MARGINS: the bar keeps the notch's room at the right, so whatever stands beside it (the Bible's page; a screen with
      a bar) has just --margin there; and a panel's left side meets the divider, not the screen's edge. */
@@ -824,7 +825,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   .dock, .deckPane { --safe-l: var(--margin); }
   .bottomBar { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
-    padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across its row: as much space at their left as at their right, the inset after) */ border-top: 0 !important; border-left: var(--rule); }
+    padding: var(--head-top) var(--inset-r) env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across its row: as much space at their left as at their right, the inset after) */ border-top: 0 !important; border-left: var(--rule); }
   #screen .bottomBar { z-index: 31; } #screen .bottomBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
   :root { --deckPaneW: var(--deckW, min(420px, calc(var(--winW, 100vw) * .45))); }
   .deckPane { top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--deckPaneW); height: auto; max-height: none; align-content: start;

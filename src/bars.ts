@@ -57,3 +57,19 @@ export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTML
   FINE.addEventListener ("change", place); addEventListener ("resize", place);
   watching.set (prev, () => { ro.disconnect (); FINE.removeEventListener ("change", place); removeEventListener ("resize", place); });
 }
+
+/** The notch's side, sideways: an iPhone gives both sides the notch's room (safe-area-inset-left and -right alike), so
+ *  the side away from the notch is told none (style.css' --inset-l / --inset-r) - the side bar, the text's margin there
+ *  no wider than their own. Which side has it by the way the phone is turned (window.orientation: 90 turned to the
+ *  left, its top - the notch - at the left; -90 to the right; else screen.orientation's angle, the other way round);
+ *  upright, both sides as the screen says. Worked out again as it turns. */
+function notchSide () {
+  const wo = (window as { orientation?: number }).orientation;
+  const a = typeof wo === "number" ? wo : (360 - (screen.orientation?.angle ?? 0)) % 360;
+  const turn = a === 90 ? "left" : a === -90 || a === 270 ? "right" : "";
+  const s = document.documentElement.style;
+  s.setProperty ("--inset-l", turn === "right" ? "0px" : "env(safe-area-inset-left, 0px)");
+  s.setProperty ("--inset-r", turn === "left" ? "0px" : "env(safe-area-inset-right, 0px)");
+}
+notchSide ();
+addEventListener ("orientationchange", notchSide); screen.orientation?.addEventListener ("change", notchSide);
