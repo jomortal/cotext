@@ -754,7 +754,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); row-gap: 0; grid-template-areas: "preview" "split" "editor";
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Narrow: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
 .cstudy > .split { display: block; grid-area: split; }
-@media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); grid-template-areas: "editor preview"; } .cstudy > .split { display: none; } }
+@media (min-width: 700px) { .cstudy { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); grid-template-areas: "preview editor"; } .cstudy > .split { display: none; } }     /* (Wide - an iPad: the printout at the left, the editor at the right) */
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }
