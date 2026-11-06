@@ -1,14 +1,20 @@
 // Study printout (☰ > Study printout): a printout made for a chapter - its text and any of the resources that have
-// something for it, arranged by the reader, printed or saved as a PDF through the browser's own print.
-// - WHAT'S STUDIED: picked at the editor's top - BOOK, CHAPTER and VERSES (All, or a range from - to) - apart from the
-//   reading (the chapter read only the first time; then the last studied, kept on the device: "cotext.study.at"). A
-//   verse range limits every item to those verses (an item's own range within it).
-// - TWO PANES: the EDITOR - a line per item added (its name; a drag handle ⠿ to move it up or down, by touch or mouse;
-//   Options, opening that item's own settings under it; ✕ removing it), "+ Add item" under the last, Print / Save as
-//   PDF - and the PREVIEW, the printout as it will print, redrawn as lines are added, moved, changed or removed (not
-//   edited itself). Narrow (under 700 px) the preview the top half, the editor the bottom half, each scrolling on its
-//   own; wide side by side, the editor at the left (style.css' .cstudy).
-// - WHAT CAN BE ADDED ("+ Add item": a list of everything there is for this chapter):
+// something for it, arranged by the reader - and for any other passages added to it, printed or saved as a PDF
+// through the browser's own print.
+// - SECTIONS: the printout is a list of sections, each a reference - BOOK, CHAPTER and VERSES (All, or a range from -
+//   to) - with its own items. The first is what's studied: picked at the editor's top, apart from the reading (the
+//   chapter read only the first time; then the last studied, kept on the device: "cotext.study.at"); it can't be
+//   removed. "+ Add another reference" (under the last section) adds one - at first the first's chapter, all its
+//   verses -, its own pickers at its top with a ✕ removing it and its items. A section's verse range limits each of
+//   its items to those verses (an item's own range within it); every item works for its section's reference as it
+//   would for the first's.
+// - TWO PANES: the EDITOR - each section: its reference, a line per item added (its name; a drag handle ⠿ to move it
+//   up or down within the section, by touch or mouse; Options, opening that item's own settings under it; ✕ removing
+//   it), "+ Add item" under the last -, then "+ Add another reference" and Print / Save as PDF - and the PREVIEW, the
+//   printout as it will print: the sections in order, each headed with its reference, redrawn as anything is added,
+//   moved, changed or removed (not edited itself). Narrow (under 700 px) the preview the top half, the editor the
+//   bottom half, each scrolling on its own; wide side by side, the editor at the left (style.css' .cstudy).
+// - WHAT CAN BE ADDED to a section ("+ Add item": a list of everything there is for its chapter):
 //   TEXT - the Hebrew or Greek, its options Interlinear (the English under each word), Parsing, Transliteration, a
 //     verse range and HELPS ONLY FOR RARER WORDS (Off, or 10 / 25 / 50 / 100 / 200 / 500: the interlinear, the parsing
 //     or both printed only for words whose root comes fewer times than that in the testament - freq's whole-testament
@@ -19,11 +25,11 @@
 //     right to left, Greek left to right. Nothing shows until something is added - the text too.
 //   NOTES - each source the notes panel has for the book (translations, commentaries - the church fathers where there
 //     are some -, apparatus, ancient versions, the sentence diagram): the chapter's, or a verse range's, either
-//     BESIDE EACH VERSE (under each verse of the first text item, study-Bible style, the source named) or AS ITS OWN
-//     SECTION (each verse's notes under its reference). Beside each verse with no text item: as its own section. Its
-//     options list the range's notes under their verses, each by its first words (the church fathers' and the
-//     Catena's by father and work), a checkbox each - unticked, left out of the printout; the church fathers' sources
-//     also a checkbox per father in the range (All / None), so only the fathers ticked print.
+//     BESIDE EACH VERSE (under each verse of the section's first text item, study-Bible style, the source named) or AS
+//     ITS OWN SECTION (each verse's notes under its reference). Beside each verse with no text item in its section: as
+//     its own section. Its options list the range's notes under their verses, each by its first words (the church
+//     fathers' and the Catena's by father and work), a checkbox each - unticked, left out of the printout; the church
+//     fathers' sources also a checkbox per father in the range (All / None), so only the fathers ticked print.
 //   ARTICLES - a dictionary (Tyndale: the articles the verses cite or their words lead to; the Archaeology
 //     finds, the Ancient Parallels and the Ancient Historians: those bearing on the verses), one item: every entry for
 //     the chapter or its verse range, printed as the article opens in the app; its options list the entries, a
@@ -39,13 +45,15 @@
 //     the testament.
 // - PRINT / SAVE AS PDF: window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
 //   Hebrew right to left, a map as a picture (each canvas copied to an image first: prepare), verses, notes and
-//   entries kept whole where they fit, the chapter's reference as its title, page numbers where the browser allows
-//   (@page), and every source used credited at the end. On an iPhone in Safari: Share > Print > Save to Files.
-//   A Home Screen web app on an iPhone or iPad ignores window.print: there the button makes the PDF itself (makePdf -
-//   the preview drawn page by page as pictures, in the same print rules) and opens the share sheet with it (Print,
-//   Save to Files, Messages...).
-// - KEPT on the device per chapter (localStorage, "cotext.study.<book>.<chapter>"): leaving and coming back keeps it;
-//   another chapter starts blank.
+//   entries kept whole where they fit, each section's reference as its title, page numbers where the browser allows
+//   (@page), and every source used, in any section, credited once at the end. On an iPhone in Safari: Share > Print >
+//   Save to Files. A Home Screen web app on an iPhone or iPad ignores window.print: there the button makes the PDF
+//   itself (makePdf - the preview drawn page by page as pictures, in the same print rules) and opens the share sheet
+//   with it (Print, Save to Files, Messages...).
+// - KEPT on the device per chapter studied - the first section's - (localStorage, "cotext.study.<book>.<chapter>":
+//   { sections: [{ id, book (its code), chapter, from, to, items }] }, the first's reference taken from the place
+//   studied): leaving and coming back keeps it; another chapter starts blank. An older printout (a list of items) is
+//   read as its first section; anything else unreadable starts blank.
 
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
@@ -55,7 +63,7 @@ import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 
-/** An item of the printout. from / to: a verse range (0: the chapter's first / last). A text's under: its helps only for
+/** An item of the printout. from / to: a verse range (0: the section's first / last). A text's under: its helps only for
  *  words coming fewer times than this in the testament (0 or none: every word's), helps saying which (both at first),
  *  other: the other text (the Septuagint beside a Hebrew book, the Hebrew beside a Septuagint one: otherWords);
  *  a note's skip: the notes left out (their ids; a dictionary's, its entries' ids), noFathers: the fathers left out (their names, as fatherOf reads them). */
@@ -67,13 +75,16 @@ type Item = { id: string } & (
   | { k: "time" }
   | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean });
 
+/** A section of the printout: a reference - book, chapter, verses from - to (0: the chapter's first / last) - and its
+ *  items in order. The first is the chapter studied (the place picked at the editor's top). */
+type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[] };
+
 export const TEXT_CREDIT = "Text, parsing and lexicons: STEPBible Data, Tyndale House, Cambridge (CC BY 4.0).";
 const UNDER = [5, 10, 25, 50, 100, 200, 500];     // (WORD LIST's frequencies: words coming fewer times than this in the testament)
 const HELPS_UNDER = [10, 25, 50, 100, 200, 500];     // (TEXT's HELPS ONLY FOR RARER WORDS: the same, 0 off)
 
 let db: Db;
 let where: () => [Book, number] = () => { throw new Error ("Study printout: not started"); };
-/** main.ts: the database and where the reader is (the book shown and its chapter). */
 let bookList: () => Book[] = () => [];
 /** main.ts: the database, where the reader is (the book shown and its chapter: the first study's place) and the books
  *  to pick from (the Old Testament as read, Hebrew or Septuagint, and the New). */
@@ -87,55 +98,61 @@ const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "")
 };
 
 //==== THE CHAPTER'S DATA ====
-// Read once a chapter (reset when another is studied): its words, each notes source's notes, the word list's lexicon
-// rows, each dictionary's entries and articles; and once per item, its map (elements kept, moved into each redraw).
-let at = "";     // ("<book id>.<chapter>": the chapter the caches are for)
-let book: Book, chapter = 1;
-let words: Promise<Word[]>;
-const notesOf = new Map<string, Promise<Note[]>> ();
+// Read once a chapter, whichever sections show it (dropped when another chapter is studied): its words, each notes
+// source's notes, the word list's lexicon rows, each dictionary's entries, the other text's words. Each notes source's
+// file, each article and each item's map (elements kept, moved into each redraw) once, for every chapter.
+type Entry = { id: string; title: string; line: string };
+type Chapter = {
+  book: Book; chapter: number; words: Promise<Word[]>;
+  notesOf: Map<string, Promise<Note[]>>;     // (By source id)
+  lexicon: Promise<Row[]> | null;
+  entries: Map<string, Promise<Entry[]>>;     // (A dictionary's entries for a range: "<src>|<verses>")
+  others: Map<string, Promise<Word[]>>;     // (The other text's words by the verses: "<vs>")
+};
+const chapters = new Map<string, Chapter> ();     // (By "<book id>.<chapter>")
 const files = new Map<string, Promise<Db>> ();     // (Each notes source's file, opened once: openSource)
-let lexicon: Promise<Row[]> | null = null;
 const articles = new Map<string, Promise<Awaited<ReturnType<typeof articleBlock>>>> ();
 const maps = new Map<string, { view: ReturnType<typeof passageMap>; opts: HTMLElement[]; key: string; range: number[] }> ();
 
-function study (b: Book, c: number) {
+/** A chapter's data, made once (its words read at once, the rest as asked for). */
+function chapterOf (b: Book, c: number): Chapter {
   const key = `${b.id}.${c}`;
-  if (key === at) return;
-  at = key; book = b; chapter = c;
-  words = chapterWords (db, b.id, c);
-  notesOf.clear (); lexicon = null; articles.clear (); entries.clear (); others.clear (); maps.clear ();
+  let ch = chapters.get (key);
+  if (! ch) { ch = { book: b, chapter: c, words: chapterWords (db, b.id, c), notesOf: new Map (), lexicon: null, entries: new Map (), others: new Map () }; chapters.set (key, ch); }
+  return ch;
 }
+const dataOf = (sec: Section) => chapterOf (sec.book, sec.chapter);
 
-const sources = () => sourcesFor (book);
-const sourceOf = (id: string) => sources ().find ((s) => s.id === id);
-/** The verses studied: the chapter's, within the VERSES picked (0: from its first, to its last). */
-let span = { from: 0, to: 0 };
-const allVerses = async () => [...new Set ((await words).map ((w) => w.verse))];
-const verses = async () => inRange (await allVerses (), span.from, span.to);
+const sourceOf = (b: Book, id: string) => sourcesFor (b).find ((s) => s.id === id);
+const allVerses = async (ch: Chapter) => [...new Set ((await ch.words).map ((w) => w.verse))];
+/** A section's verses: its chapter's, within its range (0: from the first, to the last). */
+const verses = async (sec: Section) => inRange (await allVerses (dataOf (sec)), sec.from, sec.to);
 /** A range's verses (0: the chapter's first or last). */
 const inRange = (vs: number[], from: number, to: number) => vs.filter ((v) => (! from || v >= from) && (! to || v <= to));
+/** A section's reference as its heading says it: Romans 5, Romans 5:8–end, Romans 5:1–8, Romans 5:8 (one verse). */
+const refName = (sec: Section) => `${sec.book.name} ${sec.chapter}${! sec.from && ! sec.to ? "" : sec.from && sec.to === sec.from ? `:${sec.from}` : `:${sec.from || 1}–${sec.to || "end"}`}`;
 
-/** A source's notes touching the chapter, in the panel's order; a note from an earlier chapter (a range) among them. */
-function chapterNotes (s: Source): Promise<Note[]> {
-  let p = notesOf.get (s.id);
+/** A source's notes touching a chapter, in the panel's order; a note from an earlier chapter (a range) among them. */
+function chapterNotes (ch: Chapter, s: Source): Promise<Note[]> {
+  let p = ch.notesOf.get (s.id);
   if (! p) {
     let f = files.get (s.id);
     if (! f) { f = openSource (s, () => {}); files.set (s.id, f); f.catch (() => files.delete (s.id)); }
     p = f.then ((d) => d.all (`SELECT rowid AS id, start, "end", quote, body FROM notes WHERE book = ? AND "end" >= ? AND start <= ?
-                               ORDER BY start, "end" DESC, ord`, [book.id, chapter * 1000, chapter * 1000 + 999]) as unknown as Promise<Note[]>);
-    notesOf.set (s.id, p);
-    p.catch (() => notesOf.delete (s.id));
+                               ORDER BY start, "end" DESC, ord`, [ch.book.id, ch.chapter * 1000, ch.chapter * 1000 + 999]) as unknown as Promise<Note[]>);
+    ch.notesOf.set (s.id, p);
+    p.catch (() => ch.notesOf.delete (s.id));
   }
   return p;
 }
 
 /** A source's notes by the verse each is placed at - its first verse in the range (a note on 5:13-6:5 at 6:1); with
  *  an item, only those it keeps (keeps). */
-async function notesByVerse (s: Source, vs: number[], it?: NoteItem): Promise<Map<number, Note[]>> {
+async function notesByVerse (ch: Chapter, s: Source, vs: number[], it?: NoteItem): Promise<Map<number, Note[]>> {
   const out = new Map<number, Note[]> ();
-  for (const n of await chapterNotes (s)) {
+  for (const n of await chapterNotes (ch, s)) {
     if (it && ! keeps (it, n)) continue;
-    const v = vs.find ((x) => chapter * 1000 + x >= n.start && chapter * 1000 + x <= n.end);
+    const v = vs.find ((x) => ch.chapter * 1000 + x >= n.start && ch.chapter * 1000 + x <= n.end);
     if (v === undefined) continue;
     (out.get (v) ?? out.set (v, []).get (v)!).push (n);
   }
@@ -161,28 +178,54 @@ function firstWords (n: Note, after = 0): string {
 }
 
 /** A verse's notes drawn: each as the panel draws it, a diagram's sentences as trees (text: the chapter's words). */
-function drawNotes (s: Source, ns: Note[], text: Map<string, [string, string]>, v: number): HTMLElement[] {
+function drawNotes (s: Source, ns: Note[], text: Map<string, [string, string]>, chapter: number, v: number): HTMLElement[] {
   if (s.kind !== "syntax") return ns.map (noteElement);
   return ns.map ((n) => drawDiagram (JSON.parse (n.body) as Sentence, text, chapter * 1000 + v));
 }
 
 //==== THE ITEMS ====
-const KEY = () => `cotext.study.${book.code}.${chapter}`;
-let items: Item[] = [];
-const load = () => { try { items = (JSON.parse (localStorage.getItem (KEY ()) ?? "[]") as Item[]).filter ((i) => (i.k as string) !== "article"); } catch { items = []; } };     // (An article picked alone - gone, a dictionary is one item now - dropped)
-const save = () => { try { localStorage.setItem (KEY (), JSON.stringify (items)); } catch { /* private mode: not kept */ } };
+let sections: Section[] = [];
+const first = () => sections[0];
+const KEY = () => `cotext.study.${first ().book.code}.${first ().chapter}`;
+const KINDS = new Set (["text", "note", "dict", "map", "time", "words"]);
+/** A saved list's items: those of a kind there is (anything else dropped: a list not a list, an older kind). */
+const itemsOf = (x: unknown): Item[] => Array.isArray (x)
+  ? x.filter ((i): i is Item => !! i && typeof i === "object" && typeof (i as Item).id === "string" && KINDS.has ((i as Item).k)) : [];
+/** The printout kept for a chapter studied (b, c; from, to: the first section's verses, the place studied's) read back:
+ *  its sections; an older printout (a list of items) its first section's items; a section whose book isn't among
+ *  bookList's dropped; anything unreadable, blank. */
+function load (b: Book, c: number, from: number, to: number) {
+  let got: unknown = null;
+  try { got = JSON.parse (localStorage.getItem (`cotext.study.${b.code}.${c}`) ?? "null"); } catch { /* unreadable, or private mode: blank */ }
+  const kept = got && typeof got === "object" && Array.isArray ((got as { sections?: unknown }).sections) ? (got as { sections: unknown[] }).sections : [];
+  const firstItems = Array.isArray (got) ? got : (kept[0] as { items?: unknown } | undefined)?.items;
+  sections = [{ id: "first", book: b, chapter: c, from, to, items: itemsOf (firstItems) }];
+  for (const x of kept.slice (1)) {
+    if (! x || typeof x !== "object") continue;
+    const r = x as Record<string, unknown>;
+    const bk = bookList ().find ((y) => y.code === r.book);
+    if (! bk) continue;
+    sections.push ({ id: typeof r.id === "string" ? r.id : newId (), book: bk, chapter: Math.min (Math.max (Number (r.chapter) || 1, 1), bk.chapters),
+                     from: Number (r.from) || 0, to: Number (r.to) || 0, items: itemsOf (r.items) });
+  }
+}
+const save = () => {
+  try { localStorage.setItem (KEY (), JSON.stringify ({ sections: sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items })) })); }
+  catch { /* private mode: not kept */ }
+};
 let nextId = 0;
 const newId = () => `${Date.now ().toString (36)}${(nextId++).toString (36)}`;
 
-/** An item's line in the editor, as the reader knows it. */
-function nameOf (it: Item): string {
+/** An item's line in the editor, as the reader knows it (sec: its section). */
+function nameOf (sec: Section, it: Item): string {
+  const { book, chapter } = sec;
   const range = "from" in it && (it.from || it.to) ? ` (${chapter}:${it.from || "1"}-${it.to || "end"})` : "";
   switch (it.k) {
-    case "text": return `${textName (it.other)} text of ${book.name} ${chapter}` + (it.gloss ? " + interlinear" : "") + (it.parse ? " + parsing" : "")
+    case "text": return `${textName (book, it.other)} text of ${book.name} ${chapter}` + (it.gloss ? " + interlinear" : "") + (it.parse ? " + parsing" : "")
                         + (it.translit ? " + transliteration" : "") + ((it.gloss || it.parse) && it.under ? ` (helps under ${it.under}×)` : "") + range;
-    case "note": return (sourceOf (it.src)?.name ?? it.src) + (it.beside ? ", beside each verse" : "") + range
+    case "note": return (sourceOf (book, it.src)?.name ?? it.src) + (it.beside ? ", beside each verse" : "") + range
                         + (it.noFathers?.length ? ", some fathers" : "") + (it.skip?.length ? `, ${it.skip.length} left out` : "");
-    case "dict": return (sourceOf (it.src)?.name ?? it.src) + range + (it.skip?.length ? `, ${it.skip.length} left out` : "");
+    case "dict": return (sourceOf (book, it.src)?.name ?? it.src) + range + (it.skip?.length ? `, ${it.skip.length} left out` : "");
     case "map": return "Atlas map" + range;
     case "time": return "Timeline";
     case "words": return "Word list" + (it.which === "rare" ? ` (under ${it.under}×)` : it.which === "picked" ? ` (${it.picked.length} picked)` : "");
@@ -190,25 +233,27 @@ function nameOf (it: Item): string {
 }
 
 //==== THE SCREEN ====
-let previewEl: HTMLElement, linesEl: HTMLElement, menuEl: HTMLElement, printEl: HTMLButtonElement;
+let previewEl: HTMLElement, sectionsEl: HTMLElement, printEl: HTMLButtonElement;
 const openOpts = new Set<string> ();     // (The lines whose options are open)
+const linesOf = new Map<Section, HTMLElement> ();     // (Each section's lines, as drawn)
 
 // (The place studied, kept: "<book code>.<chapter>.<from>.<to>")
 const AT = "cotext.study.at";
-function placeNow (): [Book, number] {
+/** The place studied: the one kept, else the reader's (all its verses): book, chapter, from, to. */
+function placeNow (): [Book, number, number, number] {
   try {
     const [code, c, f, t] = (localStorage.getItem (AT) ?? "").split (".");
     const b = bookList ().find ((x) => x.code === code);
-    if (b && Number (c) >= 1 && Number (c) <= b.chapters) { span = { from: Number (f) || 0, to: Number (t) || 0 }; return [b, Number (c)]; }
+    if (b && Number (c) >= 1 && Number (c) <= b.chapters) return [b, Number (c), Number (f) || 0, Number (t) || 0];
   } catch { /* none kept */ }
-  span = { from: 0, to: 0 };
-  return where ();
+  return [...where (), 0, 0];
 }
-const keepPlace = () => { try { localStorage.setItem (AT, `${book.code}.${chapter}.${span.from}.${span.to}`); } catch { /* private mode */ } };
+const keepPlace = () => { const m = first (); try { localStorage.setItem (AT, `${m.book.code}.${m.chapter}.${m.from}.${m.to}`); } catch { /* private mode */ } };
 
-/** The editor's top: BOOK, CHAPTER and VERSES (from - to), redrawn as the place changes. */
-let placeEl: HTMLElement;
-async function drawPlace () {
+/** A section's reference at its top: BOOK, CHAPTER and VERSES (from - to); a later section's also a ✕ removing it.
+ *  The first's book or chapter changed studies that chapter (its printout read back); a later one's just moves it. */
+async function drawPlace (placeEl: HTMLElement, sec: Section) {
+  const isFirst = sec === first ();
   const pick = (label: string, options: [string, string][], value: string, set: (v: string) => void) => {
     const l = el ("label", "sheetPick", label);
     const s = el ("select", "choose");
@@ -218,80 +263,134 @@ async function drawPlace () {
     l.append (s);
     return l;
   };
-  const vs = await allVerses ();
+  const vs = await allVerses (dataOf (sec));
   const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, i) => String (from + i));
-  const go = (b: Book, c: number) => { study (b, c); span = { from: 0, to: 0 }; keepPlace (); load (); openOpts.clear (); drawPlace (); drawLines (); render (); };
-  placeEl.replaceChildren (
-    pick ("Book", bookList ().map ((b) => [b.code, b.name]), book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
-    pick ("Chapter", nums (1, book.chapters).map ((n) => [n, n]), String (chapter), (v) => go (book, Number (v))),
-    pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (span.from),
-          (v) => { span = { ...span, from: Number (v) }; keepPlace (); render (); }),
-    pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (span.to),
-          (v) => { span = { ...span, to: Number (v) }; keepPlace (); render (); }));
+  const go = (b: Book, c: number) => {
+    if (isFirst) { chapters.clear (); load (b, c, 0, 0); keepPlace (); openOpts.clear (); }
+    else { sec.book = b; sec.chapter = c; sec.from = sec.to = 0; save (); }
+    drawSections (); render ();
+  };
+  const range = (from: number, to: number) => { sec.from = from; sec.to = to; save (); if (isFirst) keepPlace (); render (); };
+  const kids: HTMLElement[] = [
+    pick ("Book", bookList ().map ((b) => [b.code, b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
+    pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
+    pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.from), (v) => range (Number (v), sec.to)),
+    pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.to), (v) => range (sec.from, Number (v)))];
+  if (! isFirst) {
+    const x = el ("button", "pill icon csRemove", "✕");
+    x.setAttribute ("aria-label", "Remove this reference");
+    x.addEventListener ("click", () => {
+      sections = sections.filter ((s) => s !== sec);
+      for (const it of sec.items) openOpts.delete (it.id);
+      save (); drawSections (); render ();
+    });
+    kids.push (x);
+  }
+  placeEl.replaceChildren (...kids);
 }
 
 onScreen ("Study printout", async (body) => {
-  const [b, c] = placeNow ();
-  study (b, c);
-  load ();
-  placeEl = el ("div", "csPlace");
+  const [b, c, from, to] = placeNow ();
+  load (b, c, from, to);
   const box = el ("div", "cstudy");
   previewEl = el ("div", "csPreview");
   const editor = el ("div", "csEditor");
-  linesEl = el ("div", "csLines");
-  const add = el ("button", "pill csAdd", "+ Add item");
-  menuEl = el ("div", "csMenu");
-  menuEl.hidden = true;
+  sectionsEl = el ("div", "csSections");
+  const more = el ("button", "pill csAdd", "+ Add another reference");
+  more.addEventListener ("click", () => {
+    const m = first ();
+    sections.push ({ id: newId (), book: m.book, chapter: m.chapter, from: 0, to: 0, items: [] });
+    save (); drawSections (); render ();
+    sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" });
+  });
   const print = el ("button", "pill csPrint", PRINT);
-  add.addEventListener ("click", () => { if (menuEl.hidden) showMenu (); else menuEl.hidden = true; });
   printEl = print;
   print.addEventListener ("click", () => { if (pdfReady) void sharePdf (pdfReady); else if (printIgnored ()) void makePdf (); else { prepare (); window.print (); } });
-  editor.append (placeEl, linesEl, add, menuEl, print);
+  editor.append (sectionsEl, more, print);
   box.append (previewEl, editor);
   body.append (box);
-  drawPlace ();
-  drawLines ();
+  drawSections ();
   render ();
 });
 
-/** The editor's lines, one per item, in order. */
-function drawLines () {
-  linesEl.replaceChildren (...items.map ((it) => {
-    const line = el ("div", "csLine");
-    line.dataset.id = it.id;
-    const row = el ("div", "csRow");
-    const handle = el ("button", "pill icon csHandle", "⠿");
-    handle.setAttribute ("aria-label", "Drag to move");
-    const opts = el ("button", "pill csOptsBtn", "Options");
-    opts.setAttribute ("aria-expanded", String (openOpts.has (it.id)));
-    const x = el ("button", "pill icon csRemove", "✕");
-    x.setAttribute ("aria-label", "Remove");
-    row.append (handle, el ("span", "csName", nameOf (it)), opts, x);
-    const panel = el ("div", "csOpts");
-    panel.hidden = ! openOpts.has (it.id);
-    if (! panel.hidden) fillOptions (panel, it);
-    opts.addEventListener ("click", () => {
-      if (openOpts.has (it.id)) openOpts.delete (it.id); else openOpts.add (it.id);
-      drawLines ();
-    });
-    x.addEventListener ("click", () => { items = items.filter ((i) => i !== it); openOpts.delete (it.id); changed (); });
-    dragging (handle, line);
-    line.append (row, panel);
-    return line;
+/** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
+ *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
+ *  no items, as "+ Add another reference" adds one, kept. Added to the printout shown, or the one the screen would
+ *  open on (placeNow: the chapter studied last, else the reader's) when it isn't open - read back, added to, saved -,
+ *  and redrawn if it's open. False for a book not among bookList's. */
+export function addStudyReference (code: string, chapter: number, from: number, to: number): boolean {
+  const b = bookList ().find ((x) => x.code === code);
+  if (! b) return false;
+  const open = !! sectionsEl?.isConnected;
+  if (! open) load (...placeNow ());
+  const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
+  const f = Math.max (from || 0, 0);
+  sections.push ({ id: newId (), book: b, chapter: c, from: f, to: f && (to || 0) > f ? to : f, items: [] });
+  save ();
+  if (open) { drawSections (); render (); sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" }); }
+  return true;
+}
+
+/** The editor's sections, each its reference, its lines, + Add item and its menu (hidden until that's tapped). */
+function drawSections () {
+  linesOf.clear ();
+  sectionsEl.replaceChildren (...sections.map ((sec) => {
+    const box = el ("div", "csSection");
+    const place = el ("div", "csPlace");
+    void drawPlace (place, sec);
+    const lines = el ("div", "csLines");
+    linesOf.set (sec, lines);
+    const add = el ("button", "pill csAdd", "+ Add item");
+    const menu = el ("div", "csMenu");
+    menu.hidden = true;
+    add.addEventListener ("click", () => { if (menu.hidden) showMenu (sec, menu); else menu.hidden = true; });
+    box.append (place, lines, add, menu);
+    return box;
   }));
-  if (! items.length) linesEl.append (el ("p", "csEmpty", "Nothing added yet. Add the text with its options, notes, articles, the map, the timeline or a word list."));
+  drawLines ();
+}
+
+/** Each section's lines, one per item, in order. */
+function drawLines () {
+  for (const [sec, linesEl] of linesOf) {
+    linesEl.replaceChildren (...sec.items.map ((it) => {
+      const line = el ("div", "csLine");
+      line.dataset.id = it.id;
+      const row = el ("div", "csRow");
+      const handle = el ("button", "pill icon csHandle", "⠿");
+      handle.setAttribute ("aria-label", "Drag to move");
+      const opts = el ("button", "pill csOptsBtn", "Options");
+      opts.setAttribute ("aria-expanded", String (openOpts.has (it.id)));
+      const x = el ("button", "pill icon csRemove", "✕");
+      x.setAttribute ("aria-label", "Remove");
+      row.append (handle, el ("span", "csName", nameOf (sec, it)), opts, x);
+      const panel = el ("div", "csOpts");
+      panel.hidden = ! openOpts.has (it.id);
+      if (! panel.hidden) fillOptions (panel, sec, it);
+      opts.addEventListener ("click", () => {
+        if (openOpts.has (it.id)) openOpts.delete (it.id); else openOpts.add (it.id);
+        drawLines ();
+      });
+      x.addEventListener ("click", () => { sec.items = sec.items.filter ((i) => i !== it); openOpts.delete (it.id); changed (); });
+      dragging (handle, line, sec);
+      line.append (row, panel);
+      return line;
+    }));
+    if (! sec.items.length) linesEl.append (el ("p", "csEmpty", "Nothing added yet. Add the text with its options, notes, articles, the map, the timeline or a word list."));
+  }
 }
 
 /** The items changed: kept, the lines and the preview redrawn. */
 function changed () { save (); drawLines (); render (); }
 
-/** A line dragged by its handle (pointer events: touch and mouse alike): it moves among the lines as it passes their
- *  middles; let go, the new order is kept. */
-function dragging (handle: HTMLElement, line: HTMLElement) {
+/** A line dragged by its handle (pointer events: touch and mouse alike): it moves among its section's lines as it
+ *  passes their middles; let go, the section's new order is kept. */
+function dragging (handle: HTMLElement, line: HTMLElement, sec: Section) {
   handle.addEventListener ("pointerdown", (e) => {
     e.preventDefault ();
     handle.setPointerCapture (e.pointerId);
     line.classList.add ("dragged");
+    const linesEl = line.parentElement!;
     const move = (ev: PointerEvent) => {
       const prev = line.previousElementSibling as HTMLElement | null, next = line.nextElementSibling as HTMLElement | null;
       const mid = (x: HTMLElement) => { const r = x.getBoundingClientRect (); return r.top + r.height / 2; };
@@ -304,8 +403,8 @@ function dragging (handle: HTMLElement, line: HTMLElement) {
       handle.removeEventListener ("pointercancel", up);
       line.classList.remove ("dragged");
       const order = [...linesEl.querySelectorAll<HTMLElement> (".csLine")].map ((l) => l.dataset.id);
-      const moved = order.join () !== items.map ((i) => i.id).join ();
-      items.sort ((a, b) => order.indexOf (a.id) - order.indexOf (b.id));
+      const moved = order.join () !== sec.items.map ((i) => i.id).join ();
+      sec.items.sort ((a, b) => order.indexOf (a.id) - order.indexOf (b.id));
       if (moved) changed ();
     };
     handle.addEventListener ("pointermove", move);
@@ -330,46 +429,47 @@ const picker = (label: string, choices: [string, string][], value: string, set: 
   row.append (s);
   return row;
 };
-/** A verse range's two pickers (0: the first / the last). */
-async function rangeRows (it: { from: number; to: number }): Promise<HTMLElement[]> {
-  const vs = await verses ();
+/** A verse range's two pickers, among its section's verses (0: the first / the last). */
+async function rangeRows (sec: Section, it: { from: number; to: number }): Promise<HTMLElement[]> {
+  const vs = await verses (sec);
   return [picker ("From verse", [["0", "First"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.from), (v) => { it.from = +v; }),
           picker ("To verse", [["0", "Last"], ...vs.map ((v): [string, string] => [String (v), String (v)])], String (it.to), (v) => { it.to = +v; })];
 }
 
-/** An item's own settings, under its line. */
-async function fillOptions (panel: HTMLElement, it: Item) {
+/** An item's own settings, under its line (sec: its section). */
+async function fillOptions (panel: HTMLElement, sec: Section, it: Item) {
+  const book = sec.book;
   const bar = el ("div", "bar");
   if (it.k === "text") {
     bar.append (toggle ("Interlinear", it.gloss, (v) => { it.gloss = v; }), toggle ("Parsing", it.parse, (v) => { it.parse = v; }),
                 toggle ("Transliteration", it.translit, (v) => { it.translit = v; }));
-    panel.append (bar, ...await rangeRows (it));
-    panel.append (picker ("Helps only for words coming fewer times than", [["0", "Off (every word)"], ...HELPS_UNDER.map ((n): [string, string] => [String (n), `${n} in the ${it.other ? testamentName (otherTestament ()) : testamentName ()}`])],
+    panel.append (bar, ...await rangeRows (sec, it));
+    panel.append (picker ("Helps only for words coming fewer times than", [["0", "Off (every word)"], ...HELPS_UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (it.other ? otherTestament (book) : book.testament)}`])],
                           String (it.under ?? 0), (v) => { it.under = +v; }));
     if (it.under) panel.append (picker ("For", [["both", "Interlinear and parsing"], ["gloss", "Interlinear only"], ["parse", "Parsing only"]],
                                         it.helps ?? "both", (v) => { it.helps = v as typeof it.helps; }));
   } else if (it.k === "note") {
     bar.append (toggle ("Beside each verse", it.beside, (v) => { it.beside = v; }), toggle ("As its own section", ! it.beside, (v) => { it.beside = ! v; }));
-    panel.append (bar, ...await rangeRows (it));
-    await noteChoices (panel, it);
+    panel.append (bar, ...await rangeRows (sec, it));
+    await noteChoices (panel, sec, it);
   } else if (it.k === "dict") {
-    panel.append (...await rangeRows (it));
-    await entryChoices (panel, it);
+    panel.append (...await rangeRows (sec, it));
+    await entryChoices (panel, sec, it);
   } else if (it.k === "map") {
-    panel.append (...await rangeRows (it), ...mapOf (it).opts);
+    panel.append (...await rangeRows (sec, it), ...mapOf (it).opts);
   } else if (it.k === "words") {
     panel.append (picker ("Words", [["all", "Every word of the chapter"], ["rare", "Under a frequency"], ["picked", "Words picked"]], it.which, (v) => { it.which = v as typeof it.which; }));
-    if (it.which === "rare") panel.append (picker ("Coming fewer times than", UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName ()}`]), String (it.under), (v) => { it.under = +v; }));
+    if (it.which === "rare") panel.append (picker ("Coming fewer times than", UNDER.map ((n): [string, string] => [String (n), `${n} in the ${testamentName (book.testament)}`]), String (it.under), (v) => { it.under = +v; }));
     panel.append (picker ("Definitions", [["short", "Short (the gloss)"], ["long", "Long (the lexicon's entry)"]], it.long ? "long" : "short", (v) => { it.long = v === "long"; }));
     bar.append (toggle ("Transliteration", it.translit, (v) => { it.translit = v; }));
     panel.append (bar);
     if (it.which === "picked") {
       const list = el ("div", "csPickList");
-      for (const r of await chapterLexicon ()) {
+      for (const r of await chapterLexicon (dataOf (sec))) {
         const k = String (r.strong), on = it.picked.includes (k);
         const b = el ("button", "pill csPickWord");
         b.setAttribute ("aria-pressed", String (on));
-        b.append (el ("span", hebrew () ? "heWord" : "grWord", String (r.lemma)), el ("span", "csPickGloss", ` ${meaning (r)}`));
+        b.append (el ("span", hebrew (book) ? "heWord" : "grWord", String (r.lemma)), el ("span", "csPickGloss", ` ${meaning (r)}`));
         b.addEventListener ("click", () => { it.picked = on ? it.picked.filter ((x) => x !== k) : [...it.picked, k]; changed (); });
         list.append (b);
       }
@@ -380,10 +480,10 @@ async function fillOptions (panel: HTMLElement, it: Item) {
 
 /** A tick kept and printed at once, the options left as they are (not redrawn: a list keeps its scroll), the line's
  *  name brought up to date. */
-function quietly (it: Item) {
+function quietly (sec: Section, it: Item) {
   save (); render ();
-  const name = linesEl.querySelector (`.csLine[data-id="${it.id}"] .csName`);
-  if (name) name.textContent = nameOf (it);
+  const name = sectionsEl.querySelector (`.csLine[data-id="${it.id}"] .csName`);
+  if (name) name.textContent = nameOf (sec, it);
 }
 /** A checkbox and its label (an option's list: notes, fathers, entries). */
 function check (on: boolean, set: (v: boolean) => void, ...label: HTMLElement[]) {
@@ -398,14 +498,14 @@ function check (on: boolean, set: (v: boolean) => void, ...label: HTMLElement[])
 }
 
 /** A dictionary item's entries to tick, each its title over a line of it: unticked, left out. */
-async function entryChoices (panel: HTMLElement, it: Item & { k: "dict" }) {
+async function entryChoices (panel: HTMLElement, sec: Section, it: Item & { k: "dict" }) {
   let list: Entry[];
-  try { list = await entriesOf (it); }
-  catch { panel.append (el ("p", "", `${sourceOf (it.src)?.name ?? it.src} couldn't be loaded.`)); return; }
+  try { list = await entriesOf (sec, it); }
+  catch { panel.append (el ("p", "", `${sourceOf (sec.book, it.src)?.name ?? it.src} couldn't be loaded.`)); return; }
   const box = el ("div", "csNoteList");
   box.append (...list.map ((a) => check (! it.skip?.includes (a.id), (on) => {
     it.skip = on ? (it.skip ?? []).filter ((x) => x !== a.id) : [...(it.skip ?? []), a.id];
-    quietly (it);
+    quietly (sec, it);
   }, el ("span", "csCheckName", a.title), el ("span", "csPickGloss", ` ${a.line}`))));
   if (! list.length) box.append (el ("p", "", "Nothing for these verses."));
   const top = el ("div", "bar");
@@ -420,13 +520,13 @@ async function entryChoices (panel: HTMLElement, it: Item & { k: "dict" }) {
  *  then the range's notes under their verses, a checkbox each (only the fathers ticked). A tick is kept and printed at
  *  once, the options left as they are (not redrawn: the list keeps its scroll) - but the line's name and, after a
  *  father's tick, the notes' list. */
-async function noteChoices (panel: HTMLElement, it: NoteItem) {
-  const s = sourceOf (it.src);
+async function noteChoices (panel: HTMLElement, sec: Section, it: NoteItem) {
+  const s = sourceOf (sec.book, it.src);
   if (! s) return;
   let by: Map<number, Note[]>;
-  try { by = await notesByVerse (s, inRange (await verses (), it.from, it.to)); }
+  try { by = await notesByVerse (dataOf (sec), s, inRange (await verses (sec), it.from, it.to)); }
   catch { panel.append (el ("p", "", `${s.name} couldn't be loaded.`)); return; }
-  const quiet = () => quietly (it);
+  const quiet = () => quietly (sec, it);
   const fathers = FOLDED.has (s.id);
   const list = el ("div", "csNoteList");
   const drawList = () => {
@@ -434,7 +534,7 @@ async function noteChoices (panel: HTMLElement, it: NoteItem) {
     for (const [v, ns] of by) {
       const shown = ns.filter ((n) => ! it.noFathers?.includes (fatherOf (n)?.name ?? ""));
       if (! shown.length) continue;
-      list.append (el ("div", "src verseHead", `${chapter}:${v}`));
+      list.append (el ("div", "src verseHead", `${sec.chapter}:${v}`));
       for (const n of shown) {
         const f = fathers ? fatherOf (n) : null;
         const label = f ? [el ("span", "csCheckName", `${f.name}${f.dates ? ` (${f.dates})` : ""}${f.work ? ` · ${f.work}` : ""}`),
@@ -471,17 +571,18 @@ async function noteChoices (panel: HTMLElement, it: NoteItem) {
   panel.append (el ("div", "src", "Notes (unticked: left out)"), list);
 }
 
-const hebrew = () => book.testament === "OT";
-const testamentName = (t = book.testament) => t === "OT" ? "Hebrew Bible" : t === "NT" ? "New Testament" : "Septuagint";
+const hebrew = (b: Book) => b.testament === "OT";
+const testamentName = (t: string) => t === "OT" ? "Hebrew Bible" : t === "NT" ? "New Testament" : "Septuagint";
 /** The other text's testament: the Septuagint beside the Hebrew Bible, the Hebrew beside the Septuagint. */
-const otherTestament = () => book.testament === "OT" ? "LXX" : "OT";
+const otherTestament = (b: Book) => b.testament === "OT" ? "LXX" : "OT";
 /** A text item's language as the reader knows it: Hebrew, Greek (the NT), Greek LXX. */
-const textName = (other = false) => { const t = other ? otherTestament () : book.testament; return t === "OT" ? "Hebrew" : t === "LXX" ? "Greek LXX" : "Greek"; };
+const textName = (b: Book, other = false) => { const t = other ? otherTestament (b) : b.testament; return t === "OT" ? "Hebrew" : t === "LXX" ? "Greek LXX" : "Greek"; };
 
 // ---- + Add item ----
-/** The list of what can be added: the text, the notes sources for the book (by kind), the dictionaries (each opening
- *  its articles for the chapter, to pick), the atlas, the timeline, the word list. */
-function showMenu () {
+/** A section's list of what can be added (into menuEl, under its + Add item): the text, the notes sources for its book
+ *  (by kind), the dictionaries, the atlas, the timeline, the word list. */
+function showMenu (sec: Section, menuEl: HTMLElement) {
+  const { book, chapter } = sec;
   menuEl.hidden = false;
   menuEl.replaceChildren ();
   const choice = (name: string, add: () => void, sub = "") => {
@@ -492,20 +593,21 @@ function showMenu () {
     return b;
   };
   const head = (t: string) => el ("div", "src", t);
-  const push = (it: Item) => { items.push (it); menuEl.hidden = true; changed (); };
-  menuEl.append (head ("Original text"), choice (`${textName ()} text of ${book.name} ${chapter}`,
+  const push = (it: Item) => { sec.items.push (it); menuEl.hidden = true; changed (); };
+  const sources = sourcesFor (book);
+  menuEl.append (head ("Original text"), choice (`${textName (book)} text of ${book.name} ${chapter}`,
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0 })));
-  if (book.testament === "OT" || book.heb) menuEl.append (choice (`${textName (true)} text of ${book.name} ${chapter}`,     // (The OT's other text)
+  if (book.testament === "OT" || book.heb) menuEl.append (choice (`${textName (book, true)} text of ${book.name} ${chapter}`,     // (The OT's other text)
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0, other: true })));
   // (The resources in the resources pane's order - notes.ts' sourceGroups: Syntax, Bible Background, Textual Studies,
   // Commentaries, Translations - then the timeline and the word list)
-  const notes = (kinds: string[]) => sources ().filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name,
+  const notes = (kinds: string[]) => sources.filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name,
     () => push ({ id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from: 0, to: 0 })));
   const group = (label: string, els: HTMLElement[]) => { if (els.length) menuEl.append (head (label), ...els); };
   group ("Syntax", notes (["syntax"]));
   group ("Bible Background", [
-    ...sources ().filter ((s) => s.kind === "dictionary").map ((s) => choice (s.name, () => push ({ id: newId (), k: "dict", src: s.id, from: 0, to: 0 }))),
-    ...(sources ().some ((s) => s.kind === "atlas") ? [choice ("Atlas map", () => push ({ id: newId (), k: "map", from: 0, to: 0 }), "The chapter's places")] : [])]);
+    ...sources.filter ((s) => s.kind === "dictionary").map ((s) => choice (s.name, () => push ({ id: newId (), k: "dict", src: s.id, from: 0, to: 0 }))),
+    ...(sources.some ((s) => s.kind === "atlas") ? [choice ("Atlas map", () => push ({ id: newId (), k: "map", from: 0, to: 0 }), "The chapter's places")] : [])]);
   group ("Textual Studies", notes (["apparatus", "version"]));
   group ("Commentaries", notes (["commentary"]));
   group ("Translations", notes (["translation"]));
@@ -515,15 +617,14 @@ function showMenu () {
   menuEl.scrollIntoView ({ block: "nearest" });
 }
 
-type Entry = { id: string; title: string; line: string };
-const entries = new Map<string, Promise<Entry[]>> ();     // (A dictionary's entries for a range: "<src>|<verses>")
-/** A dictionary item's entries for its verses, each once, in order: the Tyndale's by verse (those citing
- *  each, then those its words lead to - dictionary.ts' passageArticles), the finds', parallels' and historians' those
- *  bearing on the verses (bookArticles). */
-async function entriesOf (it: Item & { k: "dict" }): Promise<Entry[]> {
-  const vs = inRange (await verses (), it.from, it.to);
+/** A dictionary item's entries for its verses (sec: its section), each once, in order: the Tyndale's by verse (those
+ *  citing each, then those its words lead to - dictionary.ts' passageArticles), the finds', parallels' and historians'
+ *  those bearing on the verses (bookArticles). */
+async function entriesOf (sec: Section, it: Item & { k: "dict" }): Promise<Entry[]> {
+  const { book, chapter } = sec, ch = dataOf (sec);
+  const vs = inRange (await verses (sec), it.from, it.to);
   const key = `${it.src}|${vs.join (",")}`;
-  let p = entries.get (key);
+  let p = ch.entries.get (key);
   if (! p) {
     p = (async () => {
       const got: Entry[] = it.src === "finds" || it.src === "ane" || it.src === "historians"
@@ -532,132 +633,139 @@ async function entriesOf (it: Item & { k: "dict" }): Promise<Entry[]> {
       const seen = new Set<string> ();
       return got.filter ((a) => ! seen.has (a.id) && !! seen.add (a.id)).map ((a) => ({ id: a.id, title: a.title.replace (/\*/g, ""), line: a.line }));
     }) ();
-    entries.set (key, p);
-    p.catch (() => entries.delete (key));
+    ch.entries.set (key, p);
+    p.catch (() => ch.entries.delete (key));
   }
   return p;
 }
 
 //==== THE PREVIEW ====
-// Drawn whole on each change, off screen, then swapped in (a later draw winning over one still reading); the maps'
-// and articles' elements are kept per item and moved in.
+// Drawn whole on each change, off screen, then swapped in (a later draw winning over one still reading): each section
+// in order, headed with its reference (the first's "Study printout" under it), its items under it, then the sources
+// of every section credited once; the maps' and articles' elements are kept per item and moved in.
 let drawing = 0;
 async function render () {
   const n = ++drawing;
   const doc = el ("div", "csDoc");
   doc.dir = "ltr";
-  const part = span.from || span.to ? `:${span.from || 1}–${span.to || "end"}` : "";
-  doc.append (el ("h1", "csTitle", `${book.name} ${chapter}${part}`), el ("div", "src csSub", "Study printout"));
-  const vs = await verses ();
-  const used = new Map<string, string> ();     // (Each source credited: its name -> its credit)
+  const used = new Map<string, string> ();     // (Each source credited, in any section: its name -> its credit)
   const credit = (name: string, text: string) => { if (text && ! used.has (name)) used.set (name, text); };
-  const list: Item[] = items;     // (Nothing added: nothing shown, not even the text)
-  const firstText = list.find ((i) => i.k === "text" && ! i.other);     // (The other text numbers its own verses: notes go under this one's)
-  const beside = firstText ? list.filter ((i): i is Item & { k: "note" } => i.k === "note" && i.beside) : [];
-  const text = new Map<string, [string, string]> ();     // (A diagram's words: "ref:n" -> [text, gloss])
-  for (const w of await words) text.set (`${chapter * 1000 + w.verse}:${w.word}`, [w.text, w.gloss]);
-  const mapsNow: ReturnType<typeof mapOf>[] = [];
-  for (const it of list) {
-    if (it.k === "note" && beside.includes (it as Item & { k: "note" })) continue;     // (Drawn under the text's verses)
-    const block = el ("section", "csBlock");
-    const h = (t: string) => block.append (el ("h2", "csHead", t));
-    try {
-      if (it.k === "text") {
-        credit ("text", TEXT_CREDIT);
-        const range = inRange (vs, it.from, it.to);
-        let box: HTMLElement;
-        if (it.other) {
-          const ws = await otherWords (range);
-          h (`${textName (true)} text` + (ws.length ? ` (${wordsSpan (ws)})` : ""));
-          box = textBox ({ ...book, testament: otherTestament () }, ws[0]?.chapter ?? chapter, ws, it);
-          if (! ws.length) box.append (el ("p", "", `No ${testamentName (otherTestament ())} verses for these verses.`));
-        } else {
-          h (`${textName ()} text`);
-          box = textBox (book, chapter, (await words).filter ((w) => range.includes (w.verse)), it);
-        }
-        if (it.under) {     // (A common word's helps taken off: its root coming under times or more in its testament)
-          const count = it.other ? await countsOf ([...box.querySelectorAll<HTMLElement> (".w")].map ((w) => w.dataset.strong ?? ""), otherTestament () === "LXX" ? -1 : 0)
-                                 : new Map ((await chapterLexicon ()).map ((r) => [String (r.strong), Number (r.count ?? 0)]));
-          const helps = it.helps ?? "both";
-          for (const w of box.querySelectorAll<HTMLElement> (".w")) {
-            const common = (count.get (w.dataset.strong ?? "") ?? 0) >= it.under;
-            w.classList.toggle ("csNoGloss", common && helps !== "parse");
-            w.classList.toggle ("csNoParse", common && helps !== "gloss");
+  const mapsNow: { m: ReturnType<typeof mapOf>; sec: Section }[] = [];
+  for (const [i, sec] of sections.entries ()) {
+    const { book, chapter } = sec, ch = dataOf (sec);
+    const part = el ("div", "csPart");
+    part.append (el ("h1", "csTitle", refName (sec)));
+    if (! i) part.append (el ("div", "src csSub", "Study printout"));
+    const vs = await verses (sec);
+    const list: Item[] = sec.items;     // (Nothing added: nothing shown, not even the text)
+    const firstText = list.find ((i) => i.k === "text" && ! i.other);     // (The other text numbers its own verses: notes go under this one's)
+    const beside = firstText ? list.filter ((i): i is Item & { k: "note" } => i.k === "note" && i.beside) : [];
+    const text = new Map<string, [string, string]> ();     // (A diagram's words: "ref:n" -> [text, gloss])
+    for (const w of await ch.words) text.set (`${chapter * 1000 + w.verse}:${w.word}`, [w.text, w.gloss]);
+    for (const it of list) {
+      if (it.k === "note" && beside.includes (it as Item & { k: "note" })) continue;     // (Drawn under the text's verses)
+      const block = el ("section", "csBlock");
+      const h = (t: string) => block.append (el ("h2", "csHead", t));
+      try {
+        if (it.k === "text") {
+          credit ("text", TEXT_CREDIT);
+          const range = inRange (vs, it.from, it.to);
+          let box: HTMLElement;
+          if (it.other) {
+            const ws = await otherWords (ch, range);
+            h (`${textName (book, true)} text` + (ws.length ? ` (${wordsSpan (ws)})` : ""));
+            box = textBox ({ ...book, testament: otherTestament (book) }, ws[0]?.chapter ?? chapter, ws, it);
+            if (! ws.length) box.append (el ("p", "", `No ${testamentName (otherTestament (book))} verses for these verses.`));
+          } else {
+            h (`${textName (book)} text`);
+            box = textBox (book, chapter, (await ch.words).filter ((w) => range.includes (w.verse)), it);
           }
-        }
-        if (it === firstText) for (const b of beside) {
-          const s = sourceOf (b.src);
+          if (it.under) {     // (A common word's helps taken off: its root coming under times or more in its testament)
+            const count = it.other ? await countsOf ([...box.querySelectorAll<HTMLElement> (".w")].map ((w) => w.dataset.strong ?? ""), otherTestament (book) === "LXX" ? -1 : 0)
+                                   : new Map ((await chapterLexicon (ch)).map ((r) => [String (r.strong), Number (r.count ?? 0)]));
+            const helps = it.helps ?? "both";
+            for (const w of box.querySelectorAll<HTMLElement> (".w")) {
+              const common = (count.get (w.dataset.strong ?? "") ?? 0) >= it.under;
+              w.classList.toggle ("csNoGloss", common && helps !== "parse");
+              w.classList.toggle ("csNoParse", common && helps !== "gloss");
+            }
+          }
+          if (it === firstText) for (const b of beside) {
+            const s = sourceOf (book, b.src);
+            if (! s) continue;
+            credit (s.name, s.credit);
+            const by = await notesByVerse (ch, s, inRange (range, b.from, b.to), b);
+            for (const row of box.querySelectorAll<HTMLElement> (".vrow")) {
+              const v = Number (row.dataset.verse), ns = by.get (v);
+              if (! ns?.length) continue;
+              // (After the row and any other source's notes already placed under it)
+              let after: Element = row;
+              while (after.nextElementSibling?.classList.contains ("csBeside")) after = after.nextElementSibling;
+              const note = el ("div", "csBeside gBody");
+              note.append (el ("div", "src", s.name), ...drawNotes (s, ns, text, chapter, v));
+              after.after (note);
+            }
+          }
+          block.append (box);
+        } else if (it.k === "note") {
+          const s = sourceOf (book, it.src);
           if (! s) continue;
+          h (s.name);
           credit (s.name, s.credit);
-          const by = await notesByVerse (s, inRange (range, b.from, b.to), b);
-          for (const row of box.querySelectorAll<HTMLElement> (".vrow")) {
-            const v = Number (row.dataset.verse), ns = by.get (v);
+          const range = inRange (vs, it.from, it.to);
+          const by = await notesByVerse (ch, s, range, it);
+          const body = el ("div", "gBody csNotes");
+          for (const v of range) {
+            const ns = by.get (v);
             if (! ns?.length) continue;
-            // (After the row and any other source's notes already placed under it)
-            let after: Element = row;
-            while (after.nextElementSibling?.classList.contains ("csBeside")) after = after.nextElementSibling;
-            const note = el ("div", "csBeside gBody");
-            note.append (el ("div", "src", s.name), ...drawNotes (s, ns, text, v));
-            after.after (note);
+            const one = el ("div", "csVerse");
+            one.append (el ("div", "src verseHead", `${chapter}:${v}`), ...drawNotes (s, ns, text, chapter, v));
+            body.append (one);
           }
+          if (! body.children.length) body.append (el ("p", "", "Nothing on these verses."));
+          block.append (body);
+        } else if (it.k === "dict") {
+          const s = sourceOf (book, it.src);
+          h (s?.name ?? it.src);
+          const list = (await entriesOf (sec, it)).filter ((a) => ! it.skip?.includes (a.id));
+          for (const e of list) {
+            const key = `${it.src}:${e.id}`;
+            let a = articles.get (key);
+            if (! a) { a = articleBlock (db, e.id, it.src); articles.set (key, a); }
+            const got = await a;
+            if (! got) continue;
+            block.append (el ("h3", "csArticle", got.title), ...got.body);
+            credit (got.name, got.credit);
+          }
+          if (! list.length) block.append (el ("p", "", "Nothing for these verses."));
+        } else if (it.k === "map") {
+          h ("Atlas");
+          const m = mapOf (it);
+          const s = sourcesFor (book).find ((x) => x.kind === "atlas");
+          if (s) credit (s.name, s.credit);
+          block.append (m.view.el);
+          const range = inRange (vs, it.from, it.to);
+          const key = `${book.id}.${chapter}:${range.join (",")}`;
+          if (m.key !== key) { m.key = key; m.range = range; mapsNow.push ({ m, sec }); }
+        } else if (it.k === "time") {
+          h ("Timeline");
+          const t = await chapterTime (book.id, chapter);
+          if (t) { credit ("Timeline", t.credit); block.append (timelineBlock (t, book, chapter)); }
+          else block.append (el ("p", "", "The timeline couldn't be loaded."));
+        } else if (it.k === "words") {
+          h ("Word list");
+          credit ("text", TEXT_CREDIT);
+          block.append (await wordList (ch, it));
         }
-        block.append (box);
-      } else if (it.k === "note") {
-        const s = sourceOf (it.src);
-        if (! s) continue;
-        h (s.name);
-        credit (s.name, s.credit);
-        const range = inRange (vs, it.from, it.to);
-        const by = await notesByVerse (s, range, it);
-        const body = el ("div", "gBody csNotes");
-        for (const v of range) {
-          const ns = by.get (v);
-          if (! ns?.length) continue;
-          const one = el ("div", "csVerse");
-          one.append (el ("div", "src verseHead", `${chapter}:${v}`), ...drawNotes (s, ns, text, v));
-          body.append (one);
-        }
-        if (! body.children.length) body.append (el ("p", "", "Nothing on these verses."));
-        block.append (body);
-      } else if (it.k === "dict") {
-        const s = sourceOf (it.src);
-        h (s?.name ?? it.src);
-        const list = (await entriesOf (it)).filter ((a) => ! it.skip?.includes (a.id));
-        for (const e of list) {
-          const key = `${it.src}:${e.id}`;
-          let a = articles.get (key);
-          if (! a) { a = articleBlock (db, e.id, it.src); articles.set (key, a); }
-          const got = await a;
-          if (! got) continue;
-          block.append (el ("h3", "csArticle", got.title), ...got.body);
-          credit (got.name, got.credit);
-        }
-        if (! list.length) block.append (el ("p", "", "Nothing for these verses."));
-      } else if (it.k === "map") {
-        h ("Atlas");
-        const m = mapOf (it);
-        const s = sources ().find ((x) => x.kind === "atlas");
-        if (s) credit (s.name, s.credit);
-        block.append (m.view.el);
-        const range = inRange (vs, it.from, it.to);
-        const key = range.join (",");
-        if (m.key !== key) { m.key = key; m.range = range; mapsNow.push (m); }
-      } else if (it.k === "time") {
-        h ("Timeline");
-        const t = await chapterTime (book.id, chapter);
-        if (t) { credit ("Timeline", t.credit); block.append (timelineBlock (t)); }
-        else block.append (el ("p", "", "The timeline couldn't be loaded."));
-      } else if (it.k === "words") {
-        h ("Word list");
-        credit ("text", TEXT_CREDIT);
-        block.append (await wordList (it));
+      } catch (e) {
+        block.append (el ("p", "", "This couldn't be loaded."));
+        console.warn ("Study printout:", e);
       }
-    } catch (e) {
-      block.append (el ("p", "", "This couldn't be loaded."));
-      console.warn ("Study printout:", e);
+      if (n !== drawing) return;
+      part.append (block);
     }
     if (n !== drawing) return;
-    doc.append (block);
+    doc.append (part);
   }
   if (used.size) {
     const credits = el ("section", "csBlock csCredits");
@@ -670,8 +778,8 @@ async function render () {
   previewEl.replaceChildren (doc);
   previewEl.scrollTop = scroll;
   // (A map drawn once it's in the page: it needs its size)
-  for (const m of mapsNow)
-    m.view.update (book.id, chapter, m.range.map ((x) => ({ v: x, where: [[book.id, chapter, x]] })), "No places named in these verses.");
+  for (const { m, sec } of mapsNow)
+    m.view.update (sec.book.id, sec.chapter, m.range.map ((x) => ({ v: x, where: [[sec.book.id, sec.chapter, x]] })), "No places named in these verses.");
 }
 
 /** An Atlas item's map, made once (atlas.ts' passageMap): its pickers (BASE MAP, POLITICAL BOUNDARIES, ROUTE) moved
@@ -692,9 +800,9 @@ function mapOf (it: Item) {
 const yearText = (y: number) => { const r = Math.round (y); return r <= 0 ? `${1 - r} BC` : `AD ${r}`; };
 const SPAN = 150;     // (The years either side of the chapter's shown)
 
-/** The chapter on the timeline: its year, then each lane's items within SPAN years of it as bars along the years
- *  shown (the chapter's own in the accent), the chapter's year a line across them. */
-function timelineBlock (t: NonNullable<Awaited<ReturnType<typeof chapterTime>>>): HTMLElement {
+/** A chapter (of book) on the timeline: its year, then each lane's items within SPAN years of it as bars along the
+ *  years shown (the chapter's own in the accent), the chapter's year a line across them. */
+function timelineBlock (t: NonNullable<Awaited<ReturnType<typeof chapterTime>>>, book: Book, chapter: number): HTMLElement {
   const box = el ("div", "csTime");
   if (t.year === null) { box.append (el ("p", "", "This chapter isn't dated on the timeline.")); return box; }
   const y = t.year, lo = y - SPAN, hi = y + SPAN;
@@ -756,15 +864,14 @@ export async function translatedWords (theDb: Db, b: Book, chapter: number, lo: 
   return (await Promise.all (refs.map (([bk, c, v]) => verseWords (theDb, bk, c, v)))).flat ();
 }
 
-/** The other text's words for the verses studied (vs): translatedWords, kept per range. */
-const others = new Map<string, Promise<Word[]>> ();     // (By the verses studied: "<vs>")
-function otherWords (vs: number[]): Promise<Word[]> {
+/** The other text's words for a chapter's verses (vs): translatedWords, kept per range. */
+function otherWords (ch: Chapter, vs: number[]): Promise<Word[]> {
   const key = vs.join (",");
-  let p = others.get (key);
+  let p = ch.others.get (key);
   if (! p && vs.length) {
-    p = translatedWords (db, book, chapter, Math.min (...vs), Math.max (...vs));
-    others.set (key, p);
-    p.catch (() => others.delete (key));
+    p = translatedWords (db, ch.book, ch.chapter, Math.min (...vs), Math.max (...vs));
+    ch.others.set (key, p);
+    p.catch (() => ch.others.delete (key));
   }
   return p ?? Promise.resolve ([]);
 }
@@ -780,12 +887,12 @@ async function countsOf (strongs: string[], freqBook: number): Promise<Map<strin
   return out;
 }
 
-/** The chapter's words' lexicon rows (each root once, in the order it first comes), with its count in the testament. */
-function chapterLexicon (): Promise<Row[]> {
-  lexicon ??= (async () => {
-    const strongs = [...new Set ((await words).map ((w) => w.strong))];
+/** A chapter's words' lexicon rows (each root once, in the order it first comes), with its count in the testament. */
+function chapterLexicon (ch: Chapter): Promise<Row[]> {
+  ch.lexicon ??= (async () => {
+    const strongs = [...new Set ((await ch.words).map ((w) => w.strong))];
     const out = new Map<string, Row> ();
-    const whole = book.testament === "LXX" ? -1 : 0;
+    const whole = ch.book.testament === "LXX" ? -1 : 0;
     for (let i = 0; i < strongs.length; i += 500) {     // (SQLite's bound parameters, a chunk at a time)
       const part = strongs.slice (i, i + 500);
       for (const r of await db.all (`SELECT l.strong, l.lemma, l.translit, l.gloss, l.concise, l.entry, f.count FROM lexicon l
@@ -794,23 +901,24 @@ function chapterLexicon (): Promise<Row[]> {
     }
     return strongs.filter ((s) => out.has (s)).map ((s) => out.get (s)!);
   }) ();
-  return lexicon;
+  return ch.lexicon;
 }
 const meaning = (r: Row) => String (r.concise || r.gloss || "");
 
-/** WORD LIST: the words asked for, rarest first (then as they come), each its dictionary form, transliteration (an
- *  option), definition (short: the vocab gloss; long: the brief lexicon's entry - only <b>, <i>, <br>: build_db.py) and
- *  its count in the testament. */
-async function wordList (it: Item & { k: "words" }): Promise<HTMLElement> {
-  const rows = (await chapterLexicon ()).filter ((r) => it.which === "all" || (it.which === "rare" ? Number (r.count ?? 0) < it.under : it.picked.includes (String (r.strong))));
+/** WORD LIST: a chapter's words asked for, rarest first (then as they come), each its dictionary form, transliteration
+ *  (an option), definition (short: the vocab gloss; long: the brief lexicon's entry - only <b>, <i>, <br>: build_db.py)
+ *  and its count in the testament. */
+async function wordList (ch: Chapter, it: Item & { k: "words" }): Promise<HTMLElement> {
+  const rows = (await chapterLexicon (ch)).filter ((r) => it.which === "all" || (it.which === "rare" ? Number (r.count ?? 0) < it.under : it.picked.includes (String (r.strong))));
   const sorted = rows.map ((r, i) => ({ r, i })).sort ((a, b) => Number (a.r.count ?? 0) - Number (b.r.count ?? 0) || a.i - b.i).map ((x) => x.r);
   const box = el ("div", "csWords");
   if (! sorted.length) { box.append (el ("p", "", it.which === "picked" ? "No words picked yet: pick them in the line's options." : "No words.")); return box; }
+  const he = hebrew (ch.book);
   for (const r of sorted) {
     const row = el ("div", "csWord");
     const head = el ("div", "csWordHead");
-    head.append (el ("span", hebrew () ? "heWord" : "grWord", String (r.lemma)));
-    if (it.translit) head.append (el ("span", "csTr", latin (hebrew (), String (r.lemma), String (r.translit ?? ""))));
+    head.append (el ("span", he ? "heWord" : "grWord", String (r.lemma)));
+    if (it.translit) head.append (el ("span", "csTr", latin (he, String (r.lemma), String (r.translit ?? ""))));
     head.append (el ("span", "csCount", `${Number (r.count ?? 0)}×`));
     const def = el ("div", "csDef");
     if (it.long && r.entry) def.innerHTML = String (r.entry); else def.textContent = meaning (r);
@@ -976,7 +1084,7 @@ async function makePdf () {
       shots.push ({ jpeg: new Uint8Array (await blob.arrayBuffer ()), pw, ph, h: h / px });
       top = cut;
     }
-    const name = `${book.name} ${chapter} study.pdf`;
+    const name = `${first ().book.name} ${first ().chapter} study.pdf`;     // (Named by the chapter studied)
     pdfReady = new File ([pdfOf (shots, page, soft)], name, { type: "application/pdf" });
     printEl.textContent = PRINT;
     await sharePdf (pdfReady);

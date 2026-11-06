@@ -754,6 +754,9 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }
+.csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
+.csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
+.csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
 .csEditor { grid-area: editor; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
 .csLine { border-bottom: var(--rule); background: var(--bg); }
 .csLine.dragged { background: var(--tint-solid); }
@@ -787,6 +790,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    title, each block headed; the text's lines shown by its own options, whatever the ⋯ menu says for the reader. */
 .csDoc { max-width: var(--page); margin: 0 auto; }
 .csTitle { font-size: var(--fs-2xl); }
+.csPart + .csPart { margin-top: calc(2 * var(--gap-l)); }     /* (A later section of the printout, headed with its reference: set apart from the one before) */
 .csSub { margin-top: 2px; }
 .csBlock { margin-top: 22px; }
 .csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: var(--rule); padding-bottom: 4px; }
@@ -930,7 +934,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   .csSnap { display: block; width: 100%; }
   .csDoc .atlasMap { aspect-ratio: auto; max-height: none; }
   .csDoc .vrow, .csBeside, .csDoc .note, .csWord, .csDoc .atlasMap, .csDoc .dictPhoto, .csDoc .atlasRow, .csBarRow, .csDoc .dg { break-inside: avoid; }
-  .csHead, .csDoc .verseHead { break-after: avoid; }
+  .csTitle, .csHead, .csDoc .verseHead { break-after: avoid; }
   .csDoc .dictPhoto img { max-height: 9cm; width: auto; }
   .csDoc { --word-he: 24px; --word-gr: 22px; }
 }
