@@ -14,7 +14,8 @@
 //   its items to those verses (an item's own range within it); every item works for its section's reference as it
 //   would for the first's. Between passages (before the first, after the last) the reader's FREE items may sit on
 //   their own - notes and single entries, tied to no verses: a loose run, no heading.
-// - TWO PANES: the EDITOR - each section: its reference, a line per item added (its name; a drag handle ⠿ to move it
+// - TWO PANES: the EDITOR - each passage: its reference line (⠿ dragging the whole passage, its items with it, as a
+//   folder, among the others; ⌄ folding it to that line alone, or unfolding it), then, unfolded, its pickers, a line per item added (its name; a drag handle ⠿ to move it
 //   up or down within the section, by touch or mouse - a free item's anywhere: into any passage or the drop places
 //   shown before, between and after them; Options, opening that item's own settings under it - a note's Edit, opening
 //   its editor -; ✕ removing it), "+ Add item" under the last (its menu over everything, the panel's divider too) -,
@@ -117,7 +118,7 @@ type Item = { id: string } & (
  *  items in order. The first passage names the printout until it's renamed. loose: no passage - a run of the reader's
  *  free items (FREE: notes and single entries) between passages, before the first or after the last; no heading, its
  *  book only what its entries' sources are looked up by. Never empty: emptied, it's gone (settle). */
-type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[]; loose?: boolean };
+type Section = { id: string; book: Book; chapter: number; from: number; to: number; items: Item[]; loose?: boolean; closed?: boolean };     // (closed: a passage folded in the editor - its reference line alone)
 /** The items tied to no verses - a note, a single entry -, so dragged anywhere: within any passage or between them. */
 const FREE = new Set<Item["k"]> (["memo", "article"]);
 const isFree = (it: Item) => FREE.has (it.k);
@@ -272,7 +273,7 @@ function sectionsOf (x: unknown): Section[] {
     const loose = r.loose === true, items = itemsOf (r.items).filter ((i) => ! loose || isFree (i));     // (A loose run: its free items alone)
     if (loose && ! items.length) continue;
     out.push ({ id: typeof r.id === "string" ? r.id : newId (), book: bk, chapter: Math.min (Math.max (Number (r.chapter) || 1, 1), bk.chapters),
-                from: Number (r.from) || 0, to: Number (r.to) || 0, items, ...(loose ? { loose } : {}) });
+                from: Number (r.from) || 0, to: Number (r.to) || 0, items, ...(loose ? { loose } : {}), ...(r.closed === true && ! loose ? { closed: true } : {}) });
   }
   return out;
 }
@@ -310,7 +311,7 @@ function load () {
 const save = () => {
   try {
     localStorage.setItem (KEY, JSON.stringify ({ at: now ().id, printouts: printouts.map ((p) => ({ id: p.id, name: p.name, bib: p.bib,
-      sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items, loose: s.loose })) })) }));
+      sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items, loose: s.loose, closed: s.closed })) })) }));
   } catch { /* private mode: not kept */ }
 };
 let nextId = 0;
@@ -356,7 +357,11 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
   const vs = await allVerses (dataOf (sec));
   const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, i) => String (from + i));
   const go = (b: Book, c: number) => { sec.book = b; sec.chapter = c; sec.from = sec.to = 0; save (); drawSections (); render (); if (isFirst) nameFollows (); };
-  const range = (from: number, to: number) => { sec.from = from; sec.to = to; save (); render (); if (isFirst) nameFollows (); };
+  const range = (from: number, to: number) => {
+    sec.from = from; sec.to = to; save (); render (); if (isFirst) nameFollows ();
+    const name = placeEl.parentElement?.querySelector (".csPassage .csName");
+    if (name) name.textContent = refName (sec);     // (Its reference line following)
+  };
   const kids: HTMLElement[] = [
     pick ("Book", bookList ().map ((b) => [b.code, b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
     pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
@@ -637,7 +642,9 @@ document.addEventListener ("pointerdown", (e) => {
     if (! m.contains (t) && ! menuButtons.get (m)?.contains (t)) closeMenu (m);
 });
 
-/** The editor's sections, each its reference, its lines, + Add item and its menu (hidden until that's tapped). */
+/** The editor's sections, each a passage - its reference line (⠿ dragging the passage with all it holds, as a folder;
+ *  its reference; ⌄ folding or unfolding it) and, unfolded, its pickers, its lines, + Add item and its menu (hidden
+ *  until that's tapped) - or a loose run's lines. */
 function drawSections () {
   linesOf.clear ();
   for (const m of document.querySelectorAll<HTMLElement> (".csMenu:not([hidden])")) closeMenu (m);
@@ -650,6 +657,18 @@ function drawSections () {
       box.append (lines);
       return box;
     }
+    const head = el ("div", "csRow csPassage");
+    const handle = el ("button", "pill icon csHandle", "⠿");
+    handle.setAttribute ("aria-label", "Drag to move this passage");
+    const fold = el ("button", "pill icon csFold");
+    fold.append (el ("span", "topArrow"));
+    fold.setAttribute ("aria-expanded", String (! sec.closed));
+    fold.setAttribute ("aria-label", sec.closed ? "Open this passage" : "Fold this passage");
+    fold.addEventListener ("click", () => { sec.closed = ! sec.closed || undefined; save (); drawSections (); });
+    head.append (handle, el ("span", "csName", refName (sec)), fold);
+    draggingPassage (handle, box);
+    box.append (head);
+    if (sec.closed) return box;     // (Folded: its reference alone)
     const place = el ("div", "csPlace");
     void drawPlace (place, sec);
     const lines = el ("div", "csLines");
@@ -850,6 +869,36 @@ function draggingFree (handle: HTMLElement, line: HTMLElement) {
       now ().sections = sections = settle (out);
       if (JSON.stringify (sections.map ((s) => [s.id, s.items.map ((i) => i.id)])) !== was) { save (); render (); }
       drawSections ();     // (The drop places gone)
+    };
+    document.addEventListener ("pointermove", move);
+    document.addEventListener ("pointerup", up);
+    document.addEventListener ("pointercancel", up);
+  });
+}
+
+/** A passage dragged by its reference line's ⠿ (as a folder: its items with it): among the passages and loose runs, as
+ *  it passes their middles; let go, the new order kept (settle: loose runs left side by side made one), the preview
+ *  drawn again, the printout's name following its first passage. */
+function draggingPassage (handle: HTMLElement, box: HTMLElement) {
+  handle.addEventListener ("pointerdown", (e) => {
+    e.preventDefault ();
+    box.classList.add ("dragged");
+    const move = (ev: PointerEvent) => {
+      const prev = box.previousElementSibling as HTMLElement | null, next = box.nextElementSibling as HTMLElement | null;
+      const mid = (x: HTMLElement) => { const r = cssBox (x); return r.top + r.height / 2; }, y = px (ev.clientY);     // (One space: zoom.ts)
+      if (prev && y < mid (prev)) sectionsEl.insertBefore (box, prev);
+      else if (next && y > mid (next)) sectionsEl.insertBefore (next, box);
+    };
+    const up = () => {
+      document.removeEventListener ("pointermove", move);
+      document.removeEventListener ("pointerup", up);
+      document.removeEventListener ("pointercancel", up);
+      box.classList.remove ("dragged");
+      const order = [...sectionsEl.children].map ((b) => (b as HTMLElement).dataset.sec);
+      const was = sections.map ((x) => x.id).join ();
+      now ().sections = sections = settle ([...sections].sort ((a, b) => order.indexOf (a.id) - order.indexOf (b.id)));
+      if (sections.map ((x) => x.id).join () !== was) { save (); render (); nameFollows (); }
+      drawSections ();
     };
     document.addEventListener ("pointermove", move);
     document.addEventListener ("pointerup", up);

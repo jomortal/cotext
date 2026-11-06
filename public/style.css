@@ -737,7 +737,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
 .csEditor { gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
 .csLine { border-bottom: var(--rule); background: var(--bg); }
-.csLine.dragged { background: var(--tint-solid); }
+.csLine.dragged, .csSection.dragged { background: var(--tint-solid); }
+.csPassage .csName { font-weight: 600; }     /* (A passage's reference line: its reference as a heading of what it holds) */
+.csFold[aria-expanded="true"] .topArrow { rotate: 180deg; }     /* (A passage's fold button: ⌄ folded, pointing up unfolded) */
 .csGap { min-height: 40px; border: 1px dashed var(--soft); border-radius: var(--radius); }     /* (A free item dragged: the places it can go between passages, each a line's height) */
 .csRow { display: flex; align-items: center; gap: var(--gap-m); min-height: 40px; }
 .csHandle { width: var(--x-w); touch-action: none; cursor: grab; color: var(--soft); user-select: none; -webkit-user-select: none; }
