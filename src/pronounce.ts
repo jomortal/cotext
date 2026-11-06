@@ -1,4 +1,9 @@
-// The Pronunciation guide (☰ > Pronunciation), for the testament shown. Greek (NT): the alphabet as modern Greek says
+// The Pronunciation guide (☰ > Pronunciation): a picker at its top - HEBREW, GREEK - MODERN or GREEK - ERASMIAN (at
+// first the testament shown's: Hebrew for the OT, modern Greek otherwise; then the last picked, kept on the device).
+// GREEK - ERASMIAN: the pronunciation most Bible schools teach (after Erasmus, 1528) - each letter its own sound, the
+// diphthongs and the nasal γ, then the breathings - with no speaker (the device's voices speak modern Greek only).
+// Each guide its tables alone, no explanation over them.
+// GREEK - MODERN (and before the picker, the NT's): the alphabet as modern Greek says
 // it - the sound COTEXT reads aloud in (audio.ts: el-GR) - each letter upper and lower case, its name, its sound (IPA)
 // and an English example; then the letter pairs that make one sound (αι, ει, ου, αυ, μπ, ντ...). Hebrew (OT): the
 // consonants as modern Israeli Hebrew says them - again what COTEXT reads aloud in (he-IL) - each with its final form,
@@ -36,6 +41,50 @@ const LETTERS: [string, string, string, string, string, string][] = [
   ["Χ", "χ", "χι", "chi", "x / ç", "ch as in Scottish loch; before ε, ι, η, υ as in German ich"],
   ["Ψ", "ψ", "ψι", "psi", "ps", "ps as in lips"],
   ["Ω", "ω", "ωμέγα", "omega", "o", "o as in more - the same as ο"],
+];
+
+/** Erasmian Greek: [upper, lower, name (English), IPA, how it sounds] */
+const ERASMIAN: [string, string, string, string, string][] = [
+  ["Α", "α", "alpha", "a / aː", "a as in father"],
+  ["Β", "β", "beta", "b", "b as in boy"],
+  ["Γ", "γ", "gamma", "g / ŋ", "g as in go; before γ, κ, ξ or χ, ng as in sing"],
+  ["Δ", "δ", "delta", "d", "d as in dog"],
+  ["Ε", "ε", "epsilon", "e", "e as in bet"],
+  ["Ζ", "ζ", "zeta", "zd / dz", "dz as in adze (often taught as z in zoo)"],
+  ["Η", "η", "eta", "ɛː", "e as in they - a long e"],
+  ["Θ", "θ", "theta", "θ", "th as in think"],
+  ["Ι", "ι", "iota", "i / iː", "i as in sit when short, ee as in machine when long"],
+  ["Κ", "κ", "kappa", "k", "k as in kite"],
+  ["Λ", "λ", "lambda", "l", "l as in lamp"],
+  ["Μ", "μ", "mu", "m", "m as in man"],
+  ["Ν", "ν", "nu", "n", "n as in net"],
+  ["Ξ", "ξ", "xi", "ks", "x as in box"],
+  ["Ο", "ο", "omicron", "o", "o as in obey - a short o"],
+  ["Π", "π", "pi", "p", "p as in pen"],
+  ["Ρ", "ρ", "rho", "r", "a rolled r"],
+  ["Σ", "σ / ς", "sigma", "s", "s as in sit (ς at the end of a word)"],
+  ["Τ", "τ", "tau", "t", "t as in top"],
+  ["Υ", "υ", "upsilon", "y", "u as in French tu, ü in German (often taught as oo in food)"],
+  ["Φ", "φ", "phi", "f", "ph as in phone"],
+  ["Χ", "χ", "chi", "x", "ch as in Scottish loch"],
+  ["Ψ", "ψ", "psi", "ps", "ps as in lips"],
+  ["Ω", "ω", "omega", "ɔː", "o as in tone - a long o"],
+];
+/** Erasmian Greek's letters said together: [pair, IPA, how it sounds] */
+const ERASMIAN_PAIRS: [string, string, string][] = [
+  ["αι", "ai", "ai as in aisle"],
+  ["ει", "ei", "ei as in eight"],
+  ["οι", "oi", "oi as in oil"],
+  ["υι", "yi", "wee as in queen"],
+  ["ου", "uː", "ou as in soup"],
+  ["αυ", "au", "ow as in cow"],
+  ["ευ, ηυ", "eu", "eu as in feud"],
+  ["γγ", "ŋg", "ng as in finger"],
+  ["γκ", "ŋk", "nk as in ink"],
+  ["γχ", "ŋx", "nkh: ng then ch as in loch"],
+  ["ἁ (rough breathing)", "h", "h before the vowel: ἁμαρτία hamartia"],
+  ["ἀ (smooth breathing)", "–", "nothing: the vowel alone"],
+  ["ᾳ ῃ ῳ (iota under)", "–", "the iota not pronounced"],
 ];
 
 /** [pair, a word with it, IPA, how it sounds] */
@@ -104,11 +153,36 @@ const say = (t: string) => {
   setTimeout (() => { const u = new SpeechSynthesisUtterance (t); u.lang = "el-GR"; speechSynthesis.speak (u); }, 60);     // (A breath after cancel: iOS)
 };
 
+type Kind = "he" | "modern" | "erasmian";
+const KEY = "cotext.pronounce";     // (The last picked)
+const KINDS: [Kind, string][] = [["he", "Hebrew"], ["modern", "Greek - Modern"], ["erasmian", "Greek - Erasmian"]];
+
 function draw (body: HTMLElement) {
+  let kind: Kind = currentTestament () === "OT" ? "he" : "modern";
+  try { const k = localStorage.getItem (KEY); if (KINDS.some (([v]) => v === k)) kind = k as Kind; } catch { /* private mode */ }
+  const row = document.createElement ("label"), pick = document.createElement ("select"), guide = document.createElement ("div");
+  row.className = "field"; row.textContent = "Language"; pick.className = "choose";
+  pick.append (...KINDS.map (([v, t]) => new Option (t, v)));
+  pick.value = kind;
+  pick.addEventListener ("change", () => { try { localStorage.setItem (KEY, pick.value); } catch { /* private mode */ } drawGuide (guide, pick.value as Kind); });
+  row.append (pick);
+  body.replaceChildren (row, guide);
+  drawGuide (guide, kind);
+}
+
+function drawGuide (body: HTMLElement, kind: Kind) {
   const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${ICONS.speak}</button>`;
-  if (currentTestament () === "OT") {
-    body.innerHTML = heIn (`<p>Hebrew as it's spoken in Israel today - the pronunciation COTEXT reads aloud in. Hebrew is read right to left; the vowels are dots and dashes under, over or beside the letters. Most words are stressed on the last syllable. Older and academic pronunciations keep a few sounds modern Hebrew has merged (ח apart from כ, ע and ק their own sounds, ת without the dot like th in think).</p>`) + `
-      <div class="ref">The letters</div>
+  if (kind === "erasmian") {
+    body.innerHTML = `      <div class="ref">The alphabet</div>
+      ${ERASMIAN.map (([up, lo, en, ipa, how]) => `<div class="sayRow"><span class="grWord sayLetter">${up} ${lo}</span>
+        <span><b>${en}</b><br><span class="ipa">[${ipa}]</span> ${how}</span></div>`).join ("")}
+      <div class="ref">Letters said together, and the marks</div>
+      ${ERASMIAN_PAIRS.map (([pair, ipa, how]) => `<div class="sayRow"><span class="grWord sayLetter">${pair}</span>
+        <span><span class="ipa">[${ipa}]</span> ${how}</span></div>`).join ("")}`;
+    return;
+  }
+  if (kind === "he") {
+    body.innerHTML = `      <div class="ref">The letters</div>
       ${HEB_LETTERS.map (([forms, he, en, ipa, how]) => `<div class="sayRow"><span class="heWord sayLetter">${forms}</span>
         <span><b>${en}</b> <span class="heWord">${he}</span><br><span class="ipa">[${ipa}]</span> ${heIn (how)}</span>${btn (he)}</div>`).join ("")}
       <div class="ref">The vowels (shown on ב, or ח)</div>
@@ -117,8 +191,7 @@ function draw (body: HTMLElement) {
     for (const b of body.querySelectorAll<HTMLElement> ("[data-say]")) b.addEventListener ("click", () => sayText (b.dataset.say!));
     return;
   }
-  body.innerHTML = `<p>Greek as it's spoken today - the pronunciation COTEXT reads aloud in. Stress falls on the syllable with the accent mark. Breathings (ἁ, ἀ) and the iota under a vowel (ᾳ) are not pronounced.</p>
-    <div class="ref">The alphabet</div>
+  body.innerHTML = `    <div class="ref">The alphabet</div>
     ${LETTERS.map (([up, lo, gr, en, ipa, how]) => `<div class="sayRow"><span class="grWord sayLetter">${up} ${lo}</span>
       <span><b>${en}</b> <span class="grWord">${gr}</span><br><span class="ipa">[${ipa}]</span> ${how}</span>${btn (gr)}</div>`).join ("")}
     <div class="ref">Letters said together</div>
