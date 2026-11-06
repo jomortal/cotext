@@ -141,7 +141,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
 .head .row { height: calc(var(--head-h) - 2 * var(--head-y)); display: grid; grid-template-columns: var(--icon-box) minmax(0, 1fr) var(--icon-box); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
 .head .row > :first-child { justify-self: start; } .head .row > :last-child { justify-self: end; }
-.head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.head .nav { display: flex; align-items: center; gap: 20px; min-width: 0; width: 100%; max-width: var(--page); justify-self: center; }     /* (A heading's title never wider than the text: at most --page, centered as the text is - the top rows' too, .topRow) */
 .head .place { flex: 1 1 auto; }     /* (The passage: a title - .title's kind, below - on an icon pill, the row's room between ☰ and ⋯) */
 .bar { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; align-items: center; }     /* (24px between buttons: they have no padding of their own) */
 /* A field (.field - every picker's, slider's and text box's label: the ⋯ menu's sliders, the Verb chart's, the decks',
@@ -506,6 +506,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
+.topRow > * { max-width: var(--page); }     /* (Its title within the content's width, as the Bible's heading: .head .nav) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
