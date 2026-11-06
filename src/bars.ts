@@ -29,20 +29,25 @@ export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void) {
   }, { passive: true });
 }
 
-/** ‹ and › into the margins: with a mouse (a desktop), a column narrower than its room - margins either side at least
- *  ARROW_ROOM wide -, the two buttons out of their bar, each centered in its margin (style.css' .inMargin: --x, --y), at
- *  the room's middle height (mid "room": the Bible's text) or the column's (mid "column": a deck's card). Worked out
- *  again as the room, the column or the window changes size; the last call for a button (a deck drawn again) the one
- *  kept. */
-const ARROW_ROOM = 64, FINE = matchMedia ("(pointer: fine)");
+/** ‹ and › into the margins: with a mouse (a desktop), once each side of the column (the Bible's text, a deck's card)
+ *  has room for a margin, the arrow and a margin again (M + A + M: M the side margin, style.css' --margin, read from
+ *  it; A the arrow's width) the two buttons come out of their bar and stand beside the column - ‹ its right edge M left
+ *  of the column's left edge, › its left edge M right of its right edge (style.css' .inMargin: --x, --y, their middles)
+ *  -, staying that close however wide the window grows; with less room they stay in the bar. Vertically at the room's
+ *  middle height (mid "room": the Bible's text) or the column's (mid "column": a deck's card). Worked out again as the
+ *  room, the column or the window changes size; the last call for a button (a deck drawn again) the one kept. */
+const FINE = matchMedia ("(pointer: fine)");
 const watching = new WeakMap<HTMLElement, () => void> ();
 export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTMLElement, next: HTMLElement, mid: "room" | "column" = "room") {
   watching.get (prev)?.();
   const place = () => {
     const m = box (room), t = box (column);     // (CSS px, whatever the UI's scale: zoom.ts)
-    const left = t.left - m.left, right = m.right - t.right, on = FINE.matches && t.width > 0 && left >= ARROW_ROOM && right >= ARROW_ROOM;
+    const M = parseFloat (getComputedStyle (document.documentElement).getPropertyValue ("--margin")) || 16;     // (CSS px, as box's)
+    const left = t.left - m.left, right = m.right - t.right;
+    const fits = (b: HTMLElement) => FINE.matches && t.width > 0 && Math.min (left, right) >= 2 * M + b.offsetWidth;
+    const on = fits (prev) && fits (next);
     const y = mid === "room" ? m.top + m.height / 2 : t.top + t.height / 2;
-    for (const [b, x] of [[prev, m.left + left / 2], [next, t.right + right / 2]] as const) {
+    for (const [b, x] of [[prev, t.left - M - prev.offsetWidth / 2], [next, t.right + M + next.offsetWidth / 2]] as const) {
       b.classList.toggle ("inMargin", on);
       if (on) { b.style.setProperty ("--x", `${x}px`); b.style.setProperty ("--y", `${y}px`); }
     }

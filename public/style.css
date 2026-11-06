@@ -237,7 +237,7 @@ body.noVerbColors .w .parse { color: inherit; }
              height: var(--barH); border-top: var(--rule-w) solid transparent; padding: 0 var(--safe-r) env(safe-area-inset-bottom, 0px) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
 #prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .bottomBar > .arrow:first-child { justify-self: start; } .bottomBar > .arrow:last-child { justify-self: end; } .bottomBar .pill.arrow { padding-block: 0; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
-.inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › centered in a column's margins - the Bible's text's, a deck's card's - bars.ts' marginArrows) */
+.inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › beside a column - the Bible's text, a deck's card - a margin from it, their middles at --x, --y: bars.ts' marginArrows) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
 #notesBtn { grid-column: 2; grid-row: 1; justify-self: center; } #searchBtn { grid-column: 4; grid-row: 1; justify-self: center; }     /* (Each centered between ▶ and its arrow: the resources at the left, the search at the right) */
