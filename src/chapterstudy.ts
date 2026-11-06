@@ -3,18 +3,19 @@
 // - PRINTOUTS: any number, each named, with its own sections. The screen's top row (no title of its own, no ✕ - back to
 //   the Bible by ☰) shows the open one's name centered with a drop-down arrow beside it; tapped, its drop-down
 //   (topbar.ts, the Verse cards' own): SELECT PRINTOUT (+ NEW PRINTOUT first; picking one opens it), DELETE PRINTOUT
-//   (the open one, asked first), NAME (edited in place). The last used opens. A new printout starts as the chapter read
-//   (one section, all its verses); until renamed (or its name left blank) it's named after its first reference.
+//   (the open one, asked first), NAME (edited in place), BIBLIOGRAPHY STYLE (SBL - the default -, Chicago, Turabian,
+//   MLA or APA: the printout's own). The last used opens. A new printout starts as the chapter read (one section, all
+//   its verses); until renamed (or its name left blank) it's named after its first reference.
 // - SECTIONS: a printout is a list of sections, each a reference - BOOK, CHAPTER and VERSES (All, or a range from -
 //   to) - with its own items, picked at its top, a ✕ removing it (any of them, the first too: every one removed, the
-//   printout is empty until "+ Add another reference" - the chapter read - starts it again; named "Untitled" meanwhile
-//   unless renamed). "+ Add another reference" (under the last section) adds one - at first the first's chapter, all its
+//   printout is empty until "+ Add passage" - the chapter read - starts it again; named "Untitled" meanwhile
+//   unless renamed). "+ Add passage" (under the last section) adds one - at first the first's chapter, all its
 //   verses -, its own pickers at its top with a ✕ removing it and its items. A section's verse range limits each of
 //   its items to those verses (an item's own range within it); every item works for its section's reference as it
 //   would for the first's.
 // - TWO PANES: the EDITOR - each section: its reference, a line per item added (its name; a drag handle ⠿ to move it
 //   up or down within the section, by touch or mouse; Options, opening that item's own settings under it; ✕ removing
-//   it), "+ Add item" under the last -, then "+ Add another reference" and Print / Save as PDF - and the PREVIEW, the
+//   it), "+ Add item" under the last -, then "+ Add passage", Download and Print under it - and the PREVIEW, the
 //   printout as it will print: the sections in order, each headed with its reference, redrawn as anything is added,
 //   moved, changed or removed (not edited itself). Narrow (under 700 px) the preview the top half, the editor the
 //   bottom half, each scrolling on its own; wide side by side, the editor at the left (style.css' .cstudy).
@@ -52,15 +53,25 @@
 //     chapter's list), rarest first, each its dictionary form, transliteration (an option), definition - SHORT (the
 //     vocab gloss) or LONG (the brief lexicon's full entry: abridged BDB or Abbott-Smith) - and how often it comes in
 //     the testament.
-// - PRINT / SAVE AS PDF: window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
+// - PRINT (under DOWNLOAD): window.print with style.css' print rules - the preview alone, in the light colors, its fonts,
 //   Hebrew right to left, a map as a picture (each canvas copied to an image first: prepare), verses, notes and
 //   entries kept whole where they fit, each section's reference as its title, page numbers where the browser allows
-//   (@page), and every source used, in any section, credited once at the end. On an iPhone in Safari: Share > Print >
-//   Save to Files. A Home Screen web app on an iPhone or iPad ignores window.print: there the button makes the PDF
-//   itself (makePdf - the preview drawn page by page as pictures, in the same print rules) and opens the share sheet
-//   with it (Print, Save to Files, Messages...).
+//   (@page). On an iPhone in Safari: Share > Print > Save to Files. A Home Screen web app on an iPhone or iPad ignores
+//   window.print: there the button makes the PDF itself (makePdf - the preview drawn page by page as pictures, in the
+//   same print rules) and opens the share sheet with it (Print, Save to Files, Messages...).
+// - THE BIBLIOGRAPHY, at the printout's end: every work it uses, in any section - the original texts and lexicons, the
+//   translations, commentaries, apparatus, dictionaries and articles (an ancient text's translation where an article
+//   prints it), the Atlas' places and the base map and boundaries its map shows, the timeline's sources -,
+//   alphabetized in the printout's BIBLIOGRAPHY STYLE (bibliography.ts: the works, taken from their credits, and the
+//   styles), then "Licenses": the licenses' notices (each license's works and address, what was changed).
+// - DOWNLOAD (over Print): the printout as a file made on the device - Microsoft Word (.docx, .doc), OpenDocument
+//   (.odt), Rich Text Format (.rtf), Plain Text (.txt), Web Page (.html, .htm) or PDF (.pdf: makePdf's) - each made from
+//   the preview in the print rules (printfiles.ts, loaded only then): the same content, light colors, Hebrew and Greek
+//   as real text with their fonts named, the maps as pictures. Named as the printout ("John 3.docx"); handed over as
+//   the PDF is (handOver): a Home Screen iPhone or iPad's share sheet, elsewhere a download.
 // - KEPT on the device, every printout under one key (localStorage "cotext.study": { at: the open one's id, printouts:
-//   [{ id, name ("" until renamed), sections: [{ id, book (its code), chapter, from, to, items }] }] }). The earlier
+//   [{ id, name ("" until renamed), bib (its bibliography style; none: SBL), sections: [{ id, book (its code), chapter,
+//   from, to, items }] }] }). The earlier
 //   per-chapter printouts ("cotext.study.<book>.<chapter>") are brought in once as printouts of their own, their keys
 //   removed; anything unreadable is skipped.
 
@@ -73,6 +84,8 @@ import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 import { printSplit } from "./layout";
+import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
+import type { FileKind } from "./printfiles";
 
 /** An item of the printout. from / to: a verse range (0: the section's first / last). A text's under: its helps only for
  *  words coming fewer times than this in the testament (0 or none: every word's), helps saying which (both at first),
@@ -203,8 +216,9 @@ function drawNotes (s: Source, ns: Note[], text: Map<string, [string, string]>, 
 }
 
 //==== THE ITEMS ====
-/** A printout: its name ("" until renamed: shown as its first section's reference - nameShown) and its sections. */
-type Printout = { id: string; name: string; sections: Section[] };
+/** A printout: its name ("" until renamed: shown as its first section's reference - nameShown), its sections and its
+ *  bibliography's style (none: SBL). */
+type Printout = { id: string; name: string; sections: Section[]; bib?: BibStyle };
 let printouts: Printout[] = [];
 let at = "";     // (The printout open: its id - the last used)
 let loaded = false;
@@ -251,7 +265,7 @@ function load () {
   for (const x of Array.isArray (kept.printouts) ? kept.printouts : []) {
     if (! x || typeof x !== "object") continue;
     const r = x as Record<string, unknown>, secs = sectionsOf (r.sections);
-    printouts.push ({ id: typeof r.id === "string" ? r.id : newId (), name: typeof r.name === "string" ? r.name : "", sections: secs });
+    printouts.push ({ id: typeof r.id === "string" ? r.id : newId (), name: typeof r.name === "string" ? r.name : "", sections: secs, bib: isBibStyle (r.bib) ? r.bib : undefined });
   }
   try {     // (The earlier kind: one printout per chapter studied, its first section the chapter)
     for (const k of Object.keys (localStorage)) {
@@ -273,7 +287,7 @@ function load () {
 }
 const save = () => {
   try {
-    localStorage.setItem (KEY, JSON.stringify ({ at: now ().id, printouts: printouts.map ((p) => ({ id: p.id, name: p.name,
+    localStorage.setItem (KEY, JSON.stringify ({ at: now ().id, printouts: printouts.map ((p) => ({ id: p.id, name: p.name, bib: p.bib,
       sections: p.sections.map ((s) => ({ id: s.id, book: s.book.code, chapter: s.chapter, from: s.from, to: s.to, items: s.items })) })) }));
   } catch { /* private mode: not kept */ }
 };
@@ -302,7 +316,7 @@ const openOpts = new Set<string> ();     // (The lines whose options are open)
 const linesOf = new Map<Section, HTMLElement> ();     // (Each section's lines, as drawn)
 
 /** A section's reference at its top: BOOK, CHAPTER and VERSES (from - to), changed in place, and a ✕ removing it (the
- *  first too; the last removed, the printout empty until + Add another reference). The first's changed or removed, the
+ *  first too; the last removed, the printout empty until + Add passage). The first's changed or removed, the
  *  printout's name follows while it has none of its own. */
 async function drawPlace (placeEl: HTMLElement, sec: Section) {
   const isFirst = sec === first ();
@@ -338,8 +352,9 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
 
 //==== THE TOP ROW ====
 // The open printout's name centered, its drop-down arrow beside it, tapped opening its drop-down (topbar.ts, as the
-// Verse cards' deck's name): SELECT PRINTOUT (+ NEW PRINTOUT first), DELETE PRINTOUT (asked first), NAME. No title of
-// its own and no ✕: back to the Bible by ☰ (style.css hides #screenTop here, as for the Verse cards).
+// Verse cards' deck's name): SELECT PRINTOUT (+ NEW PRINTOUT first), DELETE PRINTOUT (asked first), NAME, then the
+// printout's own BIBLIOGRAPHY STYLE (a change redraws the bibliography alone: drawSources). No title of its own and no
+// ✕: back to the Bible by ☰ (style.css hides #screenTop here, as for the Verse cards).
 let topEl: HTMLElement | null = null;
 let topOpen = "";     // (Its drop-down open: "more", or "" - kept across redraws)
 /** The top bar drawn (again) into topEl: the name and its drop-down. */
@@ -354,7 +369,12 @@ function drawTop () {
     renamed: () => save () });
   const row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   row.append (named.title);
-  menu.append (...named.rows);
+  const bibRow = el ("label", "vcPick", "Bibliography style"), bib = el ("select", "choose");
+  bib.append (...BIB_STYLES.map (([k, t]) => new Option (t, k)));
+  bib.value = now ().bib ?? "sbl";
+  bib.addEventListener ("change", () => { now ().bib = bib.value as BibStyle; save (); drawSources (); });
+  bibRow.append (bib);
+  menu.append (...named.rows, bibRow);
   topEl.replaceChildren (row, menu);
   dropDowns ([{ key: "more", button: named.button, menu, icon: "" }], topOpen, (k) => { topOpen = k; });
 }
@@ -374,7 +394,7 @@ onScreen ("Study printout", async (body) => {
   previewEl = el ("div", "csPreview");
   const editor = el ("div", "csEditor");
   sectionsEl = el ("div", "csSections");
-  const more = el ("button", "pill csAdd", "+ Add another reference");
+  const more = el ("button", "pill csAdd", "+ Add passage");
   more.addEventListener ("click", () => {
     const [b, c] = first () ? [first ().book, first ().chapter] : where ();     // (The first's chapter; none, the chapter read)
     sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] });
@@ -384,8 +404,20 @@ onScreen ("Study printout", async (body) => {
   });
   const print = el ("button", "pill csPrint", PRINT);
   printEl = print;
-  print.addEventListener ("click", () => { if (pdfReady) void sharePdf (pdfReady); else if (printIgnored ()) void makePdf (); else { prepare (); window.print (); } });
-  editor.append (sectionsEl, more, print);
+  print.addEventListener ("click", () => {
+    if (ready) void handOver (ready);
+    else if (printIgnored ()) void makePdf ().then ((f) => f && handOver (f));
+    else { prepare (); window.print (); }
+  });
+  // DOWNLOAD: a picker of the formats, PRINT under it, back to its first line once one's picked (which says the file's being made)
+  const dlRow = el ("label", "vcPick", "Download"), dl = el ("select", "choose");
+  downloadEl = dl;
+  dl.append (new Option (DOWNLOAD, ""), ...FORMATS.map (([k, t]) => new Option (t, k)));
+  dl.addEventListener ("change", () => { const k = dl.value as FileKind | "pdf" | ""; if (k) void download (k); });
+  dlRow.append (dl);
+  const out = el ("div", "csOut");
+  out.append (dlRow, print);
+  editor.append (sectionsEl, more, out);
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
@@ -397,7 +429,7 @@ onScreen ("Study printout", async (body) => {
 
 /** Another reference added to the Study printout from elsewhere (the Bible's Add to Verse Cards box): a new section -
  *  book code, chapter, verses from - to (from 0: the whole chapter; to 0, or not past from, the verse from alone) - with
- *  no items, as "+ Add another reference" adds one, kept. Added to the open printout (the last used, whether
+ *  no items, as "+ Add passage" adds one, kept. Added to the open printout (the last used, whether
  *  the screen is open or not), redrawn if it's shown. False for a book not among bookList's. */
 export function addStudyReference (code: string, chapter: number, from: number, to: number): boolean {
   return addStudy (code, chapter, from, to, "");
@@ -789,15 +821,17 @@ async function entriesOf (sec: Section, it: Item & { k: "dict" }): Promise<Entry
 
 //==== THE PREVIEW ====
 // Drawn whole on each change, off screen, then swapped in (a later draw winning over one still reading): each section
-// in order, headed with its reference (the first's "Study printout" under it), its items under it, then the sources
-// of every section credited once; the maps' and articles' elements are kept per item and moved in.
+// in order, headed with its reference (the first's "Study printout" under it), its items under it, then the
+// bibliography of every section's works (drawSources); the maps' and articles' elements are kept per item and moved in.
+let cited = new Set<string> ();     // (What the printout shown cites: bibliography.ts' keys - a text's "text:<testament>", a source's id...)
+let sourcesEl: HTMLElement | null = null;     // (Its bibliography: drawSources fills it)
 let drawing = 0;
 async function render () {
   const n = ++drawing;
   const doc = el ("div", "csDoc");
   doc.dir = "ltr";
-  const used = new Map<string, string> ();     // (Each source credited, in any section: its name -> its credit)
-  const credit = (name: string, text: string) => { if (text && ! used.has (name)) used.set (name, text); };
+  const used = new Set<string> ();     // (Each thing cited, in any section: bibliography.ts' keys)
+  const cite = (key: string) => used.add (key);
   const mapsNow: { m: ReturnType<typeof mapOf>; sec: Section; per: { v: number; where: number[][] }[] }[] = [];
   for (const [i, sec] of sections.entries ()) {
     const { book, chapter } = sec, ch = dataOf (sec);
@@ -816,7 +850,7 @@ async function render () {
       const h = (t: string) => block.append (el ("h2", "csHead", t));
       try {
         if (it.k === "text") {
-          credit ("text", TEXT_CREDIT);
+          cite (`text:${it.other ? otherTestament (book) : book.testament}`);
           const range = inRange (vs, it.from, it.to);
           let box: HTMLElement;
           if (it.other) {
@@ -841,7 +875,7 @@ async function render () {
           if (it === firstText) for (const b of beside) {
             const s = sourceOf (book, b.src);
             if (! s) continue;
-            credit (s.name, s.credit);
+            cite (s.id);
             const by = await notesByVerse (ch, s, inRange (range, b.from, b.to), b);
             for (const row of box.querySelectorAll<HTMLElement> (".vrow")) {
               const v = Number (row.dataset.verse), ns = by.get (v);
@@ -859,7 +893,7 @@ async function render () {
           const s = sourceOf (book, it.src);
           if (! s) continue;
           h (s.name);
-          credit (s.name, s.credit);
+          cite (s.id);
           const range = inRange (vs, it.from, it.to);
           const by = await notesByVerse (ch, s, range, it);
           const body = el ("div", "gBody csNotes");
@@ -875,6 +909,7 @@ async function render () {
         } else if (it.k === "dict") {
           const s = sourceOf (book, it.src);
           h (s?.name ?? it.src);
+          cite (it.src);
           const list = (await entriesOf (sec, it)).filter ((a) => ! it.skip?.includes (a.id));
           for (const e of list) {
             const key = `${it.src}:${e.id}`;
@@ -883,14 +918,13 @@ async function render () {
             const got = await a;
             if (! got) continue;
             block.append (el ("h3", "csArticle", got.title), ...got.body);
-            credit (got.name, got.credit);
           }
           if (! list.length) block.append (el ("p", "", "Nothing for these verses."));
         } else if (it.k === "map") {
           h ("Atlas");
           const m = mapOf (it);
           const s = sourcesFor (book).find ((x) => x.kind === "atlas");
-          if (s) credit (s.name, s.credit);
+          cite ("atlas");
           block.append (m.view.el);
           const range = inRange (vs, it.from, it.to);
           const key = `${book.id}.${chapter}:${range.join (",")}`;
@@ -899,11 +933,11 @@ async function render () {
         } else if (it.k === "time") {
           h ("Timeline");
           const t = await chapterTime (book.id, chapter);
-          if (t) { credit ("Timeline", t.credit); block.append (timelineBlock (t, book, chapter)); }
+          if (t) { cite ("timeline"); block.append (timelineBlock (t, book, chapter)); }
           else block.append (el ("p", "", "The timeline couldn't be loaded."));
         } else if (it.k === "words") {
           h ("Word list");
-          credit ("text", TEXT_CREDIT);
+          cite (`text:${book.testament}`); cite (`lex:${book.testament}`);
           block.append (await wordList (ch, it));
         }
       } catch (e) {
@@ -916,18 +950,41 @@ async function render () {
     if (n !== drawing) return;
     doc.append (part);
   }
-  if (used.size) {
-    const credits = el ("section", "csBlock csCredits");
-    credits.append (el ("h2", "csHead", "Sources"), ...[...used.values ()].map ((t) => el ("p", "credit", t)));
-    doc.append (credits);
-  }
+  const bib = el ("section", "csBlock csBib");
+  doc.append (bib);
   if (n !== drawing) return;
-  if (pdfReady) { pdfReady = null; printEl.textContent = PRINT; }     // (A PDF made before this change is out of date)
+  if (ready) { ready = null; printEl.textContent = PRINT; }     // (A file made before this change is out of date)
   const scroll = previewEl.scrollTop;
   previewEl.replaceChildren (doc);
   previewEl.scrollTop = scroll;
-  // (A map drawn once it's in the page: it needs its size)
-  for (const { m, sec, per } of mapsNow) m.view.update (sec.book.id, sec.chapter, per, "No places named in these verses.");
+  cited = used; sourcesEl = bib;
+  drawSources ();
+  // (A map drawn once it's in the page: it needs its size; its base map's and boundaries' credits then cited)
+  const drawn = mapsNow.map (({ m, sec, per }) => m.view.update (sec.book.id, sec.chapter, per, "No places named in these verses."));
+  if (drawn.length) void Promise.allSettled (drawn).then (() => { if (n === drawing) drawSources (); });
+}
+
+/** The bibliography at the printout's end (sourcesEl), drawn again from what it cites and what it shows (a map's base
+ *  map and boundaries, an article's translation: their credit lines in the printout - an article's source credit, its
+ *  last line, not counted) in the printout's style: its heading, the entries (bibliography.ts), then "Licenses". */
+function drawSources () {
+  if (! sourcesEl?.isConnected) return;
+  const doc = sourcesEl.parentElement!;
+  let shown = "";
+  const walker = document.createTreeWalker (doc, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode (); t; t = walker.nextNode ()) if (! t.parentElement?.closest (".csBib, .lexCredit")) shown += t.textContent + "\n";
+  const ids = citedWorks (cited, shown);
+  sourcesEl.hidden = ! ids.length;
+  if (! ids.length) { sourcesEl.replaceChildren (); return; }
+  const style = now ().bib ?? "sbl";
+  const entries = bibliography (ids, style).map ((segs) => {
+    const p = el ("p", "csBibEntry");
+    p.append (...segs.map ((s) => s.i ? el ("i", "", s.text) : document.createTextNode (s.text)));
+    return p;
+  });
+  const notes = licenses (ids);
+  sourcesEl.replaceChildren (el ("h2", "csHead", bibHeading (style)), ...entries,
+                             ...(notes.length ? [el ("h3", "csArticle", "Licenses"), ...notes.map ((t) => el ("p", "credit", t))] : []));
 }
 
 /** An Atlas item's map, made once (atlas.ts' passageMap): its pickers (BASE MAP, POLITICAL BOUNDARIES, ROUTE) moved
@@ -937,7 +994,7 @@ function mapOf (it: Item) {
   if (! m) {
     const view = passageMap (db);
     const opts = [...view.el.querySelectorAll<HTMLElement> (":scope > label.sheetPick")];
-    for (const o of opts) o.remove ();
+    for (const o of opts) { o.remove (); o.addEventListener ("change", () => drawSources ()); }     // (Another base map or boundaries: their credits cited)
     m = { view, opts, key: "", range: [] as number[] };
     maps.set (it.id, m);
   }
@@ -1099,16 +1156,22 @@ window.addEventListener ("beforeprint", () => { if (previewEl?.isConnected) prep
 // verses, notes and entries (the rules' break-inside: avoid and a heading's break-after: avoid, read back from the
 // page: pageCuts), the whole made one SVG picture by modern-screenshot (loaded only then: its own file, not in the
 // app's first load), each page drawn from its slice at the screen's sharpness and written as a JPEG into a PDF (pdfOf). A4, or Letter where the device's region uses it; @page's margins; the page
-// number at each foot. Named as "Genesis 1 study.pdf".
-const PRINT = "Print / Save as PDF";
-let pdfReady: File | null = null;     // (A PDF made but not yet shared: the share sheet refused it - see sharePdf)
+// number at each foot. Named as the printout ("John 3.pdf"). The same PDF is DOWNLOAD's PDF, on any device.
+const PRINT = "Print";
+const DOWNLOAD = "Choose a format";
+/** DOWNLOAD's formats, as the picker lists them. */
+const FORMATS: [FileKind | "pdf", string][] = [
+  ["docx", "Microsoft Word (.docx)"], ["doc", "Microsoft Word 97-2003 (.doc)"], ["odt", "OpenDocument (.odt)"], ["rtf", "Rich Text Format (.rtf)"],
+  ["txt", "Plain Text (.txt)"], ["html", "Web Page (.html)"], ["htm", "Web Page (.htm)"], ["pdf", "PDF (.pdf)"]];
+let downloadEl: HTMLSelectElement;
+let ready: File | null = null;     // (A file made but not yet shared: the share sheet refused it - see handOver)
 
 /** Whether window.print does nothing here: a Home Screen web app on iOS (an iPad says it's a Mac, but has touch),
- *  which can share a PDF file instead. */
-function printIgnored (): boolean {
+ *  which can share a file (file: that one; none, a PDF) instead - there a file made is shared, not downloaded. */
+function printIgnored (file = new File ([""], "x.pdf", { type: "application/pdf" })): boolean {
   const ios = /iPhone|iPad|iPod/.test (navigator.userAgent) || (/Macintosh/.test (navigator.userAgent) && navigator.maxTouchPoints > 1);
   const standalone = (navigator as { standalone?: boolean }).standalone === true || matchMedia ("(display-mode: standalone)").matches;
-  try { return ios && standalone && navigator.canShare?.({ files: [new File ([""], "x.pdf", { type: "application/pdf" })] }) === true; }
+  try { return ios && standalone && navigator.canShare?.({ files: [file] }) === true; }
   catch { return false; }
 }
 
@@ -1185,87 +1248,130 @@ function pageCuts (doc: HTMLElement, height: number): number[] {
   return cuts;
 }
 
-/** The PDF made from the preview and shared (the button saying so meanwhile; a second tap while it's made ignored). */
-async function makePdf () {
+/** fn run on a copy of the preview laid out as it prints (the print rules - printRules - in an off-screen frame at the
+ *  page's text width: px, CSS px; the maps as pictures - prepare), the frame removed after; null with no preview. */
+async function withPrintCopy<T> (fn: (copy: HTMLElement, page: ReturnType<typeof paper>, width: number) => Promise<T>): Promise<T | null> {
   const doc = previewEl.querySelector<HTMLElement> (".csDoc");
-  if (! doc || printEl.disabled) return;
-  printEl.disabled = true;
-  printEl.textContent = "Making PDF…";
+  if (! doc) return null;
   const style = el ("style", "", printRules ());
   const host = el ("div", "csPdf");
   try {
-    const { domToForeignObjectSvg, loadMedia } = await import ("modern-screenshot");
     prepare ();     // (The maps as pictures)
     const page = paper ();
-    const px = 96 / 72;     // (CSS px a point)
-    const width = (page.w - 2 * page.side) * px, height = (page.h - 2 * page.top) * px;
+    const width = (page.w - 2 * page.side) * 96 / 72;
     const copy = doc.cloneNode (true) as HTMLElement;
     host.style.width = `${width}px`;
     host.append (copy);
     document.head.append (style);
     document.body.append (host);
     await document.fonts.ready;
-    const cuts = pageCuts (copy, height);
-    const scale = Math.min (window.devicePixelRatio || 1, 300 / 96);     // (The screen's sharpness, no finer than 300 dpi)
-    const look = getComputedStyle (copy), soft = look.getPropertyValue ("--soft"), paperColor = look.backgroundColor;
-    // The whole printout made one SVG picture (every element's look copied into it, the fonts embedded), loaded once;
-    // each page drawn from its slice - a vector picture, so drawn sharp at the canvas' scale.
-    const full = copy.getBoundingClientRect ().height;
-    const svg = await domToForeignObjectSvg (copy, { width, height: full });
-    const img = await loadMedia (`data:image/svg+xml;charset=utf-8,${encodeURIComponent (new XMLSerializer ().serializeToString (svg))}`) as HTMLImageElement;     // (A data URL: a blob's would taint the canvas)
-    const shots: Shot[] = [];
-    let top = 0;
-    for (const cut of cuts) {
-      const h = cut - top;
-      const canvas = el ("canvas");
-      canvas.width = Math.round (width * scale);
-      canvas.height = Math.round (h * scale);
-      const g = canvas.getContext ("2d")!;
-      const draw = () => { g.fillStyle = paperColor; g.fillRect (0, 0, canvas.width, canvas.height); g.drawImage (img, 0, top, width, h, 0, 0, canvas.width, canvas.height); };
-      draw ();
-      await new Promise ((done) => setTimeout (done, 100));     // (Drawn again a moment later: Safari may not have decoded an SVG's own pictures the first time)
-      draw ();
-      const blob = await new Promise<Blob | null> ((done) => canvas.toBlob (done, "image/jpeg", 0.9));
-      const [pw, ph] = [canvas.width, canvas.height];
-      canvas.width = canvas.height = 0;     // (Freed at once: an iPhone holds few big canvases)
-      if (! blob) throw new Error ("A page couldn't be drawn");
-      shots.push ({ jpeg: new Uint8Array (await blob.arrayBuffer ()), pw, ph, h: h / px });
-      top = cut;
-    }
-    const name = `${nameShown (now ()).replace (/[\\/:*?"<>|]/g, "-")}.pdf`;     // (Named as the printout, a file name's forbidden marks made dashes)
-    pdfReady = new File ([pdfOf (shots, page, soft)], name, { type: "application/pdf" });
-    printEl.textContent = PRINT;
-    await sharePdf (pdfReady);
-  } catch (e) {
-    console.warn ("Study printout: the PDF couldn't be made:", e);
-    printEl.textContent = PRINT;
+    return await fn (copy, page, width);
   } finally {
     style.remove ();
     host.remove ();
+  }
+}
+
+/** The printout's file name with an extension: its name as shown, a file name's forbidden marks made dashes. */
+const fileName = (ext: string) => `${nameShown (now ()).replace (/[\\/:*?"<>|]/g, "-")}.${ext}`;
+
+/** The PDF made from the preview (the Print button saying so meanwhile; a second tap while it's made ignored); null
+ *  when it couldn't be made. */
+async function makePdf (): Promise<File | null> {
+  if (printEl.disabled) return null;
+  printEl.disabled = true;
+  printEl.textContent = "Making PDF…";
+  try {
+    const { domToForeignObjectSvg, loadMedia } = await import ("modern-screenshot");
+    return await withPrintCopy (async (copy, page, width) => {
+      const px = 96 / 72;     // (CSS px a point)
+      const height = (page.h - 2 * page.top) * px;
+      const cuts = pageCuts (copy, height);
+      const scale = Math.min (window.devicePixelRatio || 1, 300 / 96);     // (The screen's sharpness, no finer than 300 dpi)
+      const look = getComputedStyle (copy), soft = look.getPropertyValue ("--soft"), paperColor = look.backgroundColor;
+      // The whole printout made one SVG picture (every element's look copied into it, the fonts embedded), loaded once;
+      // each page drawn from its slice - a vector picture, so drawn sharp at the canvas' scale.
+      const full = copy.getBoundingClientRect ().height;
+      const svg = await domToForeignObjectSvg (copy, { width, height: full });
+      const img = await loadMedia (`data:image/svg+xml;charset=utf-8,${encodeURIComponent (new XMLSerializer ().serializeToString (svg))}`) as HTMLImageElement;     // (A data URL: a blob's would taint the canvas)
+      const shots: Shot[] = [];
+      let top = 0;
+      for (const cut of cuts) {
+        const h = cut - top;
+        const canvas = el ("canvas");
+        canvas.width = Math.round (width * scale);
+        canvas.height = Math.round (h * scale);
+        const g = canvas.getContext ("2d")!;
+        const draw = () => { g.fillStyle = paperColor; g.fillRect (0, 0, canvas.width, canvas.height); g.drawImage (img, 0, top, width, h, 0, 0, canvas.width, canvas.height); };
+        draw ();
+        await new Promise ((done) => setTimeout (done, 100));     // (Drawn again a moment later: Safari may not have decoded an SVG's own pictures the first time)
+        draw ();
+        const blob = await new Promise<Blob | null> ((done) => canvas.toBlob (done, "image/jpeg", 0.9));
+        const [pw, ph] = [canvas.width, canvas.height];
+        canvas.width = canvas.height = 0;     // (Freed at once: an iPhone holds few big canvases)
+        if (! blob) throw new Error ("A page couldn't be drawn");
+        shots.push ({ jpeg: new Uint8Array (await blob.arrayBuffer ()), pw, ph, h: h / px });
+        top = cut;
+      }
+        return new File ([pdfOf (shots, page, soft)], fileName ("pdf"), { type: "application/pdf" });
+    });
+  } catch (e) {
+    console.warn ("Study printout: the PDF couldn't be made:", e);
+    return null;
+  } finally {
+    printEl.textContent = PRINT;
     printEl.disabled = false;
   }
 }
 
-/** The PDF shared (the share sheet: Print, Save to Files, Messages...). Cancelled: nothing more. Refused because the
- *  making took too long after the tap (iOS shares only straight after one): the button turns to "Share PDF", a tap
- *  sharing the PDF made. Any other failure: the PDF downloaded instead. */
-async function sharePdf (file: File) {
+/** DOWNLOAD's work: the printout made into a file of the format picked (the PDF: makePdf; the rest printfiles.ts,
+ *  loaded now, from the preview's print copy) and handed over; the picker says so meanwhile, then is back to its
+ *  first line. A failure: nothing handed over, the reason logged. */
+async function download (kind: FileKind | "pdf") {
+  const first = downloadEl.options[0];
+  first.textContent = `Making ${kind.toUpperCase ()}…`;
+  downloadEl.value = ""; downloadEl.disabled = true;
   try {
-    await navigator.share ({ files: [file], title: file.name.replace (/\.pdf$/, "") });
-    pdfReady = null;
-    printEl.textContent = PRINT;
+    let file: File | null;
+    if (kind === "pdf") file = await makePdf ();
+    else {
+      const { printFile, MIME } = await import ("./printfiles");
+      file = await withPrintCopy (async (copy, page) => new File ([await printFile (kind, copy, nameShown (now ()), page)], fileName (kind), { type: MIME[kind] }));
+    }
+    if (file) await handOver (file);
   } catch (e) {
-    const why = (e as Error).name;
-    if (why === "AbortError") { pdfReady = null; return; }
-    if (why === "NotAllowedError" && printEl.textContent !== "Share PDF") { printEl.textContent = "Share PDF"; return; }
-    pdfReady = null;
-    printEl.textContent = PRINT;
-    const a = el ("a");
-    a.href = URL.createObjectURL (file);
-    a.download = file.name;
-    a.click ();
-    setTimeout (() => URL.revokeObjectURL (a.href), 60_000);
+    console.warn (`Study printout: the ${kind} couldn't be made:`, e);
+  } finally {
+    first.textContent = DOWNLOAD;
+    downloadEl.value = ""; downloadEl.disabled = false;
   }
+}
+
+/** A file made handed over: on a Home Screen iPhone or iPad (printIgnored) the share sheet (Print, Save to Files,
+ *  Messages...) - cancelled, nothing more; refused because the making took too long after the tap (iOS shares only
+ *  straight after one), the Print button turns to "Share <FORMAT>", a tap sharing the file made; any other failure, it
+ *  downloads. Elsewhere it downloads. */
+async function handOver (file: File) {
+  const ext = file.name.replace (/^.*\./, "").toUpperCase ();
+  if (printIgnored (file)) {
+    try {
+      await navigator.share ({ files: [file], title: file.name.replace (/\.[^.]*$/, "") });
+      ready = null;
+      printEl.textContent = PRINT;
+      return;
+    } catch (e) {
+      const why = (e as Error).name;
+      if (why === "AbortError") { ready = null; printEl.textContent = PRINT; return; }
+      if (why === "NotAllowedError" && ready !== file) { ready = file; printEl.textContent = `Share ${ext}`; return; }
+    }
+  }
+  ready = null;
+  printEl.textContent = PRINT;
+  const a = el ("a");
+  a.href = URL.createObjectURL (file);
+  a.download = file.name;
+  a.click ();
+  setTimeout (() => URL.revokeObjectURL (a.href), 60_000);
 }
 
 /** A page drawn: its JPEG, pw x ph pixels, h points tall on the page. */

@@ -776,7 +776,8 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csOptsBtn[aria-expanded="true"] { color: var(--accent); }
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
-.csPrint { color: var(--accent); margin-top: 8px; }
+.csPrint { color: var(--accent); }
+.csOut { display: grid; justify-items: start; gap: var(--gap); margin-top: 8px; }     /* (DOWNLOAD's picker, then Print under it) */
 .csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's choices as a line's drop-down: their names over the lines' names - in by the handle's room, --x-w, and the gap) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
@@ -803,6 +804,8 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csBlock { margin-top: 22px; }
 .csHead { font-size: var(--fs-l); margin: 0 0 6px; border-bottom: var(--rule); padding-bottom: 4px; }
 .csArticle { font-size: var(--fs-m); margin: 14px 0 4px; }
+.csBibEntry { color: var(--fg); padding-left: 2em; text-indent: -2em; margin-top: 4px; }     /* (A bibliography's entry: a hanging indent, its first line out at the left) */
+.csBib .credit { margin-top: 4px; }     /* (Licenses' lines: a short note, close together) */
 /* A text drawn by its own options (chapterstudy.ts' textBox: the printout's text items and the verse cards' original), whatever the ⋯ menu says for the reader. */
 .csText .w { cursor: default; }
 .csText :is(.w, .vnum) .gloss, .csText .w .parse, .csText .w .translit { display: none; }
@@ -838,7 +841,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 .csBarLabel.here { color: var(--accent); font-weight: 600; }
 .csHere { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--accent); }
 
-/* Printing (Study printout's Print / Save as PDF): the preview alone, in the light colors, the page flowing (not the
+/* Printing (Study printout's Print): the preview alone, in the light colors, the page flowing (not the
    app's fixed screen), each verse, note, word and picture kept whole where it fits, page numbers where the browser
    draws @page's boxes. */
 /* SIDE BAR - held sideways one-pane: a phone, or a touch screen (an iPad's) wider than a phone's (bars.ts' SIDE_BAR:
