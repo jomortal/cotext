@@ -22,9 +22,9 @@
 export interface Question { q: string; a: string; x: string[]; why?: string; s?: number; find?: string; }
 /** A lesson: id (kept with its score on the device - never reused for another lesson), its title, the grammar's
  *  sections it's from (seq ranges, [first, last] each, shown in that order: grammar.ts' readSections), its questions;
- *  guide: a lesson of its own on the letters - their names and sounds -, taught from COTEXT's ☰ Pronunciation guide (its
- *  Greek, the one picked there: pronounce.ts' greekGuide) shown as its grammar, its questions made from the guide when
- *  it's taken (learn.ts' letterQuestions), no words of its own; words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
+ *  guide: a lesson of its own on the letters - their names and sounds -, taught from COTEXT's ☰ Pronunciation guide's
+ *  Greek tables (modern or Erasmian: Learn's own PRONUNCIATION) shown as its grammar, its items - matching rounds and
+ *  transliteration both ways - made from them when it's taken (learn.ts' letterItems), no words of its own; words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
  *  book's order), quizzed with its questions (learn.ts' vocabQuestions). */
 export interface Lesson { id: string; title: string; sections: [number, number][]; questions: Question[]; words?: [string, string][]; guide?: "greek"; }
 /** A course: the grammar it follows (grammars.id), its name in the picker, its lessons in order. vocab "freq": its

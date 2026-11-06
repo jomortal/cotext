@@ -170,21 +170,16 @@ function draw (body: HTMLElement) {
   drawGuide (guide, kind);
 }
 
-/** The Greek guide the reader uses: the one last picked here if it's a Greek one, else modern Greek (☰ Learn's
- *  unfoldingWord alphabet lesson shows it as its grammar: learn.ts). */
-export function greekGuide (): Kind {
-  try { const k = localStorage.getItem (KEY); if (k === "modern" || k === "erasmian") return k; } catch { /* private mode */ }
-  return "modern";
-}
-
 /** The Greek letters as a guide gives them (kind: modern or Erasmian): each its cell (upper and lower case, as its
- *  row shows them), its name and how it sounds - ☰ Learn's alphabet lesson asks them (learn.ts). */
+ *  row shows them), its name and how it sounds - ☰ Learn's letters lesson asks them (learn.ts), in its own PRONUNCIATION's
+ *  kind, not this screen's pick. */
 export function greekLetters (kind: Kind): { cell: string; name: string; how: string }[] {
   return kind === "erasmian" ? ERASMIAN.map (([up, lo, en, , how]) => ({ cell: `${up} ${lo}`, name: en, how }))
                              : LETTERS.map (([up, lo, , en, , how]) => ({ cell: `${up} ${lo}`, name: en, how }));
 }
 
-/** A guide's tables (kind) drawn into body, their speakers live - here, and in ☰ Learn's alphabet lesson. */
+/** A guide's tables (kind) drawn into body, their speakers live - here, and in ☰ Learn's letters lesson (READ THE GUIDE,
+ *  its kind Learn's own PRONUNCIATION). */
 export function drawGuide (body: HTMLElement, kind: Kind) {
   const btn = (t: string) => `<button class="pill icon" data-say="${t}" aria-label="Say ${t}">${ICONS.speak}</button>`;
   if (kind === "erasmian") {
