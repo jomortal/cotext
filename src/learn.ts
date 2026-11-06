@@ -1,13 +1,14 @@
 // ☰ Learn: a grammar's lessons as short quizzes, one after another, a lesson opening only once the one before is passed
-// (a simplified Duolingo). COURSE picks the grammar followed - Hebrew (Gesenius) or Greek (Machen); at first the
-// language of the testament read, then the reader's own pick. The questions are learncourses.ts' (generated from the
-// grammars' text and, for Machen, his vocabularies and exercises).
+// (a simplified Duolingo). COURSE picks the grammar followed - Hebrew (Gesenius), Greek (Machen), Greek (Smyth) or
+// Greek (unfoldingWord); at first the language of the testament read, then the reader's own pick. The questions are
+// learncourses.ts' (generated from the grammars' text and, for Machen, his exercises), and the lesson's vocabulary
+// (vocabQuestions: Machen's lesson's own words; the other courses' the testament's next 10 most frequent).
 // - THE PATH: the course's lessons in the grammar's order, a row each - its number and title, under it how it stands:
 //   PASSED (and the best score), the best score so far and what passing takes, START, or LOCKED (greyed, not opening)
 //   until the lesson before is passed.
 // - A LESSON: ALL LESSONS (back to the path) and READ THE GRAMMAR (the lesson's sections, the grammar's own text - as the
 //   word panel's GRAMMAR shows them: grammar.ts' readSections - shown or hidden above the quiz); its title and the
-//   grammar's §§ under it; then its questions one at a time, in a new order each time: the question on a card
+//   grammar's §§ under it (unfoldingWord, without §§: its name alone); then its questions and its words one at a time, in a new order each time: the question on a card
 //   (flashcards' look: cards.ts' - a short Hebrew or Greek word large, as a card's front, anything longer at the text's size, as its back: in a box of its own, one line of text in the back's grid), "3 of 12"
 //   under it, the choices (in a new order) as a list under that. A choice tapped is answered at once: the right answer
 //   in the accent, a wrong pick in --wrong and struck through, a line saying so (and why, where the question says) with
@@ -21,7 +22,8 @@
 import { onScreen, currentTestament } from "./study";
 import { readSections, sectionCaption, grammarCredit, folding, setFold } from "./grammar";
 import { shuffle } from "./cards";
-import { COURSES, type Course, type Lesson, type Question } from "./learncourses";
+import { frequentWords, greekCounts } from "./vocab";
+import { COURSES, VOCAB_PER_LESSON, type Course, type Lesson, type Question } from "./learncourses";
 
 /** The share of a lesson's questions answered right that passes it (and opens the next). */
 const PASS = 0.8;
@@ -106,9 +108,11 @@ async function draw (body: HTMLElement) {
     quiz (c, i, body.querySelector<HTMLElement> (".learnQuiz")!, showIn);
   };
 
-  /** The quiz itself, into el: every question, in a new order, then the score. */
-  const quiz = (c: Course, i: number, el: HTMLElement, showIn: (q: Question) => void) => {
-    const l = c.lessons[i], qs = shuffle ([...l.questions]);
+  /** The quiz itself, into el: every question and the lesson's words (vocabQuestions), in a new order, then the score. */
+  const quiz = async (c: Course, i: number, el: HTMLElement, showIn: (q: Question) => void) => {
+    const words = await vocabQuestions (c, i).catch (() => [] as Question[]);     // (No database: the grammar's questions alone)
+    if (! el.isConnected) return;     // (Another view drawn meanwhile)
+    const l = c.lessons[i], qs = shuffle ([...l.questions, ...words]);
     let at = 0, right = 0;
     const ask = (q: Question) => {
       const big = wordOnly (q.q);
@@ -131,7 +135,7 @@ async function draw (body: HTMLElement) {
           rightBtn.setAttribute ("aria-pressed", "true");     // (The right answer in the accent: a picker's choice's look)
           if (! ok) b.classList.add ("wrong");
           note.innerHTML = (ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "")
-            + (q.s ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>` : "");
+            + (q.s !== undefined ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>` : "");
           note.querySelector (".term")?.addEventListener ("click", () => showIn (q));
           note.hidden = next.hidden = false;
           next.scrollIntoView ({ block: "nearest" });
@@ -154,6 +158,48 @@ async function draw (body: HTMLElement) {
   };
 
   path ();
+}
+
+/** A course's words as learn.ts quizzes them: word (as shown), meaning, count (in the OT or NT; none: not found). */
+interface Word { word: string; meaning: string; count?: number; }
+/** The frequency courses' words, by language (the first lessons' and the choices' pool), fetched once. */
+const frequent = new Map<string, Promise<Word[]>> ();
+/** Machen's words' NT counts, fetched once. */
+let machenCounts: Promise<Map<string, number>> | undefined;
+/** A word's dictionary form, from the form a vocabulary lists ("ἀγαθός, ή, όν", "λόγος, ὁ"): its first word. */
+const head = (w: string) => w.split (",")[0].trim ();
+/** A verb's meaning ("to say", Machen's "I loose"), so wrong choices are of its kind. */
+const verbal = (m: string) => /^(to|I) /.test (m);
+
+/** Lesson i's vocabulary questions: its words - Machen's lesson's own vocabulary (Lesson.words, however many), the other
+ *  courses' VOCAB_PER_LESSON of the testament's most frequent (lesson 1 the first 10, lesson 2 the next... - vocab.ts'
+ *  frequentWords, so the path climbs the frequency list) -, each asked one way at random: the word shown and its meaning
+ *  picked, or the meaning shown and the word picked; the three wrong choices other words of the course's (verbs' for a
+ *  verb, others' for the rest, where there are enough), never one meaning the same. No grammar link; after answering,
+ *  the word, its meaning and how often it occurs. */
+async function vocabQuestions (c: Course, i: number): Promise<Question[]> {
+  let mine: Word[], pool: Word[];
+  if (c.vocab === "freq") {
+    const n = c.lessons.length * VOCAB_PER_LESSON + 30;     // (Every lesson's words, and some beyond as wrong choices)
+    if (! frequent.has (c.lang)) frequent.set (c.lang, frequentWords (c.lang, n).then ((ws) => ws.map ((w) => ({ word: w.lemma, meaning: w.meaning, count: w.count }))));
+    pool = await frequent.get (c.lang)!;
+    mine = pool.slice (i * VOCAB_PER_LESSON, (i + 1) * VOCAB_PER_LESSON);
+  } else {
+    const all = c.lessons.flatMap ((l) => l.words ?? []);
+    machenCounts ??= greekCounts (all.map (([w]) => head (w)));
+    const counts = await machenCounts, word = ([w, m]: [string, string]): Word => ({ word: w, meaning: m, count: counts.get (head (w)) });
+    pool = all.map (word);
+    mine = (c.lessons[i].words ?? []).map (word);
+  }
+  const where = c.lang === "H" ? "OT" : "NT";
+  return mine.map ((w) => {
+    const others = shuffle (pool.filter ((o) => o.meaning !== w.meaning && o.word !== w.word));
+    const like = others.filter ((o) => verbal (o.meaning) === verbal (w.meaning)), rest = others.filter ((o) => ! like.includes (o));
+    const wrong = [...like, ...rest].slice (0, 3);
+    const why = `${w.word}: ${w.meaning}${w.count ? ` - ${w.count.toLocaleString ("en-US")} times in the ${where}.` : "."}`;
+    return Math.random () < 0.5 ? { q: w.word, a: w.meaning, x: wrong.map ((o) => o.meaning), why }
+                                : { q: w.meaning, a: w.word, x: wrong.map ((o) => o.word), why };
+  });
 }
 
 /** Marks a phrase in el's text with <mark>s - one per text node it spans (Greek and Hebrew sit in spans of their own) -

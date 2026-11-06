@@ -121,6 +121,40 @@ async function byFrequency (prefix: string, bookId = 0): Promise<string[]> {
   return (await db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = ? AND f.strong LIKE ?
                          ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"])).map ((r) => String (r.strong));
 }
+/** ☰ Learn's words (learn.ts' vocabulary questions): the testament's n most frequent words - Hebrew the OT's, Greek
+ *  the NT's (freq's book 0, whatever the Greek testament read) - in the frequency lists' order, with their lemma,
+ *  concise meaning and count; left out: the bare affixes (keys 9000 up - Hebrew's suffixes, וֹ him) and any word whose
+ *  lemma or meaning repeats an earlier one's (εἶπον after λέγω, both "to say": a quiz question needs one right answer). */
+export async function frequentWords (lang: "H" | "G", n: number) {
+  const keys = (await byFrequency (lang)).slice (0, n * 2 + 40), d = await details (keys, 0);
+  const seen = new Set<string> (), out: { lemma: string; meaning: string; count: number }[] = [];
+  for (const k of keys) {
+    const w = d.get (k);
+    if (/^[HG]9\d{3}/.test (k) || ! w?.meaning) continue;
+    const lemma = w.lemma.normalize ("NFC"), meaning = w.meaning.toLowerCase ();
+    if (seen.has (lemma) || seen.has (meaning)) continue;
+    seen.add (lemma); seen.add (meaning);
+    out.push ({ ...w, lemma });
+    if (out.length === n) break;
+  }
+  return out;
+}
+
+/** The NT counts of Greek words (their dictionary forms, any accents' spelling: the lexicon's are written with oxia,
+ *  U+1F71..., the books' with tonos), by the word as given; a word not in the lexicon left out. */
+export async function greekCounts (words: string[]): Promise<Map<string, number>> {
+  const oxia = (s: string) => s.normalize ("NFC").replace (/[άέήίόύώ]/g, (c) => String.fromCharCode (0x1F71 + 2 * "άέήίόύώ".indexOf (c)));
+  const want = new Map<string, string> ();     // (Each spelling looked up -> the word given)
+  for (const w of words) { want.set (w.normalize ("NFC"), w); want.set (oxia (w), w); }
+  const q = [...want.keys ()], out = new Map<string, number> ();
+  for (const r of await db.all (`SELECT l.lemma, SUM(f.count) AS n FROM lexicon l JOIN freq f ON f.strong = l.strong AND f.book = 0
+                                 WHERE l.strong LIKE 'G%' AND l.lemma IN (${q.map (() => "?").join (",")}) GROUP BY l.lemma`, q)) {
+    const w = want.get (String (r.lemma));
+    if (w) out.set (w, (out.get (w) ?? 0) + Number (r.n));
+  }
+  return out;
+}
+
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
 let picked = "freq";                   // (The list shown: freq - OT / NT / LXX FREQUENCY -, book - BOOK FREQUENCY -, learn - My vocab -, known, the first things to learn: alpha - ALPHABET -, nums - NUMBERS -, names - BOOK NAMES - basics.ts; or verbs - VERB PARADIGMS)
