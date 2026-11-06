@@ -54,9 +54,10 @@
 //   pane's + (draftResource) - the Hebrew OT beside a Septuagint book as the other text.
 //   THE TIMELINE - the chapter's year (Theographic, as ☰ Timeline) and the lanes' items within 150 years of it, each a
 //     bar, the chapter's own in the accent.
-//   SINGLE ENTRIES - "An entry from <dictionary>" for each dictionary: one entry, free, looked up in its Options (the
-//     dictionary searched as it's typed, at least 2 letters; one tapped picked) - nothing printed until one is; the
-//     resources pane's + by an entry adds that one at the printout's end.
+//   + Add item's TYPE (a picker at its menu's top): VERSE ITEM, everything above - for the passage's verses -, or ITEM:
+//     one entry of a resource (RESOURCE: the dictionaries), looked up there (searched as it's typed, at least 2
+//     letters; one tapped added) - free, tied to no verses; its Options look it up again. The resources pane's + by an
+//     entry adds that one at the printout's end.
 //   WORD LIST - the chapter's words (every word, those under a frequency in the testament, or ones picked from the
 //     chapter's list), rarest first, each its dictionary form, transliteration (an option), definition - SHORT (the
 //     vocab gloss) or LONG (the brief lexicon's full entry: abridged BDB or Abbott-Smith) - and how often it comes in
@@ -640,7 +641,7 @@ function closeMenu (m: HTMLElement) {
 document.addEventListener ("pointerdown", (e) => {
   const t = e.target as Element;
   for (const m of document.querySelectorAll<HTMLElement> (".csMenu:not([hidden])"))
-    if (! m.contains (t) && ! menuButtons.get (m)?.contains (t)) closeMenu (m);
+    if (! m.contains (t) && ! menuButtons.get (m)?.contains (t) && ! t.closest?.(".chooseList")) closeMenu (m);     // (Its pickers' lists are in the page itself: choose.ts)
 });
 
 /** The editor's sections, each a passage - its reference line (⠿ dragging the passage with all it holds, as a folder;
@@ -974,26 +975,34 @@ async function fillOptions (panel: HTMLElement, sec: Section, it: Item, o: Opts 
       }
       panel.append (list);
     }
-  } else if (it.k === "article") {     // (Its entry looked up: the dictionary searched as it's typed - titles first, as the search pane -, one tapped picked)
-    const find = el ("input", "choose");
-    Object.assign (find, { type: "search", placeholder: `Look up an entry in ${sourceOf (book, it.src)?.name ?? it.src}`, autocomplete: "off" });
-    const found = el ("div", "csNoteList");
-    let n = 0;
-    find.addEventListener ("input", async () => {
-      const q = find.value.trim (), k = ++n;
-      if (q.length < 2) { found.replaceChildren (); return; }
-      const hits = await searchArticles (db, q, () => {}, it.src);
-      if (k !== n) return;
-      found.replaceChildren (...hits.slice (0, 30).map ((h) => {
-        const b = el ("button", "hit csChoice");
-        b.append (el ("span", "csChoiceName", h.title), el ("span", "src", h.text.slice (0, 80)));
-        b.addEventListener ("click", () => { it.entry = h.id; it.title = h.title; o.changed (); });
-        return b;
-      }));
-      if (! hits.length) found.append (el ("p", "", "No entries found."));
-    });
-    panel.append (el ("div", "src", it.title ? `Entry: ${it.title}` : "No entry picked yet"), find, found);
+  } else if (it.k === "article") {     // (Its entry looked up again: entrySearch)
+    panel.append (el ("div", "src", it.title ? `Entry: ${it.title}` : "No entry picked yet"),
+                  ...entrySearch (book, it.src, (id, title) => { it.entry = id; it.title = title; o.changed (); }));
   } else panel.append (el ("p", "", "No options."));
+}
+
+/** An entry looked up in a resource (src: a dictionary's id): a search box - the resource searched as it's typed, at
+ *  least 2 letters, titles first as the search pane's (dictionary.ts' searchArticles) - and its results, 30 at most, one
+ *  tapped picked (pick: its id and title). An ITEM's (+ Add item's) and an entry item's Options. */
+function entrySearch (book: Book, src: string, pick: (id: string, title: string) => void): HTMLElement[] {
+  const find = el ("input", "choose");
+  Object.assign (find, { type: "search", placeholder: `Look up an entry in ${sourceOf (book, src)?.name ?? src}`, autocomplete: "off" });
+  const found = el ("div", "csNoteList");
+  let n = 0;     // (The latest search's: an earlier one answering later dropped)
+  find.addEventListener ("input", async () => {
+    const q = find.value.trim (), k = ++n;
+    if (q.length < 2) { found.replaceChildren (); return; }
+    const hits = await searchArticles (db, q, () => {}, src);
+    if (k !== n) return;
+    found.replaceChildren (...hits.slice (0, 30).map ((h) => {
+      const b = el ("button", "hit csChoice");
+      b.append (el ("span", "csChoiceName", h.title.replace (/\*/g, "")), el ("span", "src", h.text.slice (0, 80)));
+      b.addEventListener ("click", () => pick (h.id, h.title.replace (/\*/g, "")));
+      return b;
+    }));
+    if (! hits.length) found.append (el ("p", "", "No entries found."));
+  });
+  return [find, found];
 }
 
 /** A tick kept and printed at once, the options left as they are (not redrawn: a list keeps its scroll), the line's
@@ -1097,12 +1106,21 @@ const otherTestament = (b: Book) => b.testament === "OT" ? "LXX" : "OT";
 const textName = (b: Book, other = false) => { const t = other ? otherTestament (b) : b.testament; return t === "OT" ? "Hebrew" : t === "LXX" ? "Greek LXX" : "Greek"; };
 
 // ---- + Add item ----
-/** A section's list of what can be added (into menuEl, under its + Add item): the text, the notes sources for its book
- *  (by kind), the dictionaries, the atlas, the timeline, the word list. */
+/** A section's list of what can be added (into menuEl, under its + Add item), by TYPE (a picker at its top, the last
+ *  picked kept): a VERSE ITEM - for the passage's verses, a range of them in its Options: the text, the notes sources
+ *  for its book (by kind), the dictionaries, the atlas, the timeline, the word list -, or an ITEM - one entry of a
+ *  resource, tied to no verses (free: dragged anywhere): its RESOURCE picked (the dictionaries), the entry looked up
+ *  (entrySearch), one tapped added. */
+let menuType: "verse" | "item" = "verse";
 function showMenu (sec: Section, menuEl: HTMLElement) {
   const { book, chapter } = sec;
   menuEl.hidden = false;
-  menuEl.replaceChildren ();
+  const typeRow = el ("label", "field", "Type"), type = el ("select", "choose"), list = el ("div", "csMenuList");
+  type.append (new Option ("Verse item", "verse"), new Option ("Item", "item"));
+  type.value = menuType;
+  type.addEventListener ("change", () => { menuType = type.value as typeof menuType; showMenu (sec, menuEl); });
+  typeRow.append (type);
+  menuEl.replaceChildren (typeRow, list);
   const choice = (name: string, add: () => void, sub = "") => {
     const b = el ("button", "hit csChoice");
     b.append (el ("span", "csChoiceName", name));
@@ -1113,14 +1131,27 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   const head = (t: string) => el ("div", "src", t);
   const push = (it: Item) => { sec.items.push (it); closeMenu (menuEl); changed (); };
   const sources = sourcesFor (book);
-  menuEl.append (head ("Original text"), choice (`${textName (book)} text of ${book.name} ${chapter}`,
+  if (menuType === "item") {     // (An ITEM: a resource's entry)
+    const dicts = sources.filter ((s) => s.kind === "dictionary");
+    if (! dicts.length) list.append (el ("p", "", "No resource with entries for this book."));
+    else {
+      const srcRow = el ("label", "field", "Resource"), pick = el ("select", "choose"), look = el ("div", "csMenuList");
+      pick.append (...dicts.map ((s) => new Option (s.name, s.id)));
+      const lookUp = () => look.replaceChildren (...entrySearch (book, pick.value, (id, title) => push ({ id: newId (), k: "article", src: pick.value, entry: id, title })));
+      pick.addEventListener ("change", lookUp);
+      srcRow.append (pick);
+      lookUp ();
+      list.append (srcRow, look);
+    }
+  } else {
+  list.append (head ("Original text"), choice (`${textName (book)} text of ${book.name} ${chapter}`,
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0 })));
-  if (book.testament === "OT" || book.heb) menuEl.append (choice (`${textName (book, true)} text of ${book.name} ${chapter}`,     // (The OT's other text)
+  if (book.testament === "OT" || book.heb) list.append (choice (`${textName (book, true)} text of ${book.name} ${chapter}`,     // (The OT's other text)
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0, other: true })));
   // (The resources in the resources pane's order - notes.ts' sourceGroups: Syntax, Bible Background, Textual Studies,
   // Commentaries, Translations - then the timeline and the word list)
   const notes = (kinds: string[]) => sources.filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name, () => push (sourceItem (s, 0, 0))));
-  const group = (label: string, els: HTMLElement[]) => { if (els.length) menuEl.append (head (label), ...els); };
+  const group = (label: string, els: HTMLElement[]) => { if (els.length) list.append (head (label), ...els); };
   group ("Syntax", notes (["syntax"]));
   group ("Bible Background", [
     ...notes (["dictionary"]),
@@ -1129,16 +1160,12 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   group ("Commentaries", notes (["commentary"]));
   group ("Translations", notes (["translation"]));
   group ("Time", sources.filter ((s) => s.kind === "timeline").map ((s) => choice ("Timeline", () => push (sourceItem (s, 0, 0)), "The chapter's place in time")));
-  menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
+  list.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
-  // (Items not tied to the passage's verses: one entry of a dictionary, looked up in its Options - opened at once)
-  group ("Single entries", sources.filter ((s) => s.kind === "dictionary").map ((s) => choice (`An entry from ${s.name}`, () => {
-    const it: Item = { id: newId (), k: "article", src: s.id, entry: "", title: "" };
-    openOpts.add (it.id); push (it);
-  }, "Any entry, looked up by name")));
+  }
   // (Over the screen by its button, as wide as the lines' names, within the screen's room - nothing scrolled or moved)
   // (CSS px, whatever the UI's scale: zoom.ts)
-  const r = cssBox (menuButtons.get (menuEl)!), box = cssBox (menuEl.parentElement!);
+  const r = cssBox (menuButtons.get (menuEl)!), box = cssBox (menuButtons.get (menuEl)!.parentElement!);     // (Its section's box: the menu itself may be in the page already, open)
   const room = openRoom (), foot = room.bottom;     // (Down to the bar at the foot, or the screen's foot with the bar down the side - never over it: bars.ts)
   // (As far as there's room: under the button down to the foot - or, more room above it, over the button up to the top
   // bar, as a menu opens upward)
