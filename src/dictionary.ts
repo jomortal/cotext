@@ -440,6 +440,20 @@ export function markVerse (el: HTMLElement, v: number) {
 /** A source's (src) articles whose title or text (tags off) has the typed text, any case: those whose title has it
  *  first, each group in the source's (alphabetical) order - each with its text as plain text (the search's snippet)
  *  and its photo ('' none). */
+/** Each article's Bible passages (its refs: book, verses from - to as chapter * 1000 + verse), in the Bible's order - the
+ *  search's results list them first (search.ts). */
+export async function articleRefs (main: Db, ids: string[], src: string): Promise<Map<string, { book: number; start: number; end: number }[]>> {
+  const out = new Map<string, { book: number; start: number; end: number }[]> ();
+  const db = (await opened (main, src))?.db;
+  if (! db || ! ids.length) return out;
+  for (const r of await db.all (`SELECT id, book, start, "end" FROM refs WHERE id IN (${ids.map (() => "?").join ()}) ORDER BY book, start`, ids)) {
+    const id = String (r.id);
+    if (! out.has (id)) out.set (id, []);
+    out.get (id)!.push ({ book: Number (r.book), start: Number (r.start), end: Number (r.end) });
+  }
+  return out;
+}
+
 export async function searchArticles (main: Db, typed: string, onProgress: (fraction: number) => void, src = "tobd"): Promise<{ id: string; title: string; text: string; photo: string }[]> {
   const o = await opened (main, src, onProgress);
   const db = o?.db;

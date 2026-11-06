@@ -11,8 +11,7 @@
 // - What's typed is searched on Enter (the phone keyboard's search key), not on every key; picking another kind
 //   searches the bar's text again. Every kind lists its results alike: counted, each a row - its reference over its
 //   text, what matched in the accent - drawn CHUNK at a time as the list scrolls to its end; a row tapped goes to that
-//   verse in the text (main.ts) - a source's too: the notes are left as they are (opening them on it is the reader's
-//   choice, the user's call).
+//   verse in the text (main.ts) - a source's opening the resources pane on that source there (notes.ts' openNotesOn).
 // - ROOT WORD: every verse of the Bible with a
 //   word of the root (the same Strong's number), its original text, the root's words marked. From a word's panel's
 //   "Search" (panel.ts) the root is the word's and the bar shows its dictionary form; typed, the dictionary forms
@@ -26,8 +25,10 @@
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
 // - A dictionary (THE DICTIONARY, below: the Tyndale Bible Dictionary, the Archaeology finds, the Ancient Parallels, the Ancient Historians): its articles, not verses -
-//   those whose title has the typed text first -, each its title over the stretch that matched (a find its photo at the
-//   right); tapped, the article opens under it, its cited verses tappable (dictionary.ts).
+//   those whose title has the typed text first -, each its Bible passages first (the article's refs, a few, + MORE for
+//   the rest; one tapped going there with the resources pane open on the dictionary - openNotesOn), then its title over
+//   the stretch that matched (a find its photo at the right); tapped, the article opens under it, its cited verses
+//   tappable (dictionary.ts).
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the
 //   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the Bible read (LIKE, then
 //   a whole-word check here); a source every entry (LIKE).
@@ -35,9 +36,9 @@
 import type { Db, Row } from "./db";
 import type { Book } from "./reader";
 import { paneFrame } from "./layout";
-import { textSources, sourceGroups, openSource, type Source } from "./notes";
+import { textSources, sourceGroups, openSource, openNotesOn, type Source } from "./notes";
 import { currentLanguage } from "./study";
-import { searchArticles, entry } from "./dictionary";
+import { searchArticles, articleRefs, entry } from "./dictionary";
 
 const pane = document.getElementById ("search")!;
 const btn = document.getElementById ("searchBtn")!;
@@ -242,7 +243,7 @@ async function searchSource (src: Source, typed: string, n: number) {
   }
   hits.sort ((a, b) => order (books.get (a.book)!) - order (books.get (b.book)!) || a.book - b.book);     // (Stable: each book's in its order)
   counted (hits.length, src.kind === "translation" || src.kind === "version" ? "verse" : "note");
-  draw (hits, n, async () => (h) => snippet (h.text!, typed));
+  draw (hits, n, async () => (h) => snippet (h.text!, typed), src.id);
 }
 
 //==== THE DICTIONARY ====
@@ -259,8 +260,43 @@ async function searchDictionary (src: Source, typed: string, n: number) {
   }
   if (n !== searching) return;
   counted (hits.length, "article");
-  drawChunks (hits, n, async (chunk) => chunk.map ((h) => entry (db!, h.id, h.title,
-    h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200), "", src.id, h.photo)));
+  drawChunks (hits, n, async (chunk) => {
+    const refs = await articleRefs (db!, chunk.map ((h) => h.id), src.id);
+    return chunk.map ((h) => {
+      const e = entry (db!, h.id, h.title, h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200), "", src.id, h.photo);
+      const r = refs.get (h.id);
+      if (r?.length) e.prepend (passages (r, src.id));
+      return e;
+    });
+  });
+}
+
+const FEW = 4;     // (An article's passages shown at first: the rest behind + MORE)
+/** An article's Bible passages as a line of links (Genesis 6:5–8:22, ...): one tapped goes there, the resources pane
+ *  opening on the dictionary (src). */
+function passages (refs: { book: number; start: number; end: number }[], src: string): HTMLElement {
+  const line = document.createElement ("div");
+  line.className = "src hitRefs";
+  const links = refs.flatMap ((x) => {
+    const b = books.get (x.book);
+    if (! b) return [];
+    const c = Math.floor (x.start / 1000), v = x.start % 1000, ec = Math.floor (x.end / 1000), ev = x.end % 1000;
+    const a = document.createElement ("a");
+    a.className = "term";
+    a.textContent = `${b.name} ${c}:${v}` + (x.end <= x.start ? "" : ec === c ? `–${ev}` : `–${ec}:${ev}`);
+    a.addEventListener ("click", () => { void goVerse (b, c, v).then (() => openNotesOn (src)); });
+    return [a];
+  });
+  links.forEach ((a, i) => { if (i) line.append (", "); line.append (a); if (i >= FEW) a.hidden = true; });
+  if (links.length > FEW) {
+    for (const t of line.childNodes) if (t.nodeType === 3 && (t.nextSibling as HTMLElement | null)?.hidden) t.textContent = "";
+    const more = document.createElement ("a");
+    more.className = "term";
+    more.textContent = ` + ${links.length - FEW} more`;
+    more.addEventListener ("click", () => { line.replaceChildren (); links.forEach ((a, i) => { if (i) line.append (", "); a.hidden = false; line.append (a); }); });
+    line.append (more);
+  }
+  return line;
 }
 
 /** The stretch of a source's text around its first match (up to 80 characters before, 200 after, cut at spaces,
@@ -326,7 +362,7 @@ const both = (a: Texts, b: Texts): Texts => async (chunk) => {
 const CHUNK = 100;
 /** The results drawn CHUNK at a time, each chunk's text made as it's drawn (texts): a row tapped goes to its verse in
  *  the text, whatever kind it is. */
-function draw (hits: Hit[], n: number, texts: Texts) {
+function draw (hits: Hit[], n: number, texts: Texts, src = "") {     // (src: a source's results - tapped, its pane opened there)
   drawChunks (hits, n, async (chunk) => {
     const make = await texts (chunk);
     return chunk.map ((h) => {
@@ -338,7 +374,7 @@ function draw (hits: Hit[], n: number, texts: Texts) {
       const end = ! h.end ? "" : Math.floor (h.end / 1000) === h.chapter ? `–${h.end % 1000}` : `–${Math.floor (h.end / 1000)}:${h.end % 1000}`;
       ref.textContent = `${b?.name ?? ""} ${h.chapter}:${h.verse}${end}`;
       row.append (ref, make (h));
-      row.addEventListener ("click", () => { if (b) goVerse (b, h.chapter, h.verse); });
+      row.addEventListener ("click", () => { if (b) void goVerse (b, h.chapter, h.verse).then (() => { if (src) openNotesOn (src); }); });
       return row;
     });
   });

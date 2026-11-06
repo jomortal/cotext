@@ -193,6 +193,14 @@ btn.addEventListener ("click", () => {
 });
 document.getElementById ("notesClose")!.addEventListener ("click", () => { if (! panel.hidden) btn.click (); });
 
+/** The resources pane opened on a source (search.ts: a result of it tapped, once the text has gone to its verse): picked
+ *  as the picker picks - where the book read offers it - and the pane opened, showing the verse read. */
+export function openNotesOn (id: string) {
+  if (! book) return;
+  if ([...pick.options].some ((o) => o.value === id) && pick.value !== id) { pick.value = id; pick.dispatchEvent (new Event ("change")); }
+  if (panel.hidden) btn.click ();
+}
+
 /** The verses to show - and, narrow, the verse read that ONE-WAY FOLLOWING goes to. Wide: every verse of the chapter.
  *  Narrow: one - the verse being read aloud, else the first
  *  whose last line is still in view: the middle of its last word's original (the Hebrew or Greek, not the word's
