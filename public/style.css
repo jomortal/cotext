@@ -294,7 +294,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 :where(.sheet:not(.twoCol)) > .panelScroll > * { margin-inline: 0 auto; }     /* (A word's panel in one column: at the panel's left, any room beyond --page at its right) */
 .pane > .panelScroll { padding-top: 0; }     /* (Under the frozen top row: its own margin above) */
-.pane > .top { flex: none; margin: 0; padding: var(--pane-top) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge) */
+.pane > .top { flex: none; margin: 0; padding: var(--pane-top) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) var(--margin) var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge, and --margin from the divider's line above it, the left edge and what scrolls under it) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
@@ -649,7 +649,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #screenMenu { left: var(--safe-l); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch and the clock. */
-  .pane > .top { padding-top: calc(var(--pad) + env(safe-area-inset-top, 0px)); }     /* (Sideways the panel reaches the screen's top: clear of the clock) */
+  .pane > .top { padding-top: calc(var(--margin) + env(safe-area-inset-top, 0px)); }     /* (Sideways the panel reaches the screen's top: --margin from it, clear of the clock) */
   .pane > .xRow { top: calc(var(--x-top) + env(safe-area-inset-top, 0px)); }
   body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); }     /* (The notes beside or under the search: no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
