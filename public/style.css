@@ -540,6 +540,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
+.withAdd { position: relative; padding-right: calc(var(--icon-box) + var(--gap)); } .withAdd > .entryAdd { position: absolute; z-index: 1; top: 0; right: 0; }     /* (A dictionary's entry in the resources pane: its + at its top right - adding it to the Study printout -, its title kept clear of it) */
 /* A screen's panel (.deckPane, layout.ts' deckPaneSplit) - the Verse cards' VERSE LIST, Flashcards' WORD LIST, the
    Study printout's EDIT and DOWNLOAD - opened from the bar: at the screen's foot over the bar, the screen's room above
    it (--deckPaneH: its height); sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its

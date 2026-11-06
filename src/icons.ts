@@ -11,6 +11,7 @@ const path = (d: string) => `<path d="${d}"/>`;
 export const ICONS = {
   x: svg (path ("M6.5 6.5l11 11M17.5 6.5l-11 11")),     // (Close)
   plus: svg (path ("M12 5.5v13M5.5 12h13")),     // (Add)
+  check: svg (path ("M5 12.5l4.5 4.5L19 7")),     // (Added: a + done)
   menu: svg (path ("M4.5 7h15M4.5 12h15M4.5 17h15")),     // (☰: the study drawer)
   more: svg (`<circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>`),     // (⋯: the helps' menu)
   play: svg (`<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>`),     // (▶: read aloud)

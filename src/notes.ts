@@ -45,6 +45,7 @@ import { box } from "./zoom";     // (Boxes in CSS px, as scrollTop is, whatever
 import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./dictionary";
 import { passageMap } from "./atlas";
 import { timelinePane } from "./timeline";
+import { setIcon } from "./icons";
 
 export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas" | "timeline"; name: string; testaments: string; credit: string;
                    file: string; version: string; books?: string; }     // (books: the book ids it has notes for, space-separated - pipeline/source_books.py; '' or none: every book of its testaments)
@@ -206,9 +207,24 @@ function versesNow (): number[] {
 }
 
 /** Draws the notes for the verses now - loading the source's file first if it isn't open. */
+// A dictionary's entries (articles, not verse by verse) each with its own + - adding that entry to the Study printout
+// as an item of its own (chapterstudy.ts' addStudyEntry, given by setEntryAdd), turned ✓ once in; the panel's + over them hidden (the rest
+// keep it: their notes go in by passage).
+let addEntry: ((book: Book, chapter: number, src: string, id: string, title: string) => boolean) | null = null;
+export const setEntryAdd = (f: typeof addEntry) => { addEntry = f; };
+function withAdd (el: HTMLElement, src: string, id: string, title: string): HTMLElement {
+  const b = document.createElement ("button");
+  b.className = "pill icon entryAdd"; b.setAttribute ("aria-label", "Add to the Study printout");
+  setIcon (b, "plus");
+  b.addEventListener ("click", (e) => { e.stopPropagation (); if (book && addEntry?. (book, chapter, src, id, title)) setIcon (b, "check"); });
+  el.classList.add ("withAdd"); el.prepend (b);
+  return el;
+}
+
 async function show () {
   const src = current ();
   if (! book || ! src) return;
+  document.getElementById ("notesAdd")!.hidden = src.kind === "dictionary";     // (A dictionary's + by each entry instead)
   creditEl.textContent = src.credit;
   const n = ++loading;     // (A file still arriving for a source picked before: not shown)
   if (src.file && ! ownFile (src) && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
@@ -372,7 +388,7 @@ async function drawArticles (id: string, per: { v: number; where: number[][] }[]
     if (! lists[i].length) return;
     const box = verseBlock (`${chapter}:${v}`, v);
     bodyEl.append (box); blocks.push ([v, box]);
-    for (const a of lists[i]) box.append (entry (textDb!, a.id, a.title, a.line, a.why, id, a.photo));
+    for (const a of lists[i]) box.append (withAdd (entry (textDb!, a.id, a.title, a.line, a.why, id, a.photo), id, a.id, a.title));
   });
   if (! bodyEl.children.length) bodyEl.innerHTML = per.some ((p) => p.where.length) ? "<p>No articles in this chapter.</p>" : LXX_ONLY;
   placed ();
@@ -541,7 +557,7 @@ async function drawBookFinds (id: string) {
     if (n !== updating) return;
     bodyEl.replaceChildren ();
     for (const a of list) {
-      const el = entry (textDb!, a.id, a.title, a.line, "", id, a.photo);
+      const el = withAdd (entry (textDb!, a.id, a.title, a.line, "", id, a.photo), id, a.id, a.title);
       el.append (verseLinks (b.id, a.verses));
       bodyEl.append (el);
       oneRows.push ([a.verses, el]);

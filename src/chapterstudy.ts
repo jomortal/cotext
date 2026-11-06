@@ -80,7 +80,7 @@ import { setIcon, type IconName } from "./icons";
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
 import { onScreen } from "./study";
-import { sourcesFor, placesOf, openSource, noteElement, drawDiagram, FOLDED, type Source, type Note, type Sentence } from "./notes";
+import { sourcesFor, placesOf, openSource, noteElement, drawDiagram, FOLDED, type Source, type Note, type Sentence, setEntryAdd } from "./notes";
 import { passageArticles, bookArticles, articleBlock } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
@@ -101,6 +101,7 @@ type Item = { id: string } & (
   | { k: "text"; gloss: boolean; parse: boolean; translit: boolean; from: number; to: number; under?: number; helps?: "both" | "gloss" | "parse"; other?: boolean }
   | { k: "note"; src: string; beside: boolean; from: number; to: number; skip?: number[]; noFathers?: string[] }
   | { k: "dict"; src: string; from: number; to: number; skip?: string[] }
+  | { k: "article"; src: string; entry: string; title: string }     // (article: one dictionary entry, added by its own + in the resources pane - not tied to the section's verses, moved anywhere as it is)
   | { k: "map"; from: number; to: number }
   | { k: "time" }
   | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean }
@@ -119,7 +120,7 @@ let where: () => [Book, number] = () => { throw new Error ("Study printout: not 
 let bookList: () => Book[] = () => [];
 /** main.ts: the database, where the reader is (the book shown and its chapter: the first study's place) and the books
  *  to pick from (the Old Testament as read, Hebrew or Septuagint, and the New). */
-export function initChapterStudy (theDb: Db, place: () => [Book, number], list: () => Book[]) { db = theDb; where = place; bookList = list; }
+export function initChapterStudy (theDb: Db, place: () => [Book, number], list: () => Book[]) { db = theDb; where = place; bookList = list; setEntryAdd (addStudyEntry); }
 
 const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "", icon?: IconName) => {     // (icon: an icon button's drawing - icons.ts)
   const e = document.createElement (tag);
@@ -245,7 +246,7 @@ function nameShown (p: Printout): string {
 const newPrintout = (): Printout => { const [b, c] = where (); return { id: newId (), name: "", sections: [{ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }] }; };
 /** Opens a printout (id): it becomes the open one, the last used. */
 function openPrintout (id: string) { at = id; sections = now ().sections; openOpts.clear (); chapters.clear (); }
-const KINDS = new Set (["text", "note", "dict", "map", "time", "words", "memo"]);
+const KINDS = new Set (["text", "note", "dict", "article", "map", "time", "words", "memo"]);
 /** A saved list's items: those of a kind there is (anything else dropped: a list not a list, an older kind). */
 const itemsOf = (x: unknown): Item[] => Array.isArray (x)
   ? x.filter ((i): i is Item => !! i && typeof i === "object" && typeof (i as Item).id === "string" && KINDS.has ((i as Item).k)) : [];
@@ -312,6 +313,7 @@ function nameOf (sec: Section, it: Item): string {
     case "note": return (sourceOf (book, it.src)?.name ?? it.src) + (it.beside ? ", beside each verse" : "") + range
                         + (it.noFathers?.length ? ", some fathers" : "") + (it.skip?.length ? `, ${it.skip.length} left out` : "");
     case "dict": return (sourceOf (book, it.src)?.name ?? it.src) + range + (it.skip?.length ? `, ${it.skip.length} left out` : "");
+    case "article": return `${it.title} (${sourceOf (book, it.src)?.name ?? it.src})`;
     case "map": return "Atlas map" + range;
     case "time": return "Timeline";
     case "words": return "Word list" + (it.which === "rare" ? ` (under ${it.under}×)` : it.which === "picked" ? ` (${it.picked.length} picked)` : "");
@@ -483,6 +485,23 @@ onScreen ("Study printout", async (body) => {
   render ();
 });
 const EDITOR_KEY = "cotext.study.editor";     // (The pane shown: "1" the editor, "out" the download pane, "0" none)
+
+/** A dictionary's entry added from the resources pane (its + by the entry: notes.ts' setEntryAdd) to the open printout:
+ *  an item of its own (article) - not tied to verses, so moved anywhere as it is -, at the end of the last passage (none:
+ *  a passage made, the chapter read); nothing where that entry's in already. False for a book or source not there. */
+export function addStudyEntry (b: Book, chapter: number, src: string, id: string, title: string): boolean {
+  const bk = bookList ().find ((x) => x.code === b.code);
+  if (! bk || ! sourceOf (bk, src)) return false;
+  const open = !! sectionsEl?.isConnected;
+  load ();
+  if (now ().sections.some ((x) => x.items.some ((i) => i.k === "article" && i.src === src && i.entry === id))) return true;
+  if (! now ().sections.length) now ().sections.push ({ id: newId (), book: bk, chapter, from: 0, to: 0, items: [] });
+  const secs = now ().sections;
+  secs[secs.length - 1].items.push ({ id: newId (), k: "article", src, entry: id, title: title.replace (/\*/g, "") });
+  save ();
+  if (open) { drawSections (); render (); }
+  return true;
+}
 
 /** The printouts to add to (the Bible's add boxes' PRINTOUT picker, versecards.ts): each its id and name as shown,
  *  and the open one's (the last used) - picked at first. */
@@ -1081,6 +1100,14 @@ async function render () {
             block.append (el ("h3", "csArticle", got.title), ...got.body);
           }
           if (! list.length) block.append (el ("p", "", "Nothing for these verses."));
+        } else if (it.k === "article") {     // (One entry, as the dictionary item prints each - its title, then the article)
+          cite (it.src);
+          const key = `${it.src}:${it.entry}`;
+          let a = articles.get (key);
+          if (! a) { a = articleBlock (db, it.entry, it.src); articles.set (key, a); }
+          const got = await a;
+          if (got) block.append (el ("h3", "csArticle", got.title), ...got.body);
+          else block.append (el ("p", "", `${it.title} couldn't be loaded.`));
         } else if (it.k === "map") {
           h ("Atlas");
           const m = mapOf (it);
