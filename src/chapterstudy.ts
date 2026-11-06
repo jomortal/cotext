@@ -99,7 +99,8 @@ type Item = { id: string } & (
   | { k: "dict"; src: string; from: number; to: number; skip?: string[] }
   | { k: "map"; from: number; to: number }
   | { k: "time" }
-  | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean });
+  | { k: "words"; which: "all" | "rare" | "picked"; under: number; picked: string[]; long: boolean; translit: boolean }
+  | { k: "memo"; text: string });     // (memo: the reader's own note, typed in its line - printed as typed)
 
 /** A section of the printout: a reference - book, chapter, verses from - to (0: the chapter's first / last) - and its
  *  items in order. The first names the printout until it's renamed. */
@@ -239,7 +240,7 @@ function nameShown (p: Printout): string {
 const newPrintout = (): Printout => { const [b, c] = where (); return { id: newId (), name: "", sections: [{ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }] }; };
 /** Opens a printout (id): it becomes the open one, the last used. */
 function openPrintout (id: string) { at = id; sections = now ().sections; openOpts.clear (); chapters.clear (); }
-const KINDS = new Set (["text", "note", "dict", "map", "time", "words"]);
+const KINDS = new Set (["text", "note", "dict", "map", "time", "words", "memo"]);
 /** A saved list's items: those of a kind there is (anything else dropped: a list not a list, an older kind). */
 const itemsOf = (x: unknown): Item[] => Array.isArray (x)
   ? x.filter ((i): i is Item => !! i && typeof i === "object" && typeof (i as Item).id === "string" && KINDS.has ((i as Item).k)) : [];
@@ -309,6 +310,7 @@ function nameOf (sec: Section, it: Item): string {
     case "map": return "Atlas map" + range;
     case "time": return "Timeline";
     case "words": return "Word list" + (it.which === "rare" ? ` (under ${it.under}×)` : it.which === "picked" ? ` (${it.picked.length} picked)` : "");
+    case "memo": return "Note";
   }
 }
 
@@ -404,6 +406,16 @@ onScreen ("Study printout", async (body) => {
     save (); drawSections (); render ();
     sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" });
   });
+  // + ADD NOTE: a note of the reader's own at the end of the last passage (none: a passage first, the chapter read), its
+  // box ready to type in
+  const memo = el ("button", "pill csAdd", "+ Add note");
+  memo.addEventListener ("click", () => {
+    if (! sections.length) { const [b, c] = where (); sections.push ({ id: newId (), book: b, chapter: c, from: 0, to: 0, items: [] }); nameFollows (); }
+    const it: Item = { id: newId (), k: "memo", text: "" };
+    sections[sections.length - 1].items.push (it);
+    save (); drawSections (); render ();
+    sectionsEl.querySelector<HTMLTextAreaElement> (`.csLine[data-id="${it.id}"] textarea`)?.focus ();
+  });
   const print = el ("button", "pill csPrint", PRINT);
   printEl = print;
   print.addEventListener ("click", () => {
@@ -423,7 +435,8 @@ onScreen ("Study printout", async (body) => {
   const head = el ("div", "top csEditHead"), close = el ("button", "pill icon", "✕");
   close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "gTitle", "Edit"), close);
-  editor.append (head, sectionsEl, more);
+  editor.append (head, sectionsEl, more, memo);
+  editor.addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
@@ -539,6 +552,13 @@ function addStudy (code: string, chapter: number, from: number, to: number, src:
   return true;
 }
 
+// + Add item's menu open, closed by a tap anywhere but in it or on its button - as a menu is
+document.addEventListener ("pointerdown", (e) => {
+  const t = e.target as Element;
+  for (const m of document.querySelectorAll<HTMLElement> (".csMenu:not([hidden])"))
+    if (! m.contains (t) && ! m.previousElementSibling?.contains (t)) m.hidden = true;
+});
+
 /** The editor's sections, each its reference, its lines, + Add item and its menu (hidden until that's tapped). */
 function drawSections () {
   linesOf.clear ();
@@ -571,7 +591,7 @@ function drawLines () {
       opts.setAttribute ("aria-expanded", String (openOpts.has (it.id)));
       const x = el ("button", "pill icon csRemove", "✕");
       x.setAttribute ("aria-label", "Remove");
-      row.append (handle, el ("span", "csName", nameOf (sec, it)), opts, x);
+      row.append (handle, el ("span", "csName", nameOf (sec, it)), ...(it.k === "memo" ? [] : [opts]), x);
       const panel = el ("div", "csOpts");
       panel.hidden = ! openOpts.has (it.id);
       if (! panel.hidden) fillOptions (panel, sec, it);
@@ -582,6 +602,12 @@ function drawLines () {
       x.addEventListener ("click", () => { sec.items = sec.items.filter ((i) => i !== it); openOpts.delete (it.id); changed (); });
       dragging (handle, line, sec);
       line.append (row, panel);
+      if (it.k === "memo") {     // (A note: its box under its line, kept and printed as it's typed - the lines not redrawn, so the box keeps its place)
+        const box = el ("textarea", "choose csMemoBox");
+        Object.assign (box, { value: it.text, rows: 3, placeholder: "Type a note" });
+        box.addEventListener ("input", () => { it.text = box.value; save (); render (); });
+        line.append (box);
+      }
       return line;
     }));
   }
@@ -825,7 +851,11 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   group ("Time", sources.filter ((s) => s.kind === "timeline").map ((s) => choice ("Timeline", () => push (sourceItem (s, 0, 0)), "The chapter's place in time")));
   menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
-  menuEl.scrollIntoView ({ block: "nearest" });
+  // (Over the screen under its button, as wide as the lines' names, no further down than the bar - nothing scrolled or moved)
+  const r = (menuEl.previousElementSibling as HTMLElement).getBoundingClientRect (), box = menuEl.parentElement!.getBoundingClientRect ();
+  const foot = document.querySelector (".csEditBar")?.getBoundingClientRect ().top ?? innerHeight;
+  Object.assign (menuEl.style, { top: `${r.bottom}px`, left: `${box.left}px`, right: `${innerWidth - box.right}px`,     // (In from the left by its margin: style.css)
+                                 maxHeight: `${Math.max (120, Math.min (foot, innerHeight) - r.bottom - 8)}px` });
 }
 
 /** A dictionary item's entries for its verses (sec: its section), each once, in order: the Tyndale's by verse (those
@@ -971,6 +1001,9 @@ async function render () {
           const t = await chapterTime (book.id, chapter);
           if (t) { cite ("timeline"); block.append (timelineBlock (t, book, chapter)); }
           else block.append (el ("p", "", "The timeline couldn't be loaded."));
+        } else if (it.k === "memo") {
+          if (! it.text.trim ()) continue;     // (Nothing typed: nothing printed)
+          block.append (el ("p", "csMemo", it.text));
         } else if (it.k === "words") {
           h ("Word list");
           cite (`text:${book.testament}`); cite (`lex:${book.testament}`);

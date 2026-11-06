@@ -105,7 +105,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
 /* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
-#options, .chooseList, .csOutPop { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
+#options, .chooseList, .csOutPop, .csMenu { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(100dvh - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
@@ -786,9 +786,10 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); }
+.csMemoBox { width: 100%; box-sizing: border-box; resize: vertical; font-size: var(--fs-m); margin: 0 0 8px; } .csMemo { white-space: pre-wrap; margin: 0; color: var(--fg); font-size: var(--fs-m); line-height: var(--lh); }     /* (A note of the reader's own: its box in the editor, typed in; in the printout, as typed - its lines kept) */
 .csOut { display: grid; justify-items: start; gap: var(--gap); }     /* (DOWNLOAD's picker, then Print under it) */
 .csOutPop { position: fixed; z-index: 32; right: var(--safe-r); bottom: calc(var(--barH) + var(--gap-s)); padding: var(--pad); }     /* (The bar's download icon's menu: over the screen, above the icon - beside it sideways, below) */
-.csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's choices as a line's drop-down: their names over the lines' names - in by the handle's room, --x-w, and the gap) */
+.csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); position: fixed; z-index: 33; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's menu: an overlay as a menu is, over the screen under its button - showMenu places it: in by its margin, its choices' names over the lines' names; nothing moved -; a tap elsewhere closes it) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
