@@ -93,7 +93,7 @@ import { passageArticles, bookArticles, articleBlock, searchArticles } from "./d
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
-import { nativeName } from "./booknames";
+import { nativeName, ABBR } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { deckPaneSplit } from "./layout";
 import { box as cssBox, px, winW, winH } from "./zoom";
@@ -341,15 +341,15 @@ let previewEl: HTMLElement, sectionsEl: HTMLElement, printEl: HTMLButtonElement;
 const openOpts = new Set<string> ();     // (The lines whose options are open)
 const linesOf = new Map<Section, HTMLElement> ();     // (Each section's lines, as drawn)
 
-/** A section's reference at its top: BOOK, CHAPTER and VERSES (from - to), changed in place, and a ✕ removing it (the
+/** A section's reference at its top, one line: BOOK (abbreviated where the full name doesn't fit), CHAPTER and VERSES (from - to), changed in place, and a ✕ removing it (the
  *  first too; the last removed, the printout empty until + Add passage). The first's changed or removed, the
  *  printout's name follows while it has none of its own. */
 async function drawPlace (placeEl: HTMLElement, sec: Section) {
   const isFirst = sec === first ();
-  const pick = (label: string, options: [string, string][], value: string, set: (v: string) => void) => {
+  const pick = (label: string, options: [string, string, string?][], value: string, set: (v: string) => void) => {     // (A choice's third: its short form, where the full one doesn't fit - choose.ts)
     const l = el ("label", "field", label);
     const s = el ("select", "choose");
-    s.append (...options.map (([v, t]) => new Option (t, v)));
+    s.append (...options.map (([v, t, short]) => { const o = new Option (t, v); if (short) o.dataset.short = short; return o; }));
     s.value = value;
     s.addEventListener ("change", () => set (s.value));
     l.append (s);
@@ -364,7 +364,7 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
     if (name) name.textContent = refName (sec);     // (Its reference line following)
   };
   const kids: HTMLElement[] = [
-    pick ("Book", bookList ().map ((b) => [b.code, b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
+    pick ("Book", bookList ().map ((b) => [b.code, b.name, ABBR[b.name] ?? b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
     pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
     pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.from), (v) => range (Number (v), sec.to)),
     pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.to), (v) => range (sec.from, Number (v)))];

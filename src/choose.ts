@@ -22,7 +22,15 @@ function enhance (sel: HTMLSelectElement) {
   wrap.className = "chooseWrap";
   wrap.append (btn, list);
   sel.after (wrap);
-  const label = () => { btn.textContent = LABEL (sel); btn.disabled = sel.disabled; };     // (A select disabled: its button greyed out, not opening)
+  // (A select disabled: its button greyed out, not opening. The choice's short form - its data-short, a book's
+  // abbreviation - where the full one doesn't fit the button's width: kept a line, never cut; the button's width set by
+  // its row, not its text, so swapping never moves it - checked again as it's resized)
+  const label = () => {
+    btn.textContent = LABEL (sel); btn.disabled = sel.disabled;
+    const short = sel.selectedOptions[0]?.dataset.short;
+    if (short && btn.scrollWidth > btn.clientWidth) btn.textContent = short;
+  };
+  new ResizeObserver (() => { if (sel.selectedOptions[0]?.dataset.short) label (); }).observe (btn);
   // (Set from code: the button follows. The prototype's own setter still sets the select.)
   for (const prop of ["value", "selectedIndex"] as const) {
     const d = Object.getOwnPropertyDescriptor (HTMLSelectElement.prototype, prop)!;

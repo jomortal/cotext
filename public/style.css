@@ -732,7 +732,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .paneBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: inherit;
             margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); }
 .barMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
-.csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
+.csPlace { display: flex; gap: 8px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses and ✕: one line, never wrapping) */
+.csPlace > .field { flex: none; } .csPlace > .field:first-child { flex: 1 1 0; } .csPlace .chooseBtn { white-space: nowrap; }     /* (BOOK the room the rest leave - its name abbreviated where the whole doesn't fit: choose.ts' data-short -, the others their choices' width) */
+.csPlace > .field:first-child { grid-template-columns: minmax(0, 1fr); } .csPlace > .field:first-child .chooseBtn { width: 100%; box-sizing: border-box; overflow: hidden; }
 .csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
 .csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
 .csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
