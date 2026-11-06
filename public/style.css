@@ -517,9 +517,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    no pointer), its choices the book picker's inline list (.chooseList.inline) - the right one in the accent
    (aria-pressed), a wrong pick in --wrong, struck through; SHOW IN THE GRAMMAR in the line under them a link, as the
    parsing's terms (.term). */
-.card.learnCard { cursor: default; }
+.card.learnCard { cursor: default; } .learnCard .cardBack { font-size: var(--fs-xl); }     /* (A question in English: larger than a flashcard's back - a word alone, .cardFront, the card's own size) */
 .learnQuiz { display: grid; gap: var(--gap); }
-.chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
+.chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A wrong pick: --wrong, struck through) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
