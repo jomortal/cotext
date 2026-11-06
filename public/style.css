@@ -832,7 +832,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #notesBtn { grid-column: 1; grid-row: 3; }
+  #notesBtn { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 3; }     /* (The resources at the top, the search at the foot - a recording's credit in its place) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: max(var(--studyR, 0px), var(--sideBar)); }     /* (The Verse cards beside their bar) */
