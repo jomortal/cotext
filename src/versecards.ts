@@ -42,7 +42,7 @@ import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
 import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
-import { textBox, translatedWords, TEXT_CREDIT } from "./chapterstudy";
+import { textBox, translatedWords, TEXT_CREDIT, addStudyReference } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { onSwipe } from "./bars";
 
@@ -422,7 +422,8 @@ function stackWhenWrapped (place: HTMLElement) {
 
 //==== ADD VERSE (the Bible's) ====
 // A verse's margin tapped in the Bible (its number and the + under it, the verse's height): a box from the bottom, the word's panel's width (#verseSheet, under it in the
-// text's column - index.html), headed ADD TO VERSE CARDS, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
+// text's column - index.html), headed by a drop-down - ADD TO VERSE CARDS or ADD TO STUDY PRINTOUT (the last picked; the
+// printout: a new section with the verse, chapterstudy.ts' addStudyReference, no DECK) -, as the Verse cards' add row - DECK (the deck it's added to: the one open at first),
 // BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD VERSE (adding it there, and
 // closing the box); its ✕ closes it. A Septuagint book's verse (not a book the cards take): the book left blank.
 const verseSheet = document.getElementById ("verseSheet")!;
@@ -433,16 +434,24 @@ document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   const book = books.find ((b) => b.code === reading ().code) ?? null;
   addVerse ({ book, chapter: book ? Number (row.dataset.chapter) : 0, from: book ? Number (row.dataset.verse) : -1, to: 0 });
 });
+let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last picked, while the app runs)
 function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }) {
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
-  body.innerHTML = `<h2 class="avHead">Add to Verse Cards</h2><div class="vcAdd"><label class="vcPick">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
+  body.innerHTML = `<h2 class="avHead"><select class="choose" id="avTo" aria-label="Add to"><option value="cards">Add to Verse Cards</option>
+    <option value="study">Add to Study Printout</option></select></h2><div class="vcAdd"><label class="vcPick" id="avDeckRow">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
       `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
     <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
   drawPick (place, add, p); stackWhenWrapped (place);
+  const to = body.querySelector<HTMLSelectElement> ("#avTo")!, deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!;
+  const pickTo = () => { addTo = to.value; deckRow.hidden = addTo !== "cards"; };     // (DECK only for the Verse cards)
+  to.value = addTo; pickTo ();
+  to.addEventListener ("change", pickTo);
   add.addEventListener ("click", () => {
+    if (! p.book || ! p.chapter || p.from <= 0) return;
+    if (addTo === "study") { addStudyReference (p.book.code, p.chapter, p.from, p.to); verseSheet.hidden = true; return; }     // (A new section of the Study printout)
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
-    if (! d || ! p.book || ! p.chapter || p.from <= 0) return;
+    if (! d) return;
     goTo = newId ();
     d.cards.push ({ id: goTo, code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
     save (); verseSheet.hidden = true;
