@@ -46,7 +46,7 @@
     </span>
   </div>
 </header>
-<!-- The columns (layout.ts): not boxes at all (display: contents) - the text, then one panel at a time beside it, under it upright, at its right sideways; #paneCol a box only while the notes or the search are open on anything bigger than a phone (style.css' PAIR: the two sharing the panel's place). -->
+<!-- The columns (layout.ts): not boxes at all (display: contents) - the text, then one panel at a time beside it, under it upright, at its right sideways; #paneCol a box only while the notes or the search are open where the panel's place has room for two (style.css' SPLIT: the two sharing it). -->
 <div id="textCol" class="col">
 <main>
   <p id="status">Loading the text…</p>
@@ -123,7 +123,6 @@
   <button class="pill icon" id="screenMenu" aria-label="Study tools" data-icon="menu"></button>
   <div class="topBar" id="screenTop"><div class="topRow"><h1 class="topTitle" id="screenTitle"></h1></div></div>
   <div class="pickerCard"><div id="screenBody"></div></div>
-  <div id="cardSplit" class="split" role="separator" aria-orientation="horizontal" aria-label="Resize the word's panel"></div>
 </div>
 <script type="module" src="app.js"></script>
 </body>

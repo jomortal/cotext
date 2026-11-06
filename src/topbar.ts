@@ -98,5 +98,6 @@ export function dropDowns (tops: { key: string; button: HTMLElement; menu: HTMLE
  *  it makes it: style.css). */
 export function watchTopBar (bar: HTMLElement) {
   const screen = document.getElementById ("screen")!;
-  new ResizeObserver (() => screen.style.setProperty ("--topH", bar.offsetHeight + "px")).observe (bar);
+  new ResizeObserver (() => { if (bar.offsetHeight) screen.style.setProperty ("--topH", bar.offsetHeight + "px"); }).observe (bar);     // (A bar not shown - another screen's -: left to the one shown)
 }
+watchTopBar (document.getElementById ("screenTop")!);     // (Every other screen's: its title's bar)

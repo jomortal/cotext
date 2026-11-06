@@ -48,14 +48,21 @@
   --head-h: calc(var(--icon-box) + 4 * var(--head-y));     /* (The heading's height, under the clock: its row - an icon's box, --head-y above and below it - and --head-y above and below that; the side bar's width too) */
   --vnum-gap: 12px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
-  --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
+  --pad: 16px;     /* (The margin above and below: every panel's, menu's and screen's top and bottom edges) */
+  /* MARGINS: the one side margin (--margin) - the text's column, the word's panel, the resources and the search, the
+     deck panels, the printout's panes, the add boxes, the heading, the menus and screens: every one's contents this far
+     in from its sides. It changes with the window's size only (a window at most 600 px wide or 500 px tall: --vnum-gap's
+     12 px, the verse numbers as much room at their left as at their right; else 16 px), everything with it. The notch:
+     one rule - a side at the screen's edge keeps the device's own room there if that's more (--safe-l / -r); a side
+     meeting a bar or a divider (sideways: SIDE BAR's) just --margin. */
+  --margin: 16px;
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
   --word-he: 28px; --word-gr: 26px;     /* (The text's words, Hebrew and Greek - and the word's panel's, the same) */
-  /* The edges: a box's sides clear of the notch (--safe-l / -r) and the heading's, centered on --page beyond it
-     (--col-l / -r: the % the box's own where used); --x-room kept clear of a panel's ✕. */
-  --safe-l: max(var(--pad), env(safe-area-inset-left, 0px)); --safe-r: max(var(--pad), env(safe-area-inset-right, 0px));
-  --col-l: max(var(--pad), env(safe-area-inset-left, 0px), calc((100% - var(--page)) / 2));
-  --col-r: max(var(--pad), env(safe-area-inset-right, 0px), calc((100% - var(--page)) / 2));
+  /* The edges: a box's sides --margin in, clear of the notch (--safe-l / -r: MARGINS), and the heading's, centered on
+     --page beyond it (--col-l / -r: the % the box's own where used); --x-room kept clear of a panel's ✕. */
+  --safe-l: max(var(--margin), env(safe-area-inset-left, 0px)); --safe-r: max(var(--margin), env(safe-area-inset-right, 0px));
+  --col-l: max(var(--safe-l), calc((100% - var(--page)) / 2));
+  --col-r: max(var(--safe-r), calc((100% - var(--page)) / 2));
   --x-room: 52px;
   --x-w: var(--icon-box);     /* (A ✕ button's width: an icon's box) */
   --split-w: 14px; --split-half: calc(var(--split-w) / 2);     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
@@ -100,8 +107,9 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui
    such styling, thin. */
 ::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--faint); border-radius: var(--radius-xs); }
-:is(#sheet, #besideSheet) :is(.panelScroll, .infoBox)::-webkit-scrollbar-track { margin-top: 48px; }     /* (The ✕: 8-44px down) */
-.pane > .panelScroll::-webkit-scrollbar-track { margin-top: 56px; }     /* (Its ✕: 17-53px down, over the scroller on a phone) */
+/* A scroll bar spans only what scrolls: never under a title row or a bar - each scroller starts under its title row
+   (a pane's .top, a panel's .paneHead, a screen's top bar) and ends above its bar, the title kept outside it. The word's
+   panel has no title row: its ✕ floats in its margin, clear of the bar at its edge. */
 @supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--faint) transparent; } }
 main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: var(--rule);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
@@ -211,20 +219,17 @@ body.noVerbColors .w .parse { color: inherit; }
 /* The play bar and the panels: in the page's column under the text (body: heading, main, the word's panel, the notes
    panel, the play bar), not over it - the text area ends above them, so nothing covers the text; a panel opening goes
    above the play bar, which stays at the bottom. */
-/* Its size and look the heading's (6 px above and below, the heading's pills, no border), down against the screen's
-   bottom - into the home indicator's room, keeping just clear of the indicator itself. */
-/* A bottom bar - the play bar, the verse cards' -: one height, its buttons' room under them clear of the iPad's and
-   iPhone's swipe-up edge. */
-:root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--icon-box) + 19px + var(--barFoot)); }
-@media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }
-@media (max-width: 600px), (max-height: 500px) {     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways -, the verse numbers as much room at their left as at their right: --vnum-gap) */
-  :root { --text-edge: 6px; }
-  main { padding-left: max(var(--vnum-gap), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }     /* (The verse numbers' left as much room as their right: --vnum-gap) */
-}     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
-.bottomBar { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
-                        height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
+/* A bottom bar - the play bar, the decks', the printout's (.bottomBar) -: one height on every device - its line, then
+   its buttons' row, the heading's height (--head-h), the buttons centered in it -, and under that only the device's
+   own bottom inset (env(safe-area-inset-bottom): the iPhone's home indicator, the iPad's swipe-up edge), plain room with
+   nothing in it, so no button is ever in the swipe area. --barH: the whole. Its line always there (see-through until a
+   panel or the book menu is over it), so the row is the same height whether it's shown or not. */
+:root { --barH: calc(var(--rule-w) + var(--head-h) + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 600px), (max-height: 500px) { :root { --margin: var(--vnum-gap); } }     /* (MARGINS: a small window's) */
+.bottomBar { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; align-content: stretch; background: var(--bg); box-sizing: border-box;
+             height: var(--barH); border-top: var(--rule-w) solid transparent; padding: 0 var(--safe-r) env(safe-area-inset-bottom, 0px) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
-#prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .bottomBar > .arrow:first-child { justify-self: start; } .bottomBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
+#prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .bottomBar > .arrow:first-child { justify-self: start; } .bottomBar > .arrow:last-child { justify-self: end; } .bottomBar .pill.arrow { padding-block: 0; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
 .inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › centered in a column's margins - the Bible's text's, a deck's card's - bars.ts' marginArrows) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
@@ -261,8 +266,8 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #notes .gBody small { font-size: .85em; color: var(--soft); }
 #notes .credit { margin-top: 12px; }
 
-/* The word's panel (.sheet: the text's word's, #sheet, and the notes' Hebrew OT word's, #besideSheet - in the panel's
-   place: ONE PANE, below -, and a verse card's, #cardSheet - panel.ts). */
+/* The word's panel (.sheet: the text's word's - and a verse card's word's: #sheet, .onCard -, and the notes' Hebrew OT
+   word's, #besideSheet - in the panel's place: ONE PANE, below - panel.ts). */
 .sheet { position: relative; flex: 0 1 auto; min-height: 0; box-sizing: border-box; background: var(--bg); }
 /* The panel's ✕ fixed at its upper right - drawn as every ✕ is (a plain icon pill, no fill: as a screen's ✕) -
    what's beside it kept clear of it by its own padding (.heads' first row, the notes' picker). */
@@ -278,7 +283,6 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 :where(.sheet:not(.twoCol)) > .panelScroll > * { margin-inline: 0 auto; }     /* (A word's panel in one column: at the panel's left, any room beyond --page at its right) */
 .pane > .panelScroll { padding-top: 0; }     /* (Under the frozen top row: its own margin above) */
 .pane > .top { flex: none; margin: 0; padding: var(--pad) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) 10px var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge) */
-@media (max-width: 600px), (max-height: 500px) { .pane > .panelScroll { padding-inline: var(--text-edge); } .pane > .top { padding-left: var(--text-edge); padding-right: calc(var(--pad) + var(--x-w) + var(--text-edge)); } }     /* (A phone: the resources' side margins as small as the text's, upright as sideways - the picker as far from the ✕ as from the left) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
@@ -335,8 +339,11 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .steps { padding-left: 1.4em; line-height: var(--lh-loose); font-size: var(--fs-s); }     /* (Getting better voices' steps) */
 
 /* A study screen: full screen, ☰ at its top left to move between them. */
-#screen { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; z-index: 30;
-          padding: calc(64px + env(safe-area-inset-top, 0px)) var(--safe-r) var(--pad) var(--safe-l); }
+/* A ☰ screen: the window under its top bar (--topH: the bar's height, however tall - topbar.ts' watchTopBar) and above
+   its bottom bar (--barH), so it scrolls - and its scroll bar runs - only between the two; the bars fixed over the
+   window's top and foot. */
+#screen { position: fixed; inset: 0; top: var(--topH, calc(48px + env(safe-area-inset-top, 0px))); background: var(--bg); overflow-y: auto; z-index: 30;
+          padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
 #screenMenu { position: fixed; z-index: 32; top: var(--head-top); }
 #screenMenu { left: var(--col-l); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
 
@@ -492,7 +499,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
 .topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
-#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) { padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
+#screen[data-screen="Study printout"] { top: 0; padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
@@ -505,12 +512,12 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: cards.ts' fitDeck) */
   min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, cards.ts' fitDeck) */
 .deck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
-:where(#screen) .bottomBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A screen's bottom bar: over the screen's foot - the play bar's own place is in the page's column) */
+:where(#screen) .bottomBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); }     /* (A screen's bottom bar: over the screen's foot - the play bar's own place is in the page's column) */
 .bottomBar > [data-k] { grid-row: 1; } .bottomBar > [data-k=back] { grid-column: 1; } .bottomBar > [data-k=shuffle] { grid-column: 2; } .bottomBar > [data-k=over] { grid-column: 4; } .bottomBar > [data-k=next] { grid-column: 5; }     /* (A deck's buttons in their places - the middle's empty where a deck has no button of its own: cards.ts) */
 :where(#screen) .bottomBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and the middle, START OVER between the middle and ›) */
 /* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (12px), its text kept
    clear of the arrows. */
-#screen:has(.bottomBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
+#screen:has(.bottomBar) { bottom: var(--barH); padding-bottom: var(--gap-s); }     /* (The screen ending at its bar - the credits just above it) */
 .vcHead { margin-bottom: -4px; }     /* (VERSE LIST, DECKS: labels as the pickers', over their rows) */
 /* Level with the pickers (the add row's ":" and "-", + ADD VERSE, NEW VERSE): at the row's foot, a picker's height. */
 .vcSep, .pill.addVerse { align-self: end; line-height: var(--field-h); }
@@ -529,10 +536,10 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* A deck's panel of its own - the Verse cards' NEW VERSE (+), Flashcards' word list (its list icon) - opened from the
    bar: at the screen's foot over the bar, the card's room above it (--deckPaneH: its height, versecards.ts / vocab.ts);
    sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.paneHead). */
-.deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(40dvh, var(--deckH, 0px)); overflow-y: auto; box-sizing: border-box;
+.deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(40dvh, var(--deckH, 0px)); box-sizing: border-box;
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
-.deckPane:not([hidden]) { display: grid; gap: var(--gap); }
-#screen:has(.bottomBar):has(.deckPane:not([hidden])) { padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
+.deckPane:not([hidden]) { gap: var(--gap); }
+#screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: calc(var(--barH) + var(--deckPaneH, 0px)); }
 .split.deckSplit { display: none; background: none; }     /* (The panel's divider see-through, the top bar's line meeting it) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - var(--split-half)); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
   max-height: calc(100dvh - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
@@ -597,9 +604,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 
 /* A divider (layout.ts' drag): its line in the middle, a grip over it, the rest room to drag - drawn by its
    orientation (aria-orientation): vertical sets a width, horizontal a height; never scrolls the page when dragged
-   (touch-action). Shown where each is used: the panel's (ONE PANE, below), the word's panel's (its two columns: PAIR),
-   a verse card's word's (#cardSplit) and the Study printout's (.cstudy). */
-.split { display: none; }
+   (touch-action). Shown where each is used: the panel's (ONE PANE, below), the word's panel's and the panes' (SPLIT),
+   the decks' panels' (.deckSplit) and the Study printout's (.cstudy). */
 .split { flex: none; position: relative; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; }
 .split::before { content: ""; position: absolute; background: var(--edge); }
 .split::after { content: ""; position: absolute; background: var(--soft); border-radius: var(--radius-xs); opacity: .5; }
@@ -617,13 +623,12 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .split[aria-orientation="vertical"] { width: var(--split-w); cursor: col-resize; }
 .split[aria-orientation="vertical"]::before { top: calc(-1 * var(--meet)); bottom: 0; left: calc((var(--split-w) - var(--rule-w)) / 2); width: var(--rule-w); }
 .split[aria-orientation="vertical"]::after { top: 50%; left: calc((var(--split-w) - var(--grip-w)) / 2); width: var(--grip-w); height: var(--grip); margin-top: calc(var(--grip) / -2); }
-/* 700 px wide or more (layout.ts' isWide the same): the text's line at its foot the play bar's (always there), the
-   dividers shown, the heading and the ⋯ menu their full width inside the --pad margins - ☰ and ⋯ at its edges; the
-   text, the panels' contents and the screens still at most --page. */
+/* 700 px wide or more: the text's line at its foot the play bar's (always there), the heading and the ⋯ menu their
+   full width inside the margins - ☰ and ⋯ at its edges; the text, the panels' contents and the screens still at most
+   --page. */
 @media (min-width: 700px) {
   #playBar { border-top: var(--rule); }
   main { flex: 1 1 0; min-height: 0; border-bottom: 0; }
-  .split { display: block; }
   .head, #options { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   /* The book picker from the text's left edge (picker.ts sets --textL / --textR, the text's insets). A study screen
      (☰'s) the full window. */
@@ -635,7 +640,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   .pane > .xRow { top: calc(var(--x-top) + env(safe-area-inset-top, 0px)); }
   body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); }     /* (The notes beside or under the search: no clock to clear) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
-  .pane > .panelScroll::-webkit-scrollbar-track { margin-top: 0; }     /* (Its ✕ over the row above the scroller here) */
 }
 
 /* The search pane (search.ts): its bar the top row's width, beside the ✕, the picker (what's searched) under it; the count, then
@@ -689,18 +693,6 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
 #screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
-/* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
-   cards screen, with room left under the screen to scroll the card and its buttons above it. */
-#cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); border-top: var(--rule) !important; }
-#screen:not([data-screen="Verse cards"]) #cardSheet { display: none; }
-#screen:not(:has(#cardSheet:not([hidden]))) #cardSplit, #screen:not([data-screen="Verse cards"]) #cardSplit { display: none; }     /* (Its divider only with it) */
-#screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--mid, 100dvh) * .45 + var(--barH) + var(--pad)); }
-@media (min-width: 700px) {     /* (Wide: as wide as the screen; its height as dragged (#cardSplit: layout.ts' --cardH), else just the word's info - the lexicon scrolling in its column beside it: --cardFit, versecards.ts -, else 45 % of the window; undragged, at most half the room between the top and the bar - a phone held sideways) */
-  #screen { --cardPanelH: min(var(--cardH, min(var(--cardFit, calc(100dvh * .45)), calc((100dvh - 47px - env(safe-area-inset-top, 0px) - var(--barH)) / 2))), calc(100dvh - 160px)); }
-  #cardSheet { left: 0; right: 0; height: var(--cardPanelH); border-top: 0 !important; }
-  #cardSplit { position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--cardPanelH) + var(--barH)); }
-  #screen:has(#cardSheet:not([hidden])) { padding-bottom: calc(var(--cardPanelH) + 14px + var(--barH) + var(--pad)); }
-}
 .timelineNote { margin: 0; }     /* (A note: .vcHead's rule) */
 .timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
             height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
@@ -725,17 +717,23 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor), .cstudy > .csEditor[hidden] { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
 /* A panel's title row (.paneHead: the printout's EDIT and DOWNLOAD, the decks' VERSE LIST and WORD LIST): its title, its ✕
    at the right - as a pane's -, frozen over what scrolls; no line under it, as the Bible's side panels. */
-.paneHead { align-items: center; margin-bottom: var(--gap-s); padding-bottom: var(--gap-s); position: sticky; top: 0; z-index: 2; background: var(--bg); }
-.csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); } .csEditor::-webkit-scrollbar-track { margin-top: 48px; }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
+.paneHead { flex: none; align-items: center; margin-bottom: var(--gap-s); padding-bottom: var(--gap-s); }
+/* A panel with a title row (.deckPane, .csEditor - layout.ts' headFrame): the title outside its scroller (.paneBody), so
+   the scroll bar spans only what scrolls; the scroller out to the panel's right edge, its scroll bar there, its
+   contents as far in as the title's. */
+:is(.deckPane, .csEditor):not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
+.paneBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: inherit;
+            margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); }
+.csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
 .barMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
-                            .csEditor { padding-left: var(--gap-m); }
+                            .csEditor { padding-left: var(--safe-l); } .csPreview { margin-right: 0; padding-right: var(--margin); }     /* (Either side of the divider: --margin from it) */
                             #screen[data-screen="Study printout"]:has(.bottomBar) .topBar { right: var(--csTopR, 0px); }
                             #screen[data-screen="Study printout"]:has(.bottomBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
                             .cstudy:not(.csNoEditor) > :is(.split, .csEditor) { margin-top: calc(-1 * (var(--topH, 48px) + var(--pad))); margin-bottom: calc(-1 * var(--pad)); }     /* (Top to bottom: through the screen's room above - the top bar's - and its margin below) */
                             .cstudy > .csEditor { padding-top: var(--head-top); } .cstudy > .csEditor > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
-.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
+.csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; margin-right: calc(-1 * var(--safe-r)); padding: var(--pad) var(--safe-r) var(--pad) 0; }     /* (Its contents at the screen's margin as the editor's (MARGINS), its scroll bar out at the screen's edge) */
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
 .csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
@@ -820,20 +818,22 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    phone's (bars.ts' SIDE_BAR: keep the two the same): the bottom bars (the play bar, the
    Verse cards' bar) a vertical bar down the right side, the screen's width less it (--sideBar) - the room at the foot
    (--barH) none. Their buttons top to bottom: ‹, search, ▶, notes, › (left to right upright: ‹, notes, ▶, search, ›); ‹, Shuffle, Flip, Start over, ›. */
-:root { --sideBar: 0px; }
+:root { --sideBar: 0px; }     /* (Upright: no side bar) */
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {
-  :root { --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
+  :root { --barH: 0px; --sideBar: calc(var(--rule-w) + var(--head-h) + env(safe-area-inset-right, 0px)); }     /* (Its line, then as wide as the heading is tall (--head-h), its icons centered, then the device's right inset as plain room - as the bottom bar's: BOTTOM BAR) */
   body { right: var(--sideBar); }
-  main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
-  :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
+  /* MARGINS: the bar keeps the notch's room at the right, so whatever stands beside it (the Bible's page; a screen with
+     a bar) has just --margin there; and a panel's left side meets the divider, not the screen's edge. */
+  body > :not(#screen, #drawer), #screen:has(.bottomBar), .deckPane { --safe-r: var(--margin); }
+  .dock, .deckPane, .csEditor { --safe-l: var(--margin); }
   .bottomBar { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
-    padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
+    padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across its row: as much space at their left as at their right, the inset after) */ border-top: 0 !important; border-left: var(--rule); }
   #screen .bottomBar { z-index: 31; } #screen .bottomBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
   :root { --deckPaneW: var(--deckW, min(420px, 45vw)); }
   .deckPane { top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--deckPaneW); height: auto; max-height: none; align-content: start;
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
-  #screen:has(.bottomBar):has(.deckPane:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--deckPaneW)); }
+  #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: 0; right: calc(var(--sideBar) + var(--deckPaneW)); }
   #screen:has(.deckPane:not([hidden])) .topBar { right: calc(var(--sideBar) + var(--deckPaneW)); }
   .deckPane > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; }     /* (Sideways: its title row's line level with the top bar's - their feet both at --topH) */
   .deckPane:not([hidden]) + .deckSplit { top: 0; bottom: 0; left: auto; right: calc(var(--sideBar) + var(--deckPaneW) - var(--split-half)); }
@@ -842,65 +842,74 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
-  #screen:has(.bottomBar), #screen:has(.bottomBar) .topBar, #cardSheet, #cardSplit { right: var(--sideBar); }     /* (The Verse cards beside their bar) */
+  #screen:has(.bottomBar), #screen:has(.bottomBar) .topBar { right: var(--sideBar); }     /* (The decks beside their bar) */
 }
 
-/* ONE PANE - every screen (layout.ts), upright or sideways: one panel at a time - the word's (#sheet, or #besideSheet
-   for a word of the notes), the add-verse box (#verseSheet), the notes or the search (layout.ts closes the one open as
-   another opens). One divider between the text and the panel, its middle --cardShare % of the window's long side
-   (--long) up from the foot upright, in from the right edge sideways - so the same place both ways, so it stays put
-   as the device turns (layout.ts; 40 % at first): upright #sheetSplit, the card under the text (one column);
-   sideways (SIDE BAR's) #notesSplit, the card at the text's right the full height, the heading over the text only,
-   the play bar down the right side. No card open: no divider, the text the full room. */
+/* ONE PANE - every screen (layout.ts), upright or sideways: one panel at a time - the word's (#sheet - a word of the
+   text, or of a verse card -, or #besideSheet for a word of the notes), the add-verse box (#verseSheet), the notes or
+   the search (layout.ts closes the one open as another opens). One divider between the text and the panel, its middle
+   --cardShare % of the window's long side (--long) up from the foot upright, in from the right edge sideways (--dock,
+   px) - so the same place both ways, so it stays put as the device turns (layout.ts; 40 % at first): upright
+   #sheetSplit, the panel under the text; sideways (SIDE BAR's) #notesSplit, the panel at the text's right the full
+   height, the heading over the text only, the play bar down the right side. No panel open: no divider, the text the
+   full room. */
+:root { --dock: calc(var(--long) * var(--cardShare, 40) / 100); --sheetTop: calc(var(--pad) / 2); }     /* (--sheetTop: the word's panel's room above its contents) */
 :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { border-top: 0 !important; min-height: 0; }     /* (The divider is its line) */
 :is(#sheetSplit, #notesSplit, #paneSplit, #besideSplit) { display: none !important; }
 @media (orientation: portrait), (max-width: 600px) and (min-height: 500.02px) {     /* (Upright: not SIDE BAR's) */
   body { display: flex; flex-direction: column; } .col { display: contents; }     /* (One column: the columns' boxes not there - index.html) */
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) main { flex: 1 1 0px; min-height: 0; border-bottom: 0; }
-  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { flex: none; height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--barH)); }     /* (From the divider's middle down to the play bar) */
+  :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { flex: none; height: calc(var(--dock) - var(--split-half) - var(--barH)); }     /* (From the divider's middle down to the play bar) */
 }
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {     /* (Sideways: SIDE BAR's) */
+  :root { --sheetTop: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The word's panel reaches the screen's top: clear of the clock, as the panes) */
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--cardW, 0px); grid-template-rows: auto minmax(0, 1fr) auto; }
-  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
+  body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) { --cardW: calc(var(--dock) - var(--split-half) - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
   .col { display: contents; }
   .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; }
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }
   :is(#sheet, #besideSheet, #verseSheet, #search, #notes).dock { grid-column: 3; grid-row: 1 / -1; height: auto; flex: none; }
-  :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); } :is(#sheet, #besideSheet, #verseSheet) > .xRow { top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The word's panel reaches the screen's top: clear of the clock, as the panes) */
+  :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-top: var(--sheetTop); } :is(#sheet, #besideSheet, #verseSheet) > .xRow { top: var(--sheetTop); }
   body:has(:is(#sheet, #besideSheet, #verseSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc(var(--split-half) + var(--rule-w) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
 }
+/* A verse card's word (panel.ts' .onCard): the same #sheet at the same place, its divider with it, over the Verse cards
+   screen - beside the deck's bar as the Bible's beside the play bar (the two bars one size: BOTTOM BAR) -, the
+   screen's room giving way to it (the card centered in what's left: cards.ts' fitDeck): upright above it, sideways at
+   its left. */
+body:has(#sheet.onCard:not([hidden])) :is(#sheet, #sheetSplit, #notesSplit) { z-index: 31; }     /* (Over #screen, z 30) */
+body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var(--dock) + var(--split-half)); }
+@media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {
+  body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: 0; right: calc(var(--dock) + var(--split-half)); }
+  body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) .topBar { right: var(--dock); }     /* (Its line on to the divider's, as the heading's) */
+}
 
-/* PAIR - anything bigger than a phone (a tablet, a desktop window: layout.ts' PAIR, keep them the same): the notes and the search
-   share the panel's place. Upright under the text, side by side - the notes at the left, the search at
-   the right (#paneCol a row, reversed: index.html has the search first) -, #paneSplit between them (vertical:
-   layout.ts) at --rightShare % of the width from the right edge (half at first) - the word's panel's two columns'
-   divider's place too. */
-@media (orientation: portrait) and (min-width: 600.02px) and (min-height: 500.02px) {
-  #paneCol:has(.dock:not([hidden])) { display: flex; flex-direction: row-reverse; flex: none; min-height: 0;
-    height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-half) - var(--barH)); }     /* (The panel's height: ONE PANE's) */
-  #paneCol > .dock { flex: 1 1 0px; height: auto; min-width: 0; }
-  body:has(#notes:not([hidden])) #paneCol > #search { flex: none; width: calc(var(--rightShare, 50) * 1% - var(--split-half)); }     /* (With the notes: the notes the rest; alone, the full width) */
-  body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
-}
-/* Sideways, in the panel's column at the right, one over the other - the search on top (index.html's order), #paneSplit
-   (horizontal) between them at the search's share of the height (--searchH, half at first: as wide). */
-@media (orientation: landscape) and (min-width: 600.02px) and (min-height: 500.02px) {
-  #paneCol:has(.dock:not([hidden])) { display: flex; flex-direction: column; grid-column: 3; grid-row: 1 / -1; min-height: 0; min-width: 0; }
-  #paneCol > .dock { flex: 1 1 0px; min-height: 0; }
-  body:has(#notes:not([hidden])) #paneCol > #search { flex-grow: var(--searchH, 50); } #paneCol > #notes { flex-grow: calc(100 - var(--searchH, 50)); }
-  body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
-}
-/* The word's panel in two parts sideways too, one over the other as the search over the notes: the word's info on top,
-   the lexicon (or a section opened from the info) under it, #wordSplit (horizontal) between them at --searchH. */
-@media (orientation: landscape) and (min-width: 600.02px) and (min-height: 500.02px) {
-  .sheet.twoCol:not([hidden]) { padding-block: 0; } .sheet.twoCol .panelScroll { flex-direction: column; gap: 0; }     /* (The divider at the very place of the search's: no margins round the two) */
-  :is(#sheet, #besideSheet).twoCol > .panelScroll { padding-top: 0; } .sheet.twoCol .panelScroll > .infoBox { padding-top: calc(var(--pad) / 2 + env(safe-area-inset-top, 0px)); }     /* (The clock's room inside the info, not over the two) */
-  .sheet.twoCol .panelScroll > .infoBox { order: -2; width: auto; max-width: none; flex: none; box-sizing: border-box; height: calc((100% - var(--split-w)) * var(--searchH, 50) / 100); padding-right: var(--pad); }     /* (The search's height, exactly: the room less the divider, at its share) */
-  .sheet.twoCol .panelScroll > :is(.lexBox, .gInline) { order: 0; flex: 1 1 0px; padding-right: var(--pad); }     /* (The rest) */
-  .sheet.twoCol .panelScroll > .wordSplit { order: -1; }     /* (The info, the divider, the lexicon - top to bottom) */
-  :is(#sheet, #besideSheet).twoCol .panelScroll > .wordSplit { margin-left: calc(-1 * var(--pad)); }     /* (From the panel's left edge - the divider beside it -, not its margin: its line then runs on to #notesSplit's, --meet) */
-}
+/* SPLIT - the panel's place split in two where it has room, the same rule for every screen and both splits
+   (layout.ts' setSplit: :root's data-split, from the place's own size - "row" side by side, "column" one over the
+   other, "one" not split): the notes and the search share it (#paneCol a box, its two panes in it), and the word's
+   panel shows its two parts (panel.ts' .twoCol). Side by side: the notes at the left, the search at the right
+   (#paneCol a row, reversed: index.html has the search first), #paneSplit (vertical: layout.ts) at --rightShare % of
+   the width from the right edge (half at first) - the word's panel's two parts' divider's place too. One over the
+   other: the search on top (index.html's order), #paneSplit (horizontal) at the search's share of the height
+   (--searchH, half at first). */
+:root:is([data-split="row"], [data-split="column"]) #paneCol:has(.dock:not([hidden])) { display: flex; min-height: 0; min-width: 0; }
+@media (orientation: portrait), (max-width: 600px) and (min-height: 500.02px) { :root:is([data-split="row"], [data-split="column"]) #paneCol:has(.dock:not([hidden])) { flex: none; height: calc(var(--dock) - var(--split-half) - var(--barH)); } }     /* (The panel's height: ONE PANE's) */
+@media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) { :root:is([data-split="row"], [data-split="column"]) #paneCol:has(.dock:not([hidden])) { grid-column: 3; grid-row: 1 / -1; } }     /* (The panel's column: ONE PANE's) */
+:root:is([data-split="row"], [data-split="column"]) #paneCol > .dock { flex: 1 1 0px; height: auto; min-width: 0; min-height: 0; }
+:root:is([data-split="row"], [data-split="column"]) body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
+:root[data-split="row"] #paneCol:has(.dock:not([hidden])) { flex-direction: row-reverse; }
+:root[data-split="row"] body:has(#notes:not([hidden])) #paneCol > #search { flex: none; width: calc(var(--rightShare, 50) * 1% - var(--split-half)); }     /* (With the notes: the notes the rest; alone, the full width) */
+:root[data-split="column"] #paneCol:has(.dock:not([hidden])) { flex-direction: column; }
+:root[data-split="column"] body:has(#notes:not([hidden])) #paneCol > #search { flex-grow: var(--searchH, 50); } :root[data-split="column"] #paneCol > #notes { flex-grow: calc(100 - var(--searchH, 50)); }
+/* The word's panel one over the other as the search over the notes: the word's info on top, the lexicon (or a section
+   opened from the info) under it, #wordSplit (horizontal) between them at --searchH. */
+:root[data-split="column"] .sheet.twoCol:not([hidden]) { padding-block: 0; } :root[data-split="column"] .sheet.twoCol .panelScroll { flex-direction: column; gap: 0; }     /* (The divider at the very place of the search's: no margins round the two) */
+:root[data-split="column"] :is(#sheet, #besideSheet).twoCol > .panelScroll { padding-top: 0; }     /* (The clock's room inside the info, not over the two) */
+:root[data-split="column"] .sheet.twoCol .panelScroll > .infoBox { order: -2; width: auto; max-width: none; flex: none; box-sizing: border-box; height: calc((100% - var(--split-w)) * var(--searchH, 50) / 100);
+  padding-top: var(--sheetTop); padding-right: var(--safe-r); }     /* (The search's height, exactly: the room less the divider, at its share) */
+:root[data-split="column"] .sheet.twoCol .panelScroll > :is(.lexBox, .gInline) { order: 0; flex: 1 1 0px; padding-right: var(--safe-r); }     /* (The rest) */
+:root[data-split="column"] .sheet.twoCol .panelScroll > .wordSplit { order: -1; }     /* (The info, the divider, the lexicon - top to bottom) */
+:root[data-split="column"] :is(#sheet, #besideSheet).twoCol .panelScroll > .wordSplit { margin-left: calc(-1 * var(--safe-l)); }     /* (From the panel's left edge, not its margin: sideways its line then runs on to #notesSplit's, --meet) */
 
 @media print {
   @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }

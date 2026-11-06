@@ -86,7 +86,7 @@ import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 import { nativeName } from "./booknames";
 import { nativeRef, refPair } from "./refs";
-import { printSplit } from "./layout";
+import { printSplit, headFrame } from "./layout";
 import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
 import type { FileKind } from "./printfiles";
 
@@ -441,7 +441,7 @@ onScreen ("Study printout", async (body) => {
   close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
   editor.append (head, sectionsEl, more, memo);
-  editor.addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
+  headFrame (editor).addEventListener ("scroll", () => { for (const m of editor.querySelectorAll<HTMLElement> (".csMenu")) m.hidden = true; }, { passive: true });     // (+ Add item's menu, laid over the screen: closed as the editor scrolls under it)
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
@@ -457,6 +457,7 @@ onScreen ("Study printout", async (body) => {
   outClose.setAttribute ("aria-label", "Close the download pane");
   outHead.append (el ("h2", "title", "Download"), outClose);
   outPane.append (outHead, out);
+  headFrame (outPane);     // (Each pane's title over its scroller: layout.ts)
   box.append (previewEl, split, editor, outPane);
   // The bottom bar (the Verse cards' - .bottomBar: down the right side sideways, the right side at the top): a pencil in
   // its middle showing or hiding the editor, a printer next printing (as PRINT), and at its right end a download icon -

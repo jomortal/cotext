@@ -38,7 +38,7 @@ import { topTitle, dropDowns, watchTopBar } from "./topbar";
 import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, spellCode, type Form } from "./paradigm";
 import { knownWords, setKnown, unsetKnown, onHelpsChange, currentBook, setLearning, applyHelps } from "./helps";
 import { basics } from "./basics";
-import { deckPaneSplit } from "./layout";
+import { deckPaneSplit, headFrame } from "./layout";
 
 const KEY = "cotext.vocab";
 let learning: Record<string, true> = {};
@@ -207,7 +207,7 @@ async function draw (body: HTMLElement) {
   const listBtn = document.createElement ("button");
   Object.assign (listBtn, { className: "pill icon", innerHTML: ICONS.list }); listBtn.setAttribute ("aria-label", "Word list");
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${pane.offsetHeight}px`)).observe (pane);
-  deckPaneSplit (pane);     // (Its divider: dragged, its size - layout.ts)
+  headFrame (pane); deckPaneSplit (pane);     // (Its title over its scroller; its divider: dragged, its size - layout.ts)
   body.querySelector ("#fcListClose")!.addEventListener ("click", () => { listShown = false; refresh (); });
   langPick.value = l;
   stemPick.value = String (pickedStem[l]); fillPick.value = String (fillIn[l]);

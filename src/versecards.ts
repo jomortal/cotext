@@ -33,8 +33,8 @@
 //   - those references, the translation's verses (each numbered in a range; its name only in the credits below), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
 //   edge; its words larger than a pill's): BACK and NEXT as ‹ and › at its ends (as the chapters'; a swipe across the card does the same), SHUFFLE, + (NEW VERSE) in its middle and START OVER between them (cards.ts' showDeck). A tap on it turns it over
-//   or back, except on a word of its original: a word of the original tapped opens its panel at the screen's foot, as the reader's
-//   (panel.ts' showCardPanel - tapped again, or the card changed, it closes). The VERSE LIST panel (the bar's list icon): the add row at its top (BOOK, CHAPTER, VERSES, + ADD VERSE), then (while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
+//   or back, except on a word of its original: a word of the original tapped opens the Bible's word's panel, at its place
+//   over this screen (panel.ts' showCardPanel - tapped again, the card changed or the screen left, it closes). The VERSE LIST panel (the bar's list icon): the add row at its top (BOOK, CHAPTER, VERSES, + ADD VERSE), then (while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).
 
 import type { Db } from "./db";
@@ -47,7 +47,7 @@ import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
-import { deckPaneSplit } from "./layout";
+import { deckPaneSplit, headFrame } from "./layout";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -163,19 +163,6 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
 
 // ---- The screen ----
 
-/** The word's panel's height, until its divider is dragged (wide, its two columns): just the word's info - the
- *  lexicon scrolling in its column beside it - set as --cardFit (style.css). */
-function fitPanel () {
-  const sheet = document.getElementById ("cardSheet")!, info = sheet.querySelector<HTMLElement> (".infoBox");
-  if (sheet.hidden || ! info || ! sheet.classList.contains ("twoCol")) return;
-  // (The info stretched to the panel's height: its own height measured from its contents - its last shown child's foot
-  // - and its padding; plus what's around the scroller)
-  const scroll = sheet.querySelector<HTMLElement> (".panelScroll")!, top = info.getBoundingClientRect ().top;
-  const foot = Math.max (...[...info.children].map ((c) => (c as HTMLElement).offsetParent ? c.getBoundingClientRect ().bottom : top));
-  const need = foot - top + info.scrollTop + parseFloat (getComputedStyle (info).paddingBottom) + sheet.offsetHeight - scroll.clientHeight;
-  document.documentElement.style.setProperty ("--cardFit", Math.ceil (need) + "px");
-}
-
 const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebrew - NT Greek"], ["lxx", "OT Greek - NT Greek"],
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
 let goTo = "";     // (A card just added - here or from the Bible's verse numbers -: shown first when its deck is next drawn)
@@ -281,17 +268,18 @@ async function draw (body: HTMLElement) {
   plus.addEventListener ("click", () => openAdd (! addOpen));
   body.querySelector ("#vcAddClose")!.addEventListener ("click", () => openAdd (false));
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${sheet.offsetHeight}px`)).observe (sheet);
-  deckPaneSplit (sheet);     // (Its divider: dragged, its size - layout.ts)
+  headFrame (sheet); deckPaneSplit (sheet);     // (Its title over its scroller; its divider: dragged, its size - layout.ts)
   openAdd (addOpen);
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
-  // A word tapped on a card: its panel at the screen's foot, as the reader's (tapped again, it closes); the card
-  // changed (BACK, NEXT...) closes it.
+  // A word tapped on a card: the Bible's word's panel, at its place - over this screen, beside the bar as the Bible's
+  // beside the play bar (panel.ts' showCardPanel) - (tapped again, it closes); the card changed (BACK, NEXT...) or the
+  // screen left closes it.
   hideCardPanel ();
   deckEl.addEventListener ("click", (e) => {
     const t = e.target as HTMLElement, wordEl = t.closest<HTMLElement> (".w[data-wk]");
     const w = wordEl && cardWords.get (wordEl.dataset.wk!);
-    if (w && wordEl) showCardPanel (db, w, wordEl).then (fitPanel);
+    if (w && wordEl) showCardPanel (db, w, wordEl);
     else if (t.closest ("[data-k], .card")) hideCardPanel ();     // (The card turned or changed: its word's panel closed)
   });
   const listHead = body.querySelector<HTMLElement> ("#vcListHead")!;
@@ -478,3 +466,7 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
 }
 
 onScreen ("Verse cards", draw);
+// The screen left (another screen, or back to the Bible): a card's word's panel closed with it.
+{ const screenEl = document.getElementById ("screen")!;
+  new MutationObserver (() => { if (screenEl.hidden || screenEl.dataset.screen !== "Verse cards") hideCardPanel (); })
+    .observe (screenEl, { attributes: true, attributeFilter: ["hidden", "data-screen"] }); }

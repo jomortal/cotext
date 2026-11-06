@@ -3,15 +3,16 @@
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
 // (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ (or tapping the word again) hides it.
-// Three of them, each its own: #sheet for a word of the text read, above the notes panel, a second (cloned from
-// #sheet's markup, under the notes, above the search) for a word of the notes' Hebrew OT beside the Septuagint
-// (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at once - and a third (cloned too) for
-// a word on a verse card, over the Verse cards screen at its foot (without Search and Dictionary). makePanel builds one on its
-// root, its elements found by class within it; the lexicons' choice, files and the main database are shared.
+// Two of them, each its own: #sheet for a word of the text read - and for a word on a verse card (without Search and
+// Dictionary: .onCard, the same panel at the same place, over the Verse cards screen - layout.ts, style.css) -, above
+// the notes panel, and a second (cloned from #sheet's markup, under the notes, above the search) for a word of the
+// notes' Hebrew OT beside the Septuagint (interlinear.ts) - so a Greek word and the Hebrew it translates can be open at
+// once. makePanel builds one on its root, its elements found by class within it; the lexicons' choice, files and the
+// main database are shared.
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { rightShare, wordSplit, wordStacked, wordColumns, addDock } from "./layout";
+import { rightShare, wordSplit, splitNow, onSplit, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -66,14 +67,9 @@ const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
 document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes, in their column)
 addDock (besideSheet);     // (One of the panels shown one at a time: layout.ts)
-// The third: a word of a verse card's text (versecards.ts) - over the study screen, at its foot.
-const cardSheet = textSheet.cloneNode (true) as HTMLElement;
-cardSheet.id = "cardSheet";
-document.getElementById ("screen")!.append (cardSheet);
 
-/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide.
- *  lean: without Search and Dictionary (a verse card's word's). */
-function makePanel (sheet: HTMLElement, lean = false) {
+/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
+function makePanel (sheet: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement> (c: string) => sheet.querySelector<T> ("." + c)!;
   const grammar = grammarIn (sheet);
   const setVocabWord = vocabButton (q ("addVocab"));     // (+ My vocab: vocab.ts)
@@ -109,7 +105,8 @@ function makePanel (sheet: HTMLElement, lean = false) {
     btn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, x.found, grammar.showOther, src, label); });
     return x;
   });
-  q ("speakRoot").after (chartBtn, ...(lean ? [] : [searchBtn, dictBtn]), mapBtn, ...others.map ((x) => x.btn));
+  q ("speakRoot").after (chartBtn, searchBtn, dictBtn, mapBtn, ...others.map ((x) => x.btn));
+  let lean = false;     // (A verse card's word: no Search or Dictionary - show's onCard)
   let dictFound: Found = { exact: [], subject: [] };
   dictBtn.addEventListener ("click", () => { if (mainDb) openArticles (mainDb, dictFound, grammar.showOther); });
   let searchFor: [string, string] | null = null;     // (Strong's, dictionary form)
@@ -137,10 +134,10 @@ function makePanel (sheet: HTMLElement, lean = false) {
   const sheetScroll = document.createElement ("div");
   sheetScroll.className = "panelScroll";
   { const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
-  // As many columns as layout.ts' wordColumns says: one on a phone (the lexicon under the word's info); two on anything
-  // bigger (a tablet, a desktop window) - the lexicon (its picker, entry and credit) a second part (.twoCol: style.css):
-  // upright beside the word's info, the info as wide as it needs (measured at its natural width whenever the panel
-  // resizes or shows another word); sideways (wordStacked) under it.
+  // In one part or two as layout.ts' SPLIT says (splitNow: by the panel's place's size): "one", the lexicon under the
+  // word's info in one column; else the lexicon (its picker, entry and credit) a second part (.twoCol: style.css) -
+  // "row" beside the word's info, the info as wide as it needs (measured at its natural width whenever the panel
+  // resizes or shows another word); "column" under it.
   const heads = q ("heads");
   const info = document.createElement ("div");
   {      // (The word's info in one box, the lexicon's parts in another: the two columns)
@@ -160,8 +157,8 @@ function makePanel (sheet: HTMLElement, lean = false) {
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
-    if (wordColumns () === 1) return;     // (One column - layout.ts: the lexicon under the word)
-    if (wordStacked ()) { sheet.classList.add ("twoCol"); info.style.width = info.style.maxWidth = ""; return; }     // (An iPad sideways: the two one over the other, by style.css)
+    if (splitNow () === "one") { info.style.width = info.style.maxWidth = ""; return; }     // (One column: the lexicon under the word)
+    if (splitNow () === "column") { sheet.classList.add ("twoCol"); info.style.width = info.style.maxWidth = ""; return; }     // (The two one over the other, by style.css)
     info.style.width = "";
     heads.style.width = "max-content";
     const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
@@ -202,7 +199,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
       if (bar > 0) info.style.width = `${Math.ceil (width + bar)}px`;
     }
   };
-  new ResizeObserver (columns).observe (sheet);
+  new ResizeObserver (columns).observe (sheet); onSplit (columns);
   wordSplit (split, sheetScroll, columns);
   knowIt.addEventListener ("click", () => (knownWords ().includes (pickedStrong) ? unsetKnown : setKnown) (pickedStrong));
   q ("speakBtn").addEventListener ("click", () => { if (picked) sayWord (picked); });
@@ -303,9 +300,11 @@ function makePanel (sheet: HTMLElement, lean = false) {
     }
   }
 
-  /** The word tapped shown - once its entries are read (another word tapped by then: left to that one). */
-  async function show (db: Db, w: Word, wordEl: HTMLElement) {
+  /** The word tapped shown - once its entries are read (another word tapped by then: left to that one). onCard: a verse
+   *  card's word (no Search or Dictionary; .onCard sets the panel over the Verse cards screen - style.css). */
+  async function show (db: Db, w: Word, wordEl: HTMLElement, onCard = false) {
     if (picked === wordEl && ! sheet.hidden) { hide (); return; }
+    lean = onCard;
     picked?.classList.remove ("on");
     picked = wordEl;
     wordEl.classList.add ("on");
@@ -326,9 +325,10 @@ function makePanel (sheet: HTMLElement, lean = false) {
     chartFor = w.stem && chartStemOf (w.strong, w.code) >= 0 ? [w.strong, w.code] : null;
     chartBtn.hidden = ! chartFor;
     dictBtn.hidden = true; dictFound = { exact: [], subject: [] };
+    searchBtn.hidden = lean;
     articlesFor (db, w.strong).then ((found) => {     // (The dictionary's file read - downloaded on the first word: the button shown once it answers)
       if (picked !== wordEl) return;
-      dictFound = found; dictBtn.hidden = ! found.exact.length && ! found.subject.length;
+      dictFound = found; dictBtn.hidden = lean || ! found.exact.length && ! found.subject.length;
       columns ();     // (A button more: the two-column test measured again)
     });
     for (const x of others) {
@@ -366,6 +366,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
               extra, hebrew, place: [w.book, w.chapter, w.verse, w.word] };     // (Where the word stands: the reader's text, or one beside it in the notes)
     const pick = lexChoice[hebrew ? "H" : "G"];
     showEntry (extra[pick] ? pick : "full");     // (The lexicon picked; one lacking the word - or "concise", from before: the brief one)
+    sheet.classList.toggle ("onCard", lean);
     sheet.hidden = false;
     sheetScroll.scrollTop = 0;
     columns ();
@@ -384,14 +385,16 @@ function makePanel (sheet: HTMLElement, lean = false) {
     picked = null;
   }
 
-  return { show, hide };
+  return { show, hide, onCard: () => lean && ! sheet.hidden };
 }
 const progress: ((id: string, p: number) => void)[] = [];     // (Every panel's: a lexicon file's loading progress)
 
-const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet), cardPanel = makePanel (cardSheet, true);
+const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet);
 /** A word of the text read tapped (main.ts): the first panel, above the notes. */
 export const showPanel = textPanel.show, hidePanel = textPanel.hide;
 /** A word of the notes panel's Hebrew OT tapped (interlinear.ts): the second panel, under the notes. */
 export const showBesidePanel = besidePanel.show, hideBesidePanel = besidePanel.hide;
-/** A word of a verse card's text tapped (versecards.ts): the third panel, over the Verse cards screen at its foot. */
-export const showCardPanel = cardPanel.show, hideCardPanel = cardPanel.hide;
+/** A word of a verse card's text tapped (versecards.ts): the first panel, at its place, over the Verse cards screen. */
+export const showCardPanel = (db: Db, w: Word, wordEl: HTMLElement) => textPanel.show (db, w, wordEl, true);
+/** The first panel closed if it shows a verse card's word (the card changed, the screen left). */
+export const hideCardPanel = () => { if (textPanel.onCard ()) textPanel.hide (); };
