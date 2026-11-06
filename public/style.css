@@ -550,7 +550,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .guideRow .parse { font-size: var(--fs-s); overflow-wrap: anywhere; }
 
 /* My vocab (vocab.ts): the counts, the decks' buttons, then each list - a word, its meaning, its count. */
-.vocabRow { grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; padding-top: 6px; }     /* (A list's row: .guideRow's rule) */
+.vocabRow { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: baseline; padding-top: 6px; } .vocabRow:not(:has(.vocabMark)) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.vocabKnown > :not(.vocabMark) { opacity: .45; } .vocabMark { font-size: var(--fs-l); padding: 0 4px; align-self: center; }     /* (A word list's row: its mark - − make known, + learn again -; a known word greyed) */     /* (A list's row: .guideRow's rule) */
 /* The pickers (choose.ts): a button with the choice and a chevron, its choices a plain list just under it (over it near
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }

@@ -12,8 +12,7 @@
 //   the one picked last is Greek's testament, for its counts and BOOK NAMES; at first the one read) and BOOK FREQUENCY
 //   (a book picked from the language's - Greek's the NT's and the Septuagint's -, the one read at first where it's in
 //   that language) (the testament's or the book's words not yet known, most frequent first, picked 20 at a time: 1-20
-//   the 20 most frequent; a word made known leaves it and the next moves up, so 1-20 is always the 20 most frequent
-//   still to learn), MY VOCAB and KNOWN WORDS (a Greek word's the same in the NT and LXX), then the first things to
+//   the 20 most frequent; a known word stays in its place in the list, greyed, but isn't a card), MY VOCAB and KNOWN WORDS (a Greek word's the same in the NT and LXX), then the first things to
 //   learn - ALPHABET, NUMBERS (the number words, then the letters used as numbers) and BOOK NAMES (basics.ts) -, then
 //   VERB PARADIGMS: a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb chart shows for it, from
 //   the same templates (paradigm.ts), shuffled; FILL IN picks the cards' verb: PATTERN - the front the form's pattern,
@@ -22,11 +21,12 @@
 //   and its meaning on that verb. The one picked (the frequency list at first) shown as flashcards (cards.ts' showDeck).
 // - A WORD'S CARD: front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) -
 //   or, with ENGLISH TO HEBREW / GREEK, the other way round (the first things to learn the same way; not the paradigms).
-//   A tap turns it, a swipe across it or ‹ › steps; the bar's middle (cards.ts) its action: REMOVE FROM LIST (a minus in a
-//   circle: in My vocab off that list, in Known words no longer known) or, in the frequency lists, + KNOWN WORDS (a check:
-//   made known, into Known words); none in the first things to learn or the paradigms.
-// - SHOW LIST (off at first, so the answers stay hidden while quizzing): the list's words under the cards (the word, its
-//   concise meaning, how often it occurs in the whole testament - in the book, for Book frequency).
+//   A tap turns it, a swipe across it or ‹ › steps; under it its action: REMOVE FROM LIST (in My vocab off that list, in
+//   Known words no longer known) or, in the frequency lists, + KNOWN WORDS (made known, into Known words); none in the
+//   first things to learn or the paradigms.
+// - THE WORD LIST (the bar's middle icon; closed at first, so the answers stay hidden while quizzing): in a panel of its
+//   own, the list's words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for
+//   Book frequency), each with a mark: − to make it known, + (a known word, greyed) to learn it again.
 // Kept on the device: My vocab, and the language picked (with Greek's testament).
 
 import type { Db } from "./db";
@@ -114,12 +114,11 @@ function basicCard (x: { word: string; say: string; meaning: string }): Card {
   return reversed ? { front: meaning, back: word } : { front: word, back: meaning };
 }
 
-/** The testament's words (Strong's keys, by its H / G prefix) not yet known, most frequent first - in the whole
- *  testament, or in the book (its id): the frequency lists. */
-async function toLearn (prefix: string, known: string[], bookId = 0): Promise<string[]> {
-  const k = new Set (known);
+/** The testament's words (Strong's keys, by its H / G prefix), most frequent first - in the whole testament, or in the
+ *  book (its id): the frequency lists (known words among them - left out of the cards, greyed in the list). */
+async function byFrequency (prefix: string, bookId = 0): Promise<string[]> {
   return (await db.all (`SELECT f.strong FROM freq f JOIN lexicon l ON l.strong = f.strong WHERE f.book = ? AND f.strong LIKE ?
-                         ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"])).map ((r) => String (r.strong)).filter ((s) => ! k.has (s));
+                         ORDER BY f.count DESC, f.strong`, [bookId, prefix + "%"])).map ((r) => String (r.strong));
 }
 const LIST = 20;                       // (Words in each frequency list)
 const pickedList: Record<string, number> = {};     // (The 20s picked, by testament - or by book, "b" + its id: 0 the first)
@@ -145,7 +144,7 @@ async function lists () {
   const prefix = lang ();
   const known = knownWords ().filter ((k) => k.startsWith (prefix));
   const learn = Object.keys (learning).filter ((k) => k.startsWith (prefix) && ! known.includes (k));
-  const [ranked, d] = await Promise.all ([toLearn (prefix, known, bookId ()), details ([...learn, ...known])]);
+  const [ranked, d] = await Promise.all ([byFrequency (prefix, bookId ()), details ([...learn, ...known])]);
   const byCount = (a: string, b: string) => (d.get (b)?.count ?? 0) - (d.get (a)?.count ?? 0);
   return { known: known.filter ((k) => d.has (k)).sort (byCount), learn: learn.filter ((k) => d.has (k)).sort (byCount), ranked, d,
            count: Math.ceil (ranked.length / LIST) };
@@ -252,9 +251,12 @@ async function draw (body: HTMLElement) {
     freqPick.value = String (pickedList[listKey ()]);
     const book = bookList.find ((b) => b.id === theBook ())?.name ?? "";
     top.set (byFreq () ? `${picked === "book" ? book : t} frequency${x.count ? " " + range (pickedList[listKey ()]) : ""}` : NAMES[picked]);
+    // (Each row's mark: − a word not known - made known -, + a known one - back to learn -; a known word greyed)
+    const known = new Set (knownWords ());
     listEl.innerHTML = words (x).filter ((k) => d.has (k)).map ((k) => {
-      const w = d.get (k)!;
-      return `<div class="vocabRow"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
+      const w = d.get (k)!, isKnown = known.has (k);
+      return `<div class="vocabRow${isKnown ? " vocabKnown" : ""}"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span>`
+        + `<button class="pill icon vocabMark" data-mark="${esc (k)}" aria-label="${isKnown ? "Back to learn" : "Known"}">${isKnown ? "+" : "−"}</button></div>`;
     }).join ("");
   };
   // The list picked as flashcards. Under the card (cards.ts' remove): in My vocab REMOVE FROM LIST (off My vocab); in
@@ -274,7 +276,8 @@ async function draw (body: HTMLElement) {
       if (n === opening) showDeck (deckEl, cs, { backOnly: true, middle: listBtn });
       return;
     }
-    const cards = await cardsFor (words (await lists ()));
+    const known = new Set (knownWords ());
+    const cards = await cardsFor (words (await lists ()).filter ((k) => picked === "known" || ! known.has (k)));     // (A known word in the frequency lists: listed, not a card)
     if (n !== opening) return;
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
     showDeck (deckEl, cards, { backOnly: true, middle: listBtn,     // (Turned over: only the English)
@@ -283,6 +286,14 @@ async function draw (body: HTMLElement) {
   const both = () => { refresh (); open (); };
   langPick.addEventListener ("change", () => { picks.lang = langPick.value as "H" | "G"; keepPicks (); draw (body); });     // (Another language: its lists, books and stems)
   listBtn.addEventListener ("click", () => { listShown = ! listShown; refresh (); });
+  // A list row's mark: − made known (off My vocab, into Known words), + no longer known (its helps back) - the list and
+  // the cards following
+  listEl.addEventListener ("click", (e) => {
+    const k = (e.target as HTMLElement).closest<HTMLElement> ("[data-mark]")?.dataset.mark;
+    if (! k) return;
+    if (knownWords ().includes (k)) unsetKnown (k); else { delete learning[k]; save (); setKnown (k); }
+    both ();
+  });
   body.querySelector ("#reverse")!.addEventListener ("click", () => { reversed = ! reversed; both (); });
   bookPick.addEventListener ("change", () => { pickedBook[l] = Number (bookPick.value); both (); });
   freqPick.addEventListener ("change", () => { pickedList[listKey ()] = Number (freqPick.value); both (); });
