@@ -13,7 +13,8 @@
 //   their father and work, foldedNote, as the pane's); a dictionary its articles alphabetically, a letter a chapter, each
 //   article whole under its title (dictionary.ts' articleBlock: photo, place's map, text) - drawn 20 at a time as the
 //   reading nears the end of what's drawn, a letter running to hundreds; a grammar its sections in order, a run of
-//   sections under one heading a chapter (grammar.ts' sectionHtml, as the word's panel shows a section). The resource's
+//   sections under one heading a chapter (grammar.ts' sectionHtml, as the word's panel shows a section: each folded
+//   to its § and first words, tapped open; a chapter of one section open). The resource's
 //   name over the chapter, its credit under it - once, not under every article.
 // - ‹ and › at the bottom bar's ends (bars.ts; with a mouse and room, in the reading's margins: marginArrows) - and a
 //   swipe across the reading (onSwipe) - go to the previous and next chapter, across books; at the first or last
@@ -25,7 +26,7 @@ import type { Db, Row } from "./db";
 import { onScreen, closeScreen } from "./study";
 import { allSources, sourceGroups, openSource, verseBlock, noteElement, foldedNote, FOLDED, type Note, type Source } from "./notes";
 import { dictionary, articleBlock } from "./dictionary";
-import { sectionHtml } from "./grammar";
+import { sectionHtml, folding } from "./grammar";
 import { topTitle, dropDowns, watchTopBar } from "./topbar";
 import { onSwipe, marginArrows } from "./bars";
 import { ICONS } from "./icons";
@@ -154,10 +155,10 @@ async function openGrammar (g: Row): Promise<Opened> {
     chapters: runs.map ((r) => ({ key: String (r.first), group: "", label: span (r.labels) + r.heading, title: r.heading })), unit: "Section", credit: String (g.credit),
     async draw (c, el, still) {
       const run = runs.find ((r) => String (r.first) === c.key)!;
-      const secs = await db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq", [String (g.id), run.first, run.last]);
+      const secs = await db.all ("SELECT seq, label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq", [String (g.id), run.first, run.last]);
       if (! still ()) return;
       const text = document.createElement ("div");
-      text.innerHTML = secs.map ((r) => sectionHtml (r, false)).join ("");
+      text.innerHTML = secs.map ((r) => sectionHtml (r, secs.length === 1, false)).join ("");     // (One heading over them all: the chapter's title)
       el.append (...text.childNodes);
     },
   };
@@ -192,6 +193,7 @@ async function draw (body: HTMLElement) {
   watchTopBar (body.querySelector<HTMLElement> (".topBar")!);
   const groupPick = body.querySelector<HTMLSelectElement> ("#rrGroup")!, chapterPick = body.querySelector<HTMLSelectElement> ("#rrChapter")!;
   const read = body.querySelector<HTMLElement> (".rrRead")!, bookEl = body.querySelector<HTMLElement> (".rrBook")!;
+  folding (bookEl);     // (A grammar's sections open and fold: grammar.ts)
   const nameEl = body.querySelector<HTMLElement> ("#rrName")!, creditEl = body.querySelector<HTMLElement> ("#rrCredit")!;
   const prev = body.querySelector<HTMLElement> ("[data-k=back]")!, next = body.querySelector<HTMLElement> ("[data-k=next]")!;
   const screen = document.getElementById ("screen")!;

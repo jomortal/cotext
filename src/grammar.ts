@@ -1,6 +1,6 @@
 // Grammar from the word's panel (design/mock-hebrew.html): each term of the spelled-out parsing that a section explains
 // (Qal, perfect, 3rd masculine singular...) is tappable; tapped, that section takes the word's panel over (the word's
-// info hidden) - its heading, the grammar and §, its text; its ✕ closes it, the word's info back. The terms and their sections come
+// info hidden) - its heading, the grammar and §, its text (a term taught in several sections: each folded, sectionHtml); its ✕ closes it, the word's info back. The terms and their sections come
 // from the database (pipeline/grammar.py: parsings.terms, grammar_terms, grammar_sections); which grammar is read is
 // GRAMMAR in the grammar section's box (shown once a term is tapped), the choices per language (Hebrew: Gesenius, unfoldingWord; Greek: Machen, Smyth,
 // unfoldingWord - the list is the grammars table's, in its order, the first the default, so another grammar there is simply
@@ -53,6 +53,7 @@ export function grammarIn (sheet: HTMLElement) {
   const otherEl = document.createElement ("div");     // (showOther's body: beside the section's, without its text styles - .gBody)
   otherEl.className = "giOther"; otherEl.hidden = true;
   bodyEl.after (otherEl);
+  folding (bodyEl);
   let lang: Lang = "H";
   let shown: Parameters<typeof showParsing> | null = null;     // (The parsing the panel shows: its links follow GRAMMAR)
   let openKey = "";     // (The term whose section is open: "" none)
@@ -130,7 +131,6 @@ export function grammarIn (sheet: HTMLElement) {
     titleEl.textContent = title;
     secEl.textContent = sectionCaption (grammar, labels, count);
     bodyEl.innerHTML = html;
-    bodyEl.classList.toggle ("one", count === 1);
     showPick ();
     bodyEl.hidden = false; otherEl.hidden = true; otherEl.replaceChildren ();
     box.classList.remove ("other");
@@ -170,36 +170,53 @@ export function grammarIn (sheet: HTMLElement) {
   return { showParsing, hideGrammar, showOther };
 }
 
-/** A grammar section as the panel shows it (the Resource reader's too: resreader.ts): its heading first where headed,
- *  its § run into its first paragraph, then its body - the pipeline's own light HTML (<p>, <b>, <i>, tables and
- *  script spans, text escaped). */
-export function sectionHtml (r: Row, headed: boolean): string {
-  const head = headed ? `<div class="gHead">${esc (String (r.heading))}</div>` : "";
-  const num = r.label ? `<b class="gNum">§${esc (String (r.label))}</b>` : "";     // (Run into its first paragraph)
-  const body = String (r.body);
-  return head + (body.startsWith ("<p>") ? "<p>" + num + body.slice (3) : num + body);
+/** A grammar section as every screen shows it (the word panel's GRAMMAR, the Resource reader's grammars, ☰ Learn's READ
+ *  THE GRAMMAR), condensed - folded as the church fathers' notes are (notes.ts' foldedNote: the same row, .hit): a row
+ *  of its § (and its heading, where named: one no other section beside it shares) over a line of its text, cut short;
+ *  tapped, its text opens under the row (the line hidden), tapped again it folds (folding). open: shown open at first
+ *  (a section shown alone). The text in a .gSec of its own (the grammar's text in the serif: style.css; data-seq its
+ *  grammar_sections seq, where the row has it - Learn's SHOW IN THE GRAMMAR finds it by that): the pipeline's own
+ *  light HTML (<p>, <b>, <i>, tables and script spans, text escaped). */
+export function sectionHtml (r: Row, open: boolean, named: boolean): string {
+  const body = String (r.body), seq = r.seq != null ? ` data-seq="${Number (r.seq)}"` : "";
+  const name = r.label ? `§${esc (String (r.label))}` + (named ? ` · ${esc (String (r.heading))}` : "") : esc (String (r.heading));
+  // (The line: the text's first words, its tags taken off - its entities kept, a cut one dropped; style.css cuts it to a line)
+  const line = body.replace (/<[^>]+>/g, " ").replace (/\s+/g, " ").trim ().slice (0, 200).replace (/&[^;\s]*$/, "");
+  return `<div class="gFold"><button type="button" class="hit" aria-expanded="${open}"><span class="src">${name}</span>`
+       + `<span class="hitText dictLine"${open ? " hidden" : ""}>${line}</span></button>`
+       + `<div class="gSec dictBody"${seq}${open ? "" : " hidden"}>${body}</div></div>`;
+}
+
+/** A section's fold (sectionHtml's .gFold) opened or folded. */
+export function setFold (fold: Element, open: boolean) {
+  fold.querySelector (".gSec")!.toggleAttribute ("hidden", ! open);
+  fold.querySelector (".dictLine")!.toggleAttribute ("hidden", open);
+  fold.querySelector (".hit")!.setAttribute ("aria-expanded", String (open));
+}
+
+/** The sections' rows in el made to open and fold when tapped (once per container: one listener for every row). */
+export function folding (el: HTMLElement) {
+  el.addEventListener ("click", (e) => {
+    const row = (e.target as Element).closest (".gFold > .hit");
+    if (row && el.contains (row)) setFold (row.parentElement!, row.getAttribute ("aria-expanded") !== "true");
+  });
 }
 
 /** A grammar's sections read in order - ranges of seqs, [first, last] each (grammar_sections) - as the word's panel and
  *  ☰ Learn (learn.ts) show them: the first section's heading as the title, each range's § numbers ("43–44"), how many
- *  sections, and their text as HTML - each section's number (and its heading, where it changes) before it; with one
- *  section, style.css hides the number (.gBody.one: it's in the caption). The bodies are the pipeline's own light HTML
- *  (<p>, <b>, <i>, tables and script spans, text escaped). */
+ *  sections, and their HTML - each section folded (sectionHtml; one alone, open), its heading named in its row where
+ *  no section beside it shares it, else (several under one heading) the heading over them where it changes. */
 export async function readSections (grammar: string, ranges: [number, number][]) {
-  const sections = await Promise.all (ranges.map (([first, last]) => db.all ("SELECT label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
+  const sections = await Promise.all (ranges.map (([first, last]) => db.all ("SELECT seq, label, heading, body FROM grammar_sections WHERE grammar = ? AND seq BETWEEN ? AND ? ORDER BY seq",
                                                                              [grammar, first, last])));
-  const blocks: string[] = [], labels: string[] = [];
-  let title = "", count = 0, lastHeading = "";
-  for (const rows of sections) {
-    if (! rows.length) continue;
-    title ||= String (rows[0].heading);
-    if (rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
-    count += rows.length;
-    for (const r of rows) {
-      blocks.push (sectionHtml (r, r.heading !== lastHeading && blocks.length > 0));
-      lastHeading = String (r.heading);
-    }
-  }
+  const labels: string[] = [];
+  for (const rows of sections) if (rows.length && rows[0].label) labels.push (rows.length > 1 ? `${rows[0].label}–${rows[rows.length - 1].label}` : String (rows[0].label));
+  const all = sections.flat (), count = all.length, title = all.length ? String (all[0].heading) : "";
+  const blocks = all.map ((r, k) => {
+    const h = r.heading, shared = all[k - 1]?.heading === h || all[k + 1]?.heading === h;
+    const head = shared && k > 0 && all[k - 1].heading !== h ? `<div class="gHead">${esc (String (h))}</div>` : "";
+    return head + sectionHtml (r, count === 1, ! shared && count > 1);
+  });
   return { title, labels, count, html: blocks.join ("") };
 }
 

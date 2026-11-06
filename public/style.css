@@ -387,7 +387,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back - in two
    columns (.twoCol), the lexicon's column only, the word's info staying beside it -; the panel stays at most half the
    screen, scrolling. */
-:is(.sheet, .pane) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+:is(.sheet, .pane, .learnNote) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 .sheet .term.on { font-weight: 700; }
 .gInline { border-top: var(--hair); margin-top: 14px; padding-top: 12px; }
 .sheet.grammarOpen:not(.twoCol) .panelScroll > :not(.gInline), .sheet.grammarOpen:not(.twoCol) > .xRow { display: none; }
@@ -404,8 +404,14 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .giOther > .choices { flex-direction: column; align-items: start; }     /* (The dictionary's articles on a word - dictionary.ts - one a line) */
 .gBody p { color: var(--fg); font-size: inherit; margin: 0 0 8px; }
 .gHead { font-weight: 600; margin: 14px 0 6px; }
-.gNum { margin-inline-end: 6px; }
-.gBody.one .gNum { display: none; }     /* (One section: its § is in the line above) */
+/* A grammar section (grammar.ts' sectionHtml - the word panel's GRAMMAR, the Resource reader's grammars, ☰ Learn's READ
+   THE GRAMMAR): folded to a row as a church father's note (.hit, its § and heading a caption, a line of its text cut
+   short: .dictLine), tapped, its text (.gSec) open under it as a dictionary's article (.dictBody). The text in the
+   serif, read as a book; the rows and headings (.gHead) in the page's sans; its Hebrew and Greek in their own fonts
+   (.he, .grc). Learn's SHOW IN THE GRAMMAR marks the passage (mark), or the whole section (.found), in the tapped
+   word's tint (.w.on's), kept until another link is followed. */
+.gSec { font-family: var(--serif); }
+.gSec mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
 .gBody table { border-collapse: collapse; margin: 6px 0 10px; font-size: var(--fs-s); display: block; max-width: 100%; overflow-x: auto; }     /* (A table wider than the panel - unfoldingWord's word-by-word examples - scrolls sideways in its own box, never the page) */
@@ -507,7 +513,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .pill.cardAction { align-self: center; justify-self: center; }
 /* Learn (learn.ts): the path a list of plain buttons (.hit), a question on a card (the flashcards' look, not turned:
    no pointer), its choices the book picker's inline list (.chooseList.inline) - the right one in the accent
-   (aria-pressed), a wrong pick in --wrong, struck through. */
+   (aria-pressed), a wrong pick in --wrong, struck through; SHOW IN THE GRAMMAR in the line under them a link, as the
+   parsing's terms (.term). */
 .card.learnCard { cursor: default; }
 .learnQuiz { display: grid; gap: var(--gap); }
 .chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */

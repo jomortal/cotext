@@ -10,14 +10,16 @@
 //   grammar's §§ under it; then its questions one at a time, in a new order each time: the question on a card
 //   (flashcards' look: cards.ts' - a short Hebrew or Greek word large, as a card's front, anything longer at the text's size, as its back: in a box of its own, one line of text in the back's grid), "3 of 12"
 //   under it, the choices (in a new order) as a list under that. A choice tapped is answered at once: the right answer
-//   in the accent, a wrong pick in --wrong and struck through, a line saying so (and why, where the question says), and
-//   NEXT. At the end the score: PASSED at PASS (80%) or more - the next lesson opens - else NOT YET; NEXT LESSON
+//   in the accent, a wrong pick in --wrong and struck through, a line saying so (and why, where the question says) with
+//   SHOW IN THE GRAMMAR where the question says where it's taught (its s and find: learncourses.ts) - the grammar shown,
+//   that section opened and scrolled to, the passage marked in the tapped word's tint (style.css' .gSec mark), kept
+//   marked until another link is followed - and NEXT. At the end the score: PASSED at PASS (80%) or more - the next lesson opens - else NOT YET; NEXT LESSON
 //   (once passed) and TRY AGAIN (ALL LESSONS above, as throughout).
 // Kept on the device ("cotext.learn"): the course picked and each lesson's best score - a lesson passed stays passed.
 // Hebrew and Greek in a question or choice are set in their own fonts (marked).
 
 import { onScreen, currentTestament } from "./study";
-import { readSections, sectionCaption, grammarCredit } from "./grammar";
+import { readSections, sectionCaption, grammarCredit, folding, setFold } from "./grammar";
 import { shuffle } from "./cards";
 import { COURSES, type Course, type Lesson, type Question } from "./learncourses";
 
@@ -78,18 +80,34 @@ async function draw (body: HTMLElement) {
     body.querySelector ("[data-k=path]")!.addEventListener ("click", () => { path (); scrollUp (); });
     body.querySelector (".credit")!.textContent = `Quiz generated from ${grammarCredit (c.id)}.`;
     // (The sections read once, as the lesson opens: their § in the caption at once, their text shown when asked)
-    void readSections (c.id, l.sections).then ((s) => {
+    const ready = readSections (c.id, l.sections).then ((s) => {
       if (! gram.isConnected) return;     // (Another lesson or the path drawn meanwhile)
       body.querySelector (".src")!.textContent = sectionCaption (c.id, s.labels, s.count);
       gram.innerHTML = s.html;
-      gram.classList.toggle ("one", s.count === 1);
     });
-    read.addEventListener ("click", () => { gram.hidden = ! gram.hidden; read.setAttribute ("aria-pressed", String (! gram.hidden)); });
-    quiz (c, i, body.querySelector<HTMLElement> (".learnQuiz")!);
+    folding (gram);
+    const showGram = (on: boolean) => { gram.hidden = ! on; read.setAttribute ("aria-pressed", String (on)); };
+    read.addEventListener ("click", () => showGram (gram.hidden));
+    /** SHOW IN THE GRAMMAR: the grammar shown, the question's section (q.s) opened and scrolled to, its passage
+     *  (q.find, else the whole section) marked - kept marked until another question's link (or the lesson left). */
+    const showIn = async (q: Question) => {
+      await ready;
+      const sec = gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
+      if (! sec) return;
+      showGram (true);
+      setFold (sec.closest (".gFold")!, true);
+      for (const m of gram.querySelectorAll ("mark")) m.replaceWith (...m.childNodes);     // (An earlier mark gone)
+      gram.querySelector (".gSec.found")?.classList.remove ("found");
+      const marks = q.find ? markText (sec, q.find) : [];
+      const shown = marks.length ? marks : [sec];
+      if (! marks.length) sec.classList.add ("found");
+      shown[0].scrollIntoView ({ block: "center" });
+    };
+    quiz (c, i, body.querySelector<HTMLElement> (".learnQuiz")!, showIn);
   };
 
   /** The quiz itself, into el: every question, in a new order, then the score. */
-  const quiz = (c: Course, i: number, el: HTMLElement) => {
+  const quiz = (c: Course, i: number, el: HTMLElement, showIn: (q: Question) => void) => {
     const l = c.lessons[i], qs = shuffle ([...l.questions]);
     let at = 0, right = 0;
     const ask = (q: Question) => {
@@ -112,7 +130,9 @@ async function draw (body: HTMLElement) {
           if (ok) right++;
           rightBtn.setAttribute ("aria-pressed", "true");     // (The right answer in the accent: a picker's choice's look)
           if (! ok) b.classList.add ("wrong");
-          note.innerHTML = (ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "");
+          note.innerHTML = (ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "")
+            + (q.s ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>` : "");
+          note.querySelector (".term")?.addEventListener ("click", () => showIn (q));
           note.hidden = next.hidden = false;
           next.scrollIntoView ({ block: "nearest" });
         });
@@ -128,12 +148,38 @@ async function draw (body: HTMLElement) {
         <div class="cardBack">${right} of ${qs.length} right. ${ok ? (more ? `Passed: lesson ${i + 2} is open.` : "Passed: the course's last lesson.") : `Not yet: ${pct (PASS)} passes. Read the grammar and try again.`}</div></div>
         <div class="bar">${ok && more ? `<button class="pill action" data-k="next">Next lesson</button>` : ""}<button class="pill action" data-k="again">Try again</button></div>`;
       el.querySelector ("[data-k=next]")?.addEventListener ("click", () => { lesson (c, i + 1); scrollUp (); });
-      el.querySelector ("[data-k=again]")!.addEventListener ("click", () => { quiz (c, i, el); });
+      el.querySelector ("[data-k=again]")!.addEventListener ("click", () => { quiz (c, i, el, showIn); });
     };
     ask (qs[0]);
   };
 
   path ();
+}
+
+/** Marks a phrase in el's text with <mark>s - one per text node it spans (Greek and Hebrew sit in spans of their own) -
+ *  matched ignoring spaces and joiners (the text's spacing round its spans varies), the first match only. Returns the
+ *  marks; none where the phrase isn't found. */
+function markText (el: HTMLElement, phrase: string): HTMLElement[] {
+  const skip = /[\s\u200c\u200d]/, want = [...phrase.normalize ("NFC")].filter ((ch) => ! skip.test (ch)).join ("");
+  const at: [Text, number][] = [];     // (Each character kept: its text node and offset)
+  let text = "";
+  const walk = document.createTreeWalker (el, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode () as Text | null; n; n = walk.nextNode () as Text | null) {
+    const s = n.data;
+    for (let k = 0; k < s.length; k++) if (! skip.test (s[k])) { at.push ([n, k]); text += s[k]; }
+  }
+  const from = text.indexOf (want);
+  if (from < 0 || ! want) return [];
+  const runs = new Map<Text, [number, number]> ();     // (Per text node: the part of it marked)
+  for (let k = from; k < from + want.length; k++) {
+    const [n, o] = at[k], r = runs.get (n);
+    runs.set (n, r ? [r[0], o + 1] : [o, o + 1]);
+  }
+  return [...runs].map (([n, [a, b]]) => {
+    const range = document.createRange (), m = document.createElement ("mark");
+    range.setStart (n, a); range.setEnd (n, b); range.surroundContents (m);
+    return m;
+  });
 }
 
 /** Back to the screen's top (a new view drawn). */
