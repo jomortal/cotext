@@ -43,7 +43,7 @@ const LEVELS = [0.05, 0.015, 0.004, 0.001];   // (atlas.py's: each level's toler
 const SPAN = 1.6;                             // (A fitted map at least this many degrees tall)
 const MAX_SCALE = 1500;                       // (The closest zoom: screen pixels a degree)
 const MAP_KEY = "cotext.atlas.map";
-const BORDERS_KEY = "cotext.atlas.borders";     // ("1": POLITICAL BOUNDARIES on)
+const BORDERS_KEY = "cotext.atlas.borders";     // ("0": POLITICAL BOUNDARIES off; on until turned off)
 const UNSURE = 700;                           // (A route's stop whose site's score is under this drawn as uncertain)
 /** The regions' (and DARE's provinces') hues: the verb colors (style.css), indexed by a region's color. */
 const HUES = ["--qal", "--piel", "--pual", "--hiphil", "--niphal", "--hithpael", "--other"];
@@ -51,14 +51,14 @@ const HUES = ["--qal", "--piel", "--pual", "--hiphil", "--niphal", "--hithpael",
 let file: Promise<Db | null> | null = null;
 let credit = "";
 let maps: { id: string; name: string; credit: string; file: string; version: string; eras: string }[] = [];
-let mapId = "ne", bordersOn = false;
-try { mapId = localStorage.getItem (MAP_KEY) ?? "ne"; bordersOn = localStorage.getItem (BORDERS_KEY) === "1"; } catch { /* private mode */ }
+let mapId = "ne", bordersOn = true;
+try { mapId = localStorage.getItem (MAP_KEY) ?? "ne"; bordersOn = localStorage.getItem (BORDERS_KEY) !== "0"; } catch { /* private mode */ }
 /** An era (atlas.db's eras): its name, the AWMC road periods drawn in it (letters; "" none), whether it's Roman. */
 interface Era { id: string; name: string; roads: string; roman: boolean; credit: string; }
 let eras = new Map<string, Era> ();
 let eraBooks: { book: number; first: number; last: number; era: string }[] = [];
 let routes: { id: string; books: number[]; name: string }[] = [];
-const routePicked = new Map<number, string> ();     // (Each book's route picked, while the app runs: "" none)
+const routePicked = new Map<number, string> ();     // (Each book's route picked, while the app runs: "" none; unpicked, its first)
 let placesDb: Db | null = null;
 let goVerse: (book: number, chapter: number, verse: number) => void = () => {};
 
@@ -375,8 +375,8 @@ function makeMap () {
     if (e) { eraPick.replaceChildren (new Option ("Off", "off"), new Option (e.name, "on")); eraPick.value = bordersOn ? "on" : "off"; }
     eraCredit.textContent = e && bordersOn ? e.credit : "";
     eraCredit.hidden = ! eraCredit.textContent;
-    // ROUTE: the book's pick
-    const r = routeRow.hidden ? "" : routePicked.get (book) ?? "";
+    // ROUTE: the book's pick, else its first route (options[0] is None)
+    const r = routeRow.hidden ? "" : routePicked.get (book) ?? routePick.options[1].value;
     routePick.value = r;
     if (r !== route) {
       route = r; stops = null; stopList.replaceChildren (); stopRows.clear ();
