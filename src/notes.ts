@@ -71,9 +71,12 @@ const picked: Record<string, string> = {};     // testament -> source id
 try { Object.assign (picked, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 
 const panel = document.getElementById ("notes")!;
-// Its frame (layout.ts' paneFrame, as the search pane's): the ✕ fixed at the upper right, the picker's row narrow
-// scrolling away with the notes, wide fixed at the column's top; the rest in the scroller.
-const notesScroll = paneFrame (panel, document.getElementById ("notesClose")!);
+// Its frame (layout.ts' paneFrame, as the search pane's): the picker's row frozen over the scroller, the rest in the
+// scroller; the ✕ then put back on the picker's row - the picker, the + (adding the resource to the Study printout:
+// versecards.ts) and the ✕ on one line, evenly spaced (style.css' #notes > .top).
+const notesClose = document.getElementById ("notesClose")!;
+const notesScroll = paneFrame (panel, notesClose);
+notesClose.parentElement!.remove (); panel.querySelector (":scope > .top")!.append (notesClose);
 const btn = document.getElementById ("notesBtn")!;
 const pick = document.getElementById ("notesPick") as HTMLSelectElement;
 const refEl = document.getElementById ("notesRef")!;
