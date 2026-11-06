@@ -64,7 +64,7 @@
 //   prints it), the Atlas' places and the base map and boundaries its map shows, the timeline's sources -,
 //   alphabetized in the printout's BIBLIOGRAPHY STYLE (bibliography.ts: the works, taken from their credits, and the
 //   styles), then "Licenses": the licenses' notices (each license's works and address, what was changed).
-// - DOWNLOAD (over Print): the printout as a file made on the device - Microsoft Word (.docx, .doc), OpenDocument
+// - DOWNLOAD (over Print; its FORMAT picked over it - PDF at first, then the last picked): the printout as a file made on the device - Microsoft Word (.docx, .doc), OpenDocument
 //   (.odt), Rich Text Format (.rtf), Plain Text (.txt), Web Page (.html, .htm) or PDF (.pdf: makePdf's) - each made from
 //   the preview in the print rules (printfiles.ts, loaded only then): the same content, light colors, Hebrew and Greek
 //   as real text with their fonts named, the maps as pictures. Named as the printout ("John 3.docx"); handed over as
@@ -423,14 +423,17 @@ onScreen ("Study printout", async (body) => {
     else if (printIgnored ()) void makePdf ().then ((f) => f && handOver (f));
     else { prepare (); window.print (); }
   });
-  // DOWNLOAD: a picker of the formats, PRINT under it, back to its first line once one's picked (which says the file's being made)
-  const dlRow = el ("label", "vcPick", "Download"), dl = el ("select", "choose");
-  downloadEl = dl;
-  dl.append (new Option (DOWNLOAD, ""), ...FORMATS.map (([k, t]) => new Option (t, k)));
-  dl.addEventListener ("change", () => { const k = dl.value as FileKind | "pdf" | ""; if (k) void download (k); });
+  // FORMAT: a picker of the formats - PDF at first, then the one last picked (kept on the device) -, picking only; the
+  // DOWNLOAD button under it makes and hands over the file (it says while it's being made); PRINT under that
+  const dlRow = el ("label", "vcPick", "Format"), dl = el ("select", "choose"), go = el ("button", "pill csPrint", DOWNLOAD);     // (As PRINT: an action, in the accent)
+  downloadEl = go;
+  dl.append (...FORMATS.map (([k, t]) => new Option (t, k)));
+  try { const k = localStorage.getItem (FORMAT_KEY); dl.value = FORMATS.some (([f]) => f === k) ? k! : "pdf"; } catch { dl.value = "pdf"; }
+  dl.addEventListener ("change", () => { try { localStorage.setItem (FORMAT_KEY, dl.value); } catch { /* private mode */ } });
+  go.addEventListener ("click", () => void download (dl.value as FileKind | "pdf"));
   dlRow.append (dl);
   const out = el ("div", "csOut");
-  out.append (dlRow, print);
+  out.append (dlRow, go, print);
   // (Its title row: EDIT and a ✕ closing the editor - as the bar's pencil does -, apart from the passages' own ✕s)
   const head = el ("div", "top csEditHead"), close = el ("button", "pill icon", "✕");
   close.setAttribute ("aria-label", "Close the editor");
@@ -1234,12 +1237,13 @@ window.addEventListener ("beforeprint", () => { if (previewEl?.isConnected) prep
 // app's first load), each page drawn from its slice at the screen's sharpness and written as a JPEG into a PDF (pdfOf). A4, or Letter where the device's region uses it; @page's margins; the page
 // number at each foot. Named as the printout ("John 3.pdf"). The same PDF is DOWNLOAD's PDF, on any device.
 const PRINT = "Print";
-const DOWNLOAD = "Choose a format";
+const DOWNLOAD = "Download";     // (The button's word, while no file is being made)
+const FORMAT_KEY = "cotext.study.format";     // (The format last picked; none, PDF)
 /** DOWNLOAD's formats, as the picker lists them. */
 const FORMATS: [FileKind | "pdf", string][] = [
   ["docx", "Microsoft Word (.docx)"], ["doc", "Microsoft Word 97-2003 (.doc)"], ["odt", "OpenDocument (.odt)"], ["rtf", "Rich Text Format (.rtf)"],
   ["txt", "Plain Text (.txt)"], ["html", "Web Page (.html)"], ["htm", "Web Page (.htm)"], ["pdf", "PDF (.pdf)"]];
-let downloadEl: HTMLSelectElement;
+let downloadEl: HTMLButtonElement;
 let ready: File | null = null;     // (A file made but not yet shared: the share sheet refused it - see handOver)
 
 /** Whether window.print does nothing here: a Home Screen web app on iOS (an iPad says it's a Mac, but has touch),
@@ -1404,9 +1408,7 @@ async function makePdf (): Promise<File | null> {
  *  loaded now, from the preview's print copy) and handed over; the picker says so meanwhile, then is back to its
  *  first line. A failure: nothing handed over, the reason logged. */
 async function download (kind: FileKind | "pdf") {
-  const first = downloadEl.options[0];
-  first.textContent = `Making ${kind.toUpperCase ()}…`;
-  downloadEl.value = ""; downloadEl.disabled = true;
+  downloadEl.textContent = `Making ${kind.toUpperCase ()}…`; downloadEl.disabled = true;
   try {
     let file: File | null;
     if (kind === "pdf") file = await makePdf ();
@@ -1418,8 +1420,7 @@ async function download (kind: FileKind | "pdf") {
   } catch (e) {
     console.warn (`Study printout: the ${kind} couldn't be made:`, e);
   } finally {
-    first.textContent = DOWNLOAD;
-    downloadEl.value = ""; downloadEl.disabled = false;
+    downloadEl.textContent = DOWNLOAD; downloadEl.disabled = false;
   }
 }
 
