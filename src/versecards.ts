@@ -16,7 +16,7 @@
 //   before a book, CHAPTER and the verses offer up to the most in any book or chapter, moved to the book's or chapter's
 //   last where it's shorter -, + ADD VERSE greyed out until BOOK, CHAPTER and FROM VERSE are; TO VERSE optional,
 //   blank for the one verse). The deck's settings one line, wrapping where it doesn't fit: LANGUAGE, TRANSLATION,
-//   Transliteration, Interlinear and Parsing.
+//   Transliteration, Interlinear and Parsing; FREQUENCY's slider on a line of its own under them.
 // - FOR ALL THE DECK'S CARDS (its settings, each change showing at once on the card shown): TRANSLATION - None or one
 //   of the notes' English translations (notes.ts' translationSources, each file read as the notes read it:
 //   openSource); LANGUAGE - what each testament's cards show: ENGLISH ONLY (no Greek or Hebrew), OT HEBREW - NT GREEK
@@ -25,7 +25,10 @@
 //   OT ENGLISH - NT GREEK (while a choice leaves some cards in English only, TRANSLATION offers no None - switched to
 //   the first if None was picked); and, for the original, Interlinear, Parsing and Transliteration (drawn as the
 //   reader draws it: chapterstudy.ts' textBox, but the parsing without the verb colors, and each verse number in the
-//   text's own letters - "ιϛʹ", "טז" - with its number under it as a gloss when Interlinear is on; greyed out with ENGLISH ONLY). The translation where one is picked (and has the card's testament) -
+//   text's own letters - "ιϛʹ", "טז" - with its number under it as a gloss when Interlinear is on; greyed out with ENGLISH ONLY);
+//   FREQUENCY, a slider as the Bible's ⋯ menu's (0, then 20s up to 1,000 words): the interlinear and parsing hidden
+//   for that many of the most common words of the card's whole testament (helps.ts' markCommon - a hard form's still
+//   shown, as the reader's), saying how many as it moves, the card redrawn once it's let go; greyed out with ENGLISH ONLY. The translation where one is picked (and has the card's testament) -
 //   for a card left in English only with none picked, the first translation that has it.
 // - A CARD: its front the reference - and, where the card shows an original, the reference in its language
 //   beside it (the Greek before the English; the Hebrew after it, first as read from the right) (the Hebrew or Greek book name, chapter and verses in letters, the Greek in capitals: "תְּהִלִּים כג:א",
@@ -48,6 +51,7 @@ import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource
 import { nativeRef, refPair } from "./refs";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 import { deckPaneSplit } from "./layout";
+import { markCommon, freqWords, freqSays, SLIDER_STEPS } from "./helps";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -63,7 +67,7 @@ function originalOf (b: Book): "he" | "lxx" | "gr" | "" {
 /** LANGUAGE leaves some cards English only: TRANSLATION offers no None. */
 const someEnglish = () => ["en", "heEn", "enGr"].includes (deckNow ().settings.lang);
 /** The deck's settings: the translation's source id ("" none), LANGUAGE, the original's lines. */
-interface Settings { tr: string; lang: Language; gloss: boolean; parse: boolean; translit: boolean; }
+interface Settings { tr: string; lang: Language; gloss: boolean; parse: boolean; translit: boolean; common?: number; }     // (common: FREQUENCY - the slider's position, 0 or none every word helped, each step 20 more of the most common words without their helps: helps.ts' markCommon)
 
 /** A deck: its name, its cards in the order added, its settings. */
 interface Deck { id: string; name: string; cards: VerseCard[]; settings: Settings; }
@@ -146,6 +150,8 @@ async function sidesOf (c: VerseCard, used: Map<string, string>): Promise<{ fron
     const ws = lxx ? await translatedWords (db, b, c.chapter, lo, hi)
                    : (await chapterWords (db, b.id, c.chapter)).filter ((w) => w.verse >= lo && w.verse <= hi);
     const box = textBox (lxx ? { ...b, testament: "LXX" } : b, ws[0]?.chapter ?? c.chapter, ws, deckNow ().settings);
+    const common = freqWords (deckNow ().settings.common ?? 0);
+    if (common) await markCommon (box, lxx ? { ...b, testament: "LXX" } : b, common);     // (FREQUENCY: the most common words' helps off)
     if (! ws.length) box.innerHTML = "<p>No Septuagint verses for this reference.</p>";
     // (Each word keyed to its Word, for its panel when tapped - the card's HTML drawn as text, so kept here)
     box.querySelectorAll<HTMLElement> (".w").forEach ((el, i) => {
@@ -233,6 +239,7 @@ async function draw (body: HTMLElement) {
       <label class="field">Language<select class="choose" id="vcLang">${LANGUAGES.map (([k, t]) => `<option value="${k}"${k === settings.lang ? " selected" : ""}>${t}</option>`).join ("")}</select></label>
       <label class="field">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <button class="pill" data-o="translit">Transliteration</button><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button>
+      <label class="field freq" for="vcFreq"><span id="vcFreqOut"></span><input id="vcFreq" type="range" min="0" max="${SLIDER_STEPS}" value="${settings.common ?? 0}"></label>
 </div>
     </div>
     </div>
@@ -341,6 +348,12 @@ async function draw (body: HTMLElement) {
   trPick.addEventListener ("change", () => { settings.tr = trPick.value; save (); deck (true); });
   for (const b of body.querySelectorAll<HTMLElement> ("[data-o]"))
     b.addEventListener ("click", () => { const k = b.dataset.o as "gloss" | "parse" | "translit"; settings[k] = ! settings[k]; save (); deck (true); });
+  // FREQUENCY: the slider, as the ⋯ menu's - its words said as it moves, the card redrawn once it's let go
+  const freq = body.querySelector<HTMLInputElement> ("#vcFreq")!, freqOut = body.querySelector<HTMLElement> ("#vcFreqOut")!;
+  const says = () => { freqOut.innerHTML = freqSays (freqWords (+freq.value)); freq.disabled = settings.lang === "en"; };
+  says ();
+  freq.addEventListener ("input", says);
+  freq.addEventListener ("change", () => { settings.common = +freq.value; save (); deck (true); });
   listEl.addEventListener ("click", (e) => {
     const x = (e.target as HTMLElement).closest ("button.icon"), row = x?.closest<HTMLElement> (".vcRow");
     if (row) { d.cards = d.cards.filter ((c) => c.id !== row.dataset.id); save (); deck (); }

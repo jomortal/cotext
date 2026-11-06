@@ -52,14 +52,14 @@ let book: Book;
 const listeners: (() => void)[] = [];
 
 /** The scope's key in the cache: the book (its id), or the whole testament. */
-const scopeKey = (b: Book) => s.scope === "book" ? String (b.id) : b.testament;
+const scopeKey = (b: Book, whole = false) => ! whole && s.scope === "book" ? String (b.id) : b.testament;     // (whole: the testament's, whatever FREQUENCY says - a verse card's)
 /** Counts for the scope chosen: the whole testament (freq's book 0, its Strong's keys starting H or G; the
  *  Septuagint's book -1) or the book - the reader's, or another text's shown beside it (b: the notes panel's Hebrew OT). */
-function counts (b: Book = book): Counts { return cache.get (scopeKey (b)) ?? EMPTY; }
+function counts (b: Book = book, whole = false): Counts { return cache.get (scopeKey (b, whole)) ?? EMPTY; }
 
 /** Reads what b's helps need, if it isn't yet: its scope's counts (as chosen now) and its language's dictionary forms. */
-export function prepareHelps (b: Book): Promise<unknown> {
-  const key = scopeKey (b), freqBook = s.scope === "book" ? b.id : b.testament === "LXX" ? -1 : 0;
+export function prepareHelps (b: Book, whole = false): Promise<unknown> {
+  const key = scopeKey (b, whole), freqBook = ! whole && s.scope === "book" ? b.id : b.testament === "LXX" ? -1 : 0;
   const once = (k: string, read: () => Promise<void>) => {
     let p = reading.get (k);
     if (! p) { p = read ().then (() => { done.add (k); }); reading.set (k, p); p.catch (() => reading.delete (k)); }     // (Failed: read again next time)
@@ -140,6 +140,25 @@ export function knownWords (): string[] {
   return Object.keys (s.modes).filter ((k) => s.modes[k] === "hide");
 }
 
+
+// A verse card's own slider (versecards.ts: its deck's FREQUENCY, kept per deck): the n most common words of the card's
+// whole testament (OT, NT or LXX) lose their gloss and parsing, as the ⋯ menu's slider does on the reader's - a hard
+// form's still shown, My vocab's too while SHOW MY VOCAB is on; the reader's own slider, FREQUENCY and known words not used.
+/** Marks the words in root (.known, .knownForm: style.css hides their gloss, their parsing) for the n most common in b's testament. */
+export async function markCommon (root: ParentNode, b: Book, n: number) {
+  await prepareHelps (b, true);
+  const rank = counts (b, true).rank;
+  for (const el of root.querySelectorAll<HTMLElement> (".w")) {
+    const strong = el.dataset.strong ?? "";
+    const common = (rank.get (strong) ?? Infinity) < n && ! (s.showVocab !== false && learning (strong))
+                   && ! hardForm (lemmaOf (strong), el.dataset.code ?? "", strong.startsWith ("H"));
+    el.classList.toggle ("known", common); el.classList.toggle ("knownForm", common);
+  }
+}
+/** The slider's words at a position (0 none, then 20s up to 1,000) and what it says - the ⋯ menu's and a deck's. */
+export const SLIDER_STEPS = 50;
+export function freqWords (pos: number): number { return wordsAt (Math.min (pos, SLIDER_STEPS)); }
+export function freqSays (n: number): string { return n === 0 ? "Helps for every word" : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words`; }
 
 /** Called when anything here changes (the panel relabels its button). */
 export function onHelpsChange (f: () => void) { listeners.push (f); }
