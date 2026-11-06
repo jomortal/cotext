@@ -22,9 +22,11 @@
 export interface Question { q: string; a: string; x: string[]; why?: string; s?: number; find?: string; }
 /** A lesson: id (kept with its score on the device - never reused for another lesson), its title, the grammar's
  *  sections it's from (seq ranges, [first, last] each, shown in that order: grammar.ts' readSections), its questions;
- *  words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
+ *  guide: a lesson of its own on the letters - their names and sounds -, taught from COTEXT's ☰ Pronunciation guide (its
+ *  Greek, the one picked there: pronounce.ts' greekGuide) shown as its grammar, its questions made from the guide when
+ *  it's taken (learn.ts' letterQuestions), no words of its own; words, a course without vocab: the lesson's own vocabulary ([the word as the book lists it, its meaning], in the
  *  book's order), quizzed with its questions (learn.ts' vocabQuestions). */
-export interface Lesson { id: string; title: string; sections: [number, number][]; questions: Question[]; words?: [string, string][]; }
+export interface Lesson { id: string; title: string; sections: [number, number][]; questions: Question[]; words?: [string, string][]; guide?: "greek"; }
 /** A course: the grammar it follows (grammars.id), its name in the picker, its lessons in order. vocab "freq": its
  *  lessons' words are the testament's most frequent (Hebrew the OT's, Greek the NT's), VOCAB_PER_LESSON a lesson -
  *  lesson 1 the most frequent, lesson 2 the next... (learn.ts); none: each lesson's own words. */
@@ -288,6 +290,9 @@ const SMYTH: Course = { id: "smyth", name: "Greek (Smyth)", lang: "G", vocab: "f
 ] };
 
 const UGG: Course = { id: "ugg", name: "Greek (unfoldingWord)", lang: "G", vocab: "freq", lessons: [
+  // (The alphabet: unfoldingWord's grammar has no page on it - its topics begin with the adjective -, so the letters'
+  // names and sounds are a lesson of their own, from COTEXT's Pronunciation guide)
+  { id: "ugg-alphabet", title: "The Letters: Names and Sounds", sections: [], guide: "greek", questions: [] },
   { id: "ugg-noun", title: "Nouns: Gender and Number", sections: [[45, 45], [28, 28], [50, 50]], questions: [
     { q: "A noun is a word that refers to", a: "a person, a thing, a place or an idea", x: ["an action or a state", "a noun's quality", "how an action is done"], s: 45, find: "A noun is a word that refers to a person, a thing, a place, or an idea" },
     { q: "Every Koiné Greek noun has", a: "case, gender and number", x: ["tense, mood and voice", "person and number", "case only"], s: 45, find: "all nouns contain case, gender, and number" },

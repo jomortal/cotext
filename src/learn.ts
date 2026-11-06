@@ -12,6 +12,8 @@
 //   (flashcards' look: cards.ts' - a short Hebrew or Greek word large, as a card's front, anything longer at the text's size, as its back: in a box of its own, one line of text in the back's grid), "3 of 12"
 //   under it, the choices (in a new order) as a list under that. A choice tapped is answered at once: the right answer
 //   in the accent, a wrong pick in --wrong and struck through, a line saying so (and why, where the question says) with
+//   A GUIDE LESSON (learncourses.ts' guide - unfoldingWord's letters): READ THE GUIDE, ☰ Pronunciation's Greek in the
+//   grammar's place, its questions made from it (letterQuestions), no words; SHOW IN THE GUIDE marks the letter's row.
 //   SHOW IN THE GRAMMAR where the question says where it's taught (its s and find: learncourses.ts) - the grammar shown,
 //   that section opened and scrolled to, the passage marked in the tapped word's tint (style.css' .gSec mark), kept
 //   marked until another link is followed - and NEXT. At the end the score: PASSED at PASS (80%) or more - the next lesson opens - else NOT YET; NEXT LESSON
@@ -21,6 +23,7 @@
 
 import { onScreen, currentTestament } from "./study";
 import { readSections, sectionCaption, grammarCredit, folding, setFold } from "./grammar";
+import { drawGuide, greekGuide, greekLetters } from "./pronounce";
 import { shuffle } from "./cards";
 import { frequentWords, greekCounts } from "./vocab";
 import { COURSES, VOCAB_PER_LESSON, type Course, type Lesson, type Question } from "./learncourses";
@@ -81,8 +84,10 @@ async function draw (body: HTMLElement) {
     const gram = body.querySelector<HTMLElement> (".gBody")!, read = body.querySelector<HTMLElement> ("[data-k=read]")!;
     body.querySelector ("[data-k=path]")!.addEventListener ("click", () => { path (); scrollUp (); });
     body.querySelector (".credit")!.textContent = `Quiz generated from ${grammarCredit (c.id)}.`;
-    // (The sections read once, as the lesson opens: their § in the caption at once, their text shown when asked)
-    const ready = readSections (c.id, l.sections).then ((s) => {
+    // (The sections read once, as the lesson opens: their § in the caption at once, their text shown when asked - a
+    // guide lesson's, the Pronunciation guide's Greek in their place: READ THE GUIDE)
+    if (l.guide) { read.textContent = "Read the guide"; body.querySelector (".src")!.textContent = "Pronunciation guide"; drawGuide (gram, greekGuide ()); }
+    const ready = l.guide ? Promise.resolve () : readSections (c.id, l.sections).then ((s) => {
       if (! gram.isConnected) return;     // (Another lesson or the path drawn meanwhile)
       body.querySelector (".src")!.textContent = sectionCaption (c.id, s.labels, s.count);
       gram.innerHTML = s.html;
@@ -94,15 +99,15 @@ async function draw (body: HTMLElement) {
      *  (q.find, else the whole section) marked - kept marked until another question's link (or the lesson left). */
     const showIn = async (q: Question) => {
       await ready;
-      const sec = gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
+      const sec = l.guide ? gram : gram.querySelector<HTMLElement> (`.gSec[data-seq="${q.s}"]`);
       if (! sec) return;
       showGram (true);
-      setFold (sec.closest (".fold")!, true);
+      if (! l.guide) setFold (sec.closest (".fold")!, true);
       for (const m of gram.querySelectorAll ("mark")) m.replaceWith (...m.childNodes);     // (An earlier mark gone)
       gram.querySelector (".gSec.found")?.classList.remove ("found");
       const marks = q.find ? markText (sec, q.find) : [];
       const shown = marks.length ? marks : [sec];
-      if (! marks.length) sec.classList.add ("found");
+      if (! marks.length && ! l.guide) sec.classList.add ("found");
       shown[0].scrollIntoView ({ block: "center" });
     };
     quiz (c, i, body.querySelector<HTMLElement> (".learnQuiz")!, showIn);
@@ -110,7 +115,7 @@ async function draw (body: HTMLElement) {
 
   /** The quiz itself, into el: every question and the lesson's words (vocabQuestions), in a new order, then the score. */
   const quiz = async (c: Course, i: number, el: HTMLElement, showIn: (q: Question) => void) => {
-    const words = await vocabQuestions (c, i).catch (() => [] as Question[]);     // (No database: the grammar's questions alone)
+    const words = c.lessons[i].guide ? letterQuestions () : await vocabQuestions (c, i).catch (() => [] as Question[]);     // (No database: the grammar's questions alone; a guide lesson: the letters, no words)
     if (! el.isConnected) return;     // (Another view drawn meanwhile)
     const l = c.lessons[i], qs = shuffle ([...l.questions, ...words]);
     let at = 0, right = 0;
@@ -135,7 +140,8 @@ async function draw (body: HTMLElement) {
           rightBtn.setAttribute ("aria-pressed", "true");     // (The right answer in the accent: a picker's choice's look)
           if (! ok) b.classList.add ("wrong");
           note.innerHTML = (ok ? "Right." : `Not quite: ${marked (q.a)}.`) + (q.why ? ` ${marked (q.why)}` : "")
-            + (q.s !== undefined ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>` : "");
+            + (q.s !== undefined ? ` <span class="term" role="link" tabindex="0">Show in the grammar</span>`
+               : c.lessons[i].guide && q.find ? ` <span class="term" role="link" tabindex="0">Show in the guide</span>` : "");
           note.querySelector (".term")?.addEventListener ("click", () => showIn (q));
           note.hidden = next.hidden = false;
           next.scrollIntoView ({ block: "nearest" });
@@ -149,7 +155,7 @@ async function draw (body: HTMLElement) {
       kept.best[l.id] = Math.max (kept.best[l.id] ?? 0, s);
       save ();
       el.innerHTML = `<div class="card learnCard"><div class="cardFront">${pct (s)}</div>
-        <div class="cardBack">${right} of ${qs.length} right. ${ok ? (more ? `Passed: lesson ${i + 2} is open.` : "Passed: the course's last lesson.") : `Not yet: ${pct (PASS)} passes. Read the grammar and try again.`}</div></div>
+        <div class="cardBack">${right} of ${qs.length} right. ${ok ? (more ? `Passed: lesson ${i + 2} is open.` : "Passed: the course's last lesson.") : `Not yet: ${pct (PASS)} passes. Read the ${c.lessons[i].guide ? "guide" : "grammar"} and try again.`}</div></div>
         <div class="bar">${ok && more ? `<button class="pill action" data-k="next">Next lesson</button>` : ""}<button class="pill action" data-k="again">Try again</button></div>`;
       el.querySelector ("[data-k=next]")?.addEventListener ("click", () => { lesson (c, i + 1); scrollUp (); });
       el.querySelector ("[data-k=again]")!.addEventListener ("click", () => { quiz (c, i, el, showIn); });
@@ -177,13 +183,27 @@ const verbal = (m: string) => /^(to|I) /.test (m);
  *  picked, or the meaning shown and the word picked; the three wrong choices other words of the course's (verbs' for a
  *  verb, others' for the rest, where there are enough), never one meaning the same. No grammar link; after answering,
  *  the word, its meaning and how often it occurs. */
+/** A guide lesson's questions (its letters): every Greek letter once, in the guide picked in ☰ Pronunciation (modern or
+ *  Erasmian: pronounce.ts' greekLetters) - either its name (the letter shown, its name picked) or its sound (how it's
+ *  said, its letter picked), at random; wrong choices other letters'; each linked to its row in the guide (find). */
+function letterQuestions (): Question[] {
+  const ls = greekLetters (greekGuide ());
+  return ls.map ((l) => {
+    const others = shuffle (ls.filter ((o) => o.how !== l.how)).slice (0, 3), lower = l.cell.split (" ")[1];     // (Never a letter said the same - modern Greek's η, ι, υ - as a wrong choice)
+    return Math.random () < 0.5
+      ? { q: `Which letter is ${lower}?`, a: l.name, x: others.map ((o) => o.name), find: l.cell }
+      : { q: `Which letter sounds like this: ${l.how}?`, a: lower, x: others.map ((o) => o.cell.split (" ")[1]), find: l.cell };
+  });
+}
+
 async function vocabQuestions (c: Course, i: number): Promise<Question[]> {
   let mine: Word[], pool: Word[];
   if (c.vocab === "freq") {
     const n = c.lessons.length * VOCAB_PER_LESSON + 30;     // (Every lesson's words, and some beyond as wrong choices)
     if (! frequent.has (c.lang)) frequent.set (c.lang, frequentWords (c.lang, n).then ((ws) => ws.map ((w) => ({ word: w.lemma, meaning: w.meaning, count: w.count }))));
     pool = await frequent.get (c.lang)!;
-    mine = pool.slice (i * VOCAB_PER_LESSON, (i + 1) * VOCAB_PER_LESSON);
+    const k = c.lessons.slice (0, i).filter ((l) => ! l.guide).length;     // (The lessons with words before this one: a guide lesson has none)
+    mine = pool.slice (k * VOCAB_PER_LESSON, (k + 1) * VOCAB_PER_LESSON);
   } else {
     const all = c.lessons.flatMap ((l) => l.words ?? []);
     machenCounts ??= greekCounts (all.map (([w]) => head (w)));
