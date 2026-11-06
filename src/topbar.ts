@@ -1,4 +1,4 @@
-// A study screen's own top row for a set of named things (the Verse cards' decks, the Study printout's printouts): the
+// A study screen's own top row (the Verse cards', the Study printout's, Vocab's): a title centered (topTitle) - for a set of named things (the Verse cards' decks, the Study printout's printouts) the
 // open one's name centered, a drop-down arrow beside it (⌄, the pickers' own: choose.ts' button), tapped opening its
 // drop-down under it - SELECT <NOUN> (each by name; picking one opens it), DELETE <NOUN> beside it (the open one, asked
 // first) and + NEW <NOUN> at its right, then NAME (the open one's, edited in place, the title following as it's
@@ -34,17 +34,27 @@ const make = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "
   return e;
 };
 
-/** The top row's title (an h1: its button, the name and the arrow) and the name's drop-down's first rows (SELECT and
- *  DELETE, then NAME), for the screen to place: the title in its .topRow, the rows at the top of its .vcMenu. */
-export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement; button: HTMLButtonElement; rows: HTMLElement[] } {
-  const x = o.open (), noun = o.noun.toLowerCase ();
-  const title = make ("h1"), button = make ("button", "pill icon topTitle"), name = make ("span", "topName", o.shown (x));
+/** A top row's title: an h1 holding a button - the name (text) and the drop-down arrow ⌄ beside it -, its label
+ *  "<text>: <what>" for a screen reader; name: the span showing the text (set to change it; the label with it). The
+ *  screen places the title in its .topRow and makes the button its drop-down's (dropDowns). Every top row's title
+ *  (the Verse cards', the Study printout's, Vocab's) is made here. */
+export function topTitle (text: string, what: string): { title: HTMLElement; button: HTMLButtonElement; name: HTMLElement; set: (t: string) => void } {
+  const title = make ("h1"), button = make ("button", "pill icon topTitle"), name = make ("span", "topName", text);
   const arrow = make ("span", "topArrow", "⌄");
   arrow.setAttribute ("aria-hidden", "true");
-  button.setAttribute ("aria-label", `${o.shown (x)}: ${noun} options`);
   button.setAttribute ("aria-expanded", "false");
   button.append (name, arrow);
   title.append (button);
+  const set = (t: string) => { name.textContent = t; button.setAttribute ("aria-label", `${t}: ${what}`); };
+  set (text);
+  return { title, button, name, set };
+}
+
+/** The top row's title (topTitle) and the name's drop-down's first rows (SELECT and
+ *  DELETE, then NAME), for the screen to place: the title in its .topRow, the rows at the top of its .vcMenu. */
+export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement; button: HTMLButtonElement; rows: HTMLElement[] } {
+  const x = o.open (), noun = o.noun.toLowerCase ();
+  const { title, button, set } = topTitle (o.shown (x), `${noun} options`);
   // SELECT <NOUN>, DELETE <NOUN> and + NEW <NOUN>
   const pickRow = make ("div", "vcAdd"), pickLabel = make ("label", "vcPick", `Select ${noun}`), pick = make ("select", "choose");
   pick.append (...o.all ().map ((y) => new Option (o.shown (y), y.id, false, y === x)));
@@ -61,8 +71,7 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   input.setAttribute ("enterkeyhint", "done");
   const follow = () => {
     o.renamed (x);
-    name.textContent = o.shown (x);
-    button.setAttribute ("aria-label", `${o.shown (x)}: ${noun} options`);
+    set (o.shown (x));
     pick.selectedOptions[0].textContent = o.shown (x);
   };
   input.addEventListener ("input", () => { x.name = input.value.trim () ? input.value : ""; follow (); });

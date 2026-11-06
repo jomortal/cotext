@@ -1,5 +1,5 @@
 // The helps (a word's gloss and parsing code) and the ⋯ menu that controls them (design/mock-hebrew.html):
-// - the frequency slider, in steps of 20 words up to 1,000 (as My vocab's frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss and the parsing
+// - the frequency slider, in steps of 20 words up to 1,000 (as Flashcards' frequency lists) - with how much of the text they cover (every occurrence counted) shown: it hides the gloss and the parsing
 //   of the N most common words, by the root word (the lemma, its extended Strong's key: every form together), as the
 //   printed reader's editions do - except a hard form's parsing and gloss, always shown: a verb whose form is hard to recognize
 //   (a weak root's, an irregular one's: paradigm.ts' hardForm). Counted over the whole OT / NT / LXX (the Septuagint's

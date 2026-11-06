@@ -1,57 +1,67 @@
-// Flashcards: one card at a time - its front, tapped to turn it over (its back shown under it, or alone: My vocab's), tapped again to turn it
-// back. BACK and NEXT step through the deck (SHOW between them turns the card over, as a tap on it does) (wrapping round), SHUFFLE mixes it, START OVER puts it back in its first
-// order at the first card, REMOVE FROM LIST (or the name its owner gives it; My vocab's decks only) takes the card out (and tells the deck's owner: vocab.ts takes the word off
-// that list). A speaker on a card says its word. "3 of 20". Used by the Verb paradigms screen (below), My vocab (vocab.ts) and the Verse cards (versecards.ts).
-//
-// Verb paradigms (☰ > Verb paradigms): a deck per stem (Hebrew) or tense and voice (Greek) - every form the Verb
-// chart shows for it, from the same templates (paradigm.ts), shuffled. FILL IN picks the cards' verb: PATTERN - the front
-// the form's pattern, the back its parsing spelled out ("Qal perfect, 3rd masculine singular"), its meaning on "do" and the form on the first model root (קָטַל, λύω) - or a
-// model verb - the front the form on that verb, the back its parsing spelled out and its meaning on that verb.
+// Flashcards: one card at a time, centered in the screen's room (fitDeck) - its front, tapped to turn it over (its back
+// shown under it, or alone: backOnly), tapped again to turn it back (no Flip button). Its buttons in one bar at the
+// screen's foot - the Bible view's play bar's kind (.vcBar; down the right side sideways: bars.ts' SIDE_BAR) -: BACK and
+// NEXT as ‹ and › at its ends (wrapping round; a swipe across the card does the same: bars.ts' onSwipe), SHUFFLE
+// (mixes it) and START OVER (back in its first order at the first card) as icons between them, and in its middle the
+// screen's own button: the Verse cards' + (NEW VERSE), or Flashcards' card action (REMOVE FROM LIST or + KNOWN WORDS:
+// takes the card out and tells the deck's owner - vocab.ts takes the word off that list). A speaker on a card says its
+// word. "3 of 20" under the card. Used by Flashcards (vocab.ts: the word lists, the first things to learn, the verb
+// paradigms) and the Verse cards (versecards.ts).
 
-import { onScreen, currentTestament } from "./study";
 import { sayText } from "./audio";
-import { HEBREW_STEMS, GREEK_TENSES, HEBREW_MODELS, GREEK_MODELS, hebrewCells, hebrewForm, greekCells, greekForm, spellCode, type Form } from "./paradigm";
+import { onSwipe } from "./bars";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
-/** Shows a deck in el; onRemove gets each card taken out with REMOVE FROM LIST (or removeLabel, the button's own name) -
- *  without it the deck has no such button. noTurn: a selector - a tap on what it matches doesn't turn the card. flipWord: SHOW / HIDE's one name both ways
- *  (the Verse cards' FLIP).
- *  backOnly: turned over, the back alone shows, the front hidden (My vocab: only the English; a verse card: the verse with its reference); otherwise under it. */
-export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?: (c: C) => void, removeLabel = "Remove from list", backOnly = false,
-                                          noTurn = "", flipWord = ""): DeckShown<C> {
+/** The bar's icons (shown in place of their words - each kept as its aria-label for a screen reader). */
+const svg = (d: string) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+export const BAR_ICONS = {
+  shuffle: svg ("M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.6M13.1 9.6C14.2 8 15.4 7 17 7h4M18 4l3 3-3 3M18 14l3 3-3 3"),     // (Two paths crossing)
+  over: svg ("M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"),     // (Back to the start: an arrow round to its beginning)
+  known: svg ("M5 12.5l4.5 4.5L19 7"),     // (A check: + KNOWN WORDS)
+  remove: svg ("M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M8 12h8"),     // (A minus in a circle: REMOVE FROM LIST)
+};
+
+/** How a deck is shown. remove: the bar's middle button taking the card shown out (its icon, its name - the aria-label -
+ *  and done, told each card taken out); middle: the screen's own button for the bar's middle instead (the Verse cards'
+ *  +); neither: the middle empty. backOnly: turned over, the back alone shows, the front hidden (Flashcards' words: only
+ *  the English; a verse card: the verse with its reference); otherwise under it. noTurn: a selector - a tap on what it
+ *  matches doesn't turn the card (the Verse cards' words, tapped for their panel). */
+export interface DeckOptions<C> { remove?: { icon: string; label: string; done: (c: C) => void }; middle?: HTMLElement; backOnly?: boolean; noTurn?: string; }
+
+/** Shows a deck in el: the card, its count and the bar (above). */
+export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOptions<C> = {}): DeckShown<C> {
   const first = [...cards];
   let deck = [...cards], at = 0;
-  el.innerHTML = `<div class="card${backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
+  const btn = (k: string, label: string, inner: string, cls = "pill icon") => `<button class="${cls}" data-k="${k}" aria-label="${label}">${inner}</button>`;
+  el.innerHTML = `<div class="card${o.backOnly ? " single" : ""}" role="button" tabindex="0"><div class="cardFront"></div><div class="cardBack" hidden></div></div>
     <div class="src cardCount"></div>
-    <div class="bar cardBar"><button class="pill" data-k="back">Back</button><button class="pill" data-k="flip">Show</button><button class="pill" data-k="next">Next</button></div>
-    <div class="bar cardBar"><button class="pill" data-k="shuffle">Shuffle</button><button class="pill" data-k="over">Start over</button>${onRemove ? `<button class="pill" data-k="remove">${removeLabel}</button>` : ""}</div>`;
+    <div class="vcBar">${btn ("back", "Back", "‹", "pill icon arrow")}${btn ("shuffle", "Shuffle", BAR_ICONS.shuffle)}${o.remove ? btn ("remove", o.remove.label, o.remove.icon, "pill icon vcMid") : ""}${btn ("over", "Start over", BAR_ICONS.over)}${btn ("next", "Next", "›", "pill icon arrow")}</div>`;
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
-  const back = el.querySelector<HTMLElement> (".cardBack")!;
-  const count = el.querySelector<HTMLElement> (".cardCount")!, flip = el.querySelector<HTMLElement> ("[data-k=flip]")!;
-  if (flipWord) flip.textContent = flipWord;     // (A fixed word - the Verse cards' FLIP: set once, so what's added to the button stays)
+  const back = el.querySelector<HTMLElement> (".cardBack")!, count = el.querySelector<HTMLElement> (".cardCount")!;
+  const bar = el.querySelector<HTMLElement> (".vcBar")!;
+  if (o.middle) { o.middle.classList.add ("vcMid"); bar.querySelector ("[data-k=over]")!.before (o.middle); }
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
     at = (at + deck.length) % deck.length;
-    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false; if (! flipWord) flip.textContent = "Show";
+    front.innerHTML = deck[at].front; back.innerHTML = deck[at].back; back.hidden = true; front.hidden = false;
     count.textContent = `${(at + 1).toLocaleString ()} of ${deck.length.toLocaleString ()}`;
   };
-  // Turned over (a tap on the card, or SHOW - HIDE while turned - between BACK and NEXT); again, turned back.
-  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = backOnly && ! back.hidden; if (! flipWord) flip.textContent = back.hidden ? "Show" : "Hide"; } };     // (Tapped again: turned back)
-  // A speaker on a card (an element with data-say: My vocab's word) says that text, leaving the card as it is.
-  // (noTurn: what a tap on doesn't turn it - the Verse cards' words, tapped for their panel)
+  // Turned over (a tap on the card); again, turned back.
+  const turn = () => { if (deck.length) { back.hidden = ! back.hidden; front.hidden = !! o.backOnly && ! back.hidden; } };
+  // A speaker on a card (an element with data-say: a word's) says that text, leaving the card as it is.
   card.addEventListener ("click", (e) => {
     const t = e.target as HTMLElement, say = t.closest<HTMLElement> ("[data-say]");
-    if (say) sayText (say.dataset.say!); else if (! (noTurn && t.closest (noTurn))) turn ();
+    if (say) sayText (say.dataset.say!); else if (! (o.noTurn && t.closest (o.noTurn))) turn ();
   });
   card.addEventListener ("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault (); turn (); } });
-  const on = (k: string, f: () => void) => el.querySelector (`[data-k=${k}]`)!.addEventListener ("click", () => { f (); show (); });
-  flip.addEventListener ("click", turn);
+  const on = (k: string, f: () => void) => bar.querySelector (`[data-k=${k}]`)?.addEventListener ("click", () => { f (); show (); });
   on ("back", () => { at--; });
   on ("next", () => { at++; });
   on ("shuffle", () => { deck = shuffle (deck); at = 0; });
   on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
-  if (onRemove) on ("remove", () => { const [c] = deck.splice (at, 1); if (c) onRemove (c); });     // (No onRemove: no REMOVE FROM LIST - the Verb paradigms)
+  on ("remove", () => { const [c] = deck.splice (at, 1); if (c) o.remove!.done (c); });
+  onSwipe (card, (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ());     // (A swipe across the card steps as ‹ and ›)
   show ();
   return {
     update (next, same) {
@@ -68,47 +78,27 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], onRemove?
  *  pick matches shown, its front up (a verse card just added). */
 export interface DeckShown<C extends Card> { update (next: C[], same: (a: C, b: C) => boolean): void; go (pick: (c: C) => boolean): void; }
 
-/** A fresh order each time a deck opens. */
-const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor (Math.random () * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-
-/** A form's card; filled: on a model verb (its front that verb's form, so the back needs no form of its own). */
-const paradigmCard = (f: Form & { text: string }, hebrew: boolean, filled: boolean): Card => ({
-  front: f.pattern,
-  back: `<div class="paradigm">${spellCode (f.code, hebrew)}</div><div>${f.meaning}</div>${filled ? "" : `<div class="${hebrew ? "heWord" : "grWord"}">${f.text}</div>`}`,
-});
-
-const picked = { OT: 0, NT: 0, LXX: 0 };
-const fillIn = { OT: -1, NT: -1, LXX: -1 };     // (FILL IN, by testament: -1 the pattern, else a model verb's index)
-
-function paradigms (body: HTMLElement) {
-  const t = currentTestament (), hebrew = t === "OT";
-  const names = hebrew ? HEBREW_STEMS.map ((s) => s.name) : GREEK_TENSES.map ((x) => x.name);
-  body.innerHTML = `<div class="chartPick"><label>${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="deckPick">${names.map ((n, i) => `<option value="${i}">${n}</option>`).join ("")}</select></label>
-    <label>Fill in<select class="choose" id="fillPick"><option value="-1">Pattern</option>${(hebrew ? HEBREW_MODELS.map ((m) => `${m.root} - ${m.english[0]}`)
-      : GREEK_MODELS.map ((m) => `${m.lemma} - ${m.english[0]}`)).map ((m, i) => `<option value="${i}">${m}</option>`).join ("")}</select></label></div>
-    <p>Each card a form - its pattern, or on the verb picked in Fill in; turned over, its parsing and meaning (on a pattern, also the form on ${hebrew ? "קָטַל" : "λύω"}).</p><div class="deck"></div>`;
-  const pick = body.querySelector<HTMLSelectElement> ("#deckPick")!, fill_ = body.querySelector<HTMLSelectElement> ("#fillPick")!;
-  const deckEl = body.querySelector<HTMLElement> (".deck")!;
-  const fill = () => {
-    let cards: Card[];
-    if (hebrew) {
-      const stem = HEBREW_STEMS[picked.OT], c = hebrewCells (stem);
-      const cells = [...Object.values (c.grid).flatMap ((g) => Object.values (g)), ...c.ptc, ...(c.ptp ?? []), c.inc, c.ina];
-      const m = HEBREW_MODELS[fillIn.OT] ?? null;
-      cards = cells.map ((x) => paradigmCard (hebrewForm (stem, x, m), true, !! m));
-    } else {
-      const tv = GREEK_TENSES[picked.NT], c = greekCells (tv);
-      const cells = [...Object.values (c.grid).flatMap ((g) => Object.values (g)), ...(c.inf ? [c.inf] : []), ...c.ptc];
-      const m = GREEK_MODELS[fillIn.NT] ?? null;
-      cards = cells.map ((x) => paradigmCard (greekForm (tv, x, m), false, !! m));
-    }
-    showDeck (deckEl, shuffle (cards));
+/** The deck's room, measured: the screen's own height less its padding (the top bar's room, the bottom bar's - and the
+ *  Verse cards' word panel, when open) and what's kept under the deck on the first screen (under: the Verse cards'
+ *  credits, with the gap above them; none - Flashcards' list is scrolled to under it) - as much kept above the card, so
+ *  it's centered on the screen, all on one screen without scrolling where it fits (style.css' .deck: --vcRoom,
+ *  --vcCreditsH). A card taller than the room left when centered: no room kept above it - it starts at the top
+ *  (.vcTall). Kept so as the screen, the deck or what's under it changes size. */
+export function fitDeck (deckEl: HTMLElement, under?: HTMLElement) {
+  const screenEl = document.getElementById ("screen")!;
+  const fit = () => {
+    const c = under?.textContent ? under.getBoundingClientRect ().bottom - deckEl.getBoundingClientRect ().bottom : 0, cs = getComputedStyle (screenEl);
+    deckEl.style.setProperty ("--vcCreditsH", c + "px");
+    const room = screenEl.clientHeight - parseFloat (cs.paddingTop) - parseFloat (cs.paddingBottom) - c;
+    deckEl.style.setProperty ("--vcRoom", room + "px");
+    const kids = [...deckEl.children].filter ((x) => ! x.classList.contains ("vcBar")) as HTMLElement[];
+    const content = kids.length ? kids[kids.length - 1].getBoundingClientRect ().bottom - kids[0].getBoundingClientRect ().top : 0;
+    deckEl.classList.toggle ("vcTall", content > room - c);
   };
-  pick.value = String (picked[t]);
-  pick.addEventListener ("change", () => { picked[t] = Number (pick.value); fill (); });
-  fill_.value = String (fillIn[t]);
-  fill_.addEventListener ("change", () => { fillIn[t] = Number (fill_.value); fill (); });
-  fill ();
+  const watch = new ResizeObserver (fit);
+  if (under) watch.observe (under);
+  watch.observe (screenEl); watch.observe (deckEl);
 }
 
-onScreen ("Verb paradigms", paradigms);
+/** A fresh order (SHUFFLE; the verb paradigms' each time they open). */
+export const shuffle = <T,> (a: T[]) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor (Math.random () * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };

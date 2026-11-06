@@ -1,4 +1,4 @@
-// Vocab's first things to learn (vocab.ts' ALPHABET, NUMBERS, BOOK NAMES), for the testament shown - the OT's in
+// Flashcards' first things to learn (vocab.ts' ALPHABET, NUMBERS, BOOK NAMES), for the testament studied - the OT's in
 // Hebrew, the NT's and the Septuagint's in Greek: each card a word (or letter) on the front, its English on the back,
 // as the word lists' cards.
 // - ALPHABET: each letter - Hebrew's 22 and its 5 final forms, Greek's 24 (capital and small) - with its name (said

@@ -302,8 +302,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
                              -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
 #bibleBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M12 6.5C10 5 7 4.5 3 5v13c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5V5c-4-.5-7 0-9 1.5z'/%3E%3Cpath d='M12 6.5v13'/%3E%3C/svg%3E"); }     /* (An open book) */
 #verseCardsBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2'/%3E%3C/svg%3E"); }     /* (A card: a rectangle) */
-#myVocab { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='14' height='14' rx='2'/%3E%3Cpath d='M7 6V4h12a2 2 0 0 1 2 2v12h-4'/%3E%3C/svg%3E"); }
-#paradigms { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-dasharray='2.2 1.8'%3E%3Crect x='2.5' y='8' width='5.5' height='7' rx='1'/%3E%3Crect x='9.25' y='8' width='5.5' height='7' rx='1'/%3E%3Crect x='16' y='8' width='5.5' height='7' rx='1'/%3E%3C/svg%3E"); }
+#flashcardsBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Crect x='3' y='6' width='14' height='14' rx='2'/%3E%3Cpath d='M7 6V4h12a2 2 0 0 1 2 2v12h-4'/%3E%3C/svg%3E"); }
 #chartBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E"); }
 #guideBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10'/%3E%3C/svg%3E"); }
 #timelineBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M3 12h18M6 9v6M12 7v10M18 10v4'/%3E%3C/svg%3E"); }     /* (A line with marks along it) */
@@ -446,7 +445,7 @@ table.chart .mean { font-size: var(--fs-s); color: var(--soft); }     /* (Its En
 table.chart .count { display: block; }     /* (It and .none, .same: notes - .vcHead's rule) */
 table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in by the regular pattern) */
 
-/* Flashcards (cards.ts): a card, its front large, its back under it once turned; AGAIN / GOT IT under the card. */
+/* Flashcards (cards.ts - Flashcards' and the Verse cards'): a card, its front large, its back under it once turned (or alone: .single); "3 of 20" under it, its buttons in the bar at the screen's foot (.vcBar). */
 .card { border: var(--rule); border-radius: var(--radius-card); padding: 28px 16px; text-align: center; cursor: pointer;
         display: grid; gap: var(--gap); justify-items: center; min-height: 160px; align-content: center; }
 .cardFront { font-size: var(--fs-card); line-height: 1.3; }
@@ -460,9 +459,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .card.single .heWord, .card.single .grWord { font-size: var(--fs-card); }
 .card .meaning { font-size: var(--fs-3xl); line-height: 1.25; }     /* (A vocab card's English) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: var(--fs-l); }
-.cardBar { justify-content: center; }
-.cardBar .pill { font-size: var(--fs-s); padding: 7px 0; }
-.cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", over BACK, SHOW and NEXT) */
+.cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", under the card) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
@@ -471,24 +468,25 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcAdd input { flex: 1 1 160px; min-width: 0; box-sizing: border-box; }
 .vcPick { flex: 0 1 auto; min-width: 0; }     /* (As wide as its choices: the add row on one line where it fits, wrapping where not) */
 .vcName { display: grid; }     /* (NAME over the name, the name the screen's width) */
-.topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name and +, the Study printout's its printout's name, a drop-down open in it, growing with it) */
+.topBar { position: fixed; top: 0; left: 0; right: 0; z-index: 31; background: var(--bg); border-bottom: var(--rule); }     /* (Every ☰ page's top bar - the page's title centered in it, as the Bible's heading; the Verse cards' its deck's name, the Study printout's its printout's name, Flashcards' the list studied, a drop-down open in it, growing with it) */
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
-#screen:is([data-screen="Verse cards"], [data-screen="Study printout"]) { padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) { padding-top: calc(var(--topH, calc(48px + env(safe-area-inset-top, 0px))) + var(--pad)); }     /* (The room starting under the top bar, however tall: --topH, topbar.ts' watchTopBar) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
 .topArrow { position: relative; top: -.25em; margin-left: .3em; color: var(--soft); font-weight: 400; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
 #place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; overflow: visible; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; }     /* (The Bible's heading: its arrow between the original and the English - the Greek at the left, the Hebrew at the right -, after the English where there's no original) */
-/* The deck: the card centered in the screen's room between the top row and the foot's bar (the credits below, scrolled
+/* A deck (cards.ts - Flashcards', the Verse cards'): the card centered in the screen's room between the top row and the foot's bar (the Verse cards' credits below, Flashcards' list scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
-.vcDeck:has(.vcBar) { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s);
-  --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: versecards.ts' fitRoom) */
-  min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, versecards.ts) */
-.vcDeck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
+.deck { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s);
+  --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: cards.ts' fitDeck) */
+  min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, cards.ts' fitDeck) */
+.deck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
 .vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
-.vcBar .pill { padding: var(--head-y) 0; line-height: 1; } .vcBar .pill:not(.arrow) { font-size: var(--fs-icon); } .vcBar .vcWord { display: none; }     /* (Shuffle, Flip and Start over as icons, the play bar's size - their words read only by a screen reader: aria-label) */
-.vcBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and FLIP, START OVER between FLIP and ›) */
+.vcBar .pill { padding: var(--head-y) 0; line-height: 1; } .vcBar .pill:not(.arrow) { font-size: var(--fs-icon); }     /* (Shuffle, Start over and the middle's as icons, the play bar's size - their words read only by a screen reader: aria-label) */
+.vcBar > [data-k] { grid-row: 1; } .vcBar > [data-k=back] { grid-column: 1; } .vcBar > [data-k=shuffle] { grid-column: 2; } .vcBar > [data-k=over] { grid-column: 4; } .vcBar > [data-k=next] { grid-column: 5; }     /* (A deck's buttons in their places - the middle's empty where a deck has no button of its own: cards.ts) */
+.vcBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and the middle, START OVER between the middle and ›) */
 /* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (12px), its text kept
    clear of the arrows. */
 #screen:has(.vcBar) { padding-bottom: calc(var(--barH) + var(--gap-s)); }     /* (Room under the screen for the bar - the credits just above it) */
@@ -537,7 +535,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcCredits:empty { display: none; }
 
 /* The Parsing guide (guide.ts): each language, its groups, a row per code and its meaning. */
-/* A list's row (the Parsing guide's, My vocab's, the Pronunciation guide's, About verb colors'): columns, a line over it. */
+/* A list's row (the Parsing guide's, Flashcards', the Pronunciation guide's, About verb colors'): columns, a line over it. */
 .guideRow, .vocabRow, .sayRow, .colorKey > div { display: grid; gap: var(--gap-m); border-top: var(--hair); font-size: var(--fs-s); }
 .guideRow { grid-template-columns: minmax(0, 8em) minmax(0, 1fr); padding-top: 6px; }
 .guideRow .parse { font-size: var(--fs-s); overflow-wrap: anywhere; }
@@ -657,7 +655,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen:is([data-screen="Verse cards"], [data-screen="Study printout"]) #screenTop { display: none; }     /* (Verse cards, Study printout: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
 /* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
 #cardSheet { position: fixed; left: 0; right: 0; bottom: var(--barH); z-index: 32; height: calc(var(--mid, 100dvh) * .45); border-top: var(--rule) !important; }
@@ -694,7 +692,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor), .cstudy > .csEditor[hidden] { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
 .csEditHead { align-items: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: var(--rule); position: sticky; top: 0; z-index: 2; background: var(--bg); } .csEditHead .gTitle { margin: 0; }     /* (The editor's title row: EDIT, its ✕ closing it - at the right, as a pane's - frozen over what scrolls) */
 .csEditor { margin-right: calc(-1 * var(--safe-r)); padding-right: var(--safe-r); } .csEditor::-webkit-scrollbar-track { margin-top: 48px; }     /* (As the resources pane: its scroll bar at the screen's edge, clear of the ✕s - the editor out to the edge, its content as far in as before -, starting under the frozen title row) */
-.csToggle, .vcPlus { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' + and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
+.csToggle, .vcMid { grid-column: 3; grid-row: 1; justify-self: center; } .csPrintBtn { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (A bottom bar's own buttons: the Verse cards' +, Flashcards' card action and the printout's pencil in its middle, the printout's printer where the Bible's search is, its download icon at the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
                             .csEditor { padding-left: var(--gap-m); }
@@ -800,7 +798,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  .csToggle, .vcPlus { grid-column: 1; grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
+  .csToggle, .vcMid { grid-column: 1; grid-row: 3; } .vcBar > [data-k] { grid-column: 1; } .vcBar > [data-k=back] { grid-row: 1; } .vcBar > [data-k=shuffle] { grid-row: 2; } .vcBar > [data-k=over] { grid-row: 4; } .vcBar > [data-k=next] { grid-row: 5; } .vcBar > .vcMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }

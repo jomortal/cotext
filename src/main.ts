@@ -14,7 +14,6 @@ import { setTestament, currentLanguage, onLanguage, languageButtons } from "./st
 import { setAudioTestament } from "./audio";
 import { initGrammar, setGrammarTestament } from "./grammar";
 import { initChart, setChartPassage } from "./chart";
-import "./cards";     // (Registers the Verb paradigms screen)
 import { initGuide } from "./guide";
 import { initVocab } from "./vocab";
 import { initChoose } from "./choose";
