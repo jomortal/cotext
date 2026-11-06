@@ -45,7 +45,8 @@
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
   --x-top: calc(var(--pad) - var(--head-y) - 4px);     /* (A resources panel's ✕ from the panel's top: up by its button's padding and the icon's own room above its ink (~4px), so its ink sits as far down as in from the side) */
-  --head-h: calc(var(--fs-m) + 2 * var(--margin));     /* (The heading's height, under the clock - every top bar's and bottom bar's, the side bar's width: the title's text (its 1em) with the side margin above and below it, so the text sits as far from the bar's edges as from the screen's side) */
+  --head-h: calc(var(--fs-m) + 2 * var(--margin));     /* (The heading's height, under the clock - every top bar's and panel title row's spacing: the title's text (its 1em) with the side margin above and below it, so the text sits as far from the bar's edges as from the screen's side) */
+  --bar-h: calc(var(--icon-box) + 4 * var(--head-y));     /* (A bottom bar's height and the side bar's width - bars of icons, not a title: an icon's box with twice --head-y either side) */
   --row-h: calc(var(--head-h) - 2 * var(--head-y));     /* (A top row's own height inside its bar's --head-y above and below: the heading's, the screens' top rows, the drawer's ✕ row - their buttons and titles centered on it) */
   --vnum-gap: 12px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
@@ -230,11 +231,11 @@ body.noVerbColors .w .parse { color: inherit; }
    panel, the play bar), not over it - the text area ends above them, so nothing covers the text; a panel opening goes
    above the play bar, which stays at the bottom. */
 /* A bottom bar - the play bar, the decks', the printout's (.bottomBar) -: one height on every device - its line, then
-   its buttons' row, the heading's height (--head-h), the buttons centered in it -, and under that only the device's
+   its buttons' row, an icon's (--bar-h), the buttons centered in it -, and under that only the device's
    own bottom inset (env(safe-area-inset-bottom): the iPhone's home indicator, the iPad's swipe-up edge), plain room with
    nothing in it, so no button is ever in the swipe area. --barH: the whole. Its line always there (see-through until a
    panel or the book menu is over it), so the row is the same height whether it's shown or not. */
-:root { --barH: calc(var(--rule-w) + var(--head-h) + env(safe-area-inset-bottom, 0px)); }
+:root { --barH: calc(var(--rule-w) + var(--bar-h) + env(safe-area-inset-bottom, 0px)); }
 @media (max-width: 600px), (max-height: 500px) { :root { --margin: var(--vnum-gap); } }     /* (MARGINS: a small window's) */
 .bottomBar { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; align-content: stretch; background: var(--bg); box-sizing: border-box;
              height: var(--barH); border-top: var(--rule-w) solid transparent; padding: 0 var(--safe-r) env(safe-area-inset-bottom, 0px) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
@@ -510,7 +511,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .topRow { touch-action: none; }     /* (The title's row: tapped, never dragged - it doesn't scroll, nor the screen from it) */
 .topRow > * { max-width: var(--page); }     /* (Its title within the content's width, as the Bible's heading: .head .nav) */
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: var(--row-h); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as the Bible's heading - --head-h -, the name centered in it, clear of ☰ and +) */
-:is(.head, .topRow, .bottomBar, #drawerPanel .top) .pill.icon { margin-block: calc(-1 * var(--head-y)); }     /* (A bar's icon buttons: their tap room past the bar's text room, never making the bar taller - --head-h sets it) */
+:is(.head, .topRow, .bottomBar, #drawerPanel .top, .paneHead) .pill.icon { margin-block: calc(-1 * var(--head-y)); }     /* (A bar's icon buttons: their tap room past the bar's text room, never making the bar taller - --head-h sets it) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
 .topArrow { display: inline-block; vertical-align: middle; margin-left: .4em; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
@@ -723,7 +724,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen[data-screen="Study printout"] .pickerCard { max-width: none; }     /* (The preview the screen's whole width) */
 /* A panel's title row (.paneHead: the printout's EDIT and DOWNLOAD, the decks' VERSE LIST and WORD LIST): its title, its ✕
    at the right - as a pane's -, frozen over what scrolls; no line under it, as the Bible's side panels. */
-.paneHead { flex: none; align-items: center; margin-bottom: var(--gap-s); padding-bottom: var(--gap-s); }
+.paneHead { flex: none; align-items: center; height: var(--fs-m); margin-bottom: calc(var(--margin) - var(--gap)); padding-bottom: 0; }     /* (Spaced as a top bar: its title's text (1em) with --margin above - the panel's own padding - and below - this and the panel's --gap) */
 /* A panel with a title row (.deckPane - layout.ts' headFrame): the title outside its scroller (.paneBody), so
    the scroll bar spans only what scrolls; the scroller out to the panel's right edge, its scroll bar there, its
    contents as far in as the title's. */
@@ -823,7 +824,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
    (--barH) none. Their buttons top to bottom: ‹, search, ▶, notes, › (left to right upright: ‹, notes, ▶, search, ›); ‹, Shuffle, Flip, Start over, ›. */
 :root { --sideBar: 0px; }     /* (Upright: no side bar) */
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) {
-  :root { --barH: 0px; --sideBar: calc(var(--rule-w) + var(--head-h) + var(--inset-r)); }     /* (Its line, then as wide as the heading is tall (--head-h), its icons centered, then the device's right inset as plain room - as the bottom bar's: BOTTOM BAR) */
+  :root { --barH: 0px; --sideBar: calc(var(--rule-w) + var(--bar-h) + var(--inset-r)); }     /* (Its line, then as wide as a bottom bar is tall (--bar-h), its icons centered, then the device's right inset as plain room - as the bottom bar's: BOTTOM BAR) */
   body { right: var(--sideBar); }
   /* MARGINS: the bar keeps the notch's room at the right, so whatever stands beside it (the Bible's page; a screen with
      a bar) has just --margin there; and a panel's left side meets the divider, not the screen's edge. */
@@ -838,7 +839,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
   #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: 0; right: calc(var(--sideBar) + var(--deckPaneW)); }
   #screen:has(.deckPane:not([hidden])) .topBar { right: calc(var(--sideBar) + var(--deckPaneW)); }
-  .deckPane > .paneHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; }     /* (Sideways: its title row's line level with the top bar's - their feet both at --topH) */
+  .deckPane > .paneHead { box-sizing: border-box; height: var(--row-h); margin-bottom: calc(var(--head-y) - var(--gap)); padding-bottom: 0; }     /* (Sideways, from the screen's top as the top bar: its title on the top bar's row - level with its title -, --margin from it to what's under it, as the top bar's to its edge) */
   .deckPane:not([hidden]) + .deckSplit { top: 0; bottom: 0; left: auto; right: calc(var(--sideBar) + var(--deckPaneW) - var(--split-half)); }
   .barMid { grid-column: 1; grid-row: 3; } .bottomBar > [data-k] { grid-column: 1; } .bottomBar > [data-k=back] { grid-row: 1; } .bottomBar > [data-k=shuffle] { grid-row: 2; } .bottomBar > [data-k=over] { grid-row: 4; } .bottomBar > [data-k=next] { grid-row: 5; } .bottomBar > .barMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
