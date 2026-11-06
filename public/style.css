@@ -350,7 +350,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
    its bottom bar (--barH), so it scrolls - and its scroll bar runs - only between the two; the bars fixed over the
    window's top and foot. */
 #screen { position: fixed; inset: 0; top: var(--topH, calc(48px + env(safe-area-inset-top, 0px))); background: var(--bg); overflow-y: auto; z-index: 30;
-          padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); }
+          padding: var(--pad) var(--safe-r) var(--pad) var(--safe-l); box-shadow: 0 0 0 100vmax var(--bg); }     /* (Its background on past its box - behind its own bars, as a drop-down opens -: the Bible's page never showing through) */
 #screenMenu { position: fixed; z-index: 32; top: var(--head-top); }
 #screenMenu { left: var(--col-l); }     /* (Fixed: stays in the upper left, as the heading's ☰, while the screen scrolls) */
 
@@ -511,7 +511,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .title's rule) */
 .topArrow { display: inline-block; vertical-align: middle; margin-left: .4em; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
-#place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; align-self: center; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; }     /* (The Bible's heading: its arrow between the original and the English - the Greek at the left, the Hebrew at the right -, after the English where there's no original) */
+#place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; align-self: center; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; } #place .refPair > :not(.topArrow) { flex: 1 1 0px; text-align: left; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { text-align: right; } #place .refPair:has(.refNative) { gap: 0 var(--gap-m); }     /* (The Bible's heading: its arrow in the middle, the original and the English on either side of it, each against it - the Greek at the left, the Hebrew at the right -; after the English where there's no original) */
 /* A deck (cards.ts - Flashcards', the Verse cards'): the card centered in the screen's room between the top row and the foot's bar (the Verse cards' credits below, Flashcards' list scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
