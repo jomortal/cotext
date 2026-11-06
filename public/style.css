@@ -188,9 +188,9 @@ body.noVerbColors .w .parse { color: inherit; }
 :is(#playBar, .vcBar) { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, the others at its ends) */
 #playBar { flex: none; }
-#playBar > .credit { margin: 0; grid-column: 1; grid-row: 1; }     /* (A recording's credit, at its left while it plays: audio.ts) */
+#playBar > .credit { margin: 0; grid-column: 3; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 2; }
-#searchBtn { grid-column: 1; grid-row: 1; justify-self: center; } #notesBtn { grid-column: 3; justify-self: center; }     /* (Each centered between ▶ and its edge) */
+#notesBtn { grid-column: 1; grid-row: 1; justify-self: center; } #searchBtn { grid-column: 3; grid-row: 1; justify-self: center; }     /* (Each centered between ▶ and its edge: the resources at the left, the search at the right) */
 #playBar:has(> .credit:not([hidden])) #searchBtn { visibility: hidden; }     /* (A recording's credit in its place while it plays) */
 #playBar .ico { margin: 0 auto; }
 /* The lines between the page's parts, one between each: under the text (main's own, always there - so closing a
@@ -825,7 +825,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 /* SIDE BAR - held sideways one-pane: a phone, or a touch screen (an iPad's) wider than a phone's (bars.ts' SIDE_BAR:
    keep the two the same): the bottom bars (the play bar, the
    Verse cards' bar) a vertical bar down the right side, the screen's width less it (--sideBar) - the room at the foot
-   (--barH) none. Their buttons top to bottom as left to right: search, ▶, notes; Shuffle, Flip, Start over. */
+   (--barH) none. Their buttons top to bottom: search, ▶, notes (left to right upright: notes, ▶, search); Shuffle, Flip, Start over. */
 :root { --sideBar: 0px; --sheetW0: 25; }     /* (--sheetW0: the word's panel beside the text, % of the window, until dragged) */
 @media (orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px) and (pointer: coarse) {
   :root { --barH: 0px; --sideBar: calc(var(--head-h) + var(--rule-w)); }     /* (As wide as the heading is tall, --head-h and its line, its icons centered, the Verse cards' too) */
@@ -836,7 +836,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  #notesBtn { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 3; }     /* (The resources at the top, the search at the foot - a recording's credit in its place) */
+  #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 1; } #playBtn { grid-column: 1; grid-row: 2; } #notesBtn { grid-column: 1; grid-row: 3; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
   #screen:has(.vcBar), #screen:has(.vcBar) .topBar, #cardSheet, #cardSplit { right: var(--sideBar); }     /* (The Verse cards beside their bar) */
