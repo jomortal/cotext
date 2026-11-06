@@ -395,7 +395,7 @@ document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   addVerse ({ book, chapter: book ? Number (row.dataset.chapter) : 0, from: book ? Number (row.dataset.verse) : -1, to: 0 });
 });
 // The resources pane's + (beside its picker): the box for the resource shown (addVerse's src), the verse at the top of
-// the text filled in - one verse, to be widened -, ADD TO STUDY PRINTOUT putting it in the printout's section for
+// the text filled in - one verse, to be widened -, + ADD putting it in the printout's section for
 // that passage, made if there's none (chapterstudy.ts' draftResource)
 const notesPick = document.getElementById ("notesPick") as HTMLSelectElement;
 document.getElementById ("notesAdd")!.addEventListener ("click", () => {
@@ -417,15 +417,15 @@ function printoutPick (): HTMLLabelElement {
   return l;
 }
 /** The box: for a verse (from a verse's margin), or for a resource (src: its id - from the resources pane's +: headed
- *  ADD A RESOURCE, the verses picked, then the resource's line as the Study printout draws it, its Options under it -
- *  chapterstudy.ts' draftResource -, then + ADD TO STUDY PRINTOUT; last: the chapter filled in's last verse - all its
+ *  ADD TO STUDY PRINTOUT, the verses picked, then the resource's line as the Study printout draws it, its Options under it -
+ *  chapterstudy.ts' draftResource -, then + ADD; last: the chapter filled in's last verse - all its
  *  verses picked, the whole chapter's, 0 - 0). */
 function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }, src?: string, last = 0) {
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
   fromNotes = !! src;
   if (src) {
-    body.innerHTML = `<h2 class="avHead">Add a Resource</h2><div class="vcAdd avTarget"><div class="avPlace"></div></div><div class="avItem"></div>
-      <button class="pill addVerse" id="avAdd">+ Add to Study Printout</button>`;
+    body.innerHTML = `<h2 class="avHead">Add to Study Printout</h2><div class="vcAdd avTarget"><div class="avPlace"></div></div><div class="avItem"></div>
+      <button class="pill addVerse" id="avAdd">+ Add</button>`;
     const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!, itemEl = body.querySelector<HTMLElement> (".avItem")!;
     drawPick (place, add, p, allBooks);     // (Every book, the Septuagint's too; alone on its row: nothing to stack - stackWhenWrapped)
     // (The resource's line for the passage picked: made again for another book or chapter, its verses changed in place)
