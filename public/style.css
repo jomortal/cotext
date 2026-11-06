@@ -413,7 +413,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    the passage (mark), or the whole section (.found), in the tapped word's tint (.w.on's), kept until another link is
    followed. */
 .readText, .fold > .hit > .dictLine { font-family: var(--serif); font-size: var(--fs-xl); }     /* (A fold's preview line - its text's first words - in the same font and size as its text opened) */
-.gSec mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
+.gBody mark, .gSec.found { background: var(--tint); color: inherit; border-radius: var(--radius-xs); }
 .gBody .he { font-family: var(--heb); font-size: 1.2em; direction: rtl; unicode-bidi: isolate; }
 .gBody .grc { font-family: var(--grk); font-size: 1.05em; }
 .gBody table { border-collapse: collapse; margin: 6px 0 10px; font-size: var(--fs-s); display: block; max-width: 100%; overflow-x: auto; }     /* (A table wider than the panel - unfoldingWord's word-by-word examples - scrolls sideways in its own box, never the page) */
