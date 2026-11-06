@@ -31,11 +31,15 @@
 //   from the right sideways -, so dragging in one sets the other. The word's panel one column on a phone and sideways,
 //   two upright on a touch screen wider than a phone's (wordColumns).
 //   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
+//   An iPad upright (PAIR: a touch screen wider than a phone's, upright) lets the notes and the search share the
+//   panel's place, side by side - the notes at the left, the search at the right, #paneSplit (vertical) between them
+//   setting the search's share (--searchH, as wide).
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
 import { barRoom, SIDE_BAR } from "./bars";
 const PHONE = matchMedia ("(max-width: 600px), (max-height: 500px)");     // (style.css' phone media query: keep the two the same)
 const ONE_PANE = matchMedia ("(max-width: 600px), (max-height: 500px), (pointer: coarse)");     // (style.css' ONE PANE media query: keep the two the same)
+const PAIR = matchMedia ("(orientation: portrait) and (min-width: 600.02px) and (pointer: coarse)");     // (style.css' PAIR media query: keep the two the same)
 /** The word's panel's columns now while one-pane: 1 on a phone and sideways, 2 upright on a touch screen wider than a
  *  phone's (an iPad's); null otherwise - as many as fit (panel.ts' columns). */
 export const wordColumns = (): 1 | 2 | null => ! ONE_PANE.matches ? null : PHONE.matches || SIDE_BAR.matches ? 1 : 2;
@@ -103,11 +107,16 @@ drag (notesSplit, (x, y) => {
 });
 // The search's height against the notes' (both open; the search on top): its share (%) of the room the two have
 // between them - the column less its dividers and the second word's panel (style.css gives them flex-grow by it) -,
-// from the search's top to the divider's middle, each pane keeping 120 px at least.
-drag (document.getElementById ("paneSplit")!, (_x, y) => {
-  const s = searchEl.getBoundingClientRect (), room = s.height + notesEl.getBoundingClientRect ().height;
+// from the search's top to the divider's middle, each pane keeping 120 px at least. PAIR (side by side, the search at
+// the right): its width's share, from the divider's middle to the search's right edge, each keeping 120 px.
+const paneSplit = document.getElementById ("paneSplit")!;
+const pairSplit = () => paneSplit.setAttribute ("aria-orientation", PAIR.matches ? "vertical" : "horizontal");
+pairSplit (); PAIR.addEventListener ("change", pairSplit);
+drag (paneSplit, (x, y) => {
+  const s = searchEl.getBoundingClientRect (), n = notesEl.getBoundingClientRect ();
+  const room = PAIR.matches ? s.width + n.width : s.height + n.height, at = PAIR.matches ? s.right - x - 7 : y - 7 - s.top;     // (7: the divider's half)
   if (room < 240) return;     // (Too short a column for two: left as it is)
-  sizes.searchH = Math.round (clamp (y - 7 - s.top, 120, room - 120) / room * 1000) / 10;     // (7: the divider's half)
+  sizes.searchH = Math.round (clamp (at, 120, room - 120) / room * 1000) / 10;
   root.setProperty ("--searchH", String (sizes.searchH));
 });
 // The word beside the text (body.sideWord: style.css): while wide, whenever the text and its word have at least
@@ -137,7 +146,9 @@ for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (
 // --docks, and body.docks while two or more are open (one alone keeps its own height limit).
 // One-pane: one panel at a time - the word's (#sheet, or #besideSheet), the notes or the search: one opening closes
 // the one open (by its ✕, as if tapped, so all it does on closing is done); its ✕ closes it, the divider going and
-// the text taking the screen.
+// the text taking the screen. PAIR: the notes and the search open together, side by side (one place).
+const PANES = ["notes", "search"];
+const together = (a: HTMLElement, b: HTMLElement) => PAIR.matches && PANES.includes (a.id) && PANES.includes (b.id);
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
 const ONE = ["sheet", "besideSheet", "notes", "search"];     // (The panels one-pane shows one at a time)
 let shown: HTMLElement[] = [];     // (Those of them open, as last seen - so one just opened is told from the rest)
@@ -147,7 +158,7 @@ const countDocks = () => {
   document.body.classList.toggle ("docks", n >= 2);
   const open = docks.filter ((d) => ONE.includes (d.id) && ! d.hidden), opened = open.filter ((d) => ! shown.includes (d));
   shown = open;
-  if (ONE_PANE.matches && opened.length) for (const o of open) if (! opened.includes (o)) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕)
+  if (ONE_PANE.matches && opened.length) for (const o of open) if (! opened.includes (o) && ! opened.some ((d) => together (d, o))) o.querySelector<HTMLElement> (":scope > .xRow button")?.click ();     // (The one open before closed by its own ✕ - unless the two share the place: PAIR)
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });

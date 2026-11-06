@@ -866,6 +866,18 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) .head::after { content: ""; position: absolute; left: 100%; bottom: calc(-1 * var(--rule-w)); width: calc((var(--split-w) + var(--rule-w)) / 2); border-bottom: var(--rule); }     /* (The heading's line on to the divider, as wide) */
 }
 
+/* PAIR - an iPad upright (a touch screen wider than a phone's, upright: layout.ts' PAIR, keep the two the same): the
+   notes and the search share the panel's place under the text, side by side - the notes at the left, the search at
+   the right (#paneCol a row, reversed: index.html has the search first) -, #paneSplit between them (vertical:
+   layout.ts) setting the search's share (--searchH, half at first). */
+@media (orientation: portrait) and (min-width: 600.02px) and (pointer: coarse) {
+  #paneCol:has(.dock:not([hidden])) { display: flex; flex-direction: row-reverse; flex: none; min-height: 0;
+    height: calc(var(--long) * var(--cardShare, 40) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (The panel's height: ONE PANE's) */
+  #paneCol > .dock { flex: 1 1 0px; height: auto; min-width: 0; }
+  #paneCol > #search { flex-grow: var(--searchH, 50); } #paneCol > #notes { flex-grow: calc(100 - var(--searchH, 50)); }
+  body:has(#notes:not([hidden])):has(#search:not([hidden])) #paneSplit { display: block !important; }
+}
+
 @media print {
   @page { margin: 16mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #6b6862; } }
   html, body { position: static; overflow: visible; height: auto; display: block; background: #fff; }
