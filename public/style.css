@@ -145,14 +145,17 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .vnumN { font-size: .75em; }     /* (Smaller than the words, not read as one of them - on their baseline, its line as tall as theirs) */
 .vnum .gloss { font-variant-numeric: tabular-nums; }
 /* The verse's margin (the number's box, the verse's height - tapped anywhere, versecards.ts adds the verse to the Verse
-   cards) marked by a + centered on the verse's height - or, a verse too short for that, just under the number: its top
-   no higher than the number's foot (--vnum-h: the padding, the number's line at the words' size, and the interlinear's
-   while shown), the room for it kept under the number (padding-bottom). Not printed. */
-.vnum { --vnum-word: var(--word-he); --vnum-gloss: calc(2px + var(--fs-s) * 1.2); position: relative; padding-bottom: calc(var(--fs-l) + 4px); }
+   cards) marked by a + (.vadd: reader.ts) centered on the verse's height, or, a verse too short for that, just under
+   the number - its top no higher than the number's foot (--vnum-h: the padding, the number's line at the words' size,
+   and the interlinear's while shown). No room for it under the number (a one-line verse without helps): none shown -
+   the verse's height never grows for it. (.vadd a column of two, laid over the margin: a spacer down to the +'s place,
+   then the + - a + that doesn't fit wraps into a second column, outside the margin, clipped.) Not printed. */
+.vnum { --vnum-word: var(--word-he); --vnum-gloss: calc(2px + var(--fs-s) * 1.2); position: relative; }
 .gr .vnum { --vnum-word: var(--word-gr); } body.noGloss .vnum { --vnum-gloss: 0px; } .vnum .gloss { line-height: 1.2; }
-.vnum::after { content: "+"; position: absolute; inset-inline: 0; text-align: center; color: var(--soft); font-size: var(--fs-l); line-height: 1;
-               top: max(calc(50% - var(--fs-l) / 2), calc(2px + var(--vnum-word) * var(--lh) + var(--vnum-gloss) + 4px)); }
-.csText .vnum { padding-bottom: 2px; } .csText .vnum::after { content: none; }
+.vadd { position: absolute; inset: 0; display: flex; flex-flow: column wrap; align-items: center; overflow: hidden; pointer-events: none;
+        color: var(--soft); font-size: var(--fs-l); line-height: 1; }
+.vadd::before { content: ""; flex: none; width: 100%; height: max(calc(50% - var(--fs-l) / 2), calc(2px + var(--vnum-word) * var(--lh) + var(--vnum-gloss) + 4px)); }
+.csText .vadd { display: none; }
 .verse { display: flex; flex-wrap: wrap; gap: 14px 12px; min-width: 0; }
 .verse.he { direction: rtl; }
 .verse.gr { direction: ltr; }

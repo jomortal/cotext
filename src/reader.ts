@@ -62,10 +62,10 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
       verseEl = document.createElement ("div");
       verseEl.className = "verse " + (hebrew ? "he" : "gr");
       // (The verse number as a word: in the text's own letters on the words' line, smaller - טז, ιϛʹ -, its number on the
-      // interlinear's line under it, shown with the glosses; a + down the margin (style.css' .vnum::after): the verse's
-      // margin, tapped anywhere, adds it to the Verse cards - versecards.ts)
+      // interlinear's line under it, shown with the glosses; a + down the margin, where there's room (style.css' .vadd):
+      // the verse's margin, tapped anywhere, adds it to the Verse cards - versecards.ts)
       const num = span ("vnum", ""), orig = span ("orig", ""), n = span ("vnumN", hebrew ? hebrewNumber (verse) : greekNumber (verse));
-      orig.append (n); num.append (orig, span ("gloss", String (verse)));
+      orig.append (n); num.append (orig, span ("gloss", String (verse)), span ("vadd", "+"));
       row.append (num, verseEl);
       el.append (row);
     }
