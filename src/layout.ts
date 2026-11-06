@@ -31,15 +31,18 @@
 //   from the right sideways -, so dragging in one sets the other. The word's panel one column on a phone and sideways,
 //   two upright on a touch screen wider than a phone's (wordColumns).
 //   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
-//   An iPad upright (PAIR: a touch screen wider than a phone's, upright) lets the notes and the search share the
-//   panel's place, side by side - the notes at the left, the search at the right, #paneSplit (vertical) between them
-//   at --rightShare (rightShareTo) - the same place as the divider between the word's panel's two columns.
+//   An iPad (PAIR: a touch screen bigger than a phone's) lets the notes and the search share the panel's place:
+//   upright side by side - the notes at the left, the search at the right, #paneSplit (vertical) between them at
+//   --rightShare (rightShareTo), the same place as the divider between the word's panel's two columns -; sideways one
+//   over the other - the search on top, #paneSplit (horizontal) at the search's share of the height (--searchH).
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
 import { barRoom, SIDE_BAR } from "./bars";
 const PHONE = matchMedia ("(max-width: 600px), (max-height: 500px)");     // (style.css' phone media query: keep the two the same)
 const ONE_PANE = matchMedia ("(max-width: 600px), (max-height: 500px), (pointer: coarse)");     // (style.css' ONE PANE media query: keep the two the same)
-const PAIR = matchMedia ("(orientation: portrait) and (min-width: 600.02px) and (pointer: coarse)");     // (style.css' PAIR media query: keep the two the same)
+const PAIR = matchMedia ("(min-width: 600.02px) and (min-height: 500.02px) and (pointer: coarse)");     // (style.css' PAIR media queries: keep them the same)
+/** PAIR upright: the notes and the search side by side (sideways - SIDE_BAR -, one over the other). */
+const sideBySide = () => PAIR.matches && ! SIDE_BAR.matches;
 /** The word's panel's columns now while one-pane: 1 on a phone and sideways, 2 upright on a touch screen wider than a
  *  phone's (an iPad's); null otherwise - as many as fit (panel.ts' columns). */
 export const wordColumns = (): 1 | 2 | null => ! ONE_PANE.matches ? null : PHONE.matches || SIDE_BAR.matches ? 1 : 2;
@@ -125,13 +128,13 @@ drag (notesSplit, (x, y) => {
 });
 // The search's height against the notes' (both open; the search on top): its share (%) of the room the two have
 // between them - the column less its dividers and the second word's panel (style.css gives them flex-grow by it) -,
-// from the search's top to the divider's middle, each pane keeping 120 px at least. PAIR (side by side, the search at
-// the right): the divider's place, --rightShare (rightShareTo).
+// from the search's top to the divider's middle, each pane keeping 120 px at least - PAIR sideways too. PAIR upright
+// (side by side, the search at the right): the divider's place, --rightShare (rightShareTo).
 const paneSplit = document.getElementById ("paneSplit")!;
-const pairSplit = () => paneSplit.setAttribute ("aria-orientation", PAIR.matches ? "vertical" : "horizontal");
-pairSplit (); PAIR.addEventListener ("change", pairSplit);
+const pairSplit = () => paneSplit.setAttribute ("aria-orientation", sideBySide () ? "vertical" : "horizontal");
+pairSplit (); PAIR.addEventListener ("change", pairSplit); SIDE_BAR.addEventListener ("change", pairSplit);
 drag (paneSplit, (x, y) => {
-  if (PAIR.matches) { rightShareTo (paneSplit.parentElement!, x); return; }
+  if (sideBySide ()) { rightShareTo (paneSplit.parentElement!, x); return; }
   const s = searchEl.getBoundingClientRect (), room = s.height + notesEl.getBoundingClientRect ().height;
   if (room < 240) return;     // (Too short a column for two: left as it is)
   sizes.searchH = Math.round (clamp (y - 7 - s.top, 120, room - 120) / room * 1000) / 10;     // (7: the divider's half)
@@ -164,7 +167,7 @@ for (const el of [notesEl, searchEl]) new MutationObserver (placeWord).observe (
 // --docks, and body.docks while two or more are open (one alone keeps its own height limit).
 // One-pane: one panel at a time - the word's (#sheet, or #besideSheet), the notes or the search: one opening closes
 // the one open (by its ✕, as if tapped, so all it does on closing is done); its ✕ closes it, the divider going and
-// the text taking the screen. PAIR: the notes and the search open together, side by side (one place).
+// the text taking the screen. PAIR: the notes and the search open together, sharing one place.
 const PANES = ["notes", "search"];
 const together = (a: HTMLElement, b: HTMLElement) => PAIR.matches && PANES.includes (a.id) && PANES.includes (b.id);
 const docks = [...document.querySelectorAll<HTMLElement> (".dock")];
