@@ -400,9 +400,11 @@ export function addStudyResource (code: string, chapter: number, from: number, t
  *  its settings, as addStudyResource puts one. Null for a book or resource not there. */
 export function draftResource (code: string, chapter: number, from: number, to: number, src: string) {
   const b = bookList ().find ((x) => x.code === code), s = b ? sourceOf (b, src) : null;
-  if (! b || ! s) return null;
+  // (The resources pane's Hebrew OT beside a Septuagint book: the printout's other text - its Hebrew)
+  const it: Item | null = s ? sourceItem (s, 0, 0)
+    : src === "hebrew_ot" && b?.testament === "LXX" ? { id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0, other: true } : null;
+  if (! b || ! it) return null;
   const sec: Section = { id: "draft", book: b, chapter, from, to, items: [] };
-  const it = sourceItem (s, 0, 0);
   const line = el ("div", "csLine"), row = el ("div", "csRow"), name = el ("span", "csName", nameOf (sec, it));
   const opts = el ("button", "pill csOptsBtn", "Options"), panel = el ("div", "csOpts");
   panel.hidden = true; opts.setAttribute ("aria-expanded", "false");
@@ -437,18 +439,18 @@ function sourceItem (s: Source, from: number, to: number): Item {
 function addStudy (code: string, chapter: number, from: number, to: number, src: string, made?: Item): boolean {
   const b = bookList ().find ((x) => x.code === code);
   const s = src && b ? sourceOf (b, src) : null;
-  if (! b || (src && ! s)) return false;
+  if (! b || (src && ! s && ! made)) return false;
   const open = !! sectionsEl?.isConnected;
   load ();
   const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
   const f = Math.max (from || 0, 0), t = f && (to || 0) > f ? to : f;
   // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)
   const holds = (x: Section) => x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
-  const sec = s ? now ().sections.find (holds) : undefined;
+  const sec = s || made ? now ().sections.find (holds) : undefined;
   const item = sec && { ...(made ?? sourceItem (s!, 0, 0)), id: newId (), from: f === sec.from ? 0 : f, to: t === sec.to ? 0 : t } as Item;
   const same = (x: Item) => JSON.stringify ({ ...x, id: "" }) === JSON.stringify ({ ...item, id: "" });
   if (sec && item) { if (! sec.items.some (same)) sec.items.push (item); }     // (Already there, the same: not again)
-  else now ().sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [{ ...(made ?? sourceItem (s, 0, 0)), id: newId () } as Item] : [] });
+  else now ().sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s || made ? [{ ...(made ?? sourceItem (s!, 0, 0)), id: newId () } as Item] : [] });
   save ();
   if (open) { drawSections (); render (); sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" }); }
   return true;

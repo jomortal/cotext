@@ -199,7 +199,7 @@ const mostChapters = () => Math.max (...books.map ((x) => x.chapters));
  *  CHAPTER offers up to the most chapters in any book, and before a book and chapter the verses up to the most verses in
  *  any chapter; a book (or chapter) picked that doesn't go that far moves the chapter (or verses) to its last. A blank
  *  shows a dash, BOOK's "Select Book"; TO VERSE waits for FROM VERSE, + ADD VERSE for BOOK, CHAPTER and FROM VERSE. */
-async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt) {     // (p: the screen's add row's, or the Bible's add-verse box's)
+async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt, list = books) {     // (p: the screen's add row's, or the Bible's add-verse box's; list: the books offered - the cards', or every book for a resource)
   const b = p.book;
   if (b && p.chapter > b.chapters) p.chapter = b.chapters;     // (The book shorter: its last chapter)
   const r = b && p.chapter ? await db.all ("SELECT DISTINCT verse FROM words WHERE book = ? AND chapter = ? ORDER BY verse", [b.id, p.chapter]) : [];
@@ -216,7 +216,7 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
     const s = document.createElement ("select"); s.className = "choose"; s.disabled = off; s.setAttribute ("aria-label", label);
     s.append (...options.map (([v, t]) => new Option (t, String (v))));
     s.value = String (value);
-    s.addEventListener ("change", () => { set (s.value); drawPick (el, addBtn, p); });
+    s.addEventListener ("change", () => { set (s.value); drawPick (el, addBtn, p, list); });
     l.append (s);
     return l;
   };
@@ -229,8 +229,8 @@ async function drawPick (el: HTMLElement, addBtn: HTMLButtonElement, p = pickAt)
     return g;
   };
   el.replaceChildren (
-    Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...books.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
-          (v) => { p.book = books.find ((x) => x.code === v) ?? null; }), { className: "vcPick vcBook" }),
+    Object.assign (pick ("Book", [...(b ? [] : [["", "Select Book"] as [string, string]]), ...list.map ((x): [string, string] => [x.code, x.name])], b?.code ?? "",
+          (v) => { p.book = list.find ((x) => x.code === v) ?? null; }), { className: "vcPick vcBook" }),
     pick ("Chapter", [...(p.chapter ? [] : [BLANK]), ...Array.from ({ length: b?.chapters ?? mostChapters () }, (_, i): [number, string] => [i + 1, String (i + 1)])],
           p.chapter || "", (v) => { p.chapter = +v; }),
     sep (":"),
@@ -419,15 +419,16 @@ document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   const book = books.find ((b) => b.code === reading ().code) ?? null;
   addVerse ({ book, chapter: book ? Number (row.dataset.chapter) : 0, from: book ? Number (row.dataset.verse) : -1, to: 0 });
 });
-// The resources pane's + (beside its picker): the box for the resource shown (addVerse's src), the chapter read filled
-// in - its first verse to its last, to be narrowed -, ADD TO STUDY PRINTOUT putting it in the printout's section for
+// The resources pane's + (beside its picker): the box for the resource shown (addVerse's src), the verse at the top of
+// the text filled in - one verse, to be widened -, ADD TO STUDY PRINTOUT putting it in the printout's section for
 // that passage, made if there's none (chapterstudy.ts' draftResource)
 const notesPick = document.getElementById ("notesPick") as HTMLSelectElement;
 document.getElementById ("notesAdd")!.addEventListener ("click", () => {
-  const book = books.find ((b) => b.code === reading ().code) ?? null, rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const book = allBooks.find ((b) => b.code === reading ().code) ?? null, rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];     // (Any book read - the Septuagint's too)
+  const top = document.querySelector ("main")!.getBoundingClientRect ().top, at = rows.find ((r) => r.getBoundingClientRect ().bottom > top + 1) ?? rows[0];     // (The verse at the top of the text)
   if (! notesPick.value || ! rows.length) return;
-  addVerse ({ book, chapter: book ? Number (rows[0].dataset.chapter) : 0, from: book ? Number (rows[0].dataset.verse) : -1,
-              to: book ? Number (rows[rows.length - 1].dataset.verse) : 0 }, notesPick.value, Number (rows[rows.length - 1].dataset.verse));
+  addVerse ({ book, chapter: book ? Number (at.dataset.chapter) : 0, from: book ? Number (at.dataset.verse) : -1, to: 0 },
+            notesPick.value, Number (rows[rows.length - 1].dataset.verse));
 });
 let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last picked, while the app runs)
 /** The box: for a verse (from a verse's margin), or for a resource (src: its id - from the resources pane's +: headed
@@ -441,7 +442,7 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
     body.innerHTML = `<h2 class="avHead">Add a Resource</h2><div class="vcAdd"><div class="avPlace"></div></div><div class="avItem"></div>
       <button class="pill addVerse" id="avAdd">Add to Study Printout</button>`;
     const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!, itemEl = body.querySelector<HTMLElement> (".avItem")!;
-    drawPick (place, add, p);     // (Alone on its row: nothing to stack - stackWhenWrapped)
+    drawPick (place, add, p, allBooks);     // (Every book, the Septuagint's too; alone on its row: nothing to stack - stackWhenWrapped)
     // (The resource's line for the passage picked: made again for another book or chapter, its verses changed in place)
     let made = "", draft: ReturnType<typeof draftResource> = null;
     const first = { ...p };
@@ -449,7 +450,11 @@ function addVerse (p: { book: Book | null; chapter: number; from: number; to: nu
       if (! p.book || ! p.chapter) { itemEl.replaceChildren (); draft = null; made = ""; return; }
       const whole = p.book === first.book && p.chapter === first.chapter && p.from === 1 && Math.max (p.to, p.from) === last;
       const key = `${p.book.code} ${p.chapter}`, f = whole ? 0 : Math.max (p.from, 0), t = whole ? 0 : Math.max (p.to, p.from, 0);
-      if (key !== made) { made = key; draft = draftResource (p.book.code, p.chapter, f, t, src); itemEl.replaceChildren (...(draft ? [draft.line] : [])); }
+      if (key !== made) {
+        made = key; draft = draftResource (p.book.code, p.chapter, f, t, src);
+        itemEl.replaceChildren (draft ? draft.line : Object.assign (document.createElement ("p"), { className: "src", textContent: "The Study printout doesn't offer this resource for this book." }));
+        add.disabled = ! draft;
+      }
       else draft?.range (f, t);
     };
     follow ();
