@@ -132,7 +132,7 @@ const theBook = () => pickedBook[lang ()] ?? (bookList.some ((b) => b.id === cur
 const bookId = () => picked === "book" ? theBook () : whole ();
 const listKey = () => picked === "book" ? "b" + theBook () : testament ();
 let reversed = false;                  // (ENGLISH TO HEBREW / GREEK: the cards' front the meaning, turned over the word)
-let listShown = false;                 // (SHOW LIST: its words under the cards - hidden at first, for quizzing)
+let listShown = false;                 // (The word list's panel open - closed at first, the answers hidden while quizzing)
 let menuOpen = "";                     // (The top row's drop-down open - "more" - or not: kept as the screen is drawn again)
 const pickedStem = { H: 0, G: 0 };     // (VERB PARADIGMS' STEM / TENSE AND VOICE, by language)
 const fillIn = { H: -1, G: -1 };       // (FILL IN, by language: -1 the pattern, else a model verb's index)
@@ -185,10 +185,11 @@ async function draw (body: HTMLElement) {
       <div class="vcAdd" id="verbRow"><label class="vcPick">${hebrew ? "Stem" : "Tense and voice"}<select class="choose" id="stemPick">${opts (stems)}</select></label>
         <label class="vcPick">Fill in<select class="choose" id="fillPick"><option value="-1">Pattern</option>${opts (models)}</select></label></div>
       <p id="verbNote">Each card a form - its pattern, or on the verb picked in Fill in; turned over, its parsing and meaning (on a pattern, also the form on ${hebrew ? "קָטַל" : "λύω"}).</p>
-      <div class="bar" id="toggles"><button class="pill" id="reverse">English to ${hebrew ? "Hebrew" : "Greek"}</button><button class="pill" id="showList">Show list</button></div>
+      <div class="bar" id="toggles"><button class="pill" id="reverse">English to ${hebrew ? "Hebrew" : "Greek"}</button></div>
     </div></div>
     <div class="deck"></div>
-    <div class="vocabLists"></div>`;
+    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">Word list</h2><button class="pill icon" id="fcListClose" aria-label="Close">✕</button></div>
+    <div class="vocabLists"></div></div>`;
   // The top row: the list studied as its title, its drop-down the screen's choices (topbar.ts, as the Verse cards')
   const top = topTitle ("", "flashcard options");
   body.querySelector ("#fcTitle")!.replaceWith (top.title);
@@ -199,7 +200,14 @@ async function draw (body: HTMLElement) {
   const langPick = body.querySelector<HTMLSelectElement> ("#fcLang")!;
   const freqPick = body.querySelector<HTMLSelectElement> ("#freqPick")!, bookPick = body.querySelector<HTMLSelectElement> ("#bookPick")!;
   const stemPick = body.querySelector<HTMLSelectElement> ("#stemPick")!, fillPick = body.querySelector<HTMLSelectElement> ("#fillPick")!;
-  const listBtn = body.querySelector<HTMLElement> ("#showList")!, listEl = body.querySelector<HTMLElement> (".vocabLists")!;
+  // The word list: in a panel of its own (as the Verse cards' NEW VERSE: at the foot upright, at the right sideways), shown
+  // or hidden by the list icon in the bar's middle (cards.ts' middle) and closed by its ✕ - the card's room giving way
+  // to it (--deckPaneH, style.css)
+  const listEl = body.querySelector<HTMLElement> (".vocabLists")!, pane = body.querySelector<HTMLElement> (".deckPane")!;
+  const listBtn = document.createElement ("button");
+  Object.assign (listBtn, { className: "pill icon", innerHTML: BAR_ICONS.list }); listBtn.setAttribute ("aria-label", "Word list");
+  new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${pane.offsetHeight}px`)).observe (pane);
+  body.querySelector ("#fcListClose")!.addEventListener ("click", () => { listShown = false; refresh (); });
   langPick.value = l;
   stemPick.value = String (pickedStem[l]); fillPick.value = String (fillIn[l]);
   // BOOK: the language's books (Greek's the NT's, then the Septuagint's)
@@ -221,7 +229,7 @@ async function draw (body: HTMLElement) {
     body.querySelector<HTMLElement> ("#toggles")!.hidden = picked === "verbs";     // (Nothing to reverse or list for the paradigms)
     listBtn.setAttribute ("aria-pressed", String (listShown));
     body.querySelector ("#reverse")!.setAttribute ("aria-pressed", String (reversed));
-    listEl.hidden = ! listShown || picked === "verbs";
+    pane.hidden = ! listShown || picked === "verbs";
     const freqRow = body.querySelector<HTMLElement> ("#freqRow")!;
     if (! byFreq ()) freqRow.hidden = true;
     if (picked === "verbs") { top.set (`Paradigms: ${stems[pickedStem[l]]}`); return; }
@@ -249,8 +257,9 @@ async function draw (body: HTMLElement) {
       return `<div class="vocabRow"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span></div>`;
     }).join ("");
   };
-  // The list picked as flashcards. The bar's middle (cards.ts): in My vocab REMOVE FROM LIST (off My vocab); in Known
-  // words REMOVE FROM LIST (no longer known: its helps back); in the frequency lists + KNOWN WORDS (known: into Known words).
+  // The list picked as flashcards. Under the card (cards.ts' remove): in My vocab REMOVE FROM LIST (off My vocab); in
+  // Known words REMOVE FROM LIST (no longer known: its helps back); in the frequency lists + KNOWN WORDS (known: into
+  // Known words). The bar's middle: the word list's icon.
   const open = async () => {
     const remove = (c: WordCard) => {
       if (picked === "learn") { delete learning[c.strong]; save (); }
@@ -262,14 +271,14 @@ async function draw (body: HTMLElement) {
     if (picked === "verbs") { showDeck (deckEl, paradigmCards ()); return; }     // (Front the form, the back under it once turned)
     if (isBasic ()) {     // (ALPHABET, NUMBERS, BOOK NAMES: their cards as the words', nothing to take off)
       const cs = (await basics (db, picked, t)).map ((x) => basicCard (x));
-      if (n === opening) showDeck (deckEl, cs, { backOnly: true });
+      if (n === opening) showDeck (deckEl, cs, { backOnly: true, middle: listBtn });
       return;
     }
     const cards = await cardsFor (words (await lists ()));
     if (n !== opening) return;
     if (! cards.length) { deckEl.innerHTML = `<p>No words here yet.</p>`; return; }
-    showDeck (deckEl, cards, { backOnly: true,     // (Turned over: only the English)
-      remove: byFreq () ? { icon: BAR_ICONS.known, label: "+ Known words", done: remove } : { icon: BAR_ICONS.remove, label: "Remove from list", done: remove } });
+    showDeck (deckEl, cards, { backOnly: true, middle: listBtn,     // (Turned over: only the English)
+      remove: { label: byFreq () ? "+ Known words" : "Remove from list", done: remove } });     // (Under the card)
   };
   const both = () => { refresh (); open (); };
   langPick.addEventListener ("change", () => { picks.lang = langPick.value as "H" | "G"; keepPicks (); draw (body); });     // (Another language: its lists, books and stems)

@@ -460,6 +460,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .card .meaning { font-size: var(--fs-3xl); line-height: 1.25; }     /* (A vocab card's English) */
 .paradigm { font-weight: 700; letter-spacing: .02em; font-size: var(--fs-l); }
 .cardCount { margin-top: 0; text-align: center; }     /* ("3 of 20", under the card) */
+.cardAction { align-self: center; justify-self: center; }     /* (A deck's card action - + KNOWN WORDS, REMOVE FROM LIST -: under the card and its count, centered) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,
    its back (alone, .single) the reference over the translation and the original, read as text: smaller, from the
@@ -509,13 +510,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* ⋯'s options: under the top row, over the room above the centered card - the deck pushed down only as far as they'd
    cover it (versecards.ts), so the card stays in view -, a line under them. */
 #screen[data-screen="Verse cards"] .pickerCard { position: relative; }
-/* The Verse cards' NEW VERSE panel (+ in the bar): at the screen's foot over the bar, the card's room above it
-   (--vcAddH: its height, versecards.ts); sideways (SIDE BAR) at the right beside the bar, the screen's full height -
-   below. Its title row the editor's (.csEditHead). */
-.vcAddSheet { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); max-height: 60dvh; overflow-y: auto; box-sizing: border-box;
+/* A deck's panel of its own - the Verse cards' NEW VERSE (+), Flashcards' word list (its list icon) - opened from the
+   bar: at the screen's foot over the bar, the card's room above it (--deckPaneH: its height, versecards.ts / vocab.ts);
+   sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.csEditHead). */
+.deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); max-height: 40dvh; overflow-y: auto; box-sizing: border-box;
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
-.vcAddSheet:not([hidden]) { display: grid; gap: var(--gap); }
-#screen:has(.vcBar):has(.vcAddSheet:not([hidden])) { padding-bottom: calc(var(--barH) + var(--vcAddH, 0px) + var(--gap-s)); }
+.deckPane:not([hidden]) { display: grid; gap: var(--gap); }
+#screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: calc(var(--barH) + var(--deckPaneH, 0px) + var(--gap-s)); }
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
   max-height: calc(100dvh - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
@@ -804,10 +805,10 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  .vcAddSheet { --vcAddW: min(420px, 45vw); top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--vcAddW); max-height: none; align-content: start;
+  .deckPane { --deckPaneW: min(420px, 45vw); top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--deckPaneW); max-height: none; align-content: start;
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
-  #screen:has(.vcBar):has(.vcAddSheet:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + min(420px, 45vw)); }
-  #screen:has(.vcAddSheet:not([hidden])) .topBar { right: calc(var(--sideBar) + min(420px, 45vw)); }
+  #screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + min(420px, 45vw)); }
+  #screen:has(.deckPane:not([hidden])) .topBar { right: calc(var(--sideBar) + min(420px, 45vw)); }
   .csToggle, .vcMid { grid-column: 1; grid-row: 3; } .vcBar > [data-k] { grid-column: 1; } .vcBar > [data-k=back] { grid-row: 1; } .vcBar > [data-k=shuffle] { grid-row: 2; } .vcBar > [data-k=over] { grid-row: 4; } .vcBar > [data-k=next] { grid-row: 5; } .vcBar > .vcMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */

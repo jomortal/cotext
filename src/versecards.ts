@@ -251,7 +251,7 @@ async function draw (body: HTMLElement) {
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>
-    <div class="vcAddSheet" hidden><div class="top csEditHead"><h2 class="gTitle">New Verse</h2><button class="pill icon" id="vcAddClose" aria-label="Close">✕</button></div>
+    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">New Verse</h2><button class="pill icon" id="vcAddClose" aria-label="Close">✕</button></div>
     <div class="vcAdd"><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div></div>`;
   // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + in the bar
   // at the foot, in its middle (where the Bible view's ▶ is): NEW VERSE, adding cards; each a drop-down under the top
@@ -272,12 +272,12 @@ async function draw (body: HTMLElement) {
   Object.assign (plus, { className: "pill icon vcMid", id: "vcPlus", textContent: "+" }); plus.setAttribute ("aria-label", "New verse");
   dropDowns ([{ key: "more", button: named.button, menu: moreMenu, icon: "" }], menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
   // +: NEW VERSE in a panel of its own - at the foot over the bar upright, at the right beside the bar sideways (as the
-  // Bible's panels) -, the card's room giving way to it (--vcAddH, style.css); + a ✕ while it's open, its ✕ too closing it
-  const sheet = body.querySelector<HTMLElement> (".vcAddSheet")!;
+  // Bible's panels) -, the card's room giving way to it (--deckPaneH, style.css); + a ✕ while it's open, its ✕ too closing it
+  const sheet = body.querySelector<HTMLElement> (".deckPane")!;
   const openAdd = (on: boolean) => { addOpen = on; sheet.hidden = ! on; plus.textContent = on ? "✕" : "+"; plus.setAttribute ("aria-expanded", String (on)); };
   plus.addEventListener ("click", () => openAdd (! addOpen));
   body.querySelector ("#vcAddClose")!.addEventListener ("click", () => openAdd (false));
-  new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--vcAddH", `${sheet.offsetHeight}px`)).observe (sheet);
+  new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${sheet.offsetHeight}px`)).observe (sheet);
   openAdd (addOpen);
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;
