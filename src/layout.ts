@@ -57,7 +57,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number; cardShare?: number; rightShare?: number; printShare?: number } = {};
+const sizes: { notesW?: number; searchH?: number; sheetH?: number; sheetW?: number; besideH?: number; cardH?: number; paneH?: number; verseH?: number; cardShare?: number; rightShare?: number; printShare?: number; printW?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.notesW) root.setProperty ("--notesW", String (sizes.notesW));
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
@@ -70,6 +70,7 @@ if (sizes.verseH) root.setProperty ("--verseH", sizes.verseH + "px");
 if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
 if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
 if (sizes.printShare) root.setProperty ("--printShare", String (sizes.printShare));
+if (sizes.printW) root.setProperty ("--printW", String (sizes.printW));
 root.setProperty ("--long", `${Math.max (screen.width, screen.height)}px`);     // (The screen's long side, either way up: the card divider's measure)
 if (sizes.paneH || sizes.verseH || sizes.sheetH) document.body.classList.add ("panesSized");     // (Narrow: the panels at their heights as last dragged, the text taking the rest - sizeBelow)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
@@ -96,13 +97,21 @@ function drag (el: HTMLElement, move: (x: number, y: number) => void) {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo, v));
 
-/** The Study printout's divider (chapterstudy.ts; narrow, the preview over the editor - style.css' .cstudy): the
- *  preview's share of the screen's room, % (--printShare, 15-85; half until dragged), kept. */
+/** The Study printout's divider (chapterstudy.ts; style.css' .cstudy) - narrow, horizontal, the preview over the editor:
+ *  the preview's share of the room's height, % (--printShare, 15-85; half until dragged); wide, vertical, the preview
+ *  at the left: its share of the width (--printW, 30-80; two thirds until dragged). Each kept. */
 export function printSplit (split: HTMLElement, box: HTMLElement) {
-  drag (split, (_x, y) => {
+  const turn = () => split.setAttribute ("aria-orientation", WIDE.matches ? "vertical" : "horizontal");
+  turn (); WIDE.addEventListener ("change", turn);
+  drag (split, (x, y) => {
     const r = box.getBoundingClientRect ();
-    sizes.printShare = Math.round (clamp ((y - r.top) / r.height * 100, 15, 85));
-    root.setProperty ("--printShare", String (sizes.printShare));
+    if (WIDE.matches) {
+      sizes.printW = Math.round (clamp ((x - r.left) / r.width * 100, 30, 80));
+      root.setProperty ("--printW", String (sizes.printW));
+    } else {
+      sizes.printShare = Math.round (clamp ((y - r.top) / r.height * 100, 15, 85));
+      root.setProperty ("--printShare", String (sizes.printShare));
+    }
   });
 }
 

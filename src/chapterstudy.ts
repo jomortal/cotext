@@ -386,8 +386,8 @@ onScreen ("Study printout", async (body) => {
   printEl = print;
   print.addEventListener ("click", () => { if (pdfReady) void sharePdf (pdfReady); else if (printIgnored ()) void makePdf (); else { prepare (); window.print (); } });
   editor.append (sectionsEl, more, print);
-  const split = el ("div", "split");     // (Narrow: the preview's height dragged - layout.ts' printSplit)
-  Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" }); split.setAttribute ("aria-orientation", "horizontal");
+  const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
+  Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
   box.append (previewEl, split, editor);
   body.append (box);
