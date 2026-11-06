@@ -837,8 +837,9 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 
 /* A PHONE (layout.ts' PHONE: keep the two the same), upright or sideways: the panels a stack of three cards - the word
    card (#sheet, or #besideSheet for a word of the notes), the notes, the search -, only the front one shown (.front:
-   layout.ts keeps the stack), the others open under it. One divider between the text and the front card, at the text's
-   share of the room (--share, %, layout.ts: the same both ways; half at first): upright #sheetSplit, the card under the
+   layout.ts keeps the stack), the others open under it. One divider between the text and the front card, its middle --share % of the
+   way down the screen upright, across it sideways - from the screen's edge, so the same place both ways (layout.ts;
+   half at first): upright #sheetSplit, the card under the
    text; sideways #notesSplit, the card at the text's right the full height, the heading over the text only. No card
    open: no divider, the text the full room. The add-verse box (#verseSheet) not a card: its own height under the text. */
 @media (max-width: 600px), (max-height: 500px) {
@@ -848,12 +849,12 @@ body.noVerbColors .csText .w .parse { color: inherit; }
 }
 @media (max-width: 600px) and (orientation: portrait), (max-width: 600px) and (min-height: 500.02px) {     /* (Upright: a phone not held sideways - SIDE BAR) */
   body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #sheetSplit { display: block !important; }
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) main { flex: var(--share, 50) 1 0px; min-height: 0; border-bottom: 0; }
-  :is(#sheet, #besideSheet, #search, #notes).dock { flex: calc(100 - var(--share, 50)) 1 0px; height: auto; }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) main { flex: 1 1 0px; min-height: 0; border-bottom: 0; }
+  :is(#sheet, #besideSheet, #search, #notes).dock { flex: none; height: calc(100dvh * (100 - var(--share, 50)) / 100 - var(--split-w) / 2 - var(--barH)); }     /* (From the divider's middle down to the play bar) */
 }
 @media (orientation: landscape) and (max-height: 500px) {     /* (Sideways: SIDE BAR's) */
   body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--cardW, 0px); grid-template-rows: auto minmax(0, 1fr) auto; }
-  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) { --cardW: calc((100% - var(--split-w)) * (100 - var(--share, 50)) / 100); }
+  body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) { --cardW: calc(100vw * (100 - var(--share, 50)) / 100 - var(--split-w) / 2 - var(--sideBar)); }     /* (From the divider's middle to the side bar) */
   .col { display: contents; }
   .head { grid-column: 1; grid-row: 1; } main { grid-column: 1; grid-row: 2; } #verseSheet { grid-column: 1; grid-row: 3; }
   body:has(:is(#sheet, #besideSheet, #search, #notes):not([hidden])) #notesSplit { display: block !important; grid-column: 2; grid-row: 1 / -1; }

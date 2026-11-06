@@ -23,8 +23,9 @@
 //   the word card (the word's panel, #sheet - or #besideSheet, for a word tapped in the notes), the notes and the
 //   search. Only the front card shows, beside the text: upright under it, sideways at its right
 //   the full height (the heading over the text only), one divider between them (#sheetSplit upright, #notesSplit
-//   sideways). The divider is at the same share of the screen both ways: the text's share (--share, %: 60 is 60 % of
-//   the way down upright, 60 % of the way across sideways), so dragging in one sets the other.
+//   sideways). The divider is at the same place on the screen both ways, measured from the screen's own edge (not
+//   from the heading or the bars): --share, % - its middle 60 % of the way down the screen upright is 60 % of the way
+//   across sideways -, so dragging in one sets the other.
 //   The add-verse box (#verseSheet) isn't a card: under the text, as narrow.
 // The notes panel follows the text both ways while wide (notes.ts' TWO-WAY SCROLLING).
 
@@ -85,7 +86,7 @@ const panesShare = () => notesEl.hidden && searchEl.hidden ? 0 : sizes.notesW ??
 const narrowSplit = () => notesSplit.setAttribute ("aria-orientation", WIDE.matches || SIDE_BAR.matches ? "vertical" : "horizontal");
 narrowSplit (); WIDE.addEventListener ("change", narrowSplit); SIDE_BAR.addEventListener ("change", narrowSplit);
 drag (notesSplit, (x, y) => {
-  if (PHONE.matches) { phoneShare (x, document.querySelector ("main")!.getBoundingClientRect ().left, document.body.getBoundingClientRect ().right); return; }
+  if (PHONE.matches) { phoneShare (x, innerWidth); return; }
   if (! WIDE.matches) { sizeBelow (notesSplit, y); return; }
   sizes.notesW = Math.round (clamp ((innerWidth - x) / innerWidth * 100, 22, 60) * 10) / 10;
   root.setProperty ("--notesW", String (sizes.notesW));
@@ -158,11 +159,11 @@ export function toFront (d: HTMLElement): boolean {
   stack.splice (at, 1); stack.push (d); restack ();
   return PHONE.matches;
 }
-// A phone: the divider dragged between the text and the front card - its middle at p (y upright, x sideways) between
-// the text's start and the room's end (the play bar's top; sideways the side bar's edge): the text's share of the
-// two (less the divider), 20-80 %, kept for both orientations (--share: style.css).
-function phoneShare (p: number, start: number, end: number) {
-  sizes.share = Math.round (clamp ((p - 7 - start) / (end - start - 14) * 100, 20, 80) * 10) / 10;     // (7: the divider's half)
+// A phone: the divider dragged between the text and the front card - its middle at p (y upright, x sideways) as a
+// share of the screen's size that way (from its top, from its left edge), 20-80 %, kept for both orientations
+// (--share: style.css).
+function phoneShare (p: number, size: number) {
+  sizes.share = Math.round (clamp (p / size * 100, 20, 80) * 10) / 10;
   root.setProperty ("--share", String (sizes.share));
 }
 
@@ -213,7 +214,7 @@ for (const [id, key] of [["sheetSplit", "sheetH"], ["besideSplit", "besideH"]] a
     }
     const bar = innerHeight - barRoom (document.getElementById ("playBar"));     // (The play bar's top - the window's foot while it's down the side)
     const head = document.querySelector<HTMLElement> (".head")!.getBoundingClientRect ().bottom, mid = bar - head;
-    if (id === "sheetSplit" && PHONE.matches) { phoneShare (y, document.querySelector ("main")!.getBoundingClientRect ().top, bar); return; }     // (A phone upright: the divider between the text and the front card)
+    if (id === "sheetSplit" && PHONE.matches) { phoneShare (y, innerHeight); return; }     // (A phone upright: the divider between the text and the front card)
     if (id === "sheetSplit" && ! WIDE.matches) { sizeBelow (sheetSplit, y); return; }
     sizes[key] = Math.round (clamp (bar - y, 120, Math.max (120, mid - 160)));
     root.setProperty ("--" + key, sizes[key] + "px");
