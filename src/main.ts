@@ -205,6 +205,21 @@ async function start () {
   go (b, c);
   document.getElementById ("prev")!.addEventListener ("click", () => step (-1));
   document.getElementById ("next")!.addEventListener ("click", () => step (1));
+  // A swipe across the text turns the chapter as ‹ and › do: to the left the next, to the right the previous - one
+  // finger, at least 60 px across, more than twice as far across as down (not a scroll), within 0.8 s, nothing selected.
+  const text = document.querySelector ("main")!;
+  let from: { x: number; y: number; t: number } | null = null;
+  text.addEventListener ("touchstart", (e) => {
+    from = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp } : null;
+  }, { passive: true });
+  text.addEventListener ("touchcancel", () => { from = null; });
+  text.addEventListener ("touchend", (e) => {
+    const f = from, t = e.changedTouches[0];
+    from = null;
+    if (! f || e.touches.length || e.timeStamp - f.t > 800 || document.getSelection ()?.isCollapsed === false) return;
+    const dx = t.clientX - f.x, dy = t.clientY - f.y;
+    if (Math.abs (dx) >= 60 && Math.abs (dx) > 2 * Math.abs (dy)) step (dx < 0 ? 1 : -1);
+  }, { passive: true });
   placeBtn.addEventListener ("click", () => togglePicker (groups (), go, chaptersOf));     // (Tapped again: closed)
   window.addEventListener ("hashchange", () => { const r = parseRef (location.hash.slice (1)); if (r) go (...r); });
 }
