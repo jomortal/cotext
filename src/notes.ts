@@ -1,8 +1,8 @@
 // The notes panel: free commentaries, text-critical apparatuses, English translations and the ancient versions beside the
 // text, following it. The icon at the play bar's right (right of the search's)
-// opens and closes it. On a narrow screen it takes its place in the page's column above the play bar
-// (under the word's panel when that's open, over the second word's panel, a Hebrew OT word's - nothing floats over the
-// text), at most half the screen, scrolling; on a wide one in the panes' column at the right of the text, under the search when it's open (layout.ts).
+// opens and closes it. It takes the panel's place beside the text (layout.ts: under it upright, at its right sideways
+// - nothing floats over the text), scrolling; on anything bigger than a phone it shares that place with the search
+// (upright the notes at the left, sideways under the search).
 // - Its picker (a <select class="choose">: COTEXT's plain list) lists the sources for the book shown (those with notes
 //   for it: note_sources.books, pipeline/source_books.py - Rashi only in the Torah), grouped
 //   ORIGINAL TEXT (beside the Septuagint: the Hebrew OT), SYNTAX, BIBLE BACKGROUND (the dictionaries, the

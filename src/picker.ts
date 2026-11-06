@@ -18,10 +18,9 @@ const body = document.getElementById ("pickerBody")!;
 const idle = ["optionsBtn", "playBtn", "searchBtn", "notesBtn"].map ((id) => document.getElementById (id) as HTMLButtonElement);
 new MutationObserver (() => { for (const b of idle) b.disabled = ! picker.hidden; }).observe (picker, { attributes: true, attributeFilter: ["hidden"] });
 
-// (On a wide screen it starts and ends where the text's column does, so the panes' column
-// at the right stays in view: --textL and --textR, the text's insets from the window's edges, set on the root for
-// style.css; kept so as the column changes - a pane opened or closed, a split dragged, the window resized)
-// (Measured on the text itself, main: with the word beside the text #textCol has no box of its own - style.css)
+// (700 px wide or more it starts where the text does: --textL and --textR, the text's insets from the window's edges,
+// set on the root for style.css; kept so as the text changes - a panel opened or closed, a split dragged, the window
+// resized - measured on the text itself, main)
 const text = document.querySelector ("main")!;
 // The picker between the heading and the play bar: --headB, the heading's bottom, and --playB, the play bar's height
 // from the window's foot (style.css' #picker)

@@ -11,7 +11,7 @@
 
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { isSideWord, rightShare, wordSplit, wordStacked, wordColumns, addDock } from "./layout";
+import { rightShare, wordSplit, wordStacked, wordColumns, addDock } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -64,8 +64,8 @@ const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, onc
 const textSheet = document.getElementById ("sheet")!;
 const besideSheet = textSheet.cloneNode (true) as HTMLElement;
 besideSheet.id = "besideSheet";
-document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes: at the foot of the panes' column when wide, layout.ts)
-addDock (besideSheet);     // (Narrow, it shares the room with the other panels: layout.ts)
+document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes, in their column)
+addDock (besideSheet);     // (One of the panels shown one at a time: layout.ts)
 // The third: a word of a verse card's text (versecards.ts) - over the study screen, at its foot.
 const cardSheet = textSheet.cloneNode (true) as HTMLElement;
 cardSheet.id = "cardSheet";
@@ -137,12 +137,10 @@ function makePanel (sheet: HTMLElement, lean = false) {
   const sheetScroll = document.createElement ("div");
   sheetScroll.className = "panelScroll";
   { const x = sheet.querySelector (":scope > .xRow")!; sheetScroll.append (...[...sheet.children].filter ((c) => c !== x)); sheet.append (sheetScroll); }
-  // Two columns where there's room: once the panel is at least twice as wide as the word's info (everything but the
-  // lexicon) needs, the lexicon - its picker, entry and credit - moves to a second column beside it (.twoCol:
-  // style.css). Measured at the info's natural width whenever the panel resizes or shows another word. One-pane
-  // (layout.ts' wordColumns), as many as it says: one on a phone and sideways, two upright on a touch screen wider than
-  // a phone's (an iPad's) - the info then as measured, the lexicon beside it, however little room. The text's word's
-  // panel as a column beside the text (placeWord) always one column.
+  // As many columns as layout.ts' wordColumns says: one on a phone (the lexicon under the word's info); two on anything
+  // bigger (a tablet, a desktop window) - the lexicon (its picker, entry and credit) a second part (.twoCol: style.css):
+  // upright beside the word's info, the info as wide as it needs (measured at its natural width whenever the panel
+  // resizes or shows another word); sideways (wordStacked) under it.
   const heads = q ("heads");
   const info = document.createElement ("div");
   {      // (The word's info in one box, the lexicon's parts in another: the two columns)
@@ -162,8 +160,7 @@ function makePanel (sheet: HTMLElement, lean = false) {
   const columns = () => {
     if (sheet.hidden) return;
     sheet.classList.remove ("twoCol");
-    const fixed = wordColumns ();
-    if (fixed === 1 || (sheet.id === "sheet" && isSideWord ())) return;     // (One column - layout.ts: the lexicon under the word)
+    if (wordColumns () === 1) return;     // (One column - layout.ts: the lexicon under the word)
     if (wordStacked ()) { sheet.classList.add ("twoCol"); info.style.width = info.style.maxWidth = ""; return; }     // (An iPad sideways: the two one over the other, by style.css)
     info.style.width = "";
     heads.style.width = "max-content";
@@ -175,7 +172,6 @@ function makePanel (sheet: HTMLElement, lean = false) {
     const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formTranslit, .formGloss, .vocabGloss")];
     for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
     const rest = heads.getBoundingClientRect ().width;     // (The lines that don't wrap: the words, buttons)
-    const need = Math.max (rest, ...wraps.map (e => e.getBoundingClientRect ().width));
     // (The word's side, two columns: as wide as its lines unwrapped when that's at most half the panel; wider, its lines
     // wrapped to fit half - and then only as wide as their longest wrapped line, so nothing's narrower than it must be)
     const pad = getComputedStyle (sheetScroll);
@@ -191,15 +187,14 @@ function makePanel (sheet: HTMLElement, lean = false) {
       }
     }
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
-    const two = fixed === 2 || sheetScroll.clientWidth >= 2 * need;
-    sheet.classList.toggle ("twoCol", two);
+    sheet.classList.add ("twoCol");
     const share = rightShare ();
-    info.style.maxWidth = two && share ? "none" : "";
-    if (two && share) {     // (As dragged: the divider's middle --rightShare of the panel's width from its right edge - the info its own right margin and the gap less)
+    info.style.maxWidth = share ? "none" : "";
+    if (share) {     // (As dragged: the divider's middle --rightShare of the panel's width from its right edge - the info its own right margin and the gap less)
       const gap = parseFloat (getComputedStyle (sheetScroll).columnGap) || 0;
       info.style.width = `${sheetScroll.getBoundingClientRect ().width * share / 100 - split.offsetWidth / 2 - gap - parseFloat (getComputedStyle (info).paddingRight)}px`;
     }
-    else if (two) {
+    else {
       info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
       // (Plus its scroll bar's width, where it has one that takes room - Windows', always shown: else the bar would take
       // that much from the lines and wrap them)

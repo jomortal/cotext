@@ -1,7 +1,7 @@
 // The search pane: the icon at the play bar's right opens and closes it (or its ✕). Built as the notes panel is
-// (layout.ts' paneFrame: the same frame, ✕ and top row - here the search bar, the picker of what's searched under it): on a
-// narrow screen in the page's column above the play bar, on a wide one in the panes' column at the right, over the
-// notes when they're open, else its full height (layout.ts).
+// (layout.ts' paneFrame: the same frame, ✕ and top row - here the search bar, the picker of what's searched under it), in
+// the panel's place beside the text (layout.ts); on anything bigger than a phone sharing it with the notes - upright
+// at their right, sideways over them.
 // - The picker (a <select class="choose">, as the notes'): ROOT WORD, INTERLINEAR (ENGLISH) - the default - and the
 //   notes' sources that are text (notes.ts' textSources: apparatus, commentaries, the dictionary, translations, ancient
 //   versions - not the diagrams), grouped and named as the notes' picker has them, those for the whole Bible. The choice is kept per

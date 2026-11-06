@@ -26,7 +26,7 @@ import { initAtlas } from "./atlas";
 import { initTimeline } from "./timeline";
 import { initChapterStudy } from "./chapterstudy";
 import { initVerseCards } from "./versecards";
-import "./layout";     // (The wide layout's dividers)
+import "./layout";     // (The layout's dividers)
 import { onSwipe } from "./bars";
 
 const status = document.getElementById ("status")!;
