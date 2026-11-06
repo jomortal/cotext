@@ -26,7 +26,8 @@
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
   --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
   --fs-icon: 25px;     /* (Every icon button - ☰ ✕ ⋯ + ‹ › ▶, the notes' and speakers' icons - one size: a ⋯ turning ✕ changes nothing but its glyph) */
-  --fs-arrow: calc(var(--fs-icon) * 1.4);     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
+  --fs-arrow: calc(var(--fs-icon) * 1.4);
+  --bar-slot: calc(var(--fs-icon) * 1.1); --bar-slot-h: calc(var(--fs-arrow) + 2 * var(--head-y));     /* (A bottom bar's three set places - its ends and middle -: an icon's width; down the side, an arrow's height - so every bar's buttons stand alike, whatever is in them) */     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
@@ -104,7 +105,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
 /* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
-#options, .chooseList { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
+#options, .chooseList, .csOutPop { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(100dvh - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
@@ -198,10 +199,10 @@ body.noVerbColors .w .parse { color: inherit; }
   :root { --text-edge: 6px; }
   main { padding-left: max(var(--vnum-gap), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }     /* (The verse numbers' left as much room as their right: --vnum-gap) */
 }     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
-:is(#playBar, .vcBar) { display: grid; grid-template-columns: auto 1fr auto 1fr auto; gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
+:is(#playBar, .vcBar) { display: grid; grid-template-columns: var(--bar-slot) 1fr var(--bar-slot) 1fr var(--bar-slot); gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
-#prev { grid-column: 1; grid-row: 1; } #next { grid-column: 5; grid-row: 1; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
+#prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .vcBar > .arrow:first-child { justify-self: start; } .vcBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
 #notesBtn { grid-column: 2; grid-row: 1; justify-self: center; } #searchBtn { grid-column: 4; grid-row: 1; justify-self: center; }     /* (Each centered between ▶ and its arrow: the resources at the left, the search at the right) */
@@ -241,7 +242,7 @@ body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) 
 .vnum.playing { color: var(--accent); }
 #voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; background: var(--bg); color: var(--fg); max-width: 100%; }
 /* A box (a picker, its list, the printout's preview and options): a kept line round it, rounded. */
-#voicePick, .choose, .chooseList, .csMenu { border: var(--rule); border-radius: var(--radius); }
+#voicePick, .choose, .chooseList, .csMenu, .csOutPop { border: var(--rule); border-radius: var(--radius); }
 #audioSettings { flex: 1 1 100%; }
 
 /* The panes (.pane: the notes panel, notes.ts, and the search pane, search.ts - built alike, layout.ts' paneFrame):
@@ -759,7 +760,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .cstudy > .split { display: block; grid-area: split; }     /* (The one line between the preview - no border of its own - and the editor, its grip on it) */
 .cstudy.csNoEditor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); grid-template-areas: "preview"; } .cstudy.csNoEditor > :is(.split, .csEditor) { display: none; }     /* (The editor hidden by the bar's toggle: the preview the whole room) */
 .csEditHead { align-items: center; margin-bottom: 4px; padding-bottom: 4px; border-bottom: var(--rule); } .csEditHead .gTitle { margin: 0; }     /* (The editor's title row: EDIT, its ✕ closing it - at the right, as a pane's) */
-.csGhost { visibility: hidden; grid-column: var(--c); grid-row: 1; } .csToggle { grid-column: 4; grid-row: 1; justify-self: center; }     /* (The printout's bar: its one button where the Bible's search is - between the middle and the right end) */
+.csToggle { grid-column: 4; grid-row: 1; justify-self: center; } .csOutBtn { grid-column: 5; grid-row: 1; justify-self: end !important; }     /* (The printout's bar: its one button where the Bible's search is - between the middle and the right end) */
 @media (orientation: landscape) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
                                       grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
                             .csEditor { padding-left: var(--gap-m); }
@@ -784,7 +785,8 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 .csOpts { display: grid; gap: 8px; padding: 4px 0 12px; }
 .csAdd, .csPrint { justify-self: start; font-size: var(--fs-m); }
 .csPrint { color: var(--accent); }
-.csOut { display: grid; justify-items: start; gap: var(--gap); margin-top: 8px; }     /* (DOWNLOAD's picker, then Print under it) */
+.csOut { display: grid; justify-items: start; gap: var(--gap); }     /* (DOWNLOAD's picker, then Print under it) */
+.csOutPop { position: fixed; z-index: 32; right: var(--safe-r); bottom: calc(var(--barH) + var(--gap-s)); padding: var(--pad); }     /* (The bar's download icon's menu: over the screen, above the icon - beside it sideways, below) */
 .csMenu { margin-left: calc(var(--x-w) + var(--gap-m) - 12px - var(--rule-w)); padding: 4px 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; }     /* (+ Add item's choices as a line's drop-down: their names over the lines' names - in by the handle's room, --x-w, and the gap) */
 .csChoice { padding: 6px 0; }
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
@@ -861,11 +863,12 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   main { padding-right: var(--text-edge); }     /* (The text's right edge meets the bar, not the screen's edge: no room for the notch - the bar keeps that) */
   :is(.sheet, .pane) > .xRow { right: var(--pad); } .sheet > .panelScroll { padding-right: var(--pad); } :is(#sheet, #besideSheet, #verseSheet) > .panelScroll { padding-left: var(--pad); }     /* (The word's panel as upright: no notch room on an edge that meets the bar or the divider, not the screen's edge) */     /* (The panel's right edge meets the bar, not the screen's: no notch room - the ✕ as far in as when upright) */
   :is(#playBar, .vcBar) { position: fixed; top: 0; bottom: 0; left: auto; right: 0; width: var(--sideBar); height: auto; z-index: 10;
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto 1fr auto; justify-items: center; align-content: stretch;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) 0 env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across it: as much space at their left as at their right - no room added for the notch) */ border-top: 0 !important; border-left: var(--rule); }
   .vcBar { z-index: 31; } .vcBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  .csGhost { grid-column: 1; grid-row: var(--r); } .csToggle { grid-column: 1; grid-row: 2; }     /* (The printout's bar down the side: its one button where the Bible's search is) */
-  #prev { grid-column: 1; grid-row: 1; } #next { grid-column: 1; grid-row: 5; }     /* (‹ at the top, › at the foot) */
+  .csToggle { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 5; justify-self: center !important; }     /* (The printout's bar down the side: its one button where the Bible's search is) */
+  .csOutPop { right: calc(var(--sideBar) + var(--gap-s)); bottom: var(--pad); }
+  #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */
   #searchBtn, #playBar > .credit { grid-column: 1; grid-row: 2; } #playBtn { grid-column: 1; grid-row: 3; } #notesBtn { grid-column: 1; grid-row: 4; }     /* (The search at the top - a recording's credit in its place -, the resources at the foot) */
   #playBar > .credit { font-size: var(--fs-xs); overflow-wrap: anywhere; text-align: center; }
   #picker { right: var(--sideBar); }
@@ -939,7 +942,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
   body::before { display: none; }
   body > :not(#screen) { display: none !important; }
   #screen { position: static; overflow: visible !important; padding: 0 !important; }
-  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .chooseList { display: none !important; }
+  #screenMenu, .topBar, .csEditor, .cstudy > .split, .csEditBar, .csOutPop, .chooseList { display: none !important; }
   #screen .pickerCard, #screenBody, .cstudy { display: block !important; height: auto !important; max-width: none; }
   .csPreview { overflow: visible; border: 0; padding: 0; }
   .csDoc { max-width: none; background: #fff; color: #1d1c1a;

@@ -423,7 +423,7 @@ onScreen ("Study printout", async (body) => {
   const head = el ("div", "top csEditHead"), close = el ("button", "pill icon", "✕");
   close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "gTitle", "Edit"), close);
-  editor.append (head, sectionsEl, more, out);
+  editor.append (head, sectionsEl, more);
   const split = el ("div", "split");     // (The preview's height dragged, narrow; its width, wide - layout.ts' printSplit)
   Object.assign (split, { role: "separator", ariaLabel: "Resize the preview" });     // (Its orientation: printSplit's, by the width)
   printSplit (split, box);
@@ -431,8 +431,8 @@ onScreen ("Study printout", async (body) => {
   // preview alone: its right end kept at the divider's left - --csTopR, style.css)
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - split.getBoundingClientRect ().left}px`)).observe (split);
   box.append (previewEl, split, editor);
-  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): its one button, in the middle, showing or
-  // hiding the editor (shown: pressed) - hidden, the preview the whole room. Kept on the device.
+  // The bottom bar (the Verse cards' - .vcBar: down the right side sideways): a pencil where the Bible's search is,
+  // showing or hiding the editor (shown: pressed) - hidden, the preview the whole room; kept on the device.
   const bar = el ("div", "vcBar csEditBar"), toggle = el ("button", "pill icon csToggle");
   toggle.setAttribute ("aria-label", "Show or hide the editor");
   toggle.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>`;     // (A pencil: editing)
@@ -443,10 +443,18 @@ onScreen ("Study printout", async (body) => {
   toggle.addEventListener ("click", () => set (! shown));
   close.addEventListener ("click", () => set (false));
   show (shown);
-  // (Unseen stand-ins for the Bible's ‹, ▶ and ›, so the bar's room is shared out as the play bar's: the pencil exactly where its search is)
-  const ghost = (g: string, c: number, r: number) => { const x = el ("span", "pill icon csGhost" + (g === "▶" ? "" : " arrow"), g); x.setAttribute ("aria-hidden", "true"); x.style.setProperty ("--c", String (c)); x.style.setProperty ("--r", String (r)); return x; };
-  bar.append (ghost ("‹", 1, 1), ghost ("▶", 3, 3), toggle, ghost ("›", 5, 5));
-  body.append (box, bar);
+  // A download icon at the bar's right end (sideways its foot): DOWNLOAD's picker and PRINT in a menu over the screen,
+  // opened and closed by it; a tap elsewhere closes it
+  const dlBtn = el ("button", "pill icon csOutBtn"), pop = el ("div", "csOutPop");
+  dlBtn.setAttribute ("aria-label", "Download or print");
+  dlBtn.innerHTML = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>`;     // (An arrow down to a line)
+  pop.append (out);
+  const openOut = (on: boolean) => { pop.hidden = ! on; dlBtn.setAttribute ("aria-expanded", String (on)); dlBtn.setAttribute ("aria-pressed", String (on)); };
+  openOut (false);
+  dlBtn.addEventListener ("click", () => openOut (pop.hidden));
+  document.addEventListener ("pointerdown", (e) => { if (! pop.hidden && ! pop.contains (e.target as Node) && ! dlBtn.contains (e.target as Node)) openOut (false); });
+  bar.append (toggle, dlBtn);
+  body.append (box, bar, pop);
   drawSections ();
   render ();
 });
