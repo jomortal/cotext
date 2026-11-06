@@ -31,7 +31,7 @@
   --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px; --fs-card: 44px;
   --x-top: calc(var(--pad) - var(--head-y) - 4px);     /* (A resources panel's ✕ from the panel's top: up by its button's padding and the glyph's own room above its ink (~4px), so its ink sits as far down as in from the side) */
   --head-h: calc(var(--fs-icon) + 4 * var(--head-y));     /* (The heading's height, under the clock: its row - an icon's box, --head-y above and below it - and --head-y above and below that; the side bar's width too) */
-  --vnum-gap: 8px;     /* (Between a verse's number and its words) */
+  --vnum-gap: 12px;     /* (Between a verse's number and its words) */
   --ref-scale: .875; --ref-en-k: .8; --ref-en: calc(var(--ref-en-k) * 1em);     /* (A verse card's references: their size against the side's text; the English's against the original's beside it) */
   --pad: 16px;     /* (The one margin: every panel's, menu's and screen's edges - sides, top and bottom) */
   --page: 8in;     /* (The most the text - and the panels' contents, the picker, the screens - is ever wide: 768px, centered beyond it) */
@@ -181,10 +181,9 @@ body.noVerbColors .w .parse { color: inherit; }
    iPhone's swipe-up edge. */
 :root { --barFoot: max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)); --barH: calc(var(--fs-icon) * 1.1 + 19px + var(--barFoot)); }
 @media (max-width: 600px), (max-height: 500px) { :root { --barFoot: max(12px, env(safe-area-inset-bottom, 0px)); } }
-@media (max-width: 600px), (max-height: 500px) {     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways -, the verse number as near the text: --text-edge) */
+@media (max-width: 600px), (max-height: 500px) {     /* (A phone: the Bible's side margins small, more room for the text - as the resource panes' when held sideways -, the verse numbers as much room at their left as at their right: --vnum-gap) */
   :root { --text-edge: 6px; }
-  main { padding-left: max(var(--text-edge), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }
-  :root { --vnum-gap: var(--text-edge); }
+  main { padding-left: max(var(--vnum-gap), env(safe-area-inset-left, 0px)); padding-right: max(var(--text-edge), env(safe-area-inset-right, 0px)); }     /* (The verse numbers' left as much room as their right: --vnum-gap) */
 }     /* (A phone: the bars between their first height and the iPad's raised one - the iPad's extra room is for its edge swipe) */
 :is(#playBar, .vcBar) { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; background: var(--bg); box-sizing: border-box;
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, the others at its ends) */
