@@ -709,6 +709,7 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
+#screen[data-screen="Verse cards"] { --textL: 0px; --studyR: 0px; }     /* (Verse cards the full screen whatever panes are open: its insets, and its top bar's, bar's and word panel's, none) */
 #screen[data-screen="Verse cards"] #screenTop { display: none; }     /* (Verse cards: its own top bar, the deck's name in it and + - the same kind, .topBar) */
 /* A verse card's word's panel (panel.ts' #cardSheet): over the screen at its foot - above the deck's bar -, as the reader's, only on the Verse
    cards screen, with room left under the screen to scroll the card and its buttons above it. */
