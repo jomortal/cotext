@@ -26,7 +26,8 @@
 //   first things to learn or the paradigms.
 // - THE WORD LIST (the bar's middle icon; closed at first, so the answers stay hidden while quizzing): in a panel of its
 //   own, the list's words (the word, its concise meaning, how often it occurs in the whole testament - in the book, for
-//   Book frequency), each with a mark: − to make it known, + (a known word, greyed) to learn it again.
+//   Book frequency), each with a mark: − to make it known, + (a known word, greyed) to learn it again - in Known words
+//   itself, − taking it off (no longer known: back in the lists it's in).
 // Kept on the device: My vocab, and the language picked (with Greek's testament).
 
 import type { Db } from "./db";
@@ -251,12 +252,13 @@ async function draw (body: HTMLElement) {
     freqPick.value = String (pickedList[listKey ()]);
     const book = bookList.find ((b) => b.id === theBook ())?.name ?? "";
     top.set (byFreq () ? `${picked === "book" ? book : t} frequency${x.count ? " " + range (pickedList[listKey ()]) : ""}` : NAMES[picked]);
-    // (Each row's mark: − a word not known - made known -, + a known one - back to learn -; a known word greyed)
-    const known = new Set (knownWords ());
+    // (Each row's mark: − a word not known - made known -, + a known one - back to learn -; a known word greyed. In
+    // KNOWN WORDS itself, its words as any list's: − taking one off - no longer known, back in the lists it's in)
+    const known = new Set (picked === "known" ? [] : knownWords ());
     listEl.innerHTML = words (x).filter ((k) => d.has (k)).map ((k) => {
       const w = d.get (k)!, isKnown = known.has (k);
       return `<div class="vocabRow${isKnown ? " vocabKnown" : ""}"><span class="${hebrew ? "heWord" : "grWord"}">${esc (w.lemma)}</span><span>${esc (w.meaning)}</span><span class="n">${w.count.toLocaleString ()}</span>`
-        + `<button class="pill icon vocabMark" data-mark="${esc (k)}" aria-label="${isKnown ? "Back to learn" : "Known"}">${isKnown ? "+" : "−"}</button></div>`;
+        + `<button class="pill icon vocabMark" data-mark="${esc (k)}" aria-label="${isKnown ? "Back to learn" : picked === "known" ? "Off Known words" : "Known"}">${isKnown ? "+" : "−"}</button></div>`;
     }).join ("");
   };
   // The list picked as flashcards. Under the card (cards.ts' remove): in My vocab REMOVE FROM LIST (off My vocab); in
