@@ -319,13 +319,43 @@ onScreen ("Study printout", async (body) => {
  *  open on (placeNow: the chapter studied last, else the reader's) when it isn't open - read back, added to, saved -,
  *  and redrawn if it's open. False for a book not among bookList's. */
 export function addStudyReference (code: string, chapter: number, from: number, to: number): boolean {
+  return addStudy (code, chapter, from, to, "");
+}
+
+/** A resource (a source of the resources pane: its id) added to the Study printout from the resources pane's +: the
+ *  item it makes (sourceItem) for the verses from - to (as addStudyReference's) put in the printout's section for that
+ *  passage - the first of the same book and chapter whose verses take them in -, or, none, in a new section of those
+ *  verses (added as addStudyReference adds one). False for a book or resource not there. */
+export function addStudyResource (code: string, chapter: number, from: number, to: number, src: string): boolean {
+  return addStudy (code, chapter, from, to, src);
+}
+
+/** The item a resource makes, for the verses from - to (0: its section's first / last): a commentary's, an apparatus',
+ *  a translation's or the syntax's notes (beside the text but for the syntax's diagrams), a dictionary's entries, the
+ *  atlas' map. (The + Add item menu's, and the resources pane's +.) */
+function sourceItem (s: Source, from: number, to: number): Item {
+  return s.kind === "dictionary" ? { id: newId (), k: "dict", src: s.id, from, to }
+    : s.kind === "atlas" ? { id: newId (), k: "map", from, to }
+    : { id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from, to };
+}
+
+/** addStudyReference's and addStudyResource's work: the printout shown, or the one the screen would open on (placeNow:
+ *  the chapter studied last, else the reader's) when it isn't open - read back, added to, saved -, redrawn if open. */
+function addStudy (code: string, chapter: number, from: number, to: number, src: string): boolean {
   const b = bookList ().find ((x) => x.code === code);
-  if (! b) return false;
+  const s = src && b ? sourceOf (b, src) : null;
+  if (! b || (src && ! s)) return false;
   const open = !! sectionsEl?.isConnected;
   if (! open) load (...placeNow ());
   const c = Math.min (Math.max (chapter || 1, 1), b.chapters);
-  const f = Math.max (from || 0, 0);
-  sections.push ({ id: newId (), book: b, chapter: c, from: f, to: f && (to || 0) > f ? to : f, items: [] });
+  const f = Math.max (from || 0, 0), t = f && (to || 0) > f ? to : f;
+  // (A section of the same passage taking the verses in: the item there, for those verses - the whole section's, 0 - 0)
+  const holds = (x: Section) => x.book.id === b.id && x.chapter === c && (! x.from || (f && f >= x.from && t <= x.to));
+  const sec = s ? sections.find (holds) : undefined;
+  const item = sec && sourceItem (s!, f === sec.from ? 0 : f, t === sec.to ? 0 : t);
+  const same = (x: Item) => JSON.stringify ({ ...x, id: "" }) === JSON.stringify ({ ...item, id: "" });
+  if (sec && item) { if (! sec.items.some (same)) sec.items.push (item); }     // (Already there, the same: not again)
+  else sections.push ({ id: newId (), book: b, chapter: c, from: f, to: t, items: s ? [sourceItem (s, 0, 0)] : [] });
   save ();
   if (open) { drawSections (); render (); sectionsEl.lastElementChild?.scrollIntoView ({ block: "nearest" }); }
   return true;
@@ -601,12 +631,11 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
     () => push ({ id: newId (), k: "text", gloss: true, parse: false, translit: false, from: 0, to: 0, other: true })));
   // (The resources in the resources pane's order - notes.ts' sourceGroups: Syntax, Bible Background, Textual Studies,
   // Commentaries, Translations - then the timeline and the word list)
-  const notes = (kinds: string[]) => sources.filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name,
-    () => push ({ id: newId (), k: "note", src: s.id, beside: s.kind !== "syntax", from: 0, to: 0 })));
+  const notes = (kinds: string[]) => sources.filter ((s) => kinds.includes (s.kind)).map ((s) => choice (s.name, () => push (sourceItem (s, 0, 0))));
   const group = (label: string, els: HTMLElement[]) => { if (els.length) menuEl.append (head (label), ...els); };
   group ("Syntax", notes (["syntax"]));
   group ("Bible Background", [
-    ...sources.filter ((s) => s.kind === "dictionary").map ((s) => choice (s.name, () => push ({ id: newId (), k: "dict", src: s.id, from: 0, to: 0 }))),
+    ...notes (["dictionary"]),
     ...(sources.some ((s) => s.kind === "atlas") ? [choice ("Atlas map", () => push ({ id: newId (), k: "map", from: 0, to: 0 }), "The chapter's places")] : [])]);
   group ("Textual Studies", notes (["apparatus", "version"]));
   group ("Commentaries", notes (["commentary"]));

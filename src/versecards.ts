@@ -42,7 +42,7 @@ import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
 import { showDeck, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
-import { textBox, translatedWords, TEXT_CREDIT, addStudyReference } from "./chapterstudy";
+import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, addStudyResource } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { onSwipe } from "./bars";
 
@@ -427,34 +427,56 @@ function stackWhenWrapped (place: HTMLElement) {
 // BOOK, CHAPTER and FROM VERSE filled in with that verse, TO VERSE blank (optional), + ADD VERSE (adding it there, and
 // closing the box); its ✕ closes it. A Septuagint book's verse (not a book the cards take): the book left blank.
 const verseSheet = document.getElementById ("verseSheet")!;
-verseSheet.querySelector (".close")!.addEventListener ("click", () => { verseSheet.hidden = true; });
+// (Closed - by its ✕ or once added: the resources pane back where the box came from it - one-pane shows one at a time)
+let fromNotes = false;
+const closeBox = () => { verseSheet.hidden = true; if (fromNotes && document.getElementById ("notes")!.hidden) document.getElementById ("notesBtn")!.click (); fromNotes = false; };
+verseSheet.querySelector (".close")!.addEventListener ("click", closeBox);
 document.getElementById ("chapter")!.addEventListener ("click", (e) => {
   const num = (e.target as HTMLElement).closest<HTMLElement> (".vnum"), row = num?.closest<HTMLElement> (".vrow");
   if (! num || ! row) return;
   const book = books.find ((b) => b.code === reading ().code) ?? null;
   addVerse ({ book, chapter: book ? Number (row.dataset.chapter) : 0, from: book ? Number (row.dataset.verse) : -1, to: 0 });
 });
+// The resources pane's + (beside its picker): the box for the resource shown, headed ADD TO STUDY PRINTOUT and naming it,
+// the chapter read filled in - its first verse to its last, to be narrowed -, + ADD adding it to the printout
+// (addStudyResource: in the section of that passage, made if there's none)
+const notesPick = document.getElementById ("notesPick") as HTMLSelectElement;
+document.getElementById ("notesAdd")!.addEventListener ("click", () => {
+  const book = books.find ((b) => b.code === reading ().code) ?? null, rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
+  const name = notesPick.selectedOptions[0]?.text ?? "";
+  if (! notesPick.value || ! rows.length) return;
+  addVerse ({ book, chapter: book ? Number (rows[0].dataset.chapter) : 0, from: book ? Number (rows[0].dataset.verse) : -1,
+              to: book ? Number (rows[rows.length - 1].dataset.verse) : 0 }, { id: notesPick.value, name, last: Number (rows[rows.length - 1].dataset.verse) });
+});
 let addTo = "cards";     // (Where the box adds: "cards" or "study" - the last picked, while the app runs)
-function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }) {
+/** The box: for a verse (from a verse's margin), or for a resource (src: its id, its name, the chapter's last verse - from
+ *  the resources pane's +: the Study printout's alone, no drop-down, the resource named under the heading). */
+function addVerse (p: { book: Book | null; chapter: number; from: number; to: number }, src?: { id: string; name: string; last: number }) {
   const body = verseSheet.querySelector<HTMLElement> (".verseBody")!;
-  body.innerHTML = `<h2 class="avHead"><select class="choose" id="avTo" aria-label="Add to"><option value="cards">Add to Verse Cards</option>
-    <option value="study">Add to Study Printout</option></select></h2><div class="vcAdd"><label class="vcPick" id="avDeckRow">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
+  fromNotes = !! src;
+  body.innerHTML = `<h2 class="avHead">${src ? `Add to Study Printout<div class="src">${esc (src.name)}</div>` : `<select class="choose" id="avTo" aria-label="Add to"><option value="cards">Add to Verse Cards</option>
+    <option value="study">Add to Study Printout</option></select>`}</h2><div class="vcAdd"><label class="vcPick" id="avDeckRow">Deck<select class="choose" id="avDeck">${decks.map ((x) =>
       `<option value="${x.id}"${x === deckNow () ? " selected" : ""}>${esc (x.name)}</option>`).join ("")}</select></label>
     <div class="avPlace"></div><button class="pill addVerse" id="avAdd">+ Add Verse</button></div>`;
   const place = body.querySelector<HTMLElement> (".avPlace")!, add = body.querySelector<HTMLButtonElement> ("#avAdd")!;
+  if (src) add.textContent = "+ Add";     // (A resource: not a verse)
   drawPick (place, add, p); stackWhenWrapped (place);
-  const to = body.querySelector<HTMLSelectElement> ("#avTo")!, deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!;
-  const pickTo = () => { addTo = to.value; deckRow.hidden = addTo !== "cards"; };     // (DECK only for the Verse cards)
-  to.value = addTo; pickTo ();
-  to.addEventListener ("change", pickTo);
+  const to = body.querySelector<HTMLSelectElement> ("#avTo"), deckRow = body.querySelector<HTMLElement> ("#avDeckRow")!;
+  const pickTo = () => { deckRow.hidden = (to ? to.value : "study") !== "cards"; if (to) addTo = to.value; };     // (DECK only for the Verse cards)
+  if (to) { to.value = addTo; to.addEventListener ("change", pickTo); }
+  pickTo ();
   add.addEventListener ("click", () => {
     if (! p.book || ! p.chapter || p.from <= 0) return;
-    if (addTo === "study") { addStudyReference (p.book.code, p.chapter, p.from, p.to); verseSheet.hidden = true; return; }     // (A new section of the Study printout)
+    if (src) {     // (The whole chapter picked: the chapter's, 0 - 0)
+      const all = p.from === 1 && Math.max (p.to, p.from) === src.last;
+      addStudyResource (p.book.code, p.chapter, all ? 0 : p.from, all ? 0 : p.to, src.id); closeBox (); return;
+    }
+    if (addTo === "study") { addStudyReference (p.book.code, p.chapter, p.from, p.to); closeBox (); return; }     // (A new section of the Study printout)
     const d = decks.find ((x) => x.id === body.querySelector<HTMLSelectElement> ("#avDeck")!.value);
     if (! d) return;
     goTo = newId ();
     d.cards.push ({ id: goTo, code: p.book.code, chapter: p.chapter, from: p.from, to: Math.max (p.to, p.from) });
-    save (); verseSheet.hidden = true;
+    save (); closeBox ();
   });
   verseSheet.hidden = false;
 }
