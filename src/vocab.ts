@@ -3,7 +3,7 @@
 // its gloss then hidden), so the two never disagree, and a known word leaves My vocab.
 // THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰), built as the Verse cards' (versecards.ts):
 // - THE TOP ROW: the list studied centered ("OT frequency 1–20", "Genesis frequency 21–40", "My vocab", "Alphabet",
-//   "Paradigms: Qal"), a drop-down arrow ⌄ beside it (topbar.ts' topTitle) - tapped, its drop-down under it, part of the
+//   "Paradigms: Qal"), a drop-down arrow beside it (topbar.ts' topTitle) - tapped, its drop-down under it, part of the
 //   top bar (the bar growing as it opens, the card's room under it; tapped again closing it): LANGUAGE (Hebrew or Greek -
 //   at first the language of the testament read, then the reader's own pick, kept on the device), the lists (below),
 //   BOOK and WORDS (the frequency lists' book and 20s), STEM / TENSE AND VOICE and FILL IN (the verb paradigms'), then

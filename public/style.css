@@ -27,6 +27,7 @@
   --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
   --fs-icon: 25px;     /* (Every icon button - ☰ ✕ ⋯ + ‹ › ▶, the notes' and speakers' icons - one size: a ⋯ turning ✕ changes nothing but its glyph) */
   --fs-arrow: calc(var(--fs-icon) * 1.4);
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75l4.5 4.5 4.5-4.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");     /* (The drop-down arrow, one drawing everywhere - the pickers', the top rows', the Bible's heading's: .dropArrow) */
   --bar-slot: calc(var(--fs-icon) * 1.1); --bar-slot-h: calc(var(--fs-arrow) + 2 * var(--head-y));     /* (A bottom bar's three set places - its ends and middle -: an icon's width; down the side, an arrow's height - so every bar's buttons stand alike, whatever is in them) */     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
   /* Display sizes, larger than the text: xl a verse card's reference; 2xl a title, a letter, a card's English;
      3xl a card's front, a pattern; card a flashcard's word. */
@@ -475,8 +476,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .topRow { position: relative; display: flex; justify-content: center; align-items: center; gap: var(--gap-m); min-height: calc(var(--fs-icon) + 12px); padding: var(--head-top) 64px var(--head-y); }     /* (As tall as ☰ and +, the name centered on them, clear of both) */
 
 .topTitle { min-width: 0; overflow-wrap: anywhere; text-align: center; }     /* (A title: .gTitle's rule) */
-.topArrow { position: relative; top: -.25em; margin-left: .3em; color: var(--soft); font-weight: 400; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
-#place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; overflow: visible; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; }     /* (The Bible's heading: its arrow between the original and the English - the Greek at the left, the Hebrew at the right -, after the English where there's no original) */
+.topArrow { display: inline-block; vertical-align: middle; margin-left: .4em; }     /* (The drop-down arrow beside a top row's name - the Verse cards' deck, the Study printout's printout: topbar.ts -, the pickers' own ⌄ and color) */
+#place .refPair > * { order: 1; } #place .refPair > .topArrow { order: 0; flex: none; margin: 0; align-self: center; } #place .refNative.gr, #place .refPair:has(.refNative.he) > :not(.refNative, .topArrow) { order: -1; } #place .refPair:not(:has(.refNative)) > .topArrow { order: 2; margin-left: .3em; }     /* (The Bible's heading: its arrow between the original and the English - the Greek at the left, the Hebrew at the right -, after the English where there's no original) */
 /* A deck (cards.ts - Flashcards', the Verse cards'): the card centered in the screen's room between the top row and the foot's bar (the Verse cards' credits below, Flashcards' list scrolled
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
@@ -554,7 +555,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseWrap { position: relative; display: block; }
 #vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's To verse: not greyed out before From verse is picked, only not yet opening) */
 .chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
-.chooseBtn::after { content: "⌄"; position: absolute; right: 10px; top: 50%; transform: translateY(-62%); color: var(--soft); }
+.chooseBtn::after { content: ""; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.chooseBtn::after, .topArrow { width: .7em; height: .45em; background: var(--soft); -webkit-mask: var(--chevron) center / contain no-repeat; mask: var(--chevron) center / contain no-repeat; }     /* (The drop-down arrow: --chevron, in the soft color) */
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: 40; box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
               -webkit-overflow-scrolling: touch;
               background: var(--bg); }     /* (A box, an overlay: #voicePick's and #options' rules) */

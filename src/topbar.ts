@@ -1,5 +1,5 @@
 // A study screen's own top row (the Verse cards', the Study printout's, Vocab's): a title centered (topTitle) - for a set of named things (the Verse cards' decks, the Study printout's printouts) the
-// open one's name centered, a drop-down arrow beside it (⌄, the pickers' own: choose.ts' button), tapped opening its
+// open one's name centered, a drop-down arrow beside it (the pickers' own: style.css' --chevron), tapped opening its
 // drop-down under it - SELECT <NOUN> (each by name; picking one opens it), DELETE <NOUN> beside it (the open one, asked
 // first) and + NEW <NOUN> at its right, then NAME (the open one's, edited in place, the title following as it's
 // typed). Both screens build it here, one way (style.css' .topBar, .topRow, .topTitle, .topArrow, .vcMenu, .vcAdd).
@@ -34,13 +34,13 @@ const make = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "
   return e;
 };
 
-/** A top row's title: an h1 holding a button - the name (text) and the drop-down arrow ⌄ beside it -, its label
+/** A top row's title: an h1 holding a button - the name (text) and the drop-down arrow beside it -, its label
  *  "<text>: <what>" for a screen reader; name: the span showing the text (set to change it; the label with it). The
  *  screen places the title in its .topRow and makes the button its drop-down's (dropDowns). Every top row's title
  *  (the Verse cards', the Study printout's, Vocab's) is made here. */
 export function topTitle (text: string, what: string): { title: HTMLElement; button: HTMLButtonElement; name: HTMLElement; set: (t: string) => void } {
   const title = make ("h1"), button = make ("button", "pill icon topTitle"), name = make ("span", "topName", text);
-  const arrow = make ("span", "topArrow", "⌄");
+  const arrow = make ("span", "topArrow");     // (Drawn by style.css: --chevron)
   arrow.setAttribute ("aria-hidden", "true");
   button.setAttribute ("aria-expanded", "false");
   button.append (name, arrow);

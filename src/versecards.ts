@@ -1,7 +1,7 @@
 // Verse cards (☰ > Verse cards): flashcards for learning verses, built as Flashcards' (cards.ts' showDeck - its bar's
 // BACK / NEXT (arrows), SHUFFLE and START OVER, + in its middle; no Flip: a tap on the card turns it -; a card removed by its ✕ in the list, not a REMOVE CARD).
 // - THE SCREEN (no title of its own, no ✕ - back to the Bible by ☰): the open deck's name centered in the top row (as
-//   the Bible view's heading, staying as the screen scrolls; a drop-down arrow ⌄ beside it - topbar.ts, the Study
+//   the Bible view's heading, staying as the screen scrolls; a drop-down arrow beside it - topbar.ts, the Study
 //   printout's the same) and + at its right end, where the Bible view's ⋯ is, then
 //   the deck and the credits. The name tapped shows the deck's options as part of the top bar - fixed, not scrolling
 //   with the card, the bar growing as it opens and the card's room under it (the Bible view's ⋯ menu overlays; here the
