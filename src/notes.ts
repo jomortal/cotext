@@ -41,6 +41,7 @@ import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
 import { drawInterlinear, clearInterlinear } from "./interlinear";
 import { paneFrame } from "./layout";
+import { box } from "./zoom";     // (Boxes in CSS px, as scrollTop is, whatever the UI's scale)
 import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./dictionary";
 import { passageMap } from "./atlas";
 import { timelinePane } from "./timeline";
@@ -408,8 +409,8 @@ function placedOneWay () {
 function followOneWay () {
   if (leader !== "text" || ! oneRows.length || panel.hidden || ! book) return;
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
-  const top = main.getBoundingClientRect ().top + 6;
-  const row = rows.find ((r) => r.getBoundingClientRect ().bottom > top);
+  const top = box (main).top + 6;
+  const row = rows.find ((r) => box (r).bottom > top);
   const v = chapter * 1000 + Number (row?.dataset.verse ?? 1);
   if (v === oneAt) return;
   oneAt = v;
@@ -423,7 +424,7 @@ function followOneWay () {
       + (hit ? "" : after ? ` - no ${oneSay}; next at ${at (after)}` : ` - no ${oneSay}; none after it in this ${oneScope}`);
   }
   const target = (next ?? oneRows[oneRows.length - 1])[1];
-  const nt = notesScroll.getBoundingClientRect (), t = target.getBoundingClientRect ();
+  const nt = box (notesScroll), t = box (target);
   // (The entry placed at the scroller's top, under its padding)
   const edge = nt.top + parseFloat (getComputedStyle (notesScroll).paddingTop);
   if (t.top >= edge - 1 && t.top < nt.bottom - 40) return;     // (Its heading in view already: stays)
@@ -593,7 +594,7 @@ function fitTimeline () {
   if (! t) return;
   if (TIMELINE_WIDE.matches) { t.style.height = ""; return; }
   const pad = parseFloat (getComputedStyle (notesScroll).paddingBottom) || 0;
-  const room = notesScroll.getBoundingClientRect ().bottom - pad - (t.getBoundingClientRect ().top + notesScroll.scrollTop);
+  const room = box (notesScroll).bottom - pad - (box (t).top + notesScroll.scrollTop);
   t.style.height = `${Math.max (200, Math.floor (room))}px`;
 }
 new ResizeObserver (() => fitTimeline ()).observe (notesScroll);
@@ -742,14 +743,14 @@ new ResizeObserver (remeasure).observe (bodyEl);
 /** The anchors (above): [text scrollTop, panel scrollTop] pairs, rising in both. */
 function anchorsNow () {
   if (anchors) return anchors;
-  const t0 = main.getBoundingClientRect ().top - main.scrollTop;
-  const r0 = notesScroll.getBoundingClientRect ().top - notesScroll.scrollTop + parseFloat (getComputedStyle (notesScroll).paddingTop);
+  const t0 = box (main).top - main.scrollTop;
+  const r0 = box (notesScroll).top - notesScroll.scrollTop + parseFloat (getComputedStyle (notesScroll).paddingTop);
   const rows = new Map ([...document.querySelectorAll<HTMLElement> ("#chapter .vrow")].map ((r) => [Number (r.dataset.verse), r]));
   const a = [{ t: 0, r: 0 }];
   for (const [v, el] of blocks) {
     const row = rows.get (v);
     if (! row) continue;
-    const t = row.getBoundingClientRect ().top - t0 - 6, r = el.getBoundingClientRect ().top - r0;     // (6: the row a little below the edge)
+    const t = box (row).top - t0 - 6, r = box (el).top - r0;     // (6: the row a little below the edge)
     if (t > a[a.length - 1].t && r > a[a.length - 1].r) a.push ({ t, r });
   }
   const end = { t: main.scrollHeight, r: notesScroll.scrollHeight };
@@ -787,9 +788,9 @@ let spansKept: { t: Span[]; r: Span[]; pad: number } | null = null;
  *  the panel's top padding. */
 function spansNow () {
   if (spansKept && spansKept.r.length === blocks.length) return spansKept;     // (Blocks added since: measured again)
-  const measure = <T,> (box: HTMLElement, items: T[], el: (x: T) => HTMLElement, verse: (x: T) => number): Span[] => {
-    const base = box.getBoundingClientRect ().top - box.scrollTop;
-    const r = items.map ((x) => el (x).getBoundingClientRect ());
+  const measure = <T,> (scroller: HTMLElement, items: T[], el: (x: T) => HTMLElement, verse: (x: T) => number): Span[] => {
+    const base = box (scroller).top - scroller.scrollTop;
+    const r = items.map ((x) => box (el (x)));
     return items.map ((x, i) => [verse (x), r[i].top - base, (i + 1 < r.length ? r[i + 1].top : r[i].bottom) - base] as const);
   };
   const rows = [...document.querySelectorAll<HTMLElement> ("#chapter .vrow")];
@@ -802,7 +803,7 @@ function spansNow () {
  *  left the leader's view. A verse with no block of its own (inside a range note) is its block's - the last at or
  *  before it. */
 function loose () {
-  const mt = main.getBoundingClientRect (), nt = notesScroll.getBoundingClientRect ();
+  const mt = box (main), nt = box (notesScroll);
   const kept = spansNow ();
   const top = { t: mt.top + 6, r: nt.top + kept.pad };     // (6: as the anchors')
   const bottom = { t: mt.bottom, r: nt.bottom };

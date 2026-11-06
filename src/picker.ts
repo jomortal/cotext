@@ -9,6 +9,7 @@
 import { nativeName } from "./booknames";
 import type { Book } from "./reader";
 import { barRoom } from "./bars";
+import { box, winW } from "./zoom";
 
 const picker = document.getElementById ("picker")!;
 const body = document.getElementById ("pickerBody")!;
@@ -27,11 +28,11 @@ const text = document.querySelector ("main")!;
 const head = document.querySelector<HTMLElement> (".head")!, playBar = document.getElementById ("playBar")!;
 const fit = () => {
   const root0 = document.documentElement.style;
-  root0.setProperty ("--headB", `${head.getBoundingClientRect ().bottom}px`);
+  root0.setProperty ("--headB", `${box (head).bottom}px`);     // (CSS px, whatever the UI's scale: zoom.ts)
   root0.setProperty ("--playB", `${barRoom (playBar)}px`);
-  const r = text.getBoundingClientRect (), root = document.documentElement.style;
+  const r = box (text), root = document.documentElement.style;
   root.setProperty ("--textL", `${Math.max (0, r.left)}px`);
-  root.setProperty ("--textR", `${Math.max (0, innerWidth - r.right)}px`);
+  root.setProperty ("--textR", `${Math.max (0, winW () - r.right)}px`);
 };
 new ResizeObserver (fit).observe (text); new ResizeObserver (fit).observe (head); new ResizeObserver (fit).observe (playBar);
 addEventListener ("resize", fit);

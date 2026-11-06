@@ -98,6 +98,13 @@
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
 html, body { position: fixed; inset: 0; overflow: hidden; }
+/* THE SCALE: the input decides it - with a mouse or trackpad (pointer: fine) the whole page at --ui-scale (0.75), on a
+   touch screen at 1 -, everything together (text, icons, bars, spacing, panels: the root zoomed), so a laptop shows the
+   phone's page, smaller. Measurements under it: src/zoom.ts. The window's size: --winW / --winH (CSS px, layout.ts),
+   never vw / vh - Chrome's zoom scales those, Safari's doesn't. */
+:root { --ui-scale: 1; }
+@media (pointer: fine) { :root { --ui-scale: .75; } }     /* (zoom.ts' FINE: keep the two the same) */
+html { zoom: var(--ui-scale); }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }
 [hidden] { display: none !important; }     /* (The one way anything is hidden - the hidden attribute -, whatever its own display) */
@@ -111,7 +118,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui
    (a pane's .top, a panel's .paneHead, a screen's top bar) and ends above its bar, the title kept outside it. The word's
    panel has no title row: its ✕ floats in its margin, clear of the bar at its edge. */
 @supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--faint) transparent; } }
-main { flex: 1; min-height: 33.4vh; min-height: 33.4dvh; overflow-y: auto; border-bottom: var(--rule);     /* (The text never less than a third of the screen: the panels below shrink first) */
+main { flex: 1; min-height: calc(var(--winH, 100dvh) * .334); overflow-y: auto; border-bottom: var(--rule);     /* (The text never less than a third of the screen: the panels below shrink first) */
        -webkit-overflow-scrolling: touch; box-sizing: border-box;
        padding: 0 var(--safe-r) var(--pad) var(--safe-l);     /* (No top padding: main starts under the heading; the play bar and panel sit below it, not over it) */
        display: grid; grid-template-columns: minmax(0, var(--page)); justify-content: center; align-content: start; gap: 14px; }     /* (The text at most --page wide, centered: margins either side beyond that) */
@@ -130,7 +137,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 /* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
 #options, .chooseList, .csMenu { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
-           border-bottom: var(--rule); max-height: calc(100dvh - 100%);
+           border-bottom: var(--rule); max-height: calc(var(--winH, 100dvh) - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
 .head .row { height: calc(var(--head-h) - 2 * var(--head-y)); display: grid; grid-template-columns: var(--icon-box) minmax(0, 1fr) var(--icon-box); align-items: center; gap: var(--pad); }     /* (☰ at the left, ⋯ at the right, each in an icon's room - ⋯ or ✕ alike -, the passage the room between) */
 .head .row > :first-child { justify-self: start; } .head .row > :last-child { justify-self: end; }
@@ -317,7 +324,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */
 #drawer { position: fixed; inset: 0; background: transparent; z-index: 50; }     /* (The page behind not dimmed; tapping it still closes the drawer) */
-#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: 80vw; background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
+#drawerPanel { position: absolute; top: 0; bottom: 0; left: 0; width: max-content; min-width: 10em; max-width: calc(var(--winW, 100vw) * .8); background: var(--bg);     /* (As wide as its longest item, with room after it - its right padding, below -: no wider) */
                border-right: var(--rule); display: grid; align-content: start; gap: var(--gap); overflow-y: auto;
                padding: var(--head-top) calc(3 * var(--pad)) var(--pad) var(--safe-l); }     /* (Its ✕ at the top rows' height: --head-top) */
 #drawerPanel .top { align-items: center; justify-content: flex-end; margin-right: calc(-2 * var(--pad)); }     /* (Just its ✕, at the right - into the panel's right padding: as far from its edge as every ✕ from its edge, --pad) */
@@ -509,7 +516,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    to); its buttons in that bar - as the Bible view's play bar - over the screen's foot. */
      /* (The bar's height, as the play bar's: its line, the buttons' height, its own padding and line - the word's panel over it) */
 .deck { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: var(--gap-s);
-  --vcRoom: calc(100dvh - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: cards.ts' fitDeck) */
+  --vcRoom: calc(var(--winH, 100dvh) - 64px - env(safe-area-inset-top, 0px) - var(--barH) - var(--gap-s) - var(--vcCreditsH, 0px));     /* (Until measured: cards.ts' fitDeck) */
   min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, cards.ts' fitDeck) */
 .deck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
 :where(#screen) .bottomBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); }     /* (A screen's bottom bar: over the screen's foot - the play bar's own place is in the page's column) */
@@ -536,13 +543,13 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* A deck's panel of its own - the Verse cards' NEW VERSE (+), Flashcards' word list (its list icon) - opened from the
    bar: at the screen's foot over the bar, the card's room above it (--deckPaneH: its height, versecards.ts / vocab.ts);
    sideways (SIDE BAR) at the right beside the bar, the screen's full height - below. Its title row the editor's (.paneHead). */
-.deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(40dvh, var(--deckH, 0px)); box-sizing: border-box;
+.deckPane { position: fixed; z-index: 32; left: 0; right: 0; bottom: var(--barH); height: var(--deckH, auto); max-height: max(calc(var(--winH, 100dvh) * .4), var(--deckH, 0px)); box-sizing: border-box;
               background: var(--bg); border-top: var(--rule); padding: var(--gap-m) var(--safe-r) var(--pad) var(--safe-l); }
 .deckPane:not([hidden]) { gap: var(--gap); }
 #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: calc(var(--barH) + var(--deckPaneH, 0px)); }
 .split.deckSplit { display: none; background: none; }     /* (The panel's divider see-through, the top bar's line meeting it) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - var(--split-half)); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
-  max-height: calc(100dvh - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
+  max-height: calc(var(--winH, 100dvh) - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
@@ -667,7 +674,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .bookVerses a.here { font-weight: 600; text-decoration-thickness: 2px; background: var(--tint); border-radius: var(--radius-xs); }     /* (The Archaeology finds: the verse read, in each find's verses - notes.ts' followBook) */
 .dictThumb { grid-column: 2; grid-row: 1 / span 2; height: 3.2em; width: auto; max-width: 5em; object-fit: cover; border-radius: var(--radius-s); }
 .dictPhoto { margin: 8px 0 0; }
-.dictPhoto img { display: block; max-width: 100%; max-height: 40vh; border-radius: var(--radius-s); }
+.dictPhoto img { display: block; max-width: 100%; max-height: calc(var(--winH, 100vh) * .4); border-radius: var(--radius-s); }
 .dictPhoto .credit { margin-top: 4px; }
 
 /* The atlas (atlas.ts): its map the panel's width, at most 40% of the screen tall, dragged and pinched by itself (the
@@ -675,7 +682,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    each its name (a result's heading, tapped picking it out on the map) over its verses (links, as the parsing's terms) -
    the one picked in the accent - a route's stops (.atlasStops) listed the same way; BASE MAP, POLITICAL BOUNDARIES,
    ROUTE and the credits as the panel's. */
-.atlasMap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: 40vh; max-height: 40dvh; border-radius: var(--radius); overflow: hidden; }
+.atlasMap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-height: calc(var(--winH, 100dvh) * .4); border-radius: var(--radius); overflow: hidden; }
 .atlasMap canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .atlasStatus { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .atlasStatus:empty { display: none; }
@@ -694,15 +701,15 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
 #screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
 .timelineNote { margin: 0; }     /* (A note: .vcHead's rule) */
-.timeline { position: relative; height: calc(100vh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-            height: calc(100dvh - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
+.timeline { position: relative;
+            height: calc(var(--winH, 100dvh) - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
 .timeline canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }     /* (A finger up or down scrolls the page; sideways and pinches the timeline: timeline.ts) */
 .timelineStatus { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-size: var(--fs-s); color: var(--soft); pointer-events: none; }
 .timelineStatus:empty { display: none; }
 .timeline + .credit { margin-top: 4px; }
-.timeline.timelinePane { height: max(270px, 40vh); height: max(270px, 40dvh); min-height: 0; margin-top: 6px; }
+.timeline.timelinePane { height: max(270px, calc(var(--winH, 100dvh) * .4)); min-height: 0; margin-top: 6px; }
 .timelinePane + .timelineNote { margin-top: 4px; } .timelineNote:empty { display: none; }
-@media (min-width: 700px) { .timeline.timelinePane { height: max(300px, 60vh); height: max(300px, 60dvh); } }
+@media (min-width: 700px) { .timeline.timelinePane { height: max(300px, calc(var(--winH, 100dvh) * .6)); } }
 
 /* Study printout (chapterstudy.ts): the screen's whole width and height - the editor (its lines, + Add item, Print)
    and the preview (the printout as it prints), each scrolling on its own: narrow the preview the top half, the editor
@@ -754,12 +761,12 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csChoice[aria-pressed="true"] .csChoiceName { color: var(--accent); }
 .csChoice[aria-pressed="true"] .csChoiceName::before { content: "✓ "; }
 .csChoiceName { font-size: var(--fs-s); color: var(--fg); }
-.csPickList { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-wide); max-height: 40vh; overflow-y: auto; }
+.csPickList { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-wide); max-height: calc(var(--winH, 100vh) * .4); overflow-y: auto; }
 .csPickWord { font-size: var(--fs-s); }
 .csPickWord[aria-pressed="true"] .csPickGloss { color: var(--accent); }
 .csPickGloss { color: var(--soft); }
 .csFathers { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-wide); }
-.csNoteList { display: grid; gap: 2px; max-height: 40vh; overflow-y: auto; }
+.csNoteList { display: grid; gap: 2px; max-height: calc(var(--winH, 100vh) * .4); overflow-y: auto; }
 .csNoteList .verseHead { margin-top: 6px; }
 .csCheck { display: flex; align-items: center; gap: 8px; font-size: var(--fs-s); min-height: 32px; }
 .csCheck input { flex: none; margin: 0; accent-color: var(--accent); }
@@ -830,7 +837,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
     grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-slot-h) 1fr var(--bar-slot-h) 1fr var(--bar-slot-h); justify-items: center; align-content: stretch;
     padding: var(--head-top) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;     /* (Its icons centered across its row: as much space at their left as at their right, the inset after) */ border-top: 0 !important; border-left: var(--rule); }
   #screen .bottomBar { z-index: 31; } #screen .bottomBar > * { justify-self: center !important; text-align: center; }     /* (The Verse cards' buttons as icons: the bar as narrow as the heading is tall) */
-  :root { --deckPaneW: var(--deckW, min(420px, 45vw)); }
+  :root { --deckPaneW: var(--deckW, min(420px, calc(var(--winW, 100vw) * .45))); }
   .deckPane { top: 0; bottom: 0; left: auto; right: var(--sideBar); width: var(--deckPaneW); height: auto; max-height: none; align-content: start;
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
   #screen:has(.bottomBar):has(.deckPane:not([hidden])) { bottom: 0; right: calc(var(--sideBar) + var(--deckPaneW)); }

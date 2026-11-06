@@ -5,6 +5,8 @@
 // anywhere else. The <select> stays, hidden, as the value: its change event and value work as before, so the screens'
 // code is unchanged (setting value or selectedIndex updates the button too).
 
+import { box, px } from "./zoom";
+
 const LABEL = (s: HTMLSelectElement) => s.selectedOptions[0]?.textContent ?? "";
 
 function enhance (sel: HTMLSelectElement) {
@@ -35,7 +37,7 @@ function enhance (sel: HTMLSelectElement) {
   // a scrolling panel it's in. Scrolling it never scrolls what's behind (overscroll contained, style.css); anything
   // else scrolled closes it, as the button has moved from under it.
   const place = () => {
-    const r = btn.getBoundingClientRect (), h = window.visualViewport?.height ?? innerHeight, gap = 12;
+    const r = box (btn), h = px (window.visualViewport?.height ?? innerHeight), gap = 12;     // (CSS px, whatever the UI's scale: zoom.ts)
     const below = h - r.bottom - gap, above = r.top - gap, up = below < 240 && above > below;
     Object.assign (list.style, { left: `${r.left}px`, width: `${r.width}px`,
       top: up ? "" : `${r.bottom}px`, bottom: up ? `${h - r.top}px` : "",

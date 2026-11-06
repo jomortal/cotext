@@ -11,6 +11,7 @@
 import { sayText } from "./audio";
 import { onSwipe, marginArrows } from "./bars";
 import { ICONS } from "./icons";
+import { box } from "./zoom";
 
 export interface Card { front: string; back: string; /* HTML */ }
 
@@ -82,12 +83,12 @@ export interface DeckShown<C extends Card> { update (next: C[], same: (a: C, b: 
 export function fitDeck (deckEl: HTMLElement, under?: HTMLElement) {
   const screenEl = document.getElementById ("screen")!;
   const fit = () => {
-    const c = under?.textContent ? under.getBoundingClientRect ().bottom - deckEl.getBoundingClientRect ().bottom : 0, cs = getComputedStyle (screenEl);
+    const c = under?.textContent ? box (under).bottom - box (deckEl).bottom : 0, cs = getComputedStyle (screenEl);     // (CSS px, as clientHeight: zoom.ts)
     deckEl.style.setProperty ("--vcCreditsH", c + "px");
     const room = screenEl.clientHeight - parseFloat (cs.paddingTop) - parseFloat (cs.paddingBottom) - c;
     deckEl.style.setProperty ("--vcRoom", room + "px");
     const kids = [...deckEl.children].filter ((x) => ! x.classList.contains ("bottomBar")) as HTMLElement[];
-    const content = kids.length ? kids[kids.length - 1].getBoundingClientRect ().bottom - kids[0].getBoundingClientRect ().top : 0;
+    const content = kids.length ? box (kids[kids.length - 1]).bottom - box (kids[0]).top : 0;
     deckEl.classList.toggle ("vcTall", content > room - c);
   };
   const watch = new ResizeObserver (fit);

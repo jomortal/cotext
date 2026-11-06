@@ -87,6 +87,7 @@ import { nameMenu, dropDowns, watchTopBar } from "./topbar";
 import { nativeName } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { printSplit, headFrame } from "./layout";
+import { box as cssBox, px, winW, winH } from "./zoom";
 import { BIB_STYLES, isBibStyle, citedWorks, bibliography, bibHeading, licenses, type BibStyle } from "./bibliography";
 import type { FileKind } from "./printfiles";
 
@@ -449,7 +450,7 @@ onScreen ("Study printout", async (body) => {
   // preview alone: its right end kept at the divider's line - --csTopR, style.css)
   // (To the divider's line, its middle: the top bar's border meeting it - worked out again whenever the divider or the
   // printout's box changes size, a window resized moving it too)
-  const topR = () => { const r = split.getBoundingClientRect (); document.getElementById ("screen")!.style.setProperty ("--csTopR", `${innerWidth - (r.left + r.right) / 2}px`); };
+  const topR = () => { const r = cssBox (split); document.getElementById ("screen")!.style.setProperty ("--csTopR", `${winW () - (r.left + r.right) / 2}px`); };     // (CSS px, whatever the UI's scale: zoom.ts)
   const watchTop = new ResizeObserver (topR);
   watchTop.observe (split); watchTop.observe (box);
   // The download pane, in the editor's place (one at a time): its title row - DOWNLOAD and a ✕ -, then the formats and PRINT
@@ -652,9 +653,9 @@ function dragging (handle: HTMLElement, line: HTMLElement, sec: Section) {
     const linesEl = line.parentElement!;
     const move = (ev: PointerEvent) => {
       const prev = line.previousElementSibling as HTMLElement | null, next = line.nextElementSibling as HTMLElement | null;
-      const mid = (x: HTMLElement) => { const r = x.getBoundingClientRect (); return r.top + r.height / 2; };
-      if (prev && ev.clientY < mid (prev)) linesEl.insertBefore (line, prev);
-      else if (next && ev.clientY > mid (next)) linesEl.insertBefore (next, line);
+      const mid = (x: HTMLElement) => { const r = cssBox (x); return r.top + r.height / 2; }, y = px (ev.clientY);     // (One space: zoom.ts)
+      if (prev && y < mid (prev)) linesEl.insertBefore (line, prev);
+      else if (next && y > mid (next)) linesEl.insertBefore (next, line);
     };
     const up = () => {
       handle.removeEventListener ("pointermove", move);
@@ -878,10 +879,11 @@ function showMenu (sec: Section, menuEl: HTMLElement) {
   menuEl.append (head ("Words"), choice ("Word list", () => push ({ id: newId (), k: "words", which: "all", under: 25, picked: [], long: false, translit: false }),
                                          "Its words with definitions, rarest first"));
   // (Over the screen under its button, as wide as the lines' names, no further down than the bar - nothing scrolled or moved)
-  const r = (menuEl.previousElementSibling as HTMLElement).getBoundingClientRect (), box = menuEl.parentElement!.getBoundingClientRect ();
-  const foot = document.querySelector (".csEditBar")?.getBoundingClientRect ().top ?? innerHeight;
-  Object.assign (menuEl.style, { top: `${r.bottom}px`, left: `${box.left}px`, right: `${innerWidth - box.right}px`,     // (In from the left by its margin: style.css)
-                                 maxHeight: `${Math.max (120, Math.min (foot, innerHeight) - r.bottom - 8)}px` });
+  // (CSS px, whatever the UI's scale: zoom.ts)
+  const r = cssBox (menuEl.previousElementSibling as HTMLElement), box = cssBox (menuEl.parentElement!);
+  const bar = document.querySelector (".csEditBar"), foot = bar ? cssBox (bar).top : winH ();
+  Object.assign (menuEl.style, { top: `${r.bottom}px`, left: `${box.left}px`, right: `${winW () - box.right}px`,     // (In from the left by its margin: style.css)
+                                 maxHeight: `${Math.max (120, Math.min (foot, winH ()) - r.bottom - 8)}px` });
 }
 
 /** A dictionary item's entries for its verses (sec: its section), each once, in order: the Tyndale's by verse (those

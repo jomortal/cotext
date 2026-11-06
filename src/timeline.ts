@@ -18,6 +18,7 @@
 //   the kings approximate and disputed. Every date is shown "c.".
 
 import { openNotesDb, type Db } from "./db";
+import { box, px } from "./zoom";
 import { onScreen, closeScreen } from "./study";
 
 interface Item { id: number; lane: number; label: string; title: string; start: number; end: number;
@@ -244,7 +245,7 @@ function timelineView (D: Data, onTap: (it: Item) => void) {
     };
     glide = requestAnimationFrame (step);
   }
-  const local = (e: PointerEvent | WheelEvent): [number, number] => { const r = canvas.getBoundingClientRect (); return [e.clientX - r.left, e.clientY - r.top]; };
+  const local = (e: PointerEvent | WheelEvent): [number, number] => { const r = box (canvas); return [px (e.clientX) - r.left, px (e.clientY) - r.top]; };     // (CSS px, as its clientWidth: zoom.ts)
   /** Zoomed by f about x, so the year under it stays. */
   function zoomAt (x: number, f: number) {
     const w = geometry ().w;

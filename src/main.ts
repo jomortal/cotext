@@ -28,6 +28,7 @@ import { initChapterStudy } from "./chapterstudy";
 import { initVerseCards } from "./versecards";
 import "./layout";     // (The layout's dividers)
 import { onSwipe, marginArrows } from "./bars";
+import { box } from "./zoom";
 
 const status = document.getElementById ("status")!;
 const chapterEl = document.getElementById ("chapter")!;
@@ -107,7 +108,7 @@ async function goVerse (b: Book, c: number, v: number) {
   if (b !== book || c !== chapter) return;     // (Another chapter picked meanwhile)
   const main = document.querySelector ("main")!;
   const row = chapterEl.querySelector<HTMLElement> (`.vrow[data-chapter="${c}"][data-verse="${v}"]`);
-  if (row) main.scrollTo ({ top: row.getBoundingClientRect ().top - main.getBoundingClientRect ().top + main.scrollTop - 6 });
+  if (row) main.scrollTo ({ top: box (row).top - box (main).top + main.scrollTop - 6 });     // (CSS px, as scrollTop: zoom.ts)
 }
 
 /** "Gen.1" -> that book and chapter, if the book has it (a chapter within its count: one of Enoch's it lacks goes to

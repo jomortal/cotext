@@ -21,6 +21,7 @@ import { vocabButton } from "./vocab";
 import { chartStemOf, chartInto } from "./chart";
 import { articlesFor, openArticles, type Found } from "./dictionary";
 import { placeOf, wordMap, type Place } from "./atlas";
+import { box, rectPx } from "./zoom";
 
 // The entry, as LEXICON picks it (a picker as GRAMMAR's, over the entry): the STEPBible brief lexicon, or a fuller
 // lexicon that has the word - (Hebrew)
@@ -161,14 +162,14 @@ function makePanel (sheet: HTMLElement) {
     if (splitNow () === "column") { sheet.classList.add ("twoCol"); info.style.width = info.style.maxWidth = ""; return; }     // (The two one over the other, by style.css)
     info.style.width = "";
     heads.style.width = "max-content";
-    const natural = heads.getBoundingClientRect ().width;     // (Everything on one line)
+    const natural = box (heads).width;     // (CSS px, whatever the UI's scale: zoom.ts)     // (Everything on one line)
     // (The parsing may wrap at its commas, its +s and before a bracket: its widest part counts, not its whole line; the
     // English lines - the interlinear's and the vocab gloss - wrap anywhere, so only their longest word counts)
     // - each measured on its own, taken out of the grid: Safari sizes a grid at max-content from a spanning item's whole
     // line, whatever its own width says)
     const wraps = [fullEl, ...heads.querySelectorAll<HTMLElement> (".formTranslit, .formGloss, .vocabGloss")];
     for (const e of wraps) { e.style.position = "absolute"; e.style.width = "min-content"; }
-    const rest = heads.getBoundingClientRect ().width;     // (The lines that don't wrap: the words, buttons)
+    const rest = box (heads).width;     // (The lines that don't wrap: the words, buttons)
     // (The word's side, two columns: as wide as its lines unwrapped when that's at most half the panel; wider, its lines
     // wrapped to fit half - and then only as wide as their longest wrapped line, so nothing's narrower than it must be)
     const pad = getComputedStyle (sheetScroll);
@@ -178,9 +179,9 @@ function makePanel (sheet: HTMLElement) {
       width = rest;
       for (const e of wraps) {
         e.style.width = `${half}px`;
-        const left = e.getBoundingClientRect ().left, r = document.createRange ();
+        const left = box (e).left, r = document.createRange ();
         r.selectNodeContents (e);
-        for (const line of r.getClientRects ()) width = Math.max (width, line.right - left);
+        for (const line of r.getClientRects ()) width = Math.max (width, rectPx (line.right) - left);
       }
     }
     heads.style.width = ""; for (const e of wraps) { e.style.position = ""; e.style.width = ""; }
@@ -189,7 +190,7 @@ function makePanel (sheet: HTMLElement) {
     info.style.maxWidth = share ? "none" : "";
     if (share) {     // (As dragged: the divider's middle --rightShare of the panel's width from its right edge - the info its own right margin and the gap less)
       const gap = parseFloat (getComputedStyle (sheetScroll).columnGap) || 0;
-      info.style.width = `${sheetScroll.getBoundingClientRect ().width * share / 100 - split.offsetWidth / 2 - gap - parseFloat (getComputedStyle (info).paddingRight)}px`;
+      info.style.width = `${box (sheetScroll).width * share / 100 - split.offsetWidth / 2 - gap - parseFloat (getComputedStyle (info).paddingRight)}px`;
     }
     else {
       info.style.width = `${Math.ceil (width)}px`;     // (The lexicon the rest; style.css' max-width keeps it at most half)
@@ -373,7 +374,7 @@ function makePanel (sheet: HTMLElement) {
     // Keep the word in view above the panels - a word of the text read only (one in the notes panel stays where it is).
     const main = wordEl.closest ("main");
     if (main) requestAnimationFrame (() => {
-      const over = wordEl.getBoundingClientRect ().bottom - main.getBoundingClientRect ().bottom + 12;
+      const over = box (wordEl).bottom - box (main).bottom + 12;
       if (over > 0) main.scrollBy ({ top: over, behavior: "smooth" });     // (main scrolls: style.css)
     });
   }

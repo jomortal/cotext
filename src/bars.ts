@@ -2,6 +2,8 @@
 // (the window wider than tall: a phone held sideways, a tablet's or a desktop's window wider than a phone's - layout.ts),
 // a vertical bar down its right side (style.css' SIDE BAR media query: keep the two the same), taking no room at the foot.
 
+import { box } from "./zoom";
+
 export const SIDE_BAR = matchMedia ("(orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px)");
 
 /** The room a bottom bar takes at the screen's foot: its height - none while it's down the side. */
@@ -35,7 +37,7 @@ const watching = new WeakMap<HTMLElement, () => void> ();
 export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTMLElement, next: HTMLElement, mid: "room" | "column" = "room") {
   watching.get (prev)?.();
   const place = () => {
-    const m = room.getBoundingClientRect (), t = column.getBoundingClientRect ();
+    const m = box (room), t = box (column);     // (CSS px, whatever the UI's scale: zoom.ts)
     const left = t.left - m.left, right = m.right - t.right, on = FINE.matches && t.width > 0 && left >= ARROW_ROOM && right >= ARROW_ROOM;
     const y = mid === "room" ? m.top + m.height / 2 : t.top + t.height / 2;
     for (const [b, x] of [[prev, m.left + left / 2], [next, t.right + right / 2]] as const) {

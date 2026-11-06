@@ -10,7 +10,7 @@
 //   full height (the heading over the text only), one divider between them (#sheetSplit upright, #notesSplit sideways).
 //   The divider is at the same place on the screen both ways, measured from the window's foot upright and its right
 //   edge sideways (the ends the panel is at - not the top, where the clock and the heading are) against the window's
-//   long side (--long: innerWidth or innerHeight, the larger, kept as the window resizes): --cardShare, % - 40 is 40 %
+//   long side (--long: its width or height, the larger, kept as the window resizes): --cardShare, % - 40 is 40 %
 //   of the long side up from the foot upright, the same in from the right sideways -, so dragging in one sets the
 //   other. No panel open: no divider, the text the full room. A verse card's word opens the same #sheet, at the same
 //   place, over the Verse cards screen (beside its bar as the Bible's beside the play bar: style.css).
@@ -26,6 +26,7 @@
 // Each divider set by dragging (pointer events: a finger, a pen or a mouse alike), kept on the device (localStorage).
 
 import { SIDE_BAR } from "./bars";
+import { box, px, winW, winH, onScale } from "./zoom";     // (Every measurement in the page's CSS px, whatever the UI's scale)
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
@@ -38,23 +39,24 @@ if (sizes.printShare) root.setProperty ("--printShare", String (sizes.printShare
 if (sizes.printW) root.setProperty ("--printW", String (sizes.printW));
 if (sizes.deckH) root.setProperty ("--deckH", sizes.deckH + "px");
 if (sizes.deckW) root.setProperty ("--deckW", sizes.deckW + "px");
-/** The window's long side (px), either way up: the panel divider's measure (--long). The window's, not the screen's -
- *  a desktop window or an iPad's Split View can be smaller than the screen. */
-const long = () => Math.max (innerWidth, innerHeight);
-const setLong = () => root.setProperty ("--long", `${long ()}px`);
-setLong (); addEventListener ("resize", setLong);
+/** The window's long side (CSS px), either way up: the panel divider's measure (--long). The window's, not the
+ *  screen's - a desktop window or an iPad's Split View can be smaller than the screen. With it the window's width and
+ *  height (--winW, --winH: style.css' THE SCALE - in place of vw and vh). */
+const long = () => Math.max (winW (), winH ());
+const setLong = () => { root.setProperty ("--long", `${long ()}px`); root.setProperty ("--winW", `${winW ()}px`); root.setProperty ("--winH", `${winH ()}px`); };
+setLong (); addEventListener ("resize", setLong); onScale (setLong);
 /** SPLIT (the header's; setSplit, below). */
 export type Split = "row" | "column" | "one";
 let split = "" as Split;     // (Set as the module ends: setSplit)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
-/** A divider dragged: move (x, y) called with the pointer's place each frame it moves; kept when let go. */
+/** A divider dragged: move (x, y) called with the pointer's place (CSS px: zoom.ts) each frame it moves; kept when let go. */
 function drag (el: HTMLElement, move: (x: number, y: number) => void) {
   el.addEventListener ("pointerdown", (e) => {
     e.preventDefault ();
     el.setPointerCapture (e.pointerId);
     el.classList.add ("on");
-    const onMove = (m: PointerEvent) => move (m.clientX, m.clientY);
+    const onMove = (m: PointerEvent) => move (px (m.clientX), px (m.clientY));
     const end = () => {
       el.classList.remove ("on");
       el.removeEventListener ("pointermove", onMove);
@@ -80,9 +82,9 @@ export function deckPaneSplit (pane: HTMLElement) {
   turn (); SIDE_BAR.addEventListener ("change", turn);
   pane.after (split);
   drag (split, (x, y) => {
-    const r = pane.getBoundingClientRect ();
+    const r = box (pane);
     if (SIDE_BAR.matches) { sizes.deckW = Math.round (clamp (r.right - x, 240, r.right - 240)); root.setProperty ("--deckW", sizes.deckW + "px"); }
-    else { sizes.deckH = Math.round (clamp (r.bottom - y, 120, r.bottom - innerHeight / 5)); root.setProperty ("--deckH", sizes.deckH + "px"); }
+    else { sizes.deckH = Math.round (clamp (r.bottom - y, 120, r.bottom - winH () / 5)); root.setProperty ("--deckH", sizes.deckH + "px"); }
   });
 }
 
@@ -90,11 +92,11 @@ export function deckPaneSplit (pane: HTMLElement) {
  *  editor: the preview's share of the room's height, % (--printShare, 15-85; half until dragged); sideways, vertical,
  *  the preview at the left: its share of the width (--printW, 30-80; two thirds until dragged). Each kept. */
 const SIDEWAYS = matchMedia ("(orientation: landscape)");     // (style.css' .cstudy query: keep the two the same)
-export function printSplit (split: HTMLElement, box: HTMLElement) {
+export function printSplit (split: HTMLElement, frame: HTMLElement) {
   const turn = () => split.setAttribute ("aria-orientation", SIDEWAYS.matches ? "vertical" : "horizontal");
   turn (); SIDEWAYS.addEventListener ("change", turn);
   drag (split, (x, y) => {
-    const r = box.getBoundingClientRect ();
+    const r = box (frame);
     if (SIDEWAYS.matches) {
       sizes.printW = Math.round (clamp ((x - r.left) / r.width * 100, 30, 80));
       root.setProperty ("--printW", String (sizes.printW));
@@ -111,8 +113,8 @@ export function printSplit (split: HTMLElement, box: HTMLElement) {
 /** The right-hand side's share (%), as last dragged; undefined until then - the word's info as wide as it needs and the
  *  search half (panel.ts' columns, style.css' SPLIT). */
 export const rightShare = () => sizes.rightShare;
-function rightShareTo (box: HTMLElement, x: number) {
-  const r = box.getBoundingClientRect ();
+function rightShareTo (el: HTMLElement, x: number) {
+  const r = box (el);
   sizes.rightShare = Math.round (clamp ((r.right - x) / r.width * 100, 20, 80) * 10) / 10;
   root.setProperty ("--rightShare", String (sizes.rightShare));
 }
@@ -122,7 +124,7 @@ export function wordSplit (el: HTMLElement, scroll: HTMLElement, relayout: () =>
   wordSplits.push (el); pairSplit ();
   drag (el, (x, y) => {
     if (split !== "column") { rightShareTo (scroll, x); relayout (); return; }
-    const r = scroll.getBoundingClientRect (), gap = parseFloat (getComputedStyle (scroll).rowGap) || 0, half = el.offsetHeight / 2;
+    const r = box (scroll), gap = parseFloat (getComputedStyle (scroll).rowGap) || 0, half = el.offsetHeight / 2;
     const room = r.height - 2 * (half + gap);     // (The info's and the lexicon's heights together, as the search's and the notes')
     sizes.searchH = Math.round (clamp ((y - r.top - half - gap) / room * 100, 20, 80) * 10) / 10;
     root.setProperty ("--searchH", String (sizes.searchH));
@@ -131,7 +133,7 @@ export function wordSplit (el: HTMLElement, scroll: HTMLElement, relayout: () =>
 const wordSplits: HTMLElement[] = [];
 const notesEl = document.getElementById ("notes")!, searchEl = document.getElementById ("search")!;
 // Sideways, the divider between the text and the panel (cardShareTo); upright it isn't shown (#sheetSplit is).
-drag (document.getElementById ("notesSplit")!, (x) => cardShareTo (innerWidth - x));
+drag (document.getElementById ("notesSplit")!, (x) => cardShareTo (winW () - x));
 // The search's height against the notes' (both open; the search on top): its share (%) of the room the two have
 // between them (style.css gives them flex-grow by it), from the search's top to the divider's middle, each pane keeping
 // 120 px at least - SPLIT "column". Side by side ("row": the search at the right): the divider's place, --rightShare
@@ -141,7 +143,7 @@ const paneSplit = document.getElementById ("paneSplit")!;
 function pairSplit () { for (const el of [paneSplit, ...wordSplits]) el.setAttribute ("aria-orientation", split === "column" ? "horizontal" : "vertical"); }
 drag (paneSplit, (x, y) => {
   if (split === "row") { rightShareTo (paneSplit.parentElement!, x); return; }
-  const s = searchEl.getBoundingClientRect (), room = s.height + notesEl.getBoundingClientRect ().height;
+  const s = box (searchEl), room = s.height + box (notesEl).height;
   if (room < 240) return;     // (Too short a column for two: left as it is)
   sizes.searchH = Math.round (clamp (y - 7 - s.top, 120, room - 120) / room * 1000) / 10;     // (7: the divider's half)
   root.setProperty ("--searchH", String (sizes.searchH));
@@ -195,7 +197,7 @@ export const onSplit = (f: () => void) => { splitWatch.push (f); };
 const playBar = document.getElementById ("playBar")!;
 function setSplit () {
   const at = long () * (sizes.cardShare ?? 40) / 100 - SPLIT_HALF, side = SIDE_BAR.matches;
-  const w = side ? at - playBar.offsetWidth : innerWidth, h = side ? innerHeight : at - playBar.offsetHeight;
+  const w = side ? at - playBar.offsetWidth : winW (), h = side ? winH () : at - playBar.offsetHeight;
   const now: Split = w >= ROW_W ? "row" : h >= COLUMN_H ? "column" : "one";
   if (now === split) return;
   split = now;
@@ -237,5 +239,5 @@ export function headFrame (pane: HTMLElement): HTMLElement {
   return body;
 }
 // Upright, the divider between the text and the panel (cardShareTo); sideways it isn't shown (#notesSplit is).
-drag (document.getElementById ("sheetSplit")!, (_x, y) => cardShareTo (innerHeight - y));
-setSplit (); addEventListener ("resize", setSplit); SIDE_BAR.addEventListener ("change", setSplit);
+drag (document.getElementById ("sheetSplit")!, (_x, y) => cardShareTo (winH () - y));
+setSplit (); addEventListener ("resize", setSplit); SIDE_BAR.addEventListener ("change", setSplit); onScale (setSplit);

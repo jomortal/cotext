@@ -36,6 +36,7 @@
 //   (--map-*, the accent; the provinces and regions in the verb colors).
 
 import { openNotesDb, type Db, type Row } from "./db";
+import { box, px } from "./zoom";
 
 const K = Math.cos (33 * Math.PI / 180);     // (A degree of longitude, in degrees of latitude)
 const BOX = [-12, 4, 64, 50];                 // (The base maps' box, west south east north: atlas.py's BOX)
@@ -613,7 +614,7 @@ function makeMap () {
   // ---- Moving it: drag to pan, pinch or wheel to zoom, tap a point (or a route's stop) to pick it ----
   const down = new Map<number, [number, number]> ();
   let moved = 0;
-  const local = (e: PointerEvent | WheelEvent): [number, number] => { const r = canvas.getBoundingClientRect (); return [e.clientX - r.left, e.clientY - r.top]; };
+  const local = (e: PointerEvent | WheelEvent): [number, number] => { const r = box (canvas); return [px (e.clientX) - r.left, px (e.clientY) - r.top]; };     // (CSS px, as its clientWidth: zoom.ts)
   /** Zoomed by f about a screen point, so what's under it stays. */
   const zoomAt = (x: number, y: number, f: number) => {
     const { w, h } = size ();
