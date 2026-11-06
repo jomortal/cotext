@@ -25,10 +25,9 @@
 //   text as typed (any case) - each its reference and the stretch around the first match, every match in it marked.
 //   Its file is the notes' (notes.ts' openSource: downloaded the first time, then kept), the pane showing it loading.
 // - A dictionary (THE DICTIONARY, below: the Tyndale Bible Dictionary, the Archaeology finds, the Ancient Parallels, the Ancient Historians): its articles, not verses -
-//   those whose title has the typed text first -, each its Bible passages first (the article's refs, a few, + MORE for
-//   the rest; one tapped going there with the resources pane open on the dictionary - openNotesOn), then its title over
-//   the stretch that matched (a find its photo at the right); tapped, the article opens under it, its cited verses
-//   tappable (dictionary.ts).
+//   those whose title has the typed text first -, each its title over the stretch that matched (a find its photo at the
+//   right); tapped, the text goes to the article's first passage and the resources pane opens on the dictionary, the
+//   article opened there (one without passages opening under it, its cited verses tappable - dictionary.ts).
 // - The queries, no indexes added: ROOT WORD reads only the books the root occurs in (freq), by their key - the
 //   commonest root (אָמַר, 4,339 verses) about 0.9 s in the page; INTERLINEAR every word of the Bible read (LIKE, then
 //   a whole-word check here); a source every entry (LIKE).
@@ -264,39 +263,30 @@ async function searchDictionary (src: Source, typed: string, n: number) {
     const refs = await articleRefs (db!, chunk.map ((h) => h.id), src.id);
     return chunk.map ((h) => {
       const e = entry (db!, h.id, h.title, h.text.toLowerCase ().includes (typed.toLowerCase ()) ? snippet (h.text, typed) : h.text.slice (0, 200), "", src.id, h.photo);
-      const r = refs.get (h.id);
-      if (r?.length) e.prepend (passages (r, src.id));
+      const first = refs.get (h.id)?.[0], b = first && books.get (first.book);
+      // (Tapped: the article in the resources pane, at its first passage - one without passages opening here instead)
+      if (b) e.addEventListener ("click", (ev) => { ev.stopPropagation (); void openArticleAt (b, first.start, src.id, h.id); }, true);
       return e;
     });
   });
 }
 
-const FEW = 4;     // (An article's passages shown at first: the rest behind + MORE)
-/** An article's Bible passages as a line of links (Genesis 6:5–8:22, ...): one tapped goes there, the resources pane
- *  opening on the dictionary (src). */
-function passages (refs: { book: number; start: number; end: number }[], src: string): HTMLElement {
-  const line = document.createElement ("div");
-  line.className = "src hitRefs";
-  const links = refs.flatMap ((x) => {
-    const b = books.get (x.book);
-    if (! b) return [];
-    const c = Math.floor (x.start / 1000), v = x.start % 1000, ec = Math.floor (x.end / 1000), ev = x.end % 1000;
-    const a = document.createElement ("a");
-    a.className = "term";
-    a.textContent = `${b.name} ${c}:${v}` + (x.end <= x.start ? "" : ec === c ? `–${ev}` : `–${ec}:${ev}`);
-    a.addEventListener ("click", () => { void goVerse (b, c, v).then (() => openNotesOn (src)); });
-    return [a];
-  });
-  links.forEach ((a, i) => { if (i) line.append (", "); line.append (a); if (i >= FEW) a.hidden = true; });
-  if (links.length > FEW) {
-    for (const t of line.childNodes) if (t.nodeType === 3 && (t.nextSibling as HTMLElement | null)?.hidden) t.textContent = "";
-    const more = document.createElement ("a");
-    more.className = "term";
-    more.textContent = ` + ${links.length - FEW} more`;
-    more.addEventListener ("click", () => { line.replaceChildren (); links.forEach ((a, i) => { if (i) line.append (", "); a.hidden = false; line.append (a); }); });
-    line.append (more);
+/** An article opened in the resources pane: the text gone to its passage (at: chapter * 1000 + verse), the pane opened
+ *  on the dictionary (openNotesOn), and once the pane lists the article (up to 3 s), it opened there and brought into
+ *  view. */
+async function openArticleAt (b: Book, at: number, src: string, id: string) {
+  await goVerse (b, Math.floor (at / 1000), at % 1000);
+  openNotesOn (src);
+  for (let t = 0; t < 30; t++) {
+    const e = document.querySelector<HTMLElement> (`#notes [data-article="${CSS.escape (id)}"]`);
+    if (e) {
+      const row = e.querySelector<HTMLElement> (":scope > .hit");
+      if (row?.getAttribute ("aria-expanded") !== "true") row?.click ();
+      e.scrollIntoView ({ block: "start" });
+      return;
+    }
+    await new Promise ((r) => setTimeout (r, 100));
   }
-  return line;
 }
 
 /** The stretch of a source's text around its first match (up to 80 characters before, 200 after, cut at spaces,

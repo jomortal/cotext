@@ -218,6 +218,7 @@ function articleBody (main: Db, r: Row, o: Opened, open: (id: string) => void, p
  *  over it. src: its source; photo: a data: URI, or an online-only URL (not shown when it can't load). */
 export function entry (main: Db, id: string, title: string, text: HTMLElement | string, why = "", src = "tobd", photo = ""): HTMLElement {
   const el = document.createElement ("div");
+  el.dataset.article = id;     // (Found by it: the search opening an article in the resources pane - search.ts)
   const row = document.createElement ("button");
   row.className = "hit";
   row.setAttribute ("aria-expanded", "false");
@@ -441,7 +442,7 @@ export function markVerse (el: HTMLElement, v: number) {
  *  first, each group in the source's (alphabetical) order - each with its text as plain text (the search's snippet)
  *  and its photo ('' none). */
 /** Each article's Bible passages (its refs: book, verses from - to as chapter * 1000 + verse), in the Bible's order - the
- *  search's results list them first (search.ts). */
+ *  search going to an article's first (search.ts). */
 export async function articleRefs (main: Db, ids: string[], src: string): Promise<Map<string, { book: number; start: number; end: number }[]>> {
   const out = new Map<string, { book: number; start: number; end: number }[]> ();
   const db = (await opened (main, src))?.db;
