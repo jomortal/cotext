@@ -513,7 +513,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   min-height: var(--vcRoom); padding-top: calc(var(--vcCreditsH, 0px) + var(--gap-s)); }     /* (The room above the credits - the screen one page where it fits, the credits at its foot -, as much kept above the card so it's centered on the screen: --vcCreditsH, versecards.ts) */
 .vcDeck.vcTall { padding-top: 0; }     /* (A card taller than the room: from the top, no gap above it) */
 .vcBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; border-top: var(--rule); align-content: start; }     /* (A bottom bar: #playBar's rule) */
-.vcBar .pill { padding: var(--head-y) 0; font-size: var(--fs-icon); line-height: 1; } .vcBar .vcWord { display: none; }     /* (Shuffle, Flip and Start over as icons, the play bar's size - their words read only by a screen reader: aria-label) */
+.vcBar .pill { padding: var(--head-y) 0; line-height: 1; } .vcBar .pill:not(.arrow) { font-size: var(--fs-icon); } .vcBar .vcWord { display: none; }     /* (Shuffle, Flip and Start over as icons, the play bar's size - their words read only by a screen reader: aria-label) */
 .vcBar > * { justify-self: center; }     /* (As the play bar's: ‹ and › at its ends, SHUFFLE centered between ‹ and FLIP, START OVER between FLIP and ›) */
 /* BACK and NEXT: arrows inside the card's edges, fixed at the screen's middle - the card near the screen's edges (12px), its text kept
    clear of the arrows. */
