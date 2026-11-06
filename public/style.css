@@ -216,10 +216,12 @@ body.textSized:has(.dock:not([hidden])) main { flex: none; height: var(--textH);
 body.textSized :is(#sheet, #notes, #besideSheet, #search, #verseSheet):not([hidden]) { flex: 1 1 0; max-height: none; }
 body.textSized:has(.dock:not([hidden])) #sheet:not([hidden]), body.textSized:has(.dock:not([hidden])) #search:not([hidden]) { border-top: 0; }
 /* With the word's panel and a pane both open, a second divider between them (#notesSplit, horizontal here): the word's
-   share of the room below the text, --sheetShare (layout.ts), the panes the rest. */
+   panel its own height (--sheetH, layout.ts; undragged, half the room below the text), kept as the text's divider moves
+   or a pane opens or closes - the panes take the rest, 120 px at least (the panel giving way only past that). */
 body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) #notesSplit { display: block; }
 body:has(#sheet:not([hidden])):has(#notes:not([hidden]), #search:not([hidden])) :is(#notes, #search) { border-top: 0; }
-body.textSized #sheet:not([hidden]) { flex-grow: var(--sheetShare, 50); } body.textSized :is(#notes, #search):not([hidden]) { flex-grow: calc(100 - var(--sheetShare, 50)); }
+body.textSized:has(#notes:not([hidden]), #search:not([hidden])) #sheet:not([hidden]) { flex: 0 1 var(--sheetH, calc((var(--mid, 100dvh) - var(--textH) - 28px) / 2)); }
+body.textSized :is(#notes, #search):not([hidden]) { min-height: 120px; }
 }
 .w.reading { background: var(--tint-strong); }
 .vnum { cursor: pointer; }
