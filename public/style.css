@@ -351,12 +351,13 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
 /* A grammar's section (grammar.ts): the parsing's terms it explains underlined in the accent; one tapped, its
-   section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back; the
-   panel stays at most half the screen, scrolling. */
+   section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back - in two
+   columns (.twoCol), the lexicon's column only, the word's info staying beside it -; the panel stays at most half the
+   screen, scrolling. */
 :is(.sheet, .pane) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 .sheet .term.on { font-weight: 700; }
 .gInline { border-top: var(--hair); margin-top: 14px; padding-top: 12px; }
-.sheet.grammarOpen .panelScroll > :not(.gInline), .sheet.grammarOpen > .xRow { display: none; }
+.sheet.grammarOpen:not(.twoCol) .panelScroll > :not(.gInline), .sheet.grammarOpen:not(.twoCol) > .xRow { display: none; }
 .sheet.grammarOpen .gInline { border-top: 0; margin-top: 0; padding-top: 0; }
 .gInline .top { align-items: start; }
 .gTitle, .topRow .topTitle, .head .row .place { font-size: var(--fs-m); font-weight: 600; }
@@ -382,20 +383,23 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 /* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
    column, the picker over the section's own scroller (.giScroll: its heading and text), so the text never runs up
    behind the picker. */
-.sheet.grammarOpen .panelScroll { display: flex; flex-direction: column; overflow: hidden; }
+.sheet.grammarOpen:not(.twoCol) .panelScroll { display: flex; flex-direction: column; overflow: hidden; }
 /* Two columns (panel.ts' .twoCol: the panel at least twice as wide as the word's info needs): the info - the words,
    parsing, vocab gloss and buttons - on the right, the lexicon - its picker, entry and credit -
-   on the left, each scrolling on its own. A grammar section still takes the panel over, one column. */
-.sheet.twoCol:not(.grammarOpen) .panelScroll { display: flex; gap: calc(var(--pad) - var(--split-w) / 2); overflow: hidden; padding-block: 0; }     /* (Either side of the divider: 2 --pad between the columns in all) */
+   on the left, each scrolling on its own. A grammar section (or chart, or article) opened from the info takes the
+   lexicon's column, the info beside it. */
+.sheet.twoCol .panelScroll { display: flex; gap: calc(var(--pad) - var(--split-w) / 2); overflow: hidden; padding-block: 0; }     /* (Either side of the divider: 2 --pad between the columns in all) */
 .sheet .wordSplit { order: 0; margin: 0; max-width: none; } .sheet .panelScroll > .infoBox { order: 1; }     /* (The divider between the two columns, panel.ts: dragged, the word's info's share - layout.ts' wordSplit) */
-:is(.sheet:not(.twoCol), .sheet.grammarOpen) .wordSplit { display: none; }
-:is(#sheet, #besideSheet).twoCol:not(.grammarOpen) > .panelScroll { padding-right: 0; }     /* (The two columns the panel's full width - the word's side at its right edge, its scroll bar at the panel's edge: its margin inside it, below - by id, to outweigh the panels' padding) */
-.sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { padding-right: var(--safe-r); }
-.sheet.twoCol:not(.grammarOpen) .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
+.sheet:not(.twoCol) .wordSplit { display: none; }
+.sheet.twoCol.grammarOpen .panelScroll > .lexBox { display: none; }
+.sheet.twoCol .panelScroll > .gInline { order: -1; flex: 1 1 0; min-width: 0; min-height: 0; align-self: stretch; max-width: none; margin: 0; padding-block: calc(var(--pad) / 2) var(--pad); }     /* (In the lexicon's place, as tall as the panel) */
+:is(#sheet, #besideSheet).twoCol > .panelScroll { padding-right: 0; }     /* (The two columns the panel's full width - the word's side at its right edge, its scroll bar at the panel's edge: its margin inside it, below - by id, to outweigh the panels' padding) */
+.sheet.twoCol .panelScroll > .infoBox { padding-right: var(--safe-r); }
+.sheet.twoCol .panelScroll > :is(.infoBox, .lexBox) { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
   max-width: none; margin: 0; padding-block: calc(var(--pad) / 2) var(--pad); }     /* (Each column scrolls on its own; half the top margin, as in one column) */
-.sheet.twoCol:not(.grammarOpen) .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
-.sheet.twoCol:not(.grammarOpen) .panelScroll > .lexBox { order: -1; }     /* (The lexicon on the left, the word on the right: the user's choice, to try) */
-.sheet.twoCol:not(.grammarOpen) .lexBox > .lexRow { margin-top: 0; }
+.sheet.twoCol .panelScroll > .infoBox { flex: 0 1 auto; width: max-content; max-width: 50%; }     /* (The word's side as wide as it needs - at most half -, the lexicon the rest) */
+.sheet.twoCol .panelScroll > .lexBox { order: -1; }     /* (The lexicon on the left, the word on the right: the user's choice, to try) */
+.sheet.twoCol .lexBox > .lexRow { margin-top: 0; }
 .sheet.grammarOpen .gInline { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr);
   flex: 1 1 auto; min-height: 0; align-items: start; }     /* (Its first row GRAMMAR and the ✕, then the section) */
 .sheet.grammarOpen .gInline .xRow { position: static; height: auto; grid-column: 2; grid-row: 1; }
