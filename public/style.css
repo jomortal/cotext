@@ -205,7 +205,6 @@ body.noVerbColors .w .parse { color: inherit; }
                         height: var(--barH); padding: var(--head-y) var(--safe-r) var(--barFoot) var(--safe-l); }     /* (Its middle button centered - ▶, FLIP -, ‹ and › at its ends, the others between) */
 #playBar { flex: none; }
 #prev { grid-column: 1; grid-row: 1; justify-self: start; } #next { grid-column: 5; grid-row: 1; justify-self: end; } .vcBar > .arrow:first-child { justify-self: start; } .vcBar > .arrow:last-child { justify-self: end; } .pill.arrow { font-size: var(--fs-arrow); }     /* (‹ and › at a bar's ends, as far in as ☰ in the heading) */
-#vcPlus { font-size: var(--fs-arrow); } #vcPlus[aria-expanded="true"] { font-size: var(--fs-icon); }     /* (The Verse cards' + as large as the bar's ‹ and ›, its glyph as thin; turned ✕ while NEW VERSE is open, every ✕'s size) */
 .inMargin { position: fixed; z-index: 4; left: var(--x); top: var(--y); translate: -50% -50%; }     /* (A desktop with room: ‹ and › centered in a column's margins - the Bible's text's, a deck's card's - bars.ts' marginArrows) */
 #playBar > .credit { margin: 0; grid-column: 4; grid-row: 1; }     /* (A recording's credit, at its right - the search's place - while it plays: audio.ts) */
 #playBtn { grid-column: 3; }
@@ -527,7 +526,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
 #vcPlace, .avPlace { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; min-width: 0; max-width: 100%; }     /* (The add row's Book, Chapter, From and To verse: one line where they fit - BOOK narrowing first, its name cut short, to its least -, else wrapping) */
-#vcPlace .vcPick, .avPlace .vcPick { flex: none; } #vcPlace .vcBook, .avPlace .vcBook { flex: 1 1 calc(5em + 38px); max-width: calc(11em + 38px); min-width: 0; }     /* (BOOK narrowing first, to a short name's width at least - then the row wraps, nothing laid over another) */
+#vcPlace .vcPick, .avPlace .vcPick { flex: none; } .vcAdd > :is(#vcPlace, .avPlace), .avTarget > .vcPick { flex: 1 1 100%; }     /* (The add row a line of its own, the full width - and PRINTOUT over it - so it wraps only where the line is too short) */ #vcPlace .vcBook, .avPlace .vcBook { flex: 1 1 calc(5em + 38px); max-width: calc(11em + 38px); min-width: 0; }     /* (BOOK narrowing first, to a short name's width at least - then the row wraps, nothing laid over another) */
 .vcBook .chooseBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vcDeck .card.single .cardFront { font-size: var(--fs-3xl); }
 .vcDeck .card.single .cardBack { font-size: var(--fs-m); line-height: var(--lh); text-align: start; justify-self: stretch; display: grid; gap: var(--gap-m); }
@@ -712,7 +711,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
                             #screen[data-screen="Study printout"]:has(.vcBar) .topBar { right: var(--csTopR, 0px); }
                             #screen[data-screen="Study printout"]:has(.vcBar):has(.csNoEditor) .topBar { right: var(--sideBar); }     /* (The editor hidden: the top bar the full width again) */
                             .cstudy:not(.csNoEditor) > :is(.split, .csEditor) { margin-top: calc(-1 * (var(--topH, 48px) + var(--pad))); margin-bottom: calc(-1 * var(--pad)); }     /* (Top to bottom: through the screen's room above - the top bar's - and its margin below) */
-                            .cstudy > .csEditor { padding-top: var(--head-top); } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
+                            .cstudy > .csEditor { padding-top: var(--head-top); } .cstudy > .csEditor > .csEditHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); padding-bottom: 0; } }     /* (The editor and the divider the screen's full height, as the Bible's side panel - the top bar over the preview alone, its right end at the divider: --csTopR, chapterstudy.ts) */     /* (Sideways: the printout at the left, the editor at the right, the divider between at --printW %; upright, one over the other) */
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }
@@ -816,6 +815,7 @@ body.noVerbColors .csText .w .parse { color: inherit; }
                 border-top: 0; border-left: var(--rule); padding-top: var(--head-top); }     /* (Sideways: NEW VERSE at the right, the full height, beside the bar) */
   #screen:has(.vcBar):has(.deckPane:not([hidden])) { padding-bottom: var(--gap-s); padding-right: calc(var(--sideBar) + var(--deckPaneW)); }
   #screen:has(.deckPane:not([hidden])) .topBar { right: calc(var(--sideBar) + var(--deckPaneW)); }
+  .deckPane > .csEditHead { box-sizing: border-box; height: calc(var(--topH, 48px) - var(--head-top)); margin-bottom: 0; padding-bottom: 0; }     /* (Sideways: its title row's line level with the top bar's - their feet both at --topH) */
   .deckPane:not([hidden]) + .deckSplit { top: 0; bottom: 0; left: auto; right: calc(var(--sideBar) + var(--deckPaneW) - var(--split-w) / 2); }
   .csToggle, .vcMid { grid-column: 1; grid-row: 3; } .vcBar > [data-k] { grid-column: 1; } .vcBar > [data-k=back] { grid-row: 1; } .vcBar > [data-k=shuffle] { grid-row: 2; } .vcBar > [data-k=over] { grid-row: 4; } .vcBar > [data-k=next] { grid-row: 5; } .vcBar > .vcMid { grid-row: 3; } .csPrintBtn { grid-column: 1; grid-row: 2; } .csOutBtn { grid-column: 1; grid-row: 1; justify-self: center !important; }     /* (Down the side, upright's right side at the top: the download icon, the printer, then the middle's) */
   #prev { grid-column: 1; grid-row: 1; justify-self: center; } #next { grid-column: 1; grid-row: 5; justify-self: center; }     /* (‹ at the top, › at the foot) */

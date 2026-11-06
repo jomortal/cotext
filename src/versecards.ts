@@ -41,7 +41,7 @@ import type { Db } from "./db";
 import { chapterWords, type Book, type Word } from "./reader";
 import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
-import { showDeck, fitDeck, type Card, type DeckShown } from "./cards";
+import { showDeck, fitDeck, BAR_ICONS, type Card, type DeckShown } from "./cards";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
@@ -179,7 +179,7 @@ const LANGUAGES: [Language, string][] = [["en", "English Only"], ["he", "OT Hebr
                                          ["heEn", "OT Hebrew - NT English"], ["enGr", "OT English - NT Greek"]];
 let goTo = "";     // (A card just added - here or from the Bible's verse numbers -: shown first when its deck is next drawn)
 let menuOpen: "" | "more" = "";     // (The top row's drop-down open: the name's options, or none)
-let addOpen = false;     // (+'s NEW VERSE panel open - kept so between drawings)
+let addOpen = false;     // (The VERSE LIST panel open - kept so between drawings)
 /** The add row's reference: book (null: none picked), chapter (0: none picked), verses (from -1: none picked; to 0: blank,
  *  the from verse alone) - blank at first and again after each card is added. */
 let pickAt: { book: Book | null; chapter: number; from: number; to: number } = { book: null, chapter: 0, from: -1, to: 0 };
@@ -246,18 +246,18 @@ async function draw (body: HTMLElement) {
       <label class="vcPick">Translation<select class="choose" id="vcTr"><option value="">None</option>${trs.map ((s) => `<option value="${s.id}">${esc (s.name)}</option>`).join ("")}</select></label>
       <button class="pill" data-o="translit">Transliteration</button><button class="pill" data-o="gloss">Interlinear</button><button class="pill" data-o="parse">Parsing</button>
 </div>
-    <div class="vcHead" id="vcListHead">Verse list</div>
-    <div class="bar vcList"></div>
     </div>
     </div>
     <div class="deck vcDeck"></div>
     <div class="src vcCredits"></div>
-    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">New Verse</h2><button class="pill icon" id="vcAddClose" aria-label="Close">✕</button></div>
-    <div class="vcAdd"><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div></div>`;
-  // The deck's name (the title, tapped): its options - the decks, the name, the settings, the list - and + in the bar
-  // at the foot, in its middle (where the Bible view's ▶ is): NEW VERSE, adding cards; each a drop-down under the top
-  // row as the Bible view's ⋯ menu (+ a ✕ while open that closes it; the title tapped again closes its own; one open
-  // at a time), the top row growing with it - the card's room under it (kept so between drawings). The name, its arrow and the first rows of its drop-down - SELECT DECK, DELETE
+    <div class="deckPane" hidden><div class="top csEditHead"><h2 class="gTitle">Verse list</h2><button class="pill icon" id="vcAddClose" aria-label="Close">✕</button></div>
+    <div class="vcAdd"><div id="vcPlace"></div><button class="pill addVerse" id="vcAddBtn">+ Add Verse</button></div>
+    <div class="vcHead" id="vcListHead">Verses</div>
+    <div class="bar vcList"></div></div>`;
+  // The deck's name (the title, tapped): its options - the decks, the name, the settings - a drop-down under the top
+  // row as the Bible view's ⋯ menu (the title tapped again closing it), the top row growing with it - the card's room
+  // under it (kept so between drawings). The list icon in the bar's middle: the VERSE LIST panel - adding a card at its
+  // top, the cards under it. The name, its arrow and the first rows of its drop-down - SELECT DECK, DELETE
   // DECK, NAME - are topbar.ts' (the Study printout's the same)
   const named = nameMenu<Deck> ({
     noun: "Deck", all: () => decks, open: deckNow, shown: (x) => x.name || "Untitled", blank: "Untitled",
@@ -269,13 +269,14 @@ async function draw (body: HTMLElement) {
   body.querySelector ("#vcTitle")!.replaceWith (named.title);
   const moreMenu = body.querySelector<HTMLElement> ('.vcMenu[data-menu="more"]')!;
   moreMenu.prepend (...named.rows);
-  const plus = document.createElement ("button");     // (+: the bar's middle, with cards or without - deck)
-  Object.assign (plus, { className: "pill icon vcMid", id: "vcPlus", textContent: "+" }); plus.setAttribute ("aria-label", "New verse");
+  const plus = document.createElement ("button");     // (The list icon: the bar's middle, with cards or without - deck)
+  Object.assign (plus, { className: "pill icon vcMid", id: "vcPlus", innerHTML: BAR_ICONS.list }); plus.setAttribute ("aria-label", "Verse list");
   dropDowns ([{ key: "more", button: named.button, menu: moreMenu, icon: "" }], menuOpen, (k) => { menuOpen = k as typeof menuOpen; });
-  // +: NEW VERSE in a panel of its own - at the foot over the bar upright, at the right beside the bar sideways (as the
-  // Bible's panels) -, the card's room giving way to it (--deckPaneH, style.css); + a ✕ while it's open, its ✕ too closing it
+  // The list icon: VERSE LIST in a panel of its own - at the foot over the bar upright, at the right beside the bar
+  // sideways (as the Bible's panels) -, NEW VERSE at its top (Book, Chapter, Verses, + ADD VERSE), the cards under it
+  // (each its ✕); the card's room giving way to it (--deckPaneH, style.css); the icon pressed while it's open, its ✕ closing it
   const sheet = body.querySelector<HTMLElement> (".deckPane")!;
-  const openAdd = (on: boolean) => { addOpen = on; sheet.hidden = ! on; plus.textContent = on ? "✕" : "+"; plus.setAttribute ("aria-expanded", String (on)); };
+  const openAdd = (on: boolean) => { addOpen = on; sheet.hidden = ! on; plus.setAttribute ("aria-pressed", String (on)); };
   plus.addEventListener ("click", () => openAdd (! addOpen));
   body.querySelector ("#vcAddClose")!.addEventListener ("click", () => openAdd (false));
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${sheet.offsetHeight}px`)).observe (sheet);
@@ -310,7 +311,7 @@ async function draw (body: HTMLElement) {
     listEl.innerHTML = d.cards.map ((c) => `<span class="vcDeckName vcRow" data-id="${c.id}"><span>${esc (refText (c))}</span><button class="pill icon" aria-label="Remove">✕</button></span>`).join ("");
     listHead.hidden = listEl.hidden = ! d.cards.length;     // (VERSE LIST only with cards)
     if (! d.cards.length) {     // (No cards: the bar with + alone)
-      deckEl.innerHTML = "<p>Tap + to add a verse.</p>"; credits.textContent = ""; shown = null;
+      deckEl.innerHTML = "<p>Open the verse list to add a verse.</p>"; credits.textContent = ""; shown = null;
       const bar = document.createElement ("div"); bar.className = "vcBar"; bar.append (plus); deckEl.append (bar);
       return;
     }
