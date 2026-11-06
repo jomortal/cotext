@@ -46,6 +46,7 @@ import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
 import { nameMenu, dropDowns, watchTopBar } from "./topbar";
+import { deckPaneSplit } from "./layout";
 
 /** A card: its book (code), chapter and verses (from - to; 0 and 0: the whole chapter - cards kept from before). */
 interface VerseCard { id: string; code: string; chapter: number; from: number; to: number; }
@@ -278,6 +279,7 @@ async function draw (body: HTMLElement) {
   plus.addEventListener ("click", () => openAdd (! addOpen));
   body.querySelector ("#vcAddClose")!.addEventListener ("click", () => openAdd (false));
   new ResizeObserver (() => document.getElementById ("screen")!.style.setProperty ("--deckPaneH", `${sheet.offsetHeight}px`)).observe (sheet);
+  deckPaneSplit (sheet);     // (Its divider: dragged, its size - layout.ts)
   openAdd (addOpen);
   const trPick = body.querySelector<HTMLSelectElement> ("#vcTr")!, placeEl = body.querySelector<HTMLElement> ("#vcPlace")!;
   const deckEl = body.querySelector<HTMLElement> (".vcDeck")!;

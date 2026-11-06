@@ -39,7 +39,7 @@ export const onWideChange = (f: () => void) => WIDE.addEventListener ("change", 
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { searchH?: number; cardH?: number; cardShare?: number; rightShare?: number; printShare?: number; printW?: number } = {};
+const sizes: { searchH?: number; cardH?: number; cardShare?: number; rightShare?: number; printShare?: number; printW?: number; deckH?: number; deckW?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
 if (sizes.cardH) root.setProperty ("--cardH", sizes.cardH + "px");
@@ -47,6 +47,8 @@ if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
 if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
 if (sizes.printShare) root.setProperty ("--printShare", String (sizes.printShare));
 if (sizes.printW) root.setProperty ("--printW", String (sizes.printW));
+if (sizes.deckH) root.setProperty ("--deckH", sizes.deckH + "px");
+if (sizes.deckW) root.setProperty ("--deckW", sizes.deckW + "px");
 /** The window's long side (px), either way up: the panel divider's measure (--long). The window's, not the screen's -
  *  a desktop window or an iPad's Split View can be smaller than the screen. */
 const long = () => Math.max (innerWidth, innerHeight);
@@ -75,6 +77,22 @@ function drag (el: HTMLElement, move: (x: number, y: number) => void) {
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo, v));
+
+/** A deck's panel's divider (the Verse cards' NEW VERSE, Flashcards' word list: style.css' .deckPane), made and put
+ *  after it: upright on its top edge, dragged its height (--deckH, px: 120 up, leaving the card a fifth of the window);
+ *  sideways (SIDE_BAR) on its left edge, its width (--deckW: 240 up, leaving the card 240). Kept, each for every deck. */
+export function deckPaneSplit (pane: HTMLElement) {
+  const split = document.createElement ("div");
+  split.className = "split deckSplit"; split.setAttribute ("role", "separator"); split.setAttribute ("aria-label", "Resize the panel");
+  const turn = () => split.setAttribute ("aria-orientation", SIDE_BAR.matches ? "vertical" : "horizontal");
+  turn (); SIDE_BAR.addEventListener ("change", turn);
+  pane.after (split);
+  drag (split, (x, y) => {
+    const r = pane.getBoundingClientRect ();
+    if (SIDE_BAR.matches) { sizes.deckW = Math.round (clamp (r.right - x, 240, r.right - 240)); root.setProperty ("--deckW", sizes.deckW + "px"); }
+    else { sizes.deckH = Math.round (clamp (r.bottom - y, 120, r.bottom - innerHeight / 5)); root.setProperty ("--deckH", sizes.deckH + "px"); }
+  });
+}
 
 /** The Study printout's divider (chapterstudy.ts; style.css' .cstudy) - upright, horizontal, the preview over the
  *  editor: the preview's share of the room's height, % (--printShare, 15-85; half until dragged); sideways, vertical,
