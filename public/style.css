@@ -756,9 +756,10 @@ body.sideWord { grid-template-rows: auto minmax(0, 1fr) auto auto; } body.sideWo
 #screen[data-screen="Study printout"] #screenBody { min-height: 0; grid-template-rows: minmax(0, 1fr); }
 .cstudy { display: grid; min-height: 0; height: 100%; gap: var(--gap-m); row-gap: 0; grid-template-areas: "preview" "split" "editor";
           grid-template-rows: minmax(0, calc((100% - 14px) * var(--printShare, 50) / 100)) auto minmax(0, 1fr); }     /* (Narrow: the preview over the editor, the divider between at --printShare % - layout.ts' printSplit) */
-.cstudy > .split { display: block; grid-area: split; }
+.cstudy > .split { display: block; grid-area: split; margin-top: -7px; z-index: 1; background: none; } .cstudy > .split::before { display: none; }     /* (No line of its own: its grip on the preview's edge - its middle over the preview's border, narrow the foot, wide the right) */
 @media (min-width: 700px) { .cstudy { column-gap: 0; grid-template-rows: minmax(0, 1fr); grid-template-areas: "preview split editor";
-                                      grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); } }     /* (Wide - an iPad: the printout at the left, the editor at the right, the divider between at --printW %) */
+                                      grid-template-columns: minmax(0, calc((100% - var(--split-w)) * var(--printW, 66.7) / 100)) auto minmax(0, 1fr); }
+                            .cstudy > .split { margin-top: 0; margin-left: calc(var(--split-w) / -2); } .csEditor { padding-left: var(--gap-m); } }     /* (Wide - an iPad: the printout at the left, the editor at the right, the divider between at --printW %) */
 .csPreview { grid-area: preview; overflow-y: auto; overscroll-behavior: contain; padding: var(--pad); }
 .csPlace { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses: one row, wrapping) */
 .csPlace .sheetPick { margin: 0; }
