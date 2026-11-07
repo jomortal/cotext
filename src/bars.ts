@@ -4,7 +4,7 @@
 // One size on every device: a row the heading's height, under it (or, down the side, at its right) only the device's
 // own inset as plain room, no button in it (style.css' BOTTOM BAR).
 
-import { box, winW, winH } from "./zoom";
+import { box, winW, winH, mouseSeen, onScale, offScale } from "./zoom";
 
 export const SIDE_BAR = matchMedia ("(orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 600.02px)");
 
@@ -29,14 +29,13 @@ export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void) {
   }, { passive: true });
 }
 
-/** ‹ and › into the margins: with a mouse (a desktop), once each side of the column (the Bible's text, a deck's card)
+/** ‹ and › into the margins: on a device that has shown a mouse or trackpad (zoom.ts' mouseSeen), once each side of the column (the Bible's text, a deck's card)
  *  has room for a margin, the arrow and a margin again (M + A + M: M the side margin, style.css' --margin, read from
  *  it; A the arrow's width) the two buttons come out of their bar and stand beside the column - ‹ its right edge M left
  *  of the column's left edge, › its left edge M right of its right edge (style.css' .inMargin: --x, --y, their middles)
  *  -, staying that close however wide the window grows; with less room they stay in the bar. Vertically at the room's
  *  middle height (mid "room": the Bible's text) or the column's (mid "column": a deck's card). Worked out again as the
  *  room, the column or the window changes size; the last call for a button (a deck drawn again) the one kept. */
-const FINE = matchMedia ("(any-pointer: fine)");     // (A mouse or trackpad there at all, as the UI's scale: zoom.ts)
 const watching = new WeakMap<HTMLElement, () => void> ();
 export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTMLElement, next: HTMLElement, mid: "room" | "column" = "room") {
   watching.get (prev)?.();
@@ -44,7 +43,7 @@ export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTML
     const m = box (room), t = box (column);     // (CSS px, whatever the UI's scale: zoom.ts)
     const M = parseFloat (getComputedStyle (document.documentElement).getPropertyValue ("--margin")) || 16;     // (CSS px, as box's)
     const left = t.left - m.left, right = m.right - t.right;
-    const fits = (b: HTMLElement) => FINE.matches && t.width > 0 && Math.min (left, right) >= 2 * M + b.offsetWidth;
+    const fits = (b: HTMLElement) => mouseSeen () && t.width > 0 && Math.min (left, right) >= 2 * M + b.offsetWidth;
     const on = fits (prev) && fits (next);
     const y = mid === "room" ? m.top + m.height / 2 : t.top + t.height / 2;
     for (const [b, x] of [[prev, t.left - M - prev.offsetWidth / 2], [next, t.right + M + next.offsetWidth / 2]] as const) {
@@ -54,8 +53,8 @@ export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTML
   };
   const ro = new ResizeObserver (place);
   ro.observe (room); ro.observe (column);
-  FINE.addEventListener ("change", place); addEventListener ("resize", place);
-  watching.set (prev, () => { ro.disconnect (); FINE.removeEventListener ("change", place); removeEventListener ("resize", place); });
+  onScale (place); addEventListener ("resize", place);     // (A mouse or trackpad first seen: zoom.ts)
+  watching.set (prev, () => { ro.disconnect (); offScale (place); removeEventListener ("resize", place); });
 }
 
 /** The notch's side, sideways: an iPhone gives both sides the notch's room (safe-area-inset-left and -right alike), so
