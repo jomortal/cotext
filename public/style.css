@@ -104,11 +104,11 @@
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
 html, body { position: fixed; inset: 0; overflow: hidden; }
 /* THE SCALE: the input decides it - with a mouse or trackpad (any-pointer: fine: one there at all, so a touchscreen
-   laptop counts, whichever Windows calls its main input) the whole page at --ui-scale (0.75), with touch alone at 1 -, everything together (text, icons, bars, spacing, panels: the root zoomed), so a laptop shows the
+   laptop counts, whichever Windows calls its main input) the whole page at --ui-scale (0.5), with touch alone at 1 -, everything together (text, icons, bars, spacing, panels: the root zoomed), so a laptop shows the
    phone's page, smaller. Measurements under it: src/zoom.ts. The window's size: --winW / --winH (CSS px, layout.ts),
    never vw / vh - Chrome's zoom scales those, Safari's doesn't. */
 :root { --ui-scale: 1; }
-@media (any-pointer: fine) { :root { --ui-scale: .75; } }     /* (zoom.ts' FINE: keep the two the same) */
+@media (any-pointer: fine) { :root { --ui-scale: .5; } }     /* (zoom.ts' FINE: keep the two the same) */
 html { zoom: var(--ui-scale); }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }

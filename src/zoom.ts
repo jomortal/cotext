@@ -1,4 +1,4 @@
-// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 0.75 with a mouse or trackpad (any-pointer: fine: one
+// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 0.5 with a mouse or trackpad (any-pointer: fine: one
 // there at all, a touchscreen laptop too), 1 with touch alone), and the page's measurements brought into one space under it: the page's own CSS px, the units
 // style lengths and scroll positions are in. Browsers differ under CSS zoom (measured 2026-11-06): pointer events'
 // clientX / clientY and innerWidth / innerHeight are the screen's px in Chrome and Safari alike - divided by the scale
