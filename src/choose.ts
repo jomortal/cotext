@@ -55,6 +55,13 @@ function enhance (sel: HTMLSelectElement) {
     Object.assign (list.style, { left: `${r.left}px`, width: "max-content", minWidth: `${r.width}px`, maxWidth: `${room.right - r.left - gap}px`,
       top: up ? "" : `${r.bottom}px`, bottom: up ? `${h - r.top}px` : "",
       maxHeight: `${up ? above : below}px`, marginTop: up ? "0" : "4px", marginBottom: up ? "4px" : "0" });
+    // (A grid of numbers is never squeezed - six to a row, nothing scrolling sideways: where it won't fit right of its
+    // button's left edge, it's moved left until it does, as far as the screen's)
+    if (list.classList.contains ("numbers")) {
+      list.style.maxWidth = `${room.right - 2 * gap}px`;
+      const w = box (list).width;
+      list.style.left = `${Math.max (gap, Math.min (r.left, room.right - gap - w))}px`;
+    }
   };
   addEventListener ("scroll", (e) => { if (! list.hidden && ! list.contains (e.target as Node)) close (); }, true);
   addEventListener ("resize", () => { if (! list.hidden) place (); });
