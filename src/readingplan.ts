@@ -466,11 +466,10 @@ onScreen ("Reading plan", (body) => {
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");
   setIcon (close, "x"); close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
-  const lines = el ("div", "planEdit"), cols = el ("div", "planEditCols"), adds = el ("div", "fieldRow");
-  lines.append (cols);
+  const lines = el ("div", "planEdit"), tabs = el ("div", "fieldRow planTabs"), cols = el ("div", "planEditCols");
+  lines.append (tabs, cols);
   const addColumn = el ("button", "pill action", "+ Add column");
-  adds.append (addColumn);
-  editor.append (head, lines, adds);
+  editor.append (head, lines);
   const bar = el ("div", "bottomBar"), pencil = el ("button", "pill icon barMid");
   setIcon (pencil, "pencil"); pencil.setAttribute ("aria-label", "Show or hide the editor");
   bar.append (pencil);
@@ -529,18 +528,21 @@ onScreen ("Reading plan", (body) => {
     options.hidden = ! s;
   }
 
-  /** EDIT, the open plan's columns: a block a column (where EDIT has room, side by side: style.css' .planEdit) - over
-   *  it, with several, "Column N" and DELETE COLUMN -, its readings a line each ("Day N", then BOOK - None an empty
+  /** EDIT, the open plan's columns: a tab each ("Column N", then + Add column) and the picked one's block under them;
+   *  where EDIT has room (style.css' .planEdit) no tabs - every block side by side. Over a block, with several,
+   *  "Column N" and DELETE COLUMN; its readings a line each ("Day N", then BOOK - None an empty
    *  slot -, CHAPTER, TO CHAPTER and ✕), then + Add reading. A line's pickers are made only as it nears the view (a year
    *  of them at once is too many), kept once made. Drawn afresh for another plan or setting, the list kept where it
    *  was scrolled; an edit redraws only what it changes - each line and column finding its place (data-c, data-i) when
    *  used, so a removal only renumbers those after it. */
-  let edPlan = "";
+  let edPlan = "", edCol = 0;     // (The plan EDIT shows, and its column picked by the tabs: 0 first)
   const filled = new IntersectionObserver ((es) => { for (const e of es) if (e.isIntersecting) fillLine (e.target as HTMLElement); },
                                            { root: edScroll, rootMargin: "800px 0px" });
   function drawEditor () {
-    const p = now (), keep = edPlan === p.id ? edScroll.scrollTop : 0;
+    const p = now (), same = edPlan === p.id, keep = same ? edScroll.scrollTop : 0;
     edPlan = p.id;
+    if (! same) edCol = 0;
+    edCol = Math.min (edCol, Math.max (colsOf (p).length - 1, 0));
     filled.disconnect ();
     cols.replaceChildren (...colsOf (p).map ((_, c) => colBlock (c)));
     heads ();
@@ -559,6 +561,7 @@ onScreen ("Reading plan", (body) => {
       removeCol (p, k);
       block.remove ();
       cols.querySelectorAll<HTMLElement> (".planEditCol").forEach ((b, j) => { b.dataset.c = String (j); });
+      edCol = Math.min (k, Math.max (colsOf (p).length - 1, 0));
       heads (); edited ();
     });
     head.append (el ("div", "src"), del);
@@ -575,14 +578,23 @@ onScreen ("Reading plan", (body) => {
     block.append (head, list, add);
     return block;
   }
-  /** The columns' heads: "Column N" and DELETE COLUMN, shown only with several columns. */
+  /** The tabs - "Column N" each, the picked one pressed, then + Add column - and the columns' heads ("Column N" and
+   *  DELETE COLUMN, shown only with several columns); every block but the picked one's .planOff (unseen only while
+   *  the tabs show). */
   function heads () {
     const bs = cols.querySelectorAll<HTMLElement> (".planEditCol");
     bs.forEach ((b, j) => {
       const h = b.querySelector<HTMLElement> (".planEditHead")!;
       h.hidden = bs.length < 2;
       h.querySelector (".src")!.textContent = `Column ${j + 1}`;
+      b.classList.toggle ("planOff", j !== edCol);
     });
+    tabs.replaceChildren (...[...bs].map ((_, j) => {
+      const t = el ("button", "pill planTab", `Column ${j + 1}`);
+      t.setAttribute ("aria-pressed", String (j === edCol));
+      t.addEventListener ("click", () => { edCol = j; heads (); });
+      return t;
+    }), addColumn);
     if (! bs.length) cols.replaceChildren (el ("p", "", "No columns yet."));
   }
   /** Line i of a column, its pickers not yet made: "Day N", watched to be filled. */
@@ -635,13 +647,14 @@ onScreen ("Reading plan", (body) => {
     addCol (p);
     if (! cols.querySelector (".planEditCol")) cols.replaceChildren ();     // ("No columns yet." gone)
     const block = colBlock (colsOf (p).length - 1);
+    edCol = colsOf (p).length - 1;     // (Its tab picked)
     cols.append (block); heads ();
     block.scrollIntoView ({ block: "nearest" });
     edited ();
   });
-  /** Plan day n's first line brought to the top of EDIT (a day picked on the calendar). */
+  /** Plan day n's first line shown brought to the top of EDIT (a day picked on the calendar). */
   function toDay (n: number) {
-    const d = lines.querySelector<HTMLElement> (`.planEditLine[data-i="${n - 1}"]`);
+    const d = [...lines.querySelectorAll<HTMLElement> (`.planEditLine[data-i="${n - 1}"]`)].find ((l) => l.offsetParent);
     if (d) edScroll.scrollTop += box (d).top - box (edScroll).top;
   }
   drawTop ();
