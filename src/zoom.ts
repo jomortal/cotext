@@ -1,5 +1,5 @@
-// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 0.75 with a mouse or trackpad (pointer: fine),
-// 1 on a touch screen), and the page's measurements brought into one space under it: the page's own CSS px, the units
+// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 0.75 with a mouse or trackpad (any-pointer: fine: one
+// there at all, a touchscreen laptop too), 1 with touch alone), and the page's measurements brought into one space under it: the page's own CSS px, the units
 // style lengths and scroll positions are in. Browsers differ under CSS zoom (measured 2026-11-06): pointer events'
 // clientX / clientY and innerWidth / innerHeight are the screen's px in Chrome and Safari alike - divided by the scale
 // (px) -; an element's getBoundingClientRect (and a Range's rects) is the screen's px in Chrome but already CSS px in
@@ -7,7 +7,7 @@
 // clientWidth are CSS px in both. Viewport units (vh, vw) are scaled by Chrome's zoom and not by Safari's, so the page
 // sizes by the window's CSS size instead (--winW, --winH: layout.ts).
 
-const FINE = matchMedia ("(pointer: fine)");     // (style.css' --ui-scale query: keep the two the same)
+const FINE = matchMedia ("(any-pointer: fine)");     // (style.css' --ui-scale query: keep the two the same)
 let scale = 1, rectScale = 1;
 function measure () {
   const html = document.documentElement;
@@ -17,7 +17,7 @@ function measure () {
 }
 measure ();
 FINE.addEventListener ("change", measure);
-/** Calls f whenever the scale changes (a mouse plugged into a tablet, a window moved to a touch screen) - after it's
+/** Calls f whenever the scale changes (a mouse or trackpad plugged into a tablet or taken away) - after it's
  *  measured again. */
 export const onScale = (f: () => void) => FINE.addEventListener ("change", f);
 

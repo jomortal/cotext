@@ -36,7 +36,7 @@ export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void) {
  *  -, staying that close however wide the window grows; with less room they stay in the bar. Vertically at the room's
  *  middle height (mid "room": the Bible's text) or the column's (mid "column": a deck's card). Worked out again as the
  *  room, the column or the window changes size; the last call for a button (a deck drawn again) the one kept. */
-const FINE = matchMedia ("(pointer: fine)");
+const FINE = matchMedia ("(any-pointer: fine)");     // (A mouse or trackpad there at all, as the UI's scale: zoom.ts)
 const watching = new WeakMap<HTMLElement, () => void> ();
 export function marginArrows (room: HTMLElement, column: HTMLElement, prev: HTMLElement, next: HTMLElement, mid: "room" | "column" = "room") {
   watching.get (prev)?.();
