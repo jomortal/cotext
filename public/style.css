@@ -34,10 +34,11 @@
      The text itself (the interlinear's words, a card's word) is sized on its own. */
   --fs-xs: 12px; --fs-s: 14px; --fs-m: 16px; --fs-l: 17px;
   --lh: 1.5; --lh-loose: 1.6;     /* (Lines of prose - a paragraph, an entry, a note, the words' lines -; loose: a list of steps, a result's text) */
-  /* Icons (icons.ts' drawings - every icon button: ☰ ✕ ⋯ + ▶ ■, the bars', panes' and speakers'): one size on every
-     device and pointer, a box --icon-box square (--fs-icon's em, 1.1), every line --icon-stroke wide whatever the icon's
-     size; ‹ and › at --fs-arrow, larger, their lines as thin. */
-  --fs-icon: 25px; --fs-arrow: calc(var(--fs-icon) * 1.4);
+  /* Icons (icons.ts' drawings - every icon button: ☰ ✕ ⋯ + ▶ ■, the bars', panes' and speakers'): one size on touch, at
+     --icon-scale (0.8) on a device that has shown a mouse or trackpad (below: THE SCALE), a box --icon-box square
+     (--fs-icon's em, 1.1), every line --icon-stroke wide whatever the icon's size; ‹ and › at --fs-arrow, larger, their
+     lines as thin. Everything sized from them - the bars, the ✕'s room - follows. */
+  --icon-scale: 1; --fs-icon: calc(25px * var(--icon-scale)); --fs-arrow: calc(var(--fs-icon) * 1.4);
   --icon-box: calc(var(--fs-icon) * 1.1); --icon-stroke: calc(var(--icon-box) * 1.8 / 24);
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75l4.5 4.5 4.5-4.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");     /* (The drop-down arrow, one drawing everywhere - the pickers', the top rows', the Bible's heading's: .dropArrow) */
   --bar-slot: var(--icon-box); --bar-slot-h: calc(var(--fs-arrow) + 2 * var(--head-y));     /* (A bottom bar's three set places - its ends and middle -: an icon's width; down the side, an arrow's height - so every bar's buttons stand alike, whatever is in them) */     /* (‹ and › stepping at a bar's ends - the chapters', the verse cards' (.pill.arrow): larger, their glyph small in its box) */
@@ -103,13 +104,13 @@
 /* The page itself never scrolls - only <main> does, inside it: iPadOS's blur under the clock in Home Screen apps
    follows the page's own scrolling, so with the page held still it has nothing to act on. */
 html, body { position: fixed; inset: 0; overflow: hidden; }
-/* THE SCALE: the input decides it - on a device that has shown a mouse or trackpad (:root[data-pointer="fine"], set
-   by src/zoom.ts and kept for the device) the whole page at --ui-scale (0.75), on touch alone at 1 -, everything together
-   (text, icons, bars, spacing, panels: the root zoomed), so a laptop shows the phone's page, smaller. Measurements
-   under it: src/zoom.ts. The window's size: --winW / --winH (CSS px, layout.ts), never vw / vh - Chrome's zoom scales
-   those, Safari's doesn't. */
+/* THE SCALE: text and spacing one size on every device; the icons alone smaller (--icon-scale, 0.8) on a device that has
+   shown a mouse or trackpad (:root[data-pointer="fine"], set by src/zoom.ts and kept for the device) - a desktop's
+   icons nearer its other apps'. --ui-scale (the whole page zoomed: 1) is the one way the page would ever be scaled as
+   a whole; measurements under it: src/zoom.ts. The window's size: --winW / --winH (CSS px, layout.ts), never vw / vh -
+   Chrome's zoom scales those, Safari's doesn't. */
 :root { --ui-scale: 1; }
-:root[data-pointer="fine"] { --ui-scale: .75; }
+:root[data-pointer="fine"] { --icon-scale: .8; }
 html { zoom: var(--ui-scale); }
 body { display: flex; flex-direction: column; }     /* (The heading, then main filling the rest: main scrolls, below it) */
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); -webkit-text-size-adjust: 100%; }

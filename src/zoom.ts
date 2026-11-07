@@ -1,5 +1,5 @@
-// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 0.75 on a device that has shown a mouse or
-// trackpad, 1 on touch alone), and the page's measurements brought into one space under it: the page's own CSS px, the
+// The UI's scale (style.css' --ui-scale: the whole page zoomed as one - 1 now; a device that has shown a mouse or
+// trackpad gets smaller icons instead, --icon-scale), and the page's measurements brought into one space under it: the page's own CSS px, the
 // units style lengths and scroll positions are in. Browsers differ under CSS zoom (measured 2026-11-06): pointer events'
 // clientX / clientY and innerWidth / innerHeight are the screen's px in Chrome and Safari alike - divided by the scale
 // (px) -; an element's getBoundingClientRect (and a Range's rects) is the screen's px in Chrome but already CSS px in
@@ -9,13 +9,13 @@
 
 /* THE INPUT: a mouse or trackpad seen - the browser saying it has one (any-pointer: fine), or one used (a pointer event
    of type "mouse" or "pen") - marks the device (localStorage cotext.pointer "fine": the root's data-pointer, style.css'
-   scale) for good; touch never unmarks it. Not the browser's word alone: Chrome on a Windows touchscreen laptop can say
+   icons' --icon-scale) for good; touch never unmarks it. Not the browser's word alone: Chrome on a Windows touchscreen laptop can say
    it has touch only (measured 2026-11-06: any-pointer: fine false, the trackpad there), and that changes from one start
    to the next. index.html sets the mark before the first paint, by the same test. */
 const KEY = "cotext.pointer", FINE = matchMedia ("(any-pointer: fine)");
 const html = document.documentElement, listeners: (() => void)[] = [];
 let seen = html.dataset.pointer === "fine";
-/** Whether this device has shown a mouse or trackpad (the scale's 0.75; bars.ts' margin arrows). */
+/** Whether this device has shown a mouse or trackpad (style.css' --icon-scale, 0.8; bars.ts' margin arrows). */
 export const mouseSeen = () => seen;
 function markFine () {
   if (seen) return;
@@ -35,7 +35,7 @@ function measure () {
 }
 measure ();
 if (seen || FINE.matches) { seen = false; markFine (); }     // (Kept, so a later start the browser says touch only keeps it)
-/** Calls f whenever the scale changes (a mouse or trackpad first seen) - after it's measured again. */
+/** Calls f when a mouse or trackpad is first seen (the icons' and bars' sizes changed) - after it's measured again. */
 export const onScale = (f: () => void) => { listeners.push (f); };
 /** Stops calling f (onScale's). */
 export const offScale = (f: () => void) => { const i = listeners.indexOf (f); if (i >= 0) listeners.splice (i, 1); };
