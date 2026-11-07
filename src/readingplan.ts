@@ -108,7 +108,7 @@ function lastDay (p: Plan): number {
 }
 const BASES = Object.keys (FACTORY) as Base[];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];     // (In capitals, as the books' codes)
 
 const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, start: "", repeat: !! FACTORY[b].repeat, done: {}, read: {} });
 let plans: Plan[] = [];
