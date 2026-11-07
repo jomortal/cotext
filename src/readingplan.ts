@@ -398,8 +398,8 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
   next.addEventListener ("click", () => step (1));
   /** A day's row or cell: its label - on the calendar its date (dated: weekday, day of the month, its date text), in
    *  the list "Day N" (n) - and its columns' readings (READ, above). A one-column plan's checkbox is on the label;
-   *  several columns' a checkbox each, before its reading (the label's box there unseen, so every date lines up, as a
-   *  day with nothing to read). A late reading is plain text, not a link. */
+   *  several columns' a checkbox each, before its reading (the label then without one - .planMulti -, at the pane's
+   *  edge as other resources' text). A late reading is plain text, not a link. */
   function dayCell (p: Plan, n: number, slots: Slot[], picked: number, date?: { wd: number; d: number; key: string }) {
     const cell = el ("div", "planDay");
     if (n && n === picked) cell.classList.add ("on");
@@ -453,6 +453,7 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
   function drawDays () {
     const p = now (), dated = !! p.start, picked = o.picked?. () ?? 0;
     box.classList.toggle ("planList", ! dated);
+    box.classList.toggle ("planMulti", partsOf (p).length > 1);     // (Several columns: the labels' unseen box left out - every label without one, so the dates still line up, at the pane's edge)
     head.hidden = week.hidden = ! dated;
     more.disconnect (); end.remove ();
     if (! dated) {
