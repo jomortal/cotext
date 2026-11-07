@@ -405,13 +405,14 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
 // notes.ts' "Reading plan": one calendar kept while the page lives, shown at today's month whenever the pane draws it
 // afresh; PLAN over it (more than one plan) picks the open plan - the screen's too.
 let screenDraw = () => {};     // (The screen's calendar drawn again: a tick in the resource; set while the screen is made)
+let screenPlan = () => {};     // (The screen drawn for the open plan again: another picked in the resource's PLAN; set while the screen is made)
 let pane: { el: HTMLElement; cal: ReturnType<typeof calendar>; pick: HTMLElement; sel: HTMLSelectElement } | null = null;
 /** The resource's calendar, drawn for the plans as they are now (notes.ts puts it in the pane) - at today's month when
  *  fresh (just put in), else at the month it shows. */
 export function planPane (fresh: boolean): HTMLElement {
   if (! pane) {
     const cal = calendar ({ done: () => screenDraw () }), box = el ("div", "planPane"), pick = el ("label", "field", "Plan"), sel = el ("select", "choose");
-    sel.addEventListener ("change", () => { at = sel.value; save (); pane!.cal.draw (); });
+    sel.addEventListener ("change", () => { at = sel.value; save (); pane!.cal.draw (); screenPlan (); });
     pick.append (sel);
     box.append (pick, cal.el);
     pane = { el: box, cal, pick, sel };
@@ -586,6 +587,7 @@ onScreen ("Reading plan", (body) => {
     if (n && ! rs.length) lines.append (el ("p", "", "No readings this day."));
   }
   drawTop ();
+  screenPlan = () => { if (! top.isConnected) return; drawTop (); pickAfresh (); drawEditor (); cal.draw (); };     // (The screen not shown: drawn afresh when opened)
   show (editing);
   void drawEditor ();
   requestAnimationFrame (cal.toToday);
