@@ -5,7 +5,7 @@
 // (vocabQuestions: Machen's lesson's own words; the other courses' the testament's next 10 most frequent).
 // - THE PATH: the course's lessons in the grammar's order, a row each - its number and title, under it how it stands:
 //   PASSED (and the best score), the best score so far and what passing takes, START, or LOCKED (greyed, not opening)
-//   until the lesson before is passed.
+//   until the lesson before is passed - unless OPEN ALL LESSONS (a switch above them, kept) opens every one, to try them out.
 // - A LESSON: ALL LESSONS (back to the path) and READ THE GRAMMAR (the lesson's sections, the grammar's own text - as the
 //   word panel's GRAMMAR shows them: grammar.ts' readSections - shown or hidden above the quiz); its title and the
 //   grammar's §§ under it (unfoldingWord, without §§: its name alone); then its questions and its words one at a time, in a new order each time: the question on a card
@@ -41,8 +41,9 @@ import { COURSES, VOCAB_PER_LESSON, type Course, type Lesson, type Question } fr
 const PASS = 0.8;
 const KEY = "cotext.learn";
 /** What's kept: the course picked (its id; none yet: the testament's language), the letters lesson's pronunciation
- *  (PRONUNCIATION; none yet: modern) and each lesson's best score (0-1, by lesson id). */
-interface Kept { course?: string; greek?: Greek; best: Record<string, number>; }
+ *  (PRONUNCIATION; none yet: modern), each lesson's best score (0-1, by lesson id) and OPEN ALL LESSONS (all: every
+ *  lesson open, passed or not - for trying them out). */
+interface Kept { course?: string; greek?: Greek; best: Record<string, number>; all?: boolean; }
 /** A guide lesson's Greek: as modern Greek says it, or as Erasmian Greek (pronounce.ts' guides). */
 type Greek = "modern" | "erasmian";
 const greek = (): Greek => kept.greek === "erasmian" ? "erasmian" : "modern";
@@ -51,7 +52,7 @@ try { kept = { ...kept, ...JSON.parse (localStorage.getItem (KEY) ?? "{}") }; ke
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (kept)); } catch { /* private mode: not kept */ } };
 
 const passed = (l: Lesson) => (kept.best[l.id] ?? 0) >= PASS;
-const open = (c: Course, i: number) => i === 0 || passed (c.lessons[i - 1]);
+const open = (c: Course, i: number) => kept.all || i === 0 || passed (c.lessons[i - 1]);
 const pct = (x: number) => `${Math.round (x * 100)}%`;
 const course = () => COURSES.find ((c) => c.id === kept.course) ?? COURSES.find ((c) => c.lang === (currentTestament () === "OT" ? "H" : "G"))!;
 
@@ -86,7 +87,9 @@ async function draw (screenBody: HTMLElement) {
   const path = () => {
     const c = course ();
     body.innerHTML = `<div class="fieldRow"><label class="field">Course<select class="choose">${COURSES.map ((x) => `<option value="${x.id}">${esc (x.name)}</option>`).join ("")}</select></label></div>
+      <div class="bar"><button class="pill" data-k="all" aria-pressed="${!! kept.all}">Open all lessons</button></div>
       <div class="learnPath"></div><p class="credit"></p>`;
+    body.querySelector ("[data-k=all]")!.addEventListener ("click", () => { kept.all = ! kept.all; save (); path (); });
     const pick = body.querySelector<HTMLSelectElement> ("select")!;
     pick.value = c.id;
     pick.addEventListener ("change", () => { kept.course = pick.value; save (); path (); relist (); });
