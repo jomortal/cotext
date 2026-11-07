@@ -9,8 +9,8 @@
 //   Verse cards' decks: SELECT PLAN, DELETE PLAN, + NEW PLAN, NAME; then the plan's own START, REPEAT and MOVE UNREAD
 //   TO NEXT DAY), and a bottom bar with a pencil in its middle showing or hiding EDIT - a screen's panel (layout.ts'
 //   deckPaneSplit, as the Study printout's editor): the plan's columns (EDIT, below). A plan day tapped (not on a
-//   reading) is picked - its tint - and EDIT brought to it. A column's QUICK FILL ticked, EDIT fills it from books and
-//   days instead of reading by reading (QUICK FILL, below).
+//   reading) is picked - its tint - and EDIT brought to it. A column's QUICK FILL ticked, EDIT fills it from sections of
+//   books and days instead of reading by reading (QUICK FILL, below).
 // Each plan, kept with it: START - "Not on the calendar" (the default) or "On a date" (its MONTH, DAY and YEAR: every
 // date from it on a reading day); REPEAT and MOVE UNREAD TO NEXT DAY, shown on the calendar only: REPEAT - each column
 // starting over at its own end (columns of different lengths cycling against each other - a polymeter -, so the plan
@@ -36,7 +36,7 @@
 // here (not offered again), plans: [{ id, name, base?: a FACTORY key, cols?: its columns (each its readings in order,
 // Day 1 first, each as parse reads it, "" an empty slot; none: the base's), start: "YYYY-MM-DD" ("" not on the
 // calendar), repeat, moveUnread, done: { column: the plan days marked read }, read: { column: the dates marked read
-// (MOVE UNREAD), quick: { column: its QUICK FILL - on, days, books } } }] } - a column by its number, 0 first. A plan whose base is no longer made is dropped; one kept
+// (MOVE UNREAD), quick: { column: its QUICK FILL - on, days, sections } } }] } - a column by its number, 0 first. A plan whose base is no longer made is dropped; one kept
 // another way (before columns) keeps its name and settings, its days lost. A factory plan new to the device is added to
 // its plans; every plan deleted, the factory plans back, unedited.
 
@@ -59,8 +59,8 @@ import { box } from "./zoom";
 interface Plan { id: string; name: string; base?: Base; cols?: string[][]; start: string; repeat?: boolean;
                  moveUnread?: boolean; done: Record<string, number[]>; read: Record<string, string[]>; quick?: Record<string, Quick>; }
 /** A column's QUICK FILL (QUICK FILL, below), by column ("0" first) in its plan's quick: on (ticked), days (DAYS: how
- *  many days to read them in, 1 or more) and books (their codes, in the order added). */
-interface Quick { on: boolean; days: number; books: string[]; }
+ *  many days to read them in, 1 or more) and sections (each FROM BOOK to TO BOOK, by code, in the order added). */
+interface Quick { on: boolean; days: number; sections: { from: string; to: string }[]; }
 /** One reading: book (its code), whole chapters c1 to c2. */
 interface Reading { code: string; c1: number; c2: number; }
 
@@ -149,7 +149,7 @@ function quicks (v: unknown): Record<string, Quick> {
   if (v && typeof v === "object" && ! Array.isArray (v))
     for (const [k, q] of Object.entries (v as Record<string, Quick>))
       if (q && typeof q === "object") out[k] = { on: q.on === true, days: Number.isInteger (q.days) && q.days > 0 ? q.days : 30,
-                                                 books: Array.isArray (q.books) ? q.books.filter ((b) => typeof b === "string") : [] };
+                                                 sections: Array.isArray (q.sections) ? q.sections.filter ((x) => x && typeof x.from === "string" && typeof x.to === "string") : [] };
   return out;
 }
 function save () {
@@ -211,8 +211,8 @@ function removeCol (p: Plan, c: number) {
 }
 
 //==== QUICK FILL ====
-// A column filled from books and days, not reading by reading: QUICK FILL ticked over a column in EDIT shows DAYS and
-// its books (a BOOK picker each, added one at a time), and every change makes the column's readings afresh - ordinary
+// A column filled from sections of books and days, not reading by reading: QUICK FILL ticked over a column in EDIT shows DAYS and
+// its sections (FROM BOOK and TO BOOK each, added one at a time - a section its books from the one to the other), and every change makes the column's readings afresh - ordinary
 // readings, kept in its cols as any (so the calendar, the list, READ, REPEAT and MOVE UNREAD take them as they are).
 // The books' chapters in order: more chapters than days, the adjacent pair of readings in the same book (a reading is
 // one book) whose words together are fewest merged, again and again, until there's a reading a day - the short
@@ -232,14 +232,18 @@ function chapterWords (code: string): Promise<number[]> {
   }
   return wordCounts.get (code)!;
 }
+/** Book code's place in the books' order. */
+const bookAt = (code: string) => bookList.findIndex ((x) => x.code === code);
+/** QUICK FILL's books, its sections' in order (a section FROM BOOK to TO BOOK, TO BOOK before FROM BOOK just FROM BOOK). */
+const quickBooks = (q: Quick) => q.sections.flatMap ((x) => bookList.slice (bookAt (x.from), Math.max (bookAt (x.from), bookAt (x.to)) + 1).map ((b) => b.code));
 /** The fewest days QUICK FILL's books can be read in: a reading a book. */
-const fewestDays = (q: Quick) => q.books.length;
+const fewestDays = (q: Quick) => quickBooks (q).length;
 /** Column c's readings made afresh from its QUICK FILL (above) and kept. */
 async function quickFill (p: Plan, c: number) {
   const q = p.quick?.[String (c)];
   if (! q) return;
-  const counts = await Promise.all (q.books.map (chapterWords));
-  const rs = q.books.flatMap ((code, k) => counts[k].map ((n, i) => ({ code, c1: i + 1, c2: i + 1, n })));
+  const bs = quickBooks (q), counts = await Promise.all (bs.map (chapterWords));
+  const rs = bs.flatMap ((code, k) => counts[k].map ((n, i) => ({ code, c1: i + 1, c2: i + 1, n })));
   const days = Math.max (q.days, fewestDays (q));
   let out: string[];
   if (rs.length > days) {
@@ -616,14 +620,14 @@ onScreen ("Reading plan", (body) => {
   const where = (line: HTMLElement) => ({ c: +line.closest<HTMLElement> (".planEditCol")!.dataset.c!, i: +line.dataset.i! });
   /** Column c's block: its head ("Column N" where the columns are side by side, QUICK FILL, and DELETE COLUMN with
    *  several), then its lines (to be filled as they near the view) and + Add reading (a reading on its next day,
-   *  filled at once) - or, QUICK FILL ticked, its DAYS and books (quickBody). */
+   *  filled at once) - or, QUICK FILL ticked, its DAYS and sections (quickBody). */
   function colBlock (c: number): HTMLElement {
     const p = now (), block = el ("div", "planEditCol"), head = el ("div", "planEditHead"), list = el ("div", "planEditLines");
     block.dataset.c = String (c);
     const quick = () => p.quick?.[block.dataset.c!];
     const tick = check (!! quick ()?.on, (on) => {
       const k = block.dataset.c!, col = colsOf (p)[+k];
-      (p.quick ??= {})[k] = { ...(quick () ?? { days: col.length || 30, books: [] }), on };     // (First ticked: DAYS the column's length, no books)
+      (p.quick ??= {})[k] = { ...(quick () ?? { days: col.length || 30, sections: [] }), on };     // (First ticked: DAYS the column's length, no sections)
       save (); body ();
     }, "Quick fill");
     const del = el ("button", "pill planDelCol", "Delete column");     // (In words, as DELETE PLAN: not a reading's ✕)
@@ -645,7 +649,7 @@ onScreen ("Reading plan", (body) => {
       line.scrollIntoView ({ block: "nearest" });
       edited ();
     });
-    /** The block under its head drawn for QUICK FILL as it is: the lines afresh, or DAYS and the books. */
+    /** The block under its head drawn for QUICK FILL as it is: the lines afresh, or DAYS and the sections. */
     const body = () => {
       if (quick ()?.on) { block.replaceChildren (head, ...quickBody (block, quick ()!, body)); return; }
       list.replaceChildren (...colsOf (p)[+block.dataset.c!].map ((_, i) => stub (i)));
@@ -654,8 +658,9 @@ onScreen ("Reading plan", (body) => {
     body ();
     return block;
   }
-  /** QUICK FILL's settings for a block's column: DAYS (typed, kept on a change), a line per book (BOOK, ✕) and
-   *  + Add book (the book after the last, Genesis first) - each change making the column's readings afresh
+  /** QUICK FILL's settings for a block's column: DAYS (typed, kept on a change), a line per section (FROM BOOK,
+   *  TO BOOK - from FROM BOOK on -, ✕) and
+   *  + Add section (from and to the book after the last section's, Genesis first) - each change making the column's readings afresh
    *  (quickFill), then this drawn again (redraw) and the calendars. */
   function quickBody (block: HTMLElement, q: Quick, redraw: () => void): HTMLElement[] {
     const p = now ();
@@ -674,21 +679,24 @@ onScreen ("Reading plan", (body) => {
     row.append (days);
     const out: HTMLElement[] = [row];
     if (q.days < fewestDays (q)) out.push (el ("p", "src", `Needs at least ${fewestDays (q)} days: a reading a book.`));
-    q.books.forEach ((code, k) => {
+    const opts = (from: number) => bookList.slice (from).map ((x): [string, string, string] => [x.code, x.name, ABBR[x.name]]);
+    q.sections.forEach ((sec, k) => {
       const line = el ("div", "csLine planEditLine"), place = el ("div", "fieldRow planPlace");
-      place.append (pick ("Book", bookList.map ((x): [string, string, string] => [x.code, x.name, ABBR[x.name]]), code,
-                          (v) => { q.books[k] = v; void changed (); }));
+      place.append (pick ("From book", opts (0), sec.from,
+                          (v) => { q.sections[k] = { from: v, to: bookAt (sec.to) < bookAt (v) ? v : sec.to }; void changed (); }),
+                    pick ("To book", opts (bookAt (sec.from)), sec.to, (v) => { q.sections[k] = { ...sec, to: v }; void changed (); }));
       const x = el ("button", "pill icon csRemove");
-      setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this book");
-      x.addEventListener ("click", () => { q.books.splice (k, 1); void changed (); });
+      setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this section");
+      x.addEventListener ("click", () => { q.sections.splice (k, 1); void changed (); });
       place.append (x);
       line.append (place);
       out.push (line);
     });
-    const add = el ("button", "pill action", "+ Add book");
+    const add = el ("button", "pill action", "+ Add section");
     add.addEventListener ("click", () => {
-      const last = bookList.findIndex ((x) => x.code === q.books[q.books.length - 1]);
-      q.books.push (bookList[Math.min (last + 1, bookList.length - 1)].code);     // (None yet: -1 + 1, Genesis)
+      const last = q.sections.length ? bookAt (q.sections[q.sections.length - 1].to) : -1;
+      const code = bookList[Math.min (last + 1, bookList.length - 1)].code;     // (None yet: -1 + 1, Genesis)
+      q.sections.push ({ from: code, to: code });
       void changed ();
     });
     out.push (add);
