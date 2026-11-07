@@ -325,8 +325,9 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 #pickerBody > .src:first-child { margin-top: 0; }
 .pickerCard { max-width: var(--page); margin: 0 auto; display: grid; gap: var(--gap); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
-.choices .pill { font-size: var(--fs-l); padding: 7px 0; }
-.choices.numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 8px 10px 10px; border-top: var(--hair); }     /* (A book's chapters, open under it in the list: six to a row, every row even) */
+:is(.choices, .chooseList.numbers) .pill { font-size: var(--fs-l); padding: 7px 0; }
+:is(.choices, .chooseList).numbers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; padding: 8px 10px 10px; } .choices.numbers { border-top: var(--hair); }     /* (Numbers six to a row, every row even: a book's chapters, open under it in the list; a picker of numbers - choose.ts) */
+.chooseList.numbers { grid-template-columns: repeat(6, minmax(2.6em, 1fr)); } .chooseList.numbers > .chooseItem { grid-column: 1 / -1; }     /* (A picker's: each number at least two digits' room; a word - Start, End - its own row) */
 
 /* The study drawer (☰): from the left, above everything; its items with the mock-up's icons (one stroke drawing
    each, a mask over the text's color). */

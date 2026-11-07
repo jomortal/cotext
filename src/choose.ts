@@ -3,7 +3,9 @@
 // open the choices as a plain list just under it (or over it, near the bottom of the screen), over the page (no animation - iOS's own picker grows out of the control as a
 // bubble), the current one marked; a choice tapped is picked and the list closes, as does tapping the button again or
 // anywhere else. The <select> stays, hidden, as the value: its change event and value work as before, so the screens'
-// code is unchanged (setting value or selectedIndex updates the button too).
+// code is unchanged (setting value or selectedIndex updates the button too). A picker of numbers (chapters, verses: every
+// choice a number but at most two words - Start, End, All) opens as the book picker's chapters do: the numbers six to a
+// row as pills (style.css' .numbers), the words a row each above or below them, in their place in the list.
 
 import { box, px } from "./zoom";
 import { openRoom } from "./bars";
@@ -61,13 +63,16 @@ function enhance (sel: HTMLSelectElement) {
     if (! list.hidden) { close (); return; }
     for (const l of document.querySelectorAll<HTMLElement> (".chooseList:not(.inline)")) l.hidden = true;     // (One open at a time)
     list.innerHTML = "";
+    const shown = [...sel.options].filter ((o) => ! o.hidden), isNum = (o: HTMLOptionElement) => /^\d+$/.test (o.textContent ?? "");
+    const grid = ! sel.querySelector ("optgroup") && shown.filter (isNum).length >= 2 && shown.filter ((o) => ! isNum (o)).length <= 2;
+    list.classList.toggle ("numbers", grid);
     for (const el of sel.children) {
       const opts = el instanceof HTMLOptGroupElement ? [...el.children] : [el];
       if (el instanceof HTMLOptGroupElement) { const h = document.createElement ("div"); h.className = "ref"; h.textContent = el.label; list.append (h); }
       for (const o of opts as HTMLOptionElement[]) {
         if (o.hidden) continue;     // (A choice not offered just now: Verse cards' None while English only is ticked)
         const b = document.createElement ("button");
-        b.type = "button"; b.className = "chooseItem"; b.textContent = o.textContent;
+        b.type = "button"; b.className = grid && isNum (o) ? "pill" : "chooseItem"; b.textContent = o.textContent;
         b.setAttribute ("aria-pressed", String (o.selected));
         b.addEventListener ("click", (ev) => {
           ev.stopPropagation (); close ();
