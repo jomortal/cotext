@@ -428,6 +428,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 
 /* GRAMMAR, in the grammar section's box (a term tapped): a picker like the notes panel's. */
 :is(.sheet, .pane) .field:not(.fieldRow *) { margin: var(--gap) 0; }     /* (A field on its own line in a panel - LEXICON, GRAMMAR, the atlas' BASE MAP -: room over and under, among the panel's text) */
+#notes .field:not(.fieldRow *):first-child { margin-top: 0; }     /* (One first in the resource - its PLAN, BASE MAP -: as near the picker as any resource's first line, the pane's own padding over it) */
 /* GRAMMAR and the ✕ stay at the panel's top while the section scrolls: the panel itself doesn't scroll then - a
    column, the picker over the section's own scroller (.giScroll: its heading and text), so the text never runs up
    behind the picker. */
