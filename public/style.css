@@ -521,6 +521,9 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    parsing's terms (.term). */
 .card.learnCard { cursor: default; } .learnCard .cardBack { font-size: var(--fs-xl); }     /* (A question in English: larger than a flashcard's back - a word alone, .cardFront, the card's own size) */
 .learnQuiz { display: grid; gap: var(--gap); }
+/* Learn's ALL QUESTIONS (a .deckPane): each lesson's title over its questions numbered, each its right answer under it
+   in the accent (the quiz's right answer's color). */
+.learnList ol { margin: 0; padding-left: 2em; display: grid; gap: var(--gap-s); } .learnAnswer { color: var(--accent); }
 .chooseItem.wrong { color: var(--wrong); text-decoration: line-through; }     /* (A wrong pick: --wrong, struck through) */
 
 /* Verse cards (versecards.ts): the add row (the reference, its original, + ADD CARD), the deck - its front the reference,

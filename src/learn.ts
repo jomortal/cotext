@@ -21,6 +21,8 @@
 //   which shows ☰ Pronunciation's tables for it in the grammar's place; its questions made from them (letterQuestions) -
 //   each of its letters (or, LETTERS TOGETHER, its letter pairs), then a few words to read (wordQuestions) -, SHOW IN THE GUIDE marking a letter's row; no
 //   vocabulary. Changing PRONUNCIATION restarts the lesson in it.
+// - ALL QUESTIONS: the bottom bar's list icon (as Flashcards' WORD LIST) opens a screen's panel listing the course's
+//   lessons, each its questions numbered with their right answers (allQuestions) - to look over without taking them.
 // Kept on the device ("cotext.learn"): the course picked, the letters' pronunciation and each lesson's best score - a
 // lesson passed stays passed.
 // Hebrew and Greek in a question or choice are set in their own fonts (marked).
@@ -31,6 +33,8 @@ import { drawGuide, greekLetters, greekPairs } from "./pronounce";
 import { modernGreek, erasmianGreek } from "./translit";
 import { shuffle } from "./cards";
 import { frequentWords, greekCounts } from "./vocab";
+import { ICONS } from "./icons";
+import { deckPaneSplit } from "./layout";
 import { COURSES, VOCAB_PER_LESSON, type Course, type Lesson, type Question } from "./learncourses";
 
 /** The share of a lesson's questions answered right that passes it (and opens the next). */
@@ -60,7 +64,24 @@ const marked = (s: string) => esc (s).replace (HE, (m) => `<span class="heWord" 
 /** A prompt that's a short word in Hebrew or Greek alone (no English): shown large, as a flashcard's front. */
 const wordOnly = (s: string) => s.length <= 14 && ! /[A-Za-z?]/.test (s);
 
-async function draw (body: HTMLElement) {
+async function draw (screenBody: HTMLElement) {
+  // The screen: the path or a lesson (body), the bottom bar - its list icon in the middle (as Flashcards' WORD LIST) -
+  // and ALL QUESTIONS, a screen's panel (.deckPane: at the foot upright, at the right sideways), shown or hidden by the
+  // icon and closed by its ✕
+  screenBody.innerHTML = `<div class="learnMain"></div><div class="bottomBar"></div>
+    <div class="deckPane" hidden><div class="top paneHead"><h2 class="title">All questions</h2><button class="pill icon" aria-label="Close">${ICONS.x}</button></div></div>`;
+  const body = screenBody.querySelector<HTMLElement> (".learnMain")!, pane = screenBody.querySelector<HTMLElement> (".deckPane")!;
+  const listBtn = document.createElement ("button");
+  Object.assign (listBtn, { type: "button", className: "pill icon barMid", innerHTML: ICONS.list }); listBtn.setAttribute ("aria-label", "All questions");
+  screenBody.querySelector (".bottomBar")!.append (listBtn);
+  const listEl = deckPaneSplit (pane);     // (Its title over its scroller, its divider, its size: layout.ts)
+  const showList = (on: boolean) => { pane.hidden = ! on; listBtn.setAttribute ("aria-pressed", String (on)); if (on) allQuestions (course (), listEl); };
+  listBtn.addEventListener ("click", () => showList (pane.hidden));
+  pane.querySelector (".paneHead .pill")!.addEventListener ("click", () => showList (false));
+  showList (false);
+  /** Drawn again for what changed: the course picked, the letters' pronunciation. */
+  const relist = () => { if (! pane.hidden) allQuestions (course (), listEl); };
+
   /** The path: COURSE, then the course's lessons. */
   const path = () => {
     const c = course ();
@@ -68,7 +89,7 @@ async function draw (body: HTMLElement) {
       <div class="learnPath"></div><p class="credit"></p>`;
     const pick = body.querySelector<HTMLSelectElement> ("select")!;
     pick.value = c.id;
-    pick.addEventListener ("change", () => { kept.course = pick.value; save (); path (); });
+    pick.addEventListener ("change", () => { kept.course = pick.value; save (); path (); relist (); });
     const list = body.querySelector<HTMLElement> (".learnPath")!;
     c.lessons.forEach ((l, i) => {
       const best = kept.best[l.id], ok = open (c, i);
@@ -99,7 +120,7 @@ async function draw (body: HTMLElement) {
       read.textContent = "Read the guide"; body.querySelector (".src")!.textContent = "Pronunciation guide"; drawGuide (gram, greek ());
       const pick = body.querySelector<HTMLSelectElement> ("select")!;
       pick.value = greek ();
-      pick.addEventListener ("change", () => { kept.greek = pick.value as Greek; save (); lesson (c, i); });     // (The lesson restarted in it)
+      pick.addEventListener ("change", () => { kept.greek = pick.value as Greek; save (); lesson (c, i); relist (); });     // (The lesson restarted in it)
     }
     const ready = l.guide ? Promise.resolve () : readSections (c.id, l.sections).then ((s) => {
       if (! gram.isConnected) return;     // (Another lesson or the path drawn meanwhile)
@@ -180,6 +201,21 @@ async function draw (body: HTMLElement) {
   };
 
   path ();
+}
+
+/** ALL QUESTIONS (the panel): course c's lessons in order, each its number and title over its questions numbered, each
+ *  question with its right answer under it (in the accent, as when answered) - the lesson's questions as the quiz asks
+ *  them: the grammar's in learncourses.ts' order, then its words (vocabQuestions; each asked one way at random, so a
+ *  word's way here may differ from the quiz's); a guide lesson's letters and words (letterQuestions) in Learn's
+ *  PRONUNCIATION. Without the database, the grammar's questions alone. A later call wins over one still arriving. */
+let listing = 0;
+async function allQuestions (c: Course, el: HTMLElement) {
+  const n = ++listing;
+  const lessons = await Promise.all (c.lessons.map (async (l, i) => l.guide ? letterQuestions (c, i, greek ())
+    : [...l.questions, ...await vocabQuestions (c, i).catch (() => [] as Question[])]));
+  if (n !== listing) return;
+  el.innerHTML = lessons.map ((qs, i) => `<div class="learnList"><h3 class="title">${i + 1}. ${esc (c.lessons[i].title)}</h3><ol>${qs.map ((q) =>
+    `<li><div>${marked (q.q)}</div><div class="learnAnswer">${marked (q.a)}</div></li>`).join ("")}</ol></div>`).join ("");
 }
 
 /** A course's words as learn.ts quizzes them: word (as shown), meaning, count (in the OT or NT; none: not found). */
