@@ -22,17 +22,19 @@
 //   in the accent; each opening shows today's month, today scrolled into view.
 // A reading tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read
 // whole chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so:
-// mcheyne.py). M'Cheyne's (the factory plan, mcheyne.ts: its 365 days in order) is the plan its edits are laid over: its
-// days kept as they ship, the user's changes kept apart (days) - so a corrected factory plan reaches every device,
-// edited days excepted.
-// Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, plans: [{ id, name, base?:
-// "mcheyne", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
+// mcheyne.py). The factory plans (FACTORY: M'Cheyne's, mcheyne.ts, and Three Readings - Psalms and the NT, Genesis-2
+// Chronicles, Ezra-Malachi, a chapter or two each a day: threeplan.ts, threeplan.py - each 365 days in order) are what
+// their edits are laid over: their days kept as they ship, the user's changes kept apart (days) - so a corrected factory
+// plan reaches every device, edited days excepted.
+// Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, removed: the factory plans deleted
+// here (not offered again), plans: [{ id, name, base?: "mcheyne" | "three", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
 // Sunday 1 ... Saturday 64), days: { "<day number, 1 first>": readings }, done: the plan days marked done }] } - a day's readings joined by ";", each as
 // parse reads it; a day in days overrides the base's ("" none). A plan saved another way (before days were numbered) is
-// dropped. Every plan deleted: M'Cheyne's back, unedited.
+// dropped. A factory plan new to the device is added to its plans; every plan deleted, the factory plans back, unedited.
 
 import type { Book } from "./reader";
 import { MCHEYNE } from "./mcheyne";
+import { THREEPLAN } from "./threeplan";
 import { ABBR } from "./booknames";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
@@ -41,37 +43,47 @@ import { deckPaneSplit } from "./layout";
 
 //==== PLANS ====
 
-interface Plan { id: string; name: string; base?: "mcheyne"; count: number; start: string; week: number; days: Record<string, string>; done: number[]; }
+interface Plan { id: string; name: string; base?: Base; count: number; start: string; week: number; days: Record<string, string>; done: number[]; }
 /** One reading: book (its code), whole chapters c1 to c2. */
 interface Reading { code: string; c1: number; c2: number; }
 
 const KEY = "cotext.readingplans";
-const CREDIT = "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4.";
+/** The factory plans, by base: each its name, days (mcheyne.ts, threeplan.ts - Day 1 first) and credit. Each is offered on
+ *  every device until deleted there (removed, below); all deleted, they come back. */
+type Base = "mcheyne" | "three";
+const FACTORY: Record<Base, { name: string; days: string[]; credit: string }> = {
+  mcheyne: { name: "M'Cheyne", days: MCHEYNE, credit: "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4." },
+  three: { name: "Three Readings", days: THREEPLAN, credit: "Reading plan generated for COTEXT: Psalms and the New Testament; Genesis to 2 Chronicles; Ezra to Malachi." },
+};
+const BASES = Object.keys (FACTORY) as Base[];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const EVERY_DAY = 127;     // (week: every weekday ticked)
 
-const factory = (): Plan => ({ id: "mcheyne", name: "M'Cheyne", base: "mcheyne", count: MCHEYNE.length, start: "", week: EVERY_DAY, days: {}, done: [] });
+const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, count: FACTORY[b].days.length, start: "", week: EVERY_DAY, days: {}, done: [] });
 let plans: Plan[] = [];
+let removed: Base[] = [];     // (The factory plans deleted on this device: not offered again until every plan is)
 let at = "";
 function load () {
-  plans = [];
+  plans = []; removed = [];
   try {
     const s = JSON.parse (localStorage.getItem (KEY) ?? "null");
     if (s && Array.isArray (s.plans)) {
       plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count))
-                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base === "mcheyne" ? { base: p.base } : {}), count: Math.max (0, p.count),
+                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base && p.base in FACTORY ? { base: p.base } : {}), count: Math.max (0, p.count),
                                            start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
                                            week: Number.isInteger (p.week) && p.week > 0 && p.week <= EVERY_DAY ? p.week : EVERY_DAY, days: p.days,
                                            done: Array.isArray (p.done) ? p.done.filter ((n) => Number.isInteger (n)) : [] }));
       at = String (s.at ?? "");
+      removed = Array.isArray (s.removed) ? s.removed.filter ((b: Base) => b in FACTORY) : [];
     }
-  } catch { /* unreadable or private mode: the factory plan */ }
-  if (! plans.length) plans = [factory ()];
+  } catch { /* unreadable or private mode: the factory plans */ }
+  for (const b of BASES) if (! plans.some ((p) => p.base === b) && ! removed.includes (b)) plans.push (factory (b));     // (A factory plan new to this device added)
+  if (! plans.length) { removed = []; plans = BASES.map (factory); }
   if (! plans.some ((p) => p.id === at)) at = plans[0].id;
 }
 function save () {
-  try { localStorage.setItem (KEY, JSON.stringify ({ at, plans })); } catch { /* private mode: not kept */ }
+  try { localStorage.setItem (KEY, JSON.stringify ({ at, plans, removed })); } catch { /* private mode: not kept */ }
 }
 load ();
 const now = () => plans.find ((p) => p.id === at)!;
@@ -86,10 +98,10 @@ function setDone (p: Plan, n: number, on: boolean) {
 }
 /** A plan day's readings (n: 1 first): its own edit, else its base's. */
 const dayOf = (p: Plan, n: number): Reading[] =>
-  (String (n) in p.days ? p.days[n] : p.base ? MCHEYNE[n - 1] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
+  (String (n) in p.days ? p.days[n] : p.base ? FACTORY[p.base].days[n - 1] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
 function setDay (p: Plan, n: number, rs: Reading[]) {
   const s = rs.map (format).join (";");
-  if (p.base && (MCHEYNE[n - 1] ?? "") === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
+  if (p.base && (FACTORY[p.base].days[n - 1] ?? "") === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
   save ();
 }
 
@@ -215,7 +227,7 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
         return cell;
       }));
     }
-    box.querySelector (".credit")!.textContent = p.base ? CREDIT : "";
+    box.querySelector (".credit")!.textContent = p.base ? FACTORY[p.base].credit : "";
   }
   /** Today's day scrolled into view (on the calendar, where it's this month's); else the picked day's. */
   const toToday = () => (days.querySelector (".today") ?? days.querySelector (".on"))?.scrollIntoView ({ block: "center" });
@@ -314,7 +326,7 @@ onScreen ("Reading plan", (body) => {
       select: (id) => { at = id; save (); drawTop (); changed (); },
       make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, count: 0, start: "", week: EVERY_DAY, days: {}, done: [] }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
       ask: (p) => `Delete the plan "${shown (p)}"?`,
-      remove: (p) => { plans = plans.filter ((x) => x !== p); if (! plans.length) plans = [factory ()]; at = plans[0].id; save (); drawTop (); changed (); },
+      remove: (p) => { plans = plans.filter ((x) => x !== p); if (p.base && ! plans.some ((x) => x.base === p.base)) removed.push (p.base); if (! plans.length) { removed = []; plans = BASES.map (factory); } at = plans[0].id; save (); drawTop (); changed (); },
       renamed: () => save () });
     row.replaceChildren (named.title);
     drawWhen ();
