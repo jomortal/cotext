@@ -12,9 +12,10 @@
 //   reading) is picked - its tint - and EDIT brought to it. A column's QUICK FILL ticked, EDIT fills it from sections of
 //   books and days instead of reading by reading (QUICK FILL, below).
 // Each plan, kept with it: START - "Not on the calendar" (the default) or "On a date" (its MONTH, DAY and YEAR: every
-// date from it on a reading day); REPEAT and MOVE UNREAD TO NEXT DAY, shown on the calendar only: REPEAT - each column
-// starting over at its own end (columns of different lengths cycling against each other - a polymeter -, so the plan
-// never ends; unticked, each column stops at its end) -, MOVE UNREAD (READ, below).
+// date from it on a reading day); REPEAT - each column starting over at its own end (columns of different lengths
+// cycling against each other - a polymeter -, so the plan never ends: the list drawn only as far as it's scrolled, a
+// stretch more each time its end nears; unticked, each column stops at its end) -; and on the calendar only MOVE
+// UNREAD TO NEXT DAY (READ, below).
 // READ: each column's reading on a day a checkbox - a one-column plan's on the day's label ("Day N" in the list, its
 // date on the calendar), several columns' a checkbox each, before its reading -, ticked when read - in either view (the
 // resource too) ticking hides nothing: the reading stays shown, its box ticked.
@@ -52,7 +53,7 @@ import { box } from "./zoom";
 
 //==== PLANS ====
 
-/** A plan. cols: its columns once edited (none: its base's - colsOf); repeat: on the calendar, each column starting
+/** A plan. cols: its columns once edited (none: its base's - colsOf); repeat: each column starting
  *  over at its own end (else stopping); moveUnread: MOVE UNREAD TO NEXT DAY (READ, below); done: by column ("0"
  *  first), the plan days marked read; read: by column, the dates (YYYY-MM-DD) its reading was marked read on (MOVE
  *  UNREAD). */
@@ -98,7 +99,7 @@ function baseCols (b: Base): string[][] {
 const colsOf = (p: Plan): string[][] => p.cols ?? (p.base ? baseCols (p.base) : []);
 /** A plan's columns made its own to change (a copy of its base's at the first edit). */
 const own = (p: Plan): string[][] => p.cols ??= colsOf (p).map ((c) => [...c]);
-const repeating = (p: Plan) => !! p.start && !! p.repeat;     // (REPEAT: on the calendar only)
+const repeating = (p: Plan) => !! p.repeat;     // (REPEAT: on the calendar or not)
 
 /** A plan's last day: its longest column's; Infinity while REPEAT has a column starting over (never ending). */
 function lastDay (p: Plan): number {
@@ -385,6 +386,12 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
   const week = el ("div", "planWeek");
   week.append (...WEEKDAYS.map ((w) => el ("span", "src", w)));
   const days = el ("div", "planDays");
+  // The list never ending (REPEAT): drawn a stretch at a time (STRETCH days), another added as its end nears the view;
+  // drawn again, as many as were shown (the scroll kept)
+  const STRETCH = 100;
+  let listed = 0, listedFor = "";
+  const more = new IntersectionObserver ((es) => { if (es.some ((e) => e.isIntersecting)) addRows (STRETCH); }, { rootMargin: "800px 0px" });
+  const end = el ("div", "planEnd");
   box.append (head, week, days, el ("p", "credit"));
   const step = (dir: number) => { m += dir; if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; } draw (); };
   back.addEventListener ("click", () => step (-1));
@@ -447,10 +454,14 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     const p = now (), dated = !! p.start, picked = o.picked?. () ?? 0;
     box.classList.toggle ("planList", ! dated);
     head.hidden = week.hidden = ! dated;
+    more.disconnect (); end.remove ();
     if (! dated) {
-      const rows = Array.from ({ length: lastDay (p) }, (_, i) => i + 1).map ((n) => dayCell (p, n, slotsOfDay (p, n), picked));
-      days.replaceChildren (...rows);
-      if (! rows.length) days.append (el ("p", "", "No days yet."));
+      const last = lastDay (p);
+      if (listedFor !== p.id) { listedFor = p.id; listed = 0; }
+      listed = last === Infinity ? Math.max (listed, STRETCH, picked + 20) : last;
+      days.replaceChildren ();
+      addRows (0);
+      if (! listed) days.append (el ("p", "", "No days yet."));
     } else {
       const first = new Date (y, m, 1).getDay (), n = new Date (y, m + 1, 0).getDate (), month = monthSlots (p, y, m);
       title.textContent = `${MONTHS[m]} ${y}`;
@@ -465,6 +476,14 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
       }));
     }
     box.querySelector (".credit")!.textContent = p.base ? FACTORY[p.base].credit : "";
+  }
+  /** The list's rows drawn up to listed (plus extra more): never past the plan's last day; while it goes on (REPEAT),
+   *  the end watched to draw the next stretch. */
+  function addRows (extra: number) {
+    const p = now (), picked = o.picked?. () ?? 0, from = days.querySelectorAll (".planDay").length;
+    listed = Math.min (listed + extra, lastDay (p));
+    for (let n = from + 1; n <= listed; n++) days.append (dayCell (p, n, slotsOfDay (p, n), picked));
+    if (lastDay (p) === Infinity) { days.append (end); more.observe (end); }
   }
   /** Today's day scrolled into view (on the calendar, where it's this month's); else the picked day's. */
   const toToday = () => (days.querySelector (".today") ?? days.querySelector (".on"))?.scrollIntoView ({ block: "center" });
@@ -577,8 +596,8 @@ onScreen ("Reading plan", (body) => {
     menu.replaceChildren (...named.rows, when, options);
     dropDowns ([{ key: "more", button: named.button, menu }], menuOpen, (k) => { menuOpen = k; });     // (Drawn again - a plan picked, made or deleted -: left open as it was)
   }
-  /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set), then on the calendar REPEAT
-   *  and MOVE UNREAD TO NEXT DAY - each change kept and the plan drawn again. */
+  /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set), then REPEAT and on the
+   *  calendar MOVE UNREAD TO NEXT DAY - each change kept and the plan drawn again. */
   function drawWhen () {
     const p = now (), s = startOf (p), t = today ();
     const set = (y: number, m: number, d: number) => { p.start = dateText (y, m, Math.min (d, new Date (y, m + 1, 0).getDate ())); save (); drawWhen (); changed (); };
@@ -590,10 +609,9 @@ onScreen ("Reading plan", (body) => {
       pick ("Day", nums (1, new Date (s.y, s.m + 1, 0).getDate ()), String (s.d), (v) => set (s.y, s.m, +v)),
       pick ("Year", nums (Math.min (s.y, t.y) - 5, Math.max (s.y, t.y) + 5), String (s.y), (v) => set (+v, s.m, s.d)));
     const ticks = el ("div", "csFathers");
-    if (s) ticks.append (check (!! p.repeat, (on) => { p.repeat = on; save (); changed (); }, "Repeat"),
-                         check (!! p.moveUnread, (on) => { p.moveUnread = on; save (); changed (); }, "Move unread to next day"));
+    ticks.append (check (!! p.repeat, (on) => { p.repeat = on; save (); changed (); }, "Repeat"));
+    if (s) ticks.append (check (!! p.moveUnread, (on) => { p.moveUnread = on; save (); changed (); }, "Move unread to next day"));
     options.replaceChildren (ticks);
-    options.hidden = ! s;
   }
 
   /** EDIT, the open plan's columns: a tab each ("Column N", then + Add column) and the picked one's block under them;
