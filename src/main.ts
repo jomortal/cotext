@@ -8,7 +8,7 @@ import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker, togglePicker } from "./picker";
-import { ABBR, nativeName } from "./booknames";
+import { usfm, nativeName } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
@@ -46,8 +46,8 @@ let chapter = 1;
 // The heading's place, a reference pair (refs.ts: bold capitals) on one line across the heading, never wrapped: the
 // book's name and chapter in English and in its own language, either side of the drop-down arrow
 // in its middle, each against it - the Greek at the left, the Hebrew (read from the right) at the right: "GENESIS 1 | בְּרֵאשִׁית א"
-// (style.css' #place .refPair). The two too wide for the heading together: the English abbreviated first, to its SBL
-// abbreviation (booknames.ts' ABBR) with a full stop (1 THESS. 1), then the Greek, without its leading ΚΑΤΑ or ΠΡΟΣ
+// (style.css' #place .refPair). The two too wide for the heading together: the English abbreviated first, to its USFM
+// code (booknames.ts' usfm: 1TH 1), then the Greek, without its leading ΚΑΤΑ or ΠΡΟΣ
 // (ΘΕΣΣΑΛΟΝΙΚΕΙΣ Α΄ Εʹ), then its long words cut short (ΘΕΣ. Α΄ Εʹ); still too wide, both made smaller to fit. Between
 // the two (after the English alone), the drop-down arrow: tapped, the passage opens the book list.
 const crowded = () => [...placeBtn.querySelectorAll (".refPair > *")].some ((e) => e.scrollWidth > e.clientWidth + 0.5);
@@ -57,7 +57,7 @@ function showPlace () {
   // (Between the two, the drop-down arrow - the top rows' own, topbar.ts' - saying the passage opens the book list)
   const draw = (en: string) => { placeBtn.innerHTML = refPair (en, native); placeBtn.querySelector (".refPair")!.append (Object.assign (document.createElement ("span"), { className: "topArrow", ariaHidden: "true" })); };
   draw (`${book.name} ${chapter}`);
-  if (crowded () && ABBR[book.name]) draw (`${ABBR[book.name]}. ${chapter}`);
+  if (crowded ()) draw (`${usfm (book.code)} ${chapter}`);
   const n = placeBtn.querySelector (".refNative.gr");
   if (n && crowded ()) n.textContent = n.textContent!.replace (/^(ΚΑΤΑ|ΠΡΟΣ) /, "");
   if (n && crowded ()) {     // (Still too wide: the name's long words cut to three letters - ΨΑΛ. ΣΟΛ. ΙΗʹ - the chapter kept whole)

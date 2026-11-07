@@ -93,7 +93,7 @@ import { passageArticles, bookArticles, articleBlock, searchArticles } from "./d
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
 import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
-import { nativeName, ABBR } from "./booknames";
+import { nativeName, usfm } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { deckPaneSplit } from "./layout";
 import { box as cssBox, px, winW, winH } from "./zoom";
@@ -364,7 +364,7 @@ async function drawPlace (placeEl: HTMLElement, sec: Section) {
     if (name) name.textContent = refName (sec);     // (Its reference line following)
   };
   const kids: HTMLElement[] = [
-    pick ("Book", bookList ().map ((b) => [b.code, b.name, ABBR[b.name] ?? b.name]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
+    pick ("Book", bookList ().map ((b) => [b.code, b.name, usfm (b.code)]), sec.book.code, (v) => { const b = bookList ().find ((x) => x.code === v); if (b) go (b, 1); }),
     pick ("Chapter", nums (1, sec.book.chapters).map ((n) => [n, n]), String (sec.chapter), (v) => go (sec.book, Number (v))),
     pick ("From verse", [["0", "Start"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.from), (v) => range (Number (v), sec.to)),
     pick ("To verse", [["0", "End"], ...vs.map ((v) => [String (v), String (v)] as [string, string])], String (sec.to), (v) => range (sec.from, Number (v)))];

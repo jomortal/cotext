@@ -44,7 +44,7 @@
 import type { Book } from "./reader";
 import type { Db } from "./db";
 import { MCHEYNE } from "./mcheyne";
-import { ABBR } from "./booknames";
+import { usfm } from "./booknames";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
 import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
@@ -344,9 +344,9 @@ function parse (s: string): Reading | null {
 function format (r: Reading): string {
   return `${r.code} ${r.c1}` + (r.c2 > r.c1 ? `-${r.c2}` : "");
 }
-/** A reading as the plan shows it: the book's SBL abbreviation and its span - "Ps 119", "Gen 9–10". */
+/** A reading as the plan shows it: the book's USFM code (booknames.ts' usfm) and its span - "PSA 119", "GEN 9–10". */
 function label (r: Reading): string {
-  const b = books.get (r.code)!, name = ABBR[b.name] ?? b.name;
+  const b = books.get (r.code)!, name = usfm (b.code);
   return `${name} ${r.c1}` + (r.c2 > r.c1 ? `–${r.c2}` : "");
 }
 
@@ -697,7 +697,7 @@ onScreen ("Reading plan", (body) => {
     row.append (days);
     const out: HTMLElement[] = [row];
     if (q.days < fewestDays (q)) out.push (el ("p", "src", `Needs at least ${fewestDays (q)} days: a reading a book.`));
-    const opts = (from: number) => bookList.slice (from).map ((x): [string, string, string] => [x.code, x.name, ABBR[x.name]]);
+    const opts = (from: number) => bookList.slice (from).map ((x): [string, string, string] => [x.code, x.name, usfm (x.code)]);
     q.sections.forEach ((sec, k) => {
       const line = el ("div", "csLine planEditLine"), place = el ("div", "fieldRow planPlace");
       place.append (pick ("From book", opts (0), sec.from,
@@ -761,7 +761,7 @@ onScreen ("Reading plan", (body) => {
       fillLine (line); edited ();
     };
     const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => [String (from + k), String (from + k)] as [string, string]);
-    place.append (pick ("Book", [["", "None", "—"], ...bookList.map ((x): [string, string, string] => [x.code, x.name, ABBR[x.name]])], r?.code ?? "",
+    place.append (pick ("Book", [["", "None", "—"], ...bookList.map ((x): [string, string, string] => [x.code, x.name, usfm (x.code)])], r?.code ?? "",
                         (v) => set (v ? { code: v, c1: 1, c2: 1 } : null)));
     if (r) {
       const b = books.get (r.code)!;

@@ -40,21 +40,13 @@ export function nativeName (code: string): [string, "he" | "gr"] | null {
   return HE[code] ? [HE[code], "he"] : GR[code] ? [GR[code], "gr"] : null;
 }
 
-/** Each book's SBL abbreviation, by its English name: the heading's place when the full name would wrap (main.ts),
- *  and a reference typed on a verse card (versecards.ts: "Rom 8:28"). */
-export const ABBR: Record<string, string> = { Genesis: "Gen", Exodus: "Exod", Leviticus: "Lev", Numbers: "Num", Deuteronomy: "Deut",
-  Joshua: "Josh", Judges: "Judg", "1 Samuel": "1 Sam", "2 Samuel": "2 Sam", "1 Kings": "1 Kgs", "2 Kings": "2 Kgs",
-  "1 Chronicles": "1 Chr", "2 Chronicles": "2 Chr", Nehemiah: "Neh", Esther: "Esth", Psalms: "Ps", Proverbs: "Prov",
-  Ecclesiastes: "Eccl", "Song of Songs": "Song", Isaiah: "Isa", Jeremiah: "Jer", Lamentations: "Lam", Ezekiel: "Ezek",
-  Daniel: "Dan", Hosea: "Hos", Obadiah: "Obad", Micah: "Mic", Nahum: "Nah", Habakkuk: "Hab", Zephaniah: "Zeph",
-  Haggai: "Hag", Zechariah: "Zech", Malachi: "Mal", Matthew: "Matt", Romans: "Rom", "1 Corinthians": "1 Cor",
-  "2 Corinthians": "2 Cor", Galatians: "Gal", Ephesians: "Eph", Philippians: "Phil", Colossians: "Col",
-  "1 Thessalonians": "1 Thess", "2 Thessalonians": "2 Thess", "1 Timothy": "1 Tim", "2 Timothy": "2 Tim",
-  Philemon: "Phlm", Hebrews: "Heb", James: "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet", Revelation: "Rev",
-  // (The Septuagint's: SBL's, its two texts of a book marked OG / Th)
-  "1 Kingdoms": "1 Kgdms", "2 Kingdoms": "2 Kgdms", "3 Kingdoms": "3 Kgdms", "4 Kingdoms": "4 Kgdms", "1 Esdras": "1 Esd",
-  "2 Esdras (Ezra)": "2 Esd", "2 Esdras (Nehemiah)": "Neh", "Wisdom of Solomon": "Wis", "Sirach (Prologue)": "Sir Prol",
-  "Tobit (Sinaiticus)": "Tob S", "Letter of Jeremiah": "Ep Jer", "Daniel (Old Greek)": "Dan OG", "Daniel (Theodotion)": "Dan Th",
-  "Susanna (Old Greek)": "Sus OG", "Susanna (Theodotion)": "Sus Th", "Bel and the Dragon (Old Greek)": "Bel OG",
-  "Bel and the Dragon (Theodotion)": "Bel Th", "1 Maccabees": "1 Macc", "2 Maccabees": "2 Macc", "3 Maccabees": "3 Macc",
-  "4 Maccabees": "4 Macc", "Psalms of Solomon": "Pss Sol" };
+/** Each book's USFM code, three letters in capitals (GEN, 1SA, MRK) - the one abbreviation everywhere a book is
+ *  shortened: the heading's place when the full name would wrap (main.ts), a reading plan's readings and the book
+ *  pickers' short form. The Hebrew Bible's and the NT's codes are USFM's already (Gen, 1Sa, Mrk); the Septuagint's
+ *  (LXX...) mapped to USFM's - its two texts of a book (Old Greek, Theodotion) both one code, marked OG / TH. */
+export function usfm (code: string): string {
+  const c = code.startsWith ("LXX") ? LXX_USFM[code.slice (3)] ?? code.slice (3) : code;
+  return c.toUpperCase ();
+}
+const LXX_USFM: Record<string, string> = { "1Es": "1ES", Sol: "SNG", Sip: "SIR", Est: "ESG", Tbs: "TOB", Joe: "JOL", Nah: "NAM",
+  Epj: "LJE", Eze: "EZK", Dan: "DAG OG", Dat: "DAG TH", Sus: "SUS OG", Sut: "SUS TH", Bel: "BEL OG", Bet: "BEL TH", "1En": "ENO", Ode: "ODA" };
