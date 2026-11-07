@@ -998,7 +998,7 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planCal:not(.planList) .planN { display: block; }     /* (On the calendar: the plan day under the date) */
 .planDay.today .planDate { color: var(--accent); font-weight: 700; }
 .planDay.on { background: var(--tint); }
-.planN.csCheck { min-height: 0; gap: 4px; }     /* (A day's done: the checkbox on its "Day N", as tall as the line) */
+.planN.csCheck { min-height: 0; gap: 4px; } .planNone input { visibility: hidden; }     /* (A day's done: the checkbox on its "Day N", as tall as the line) */
 .planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
 #screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
 .planPlace { padding-bottom: 8px; }

@@ -13,15 +13,15 @@
 // DAYS, a checkbox a weekday (Sun-Sat, all ticked at first, one at least): the weekdays the plan is read on; REPEAT,
 // shown on the calendar only: after its last day the plan starts over at Day 1 (unticked, it stops); COMBINED PLAN (a
 // plan of plans: COMBINED PLAN, below).
-// DONE: each day's "Day N" a checkbox, ticked when done. In the resource a day ticked is no longer shown (on the
+// DONE: each day a checkbox - labeled "Day N" in the list, its date on the calendar -, ticked when done. In the resource a day ticked is no longer shown (on the
 // calendar its date stays, blank; in the list its row goes); the screen shows every day, the days done ticked -
 // unticked, the day shows in the resource again.
 // - Not on the calendar: the days as a list, a day a row - "Day 1" at its left, its readings beside them - at any width.
 // - On the calendar: the month's name between ‹ and › (the month before and after), then its days - where its box is at
-//   least 560 px wide a week a row, Sunday first, each day its date over its plan day and readings; narrower, a day a
-//   row, its weekday, date and plan day at its left, its readings beside them (style.css' .planCal: a container query,
-//   the box's own width, never the device's). Each ticked weekday from the start date on is given the next plan day -
-//   "Day N" and its readings -; a day not ticked, before the start or after the plan's last day is blank. Today's date
+//   least 560 px wide a week a row, Sunday first, each day its date over its readings; narrower, a day a
+//   row, its weekday and date at its left, its readings beside them (style.css' .planCal: a container query,
+//   the box's own width, never the device's). Each ticked weekday from the start date on is given the next plan day's readings (no "Day N" shown
+//   on the calendar: the date is its name); a day not ticked, before the start or after the plan's last day is blank. Today's date
 //   in the accent; each opening shows today's month, today scrolled into view.
 // A reading tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read
 // whole chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so:
@@ -235,7 +235,7 @@ const today = () => { const d = new Date (); return { y: d.getFullYear (), m: d.
 /** The open plan as a calendar (a start date set) or a list of its days (none): el, its box; draw, drawn again (the
  *  plan or a day changed) - at month (y, m) if given, else the month shown. leaving: called before a reading's passage
  *  is gone to (the screen closed); pick: a plan day tapped (not its readings) - the screen's editor (none in the
- *  resource); picked: the plan day marked picked (0 none). Each day's "Day N" a checkbox, ticked when done; resource: the
+ *  resource); picked: the plan day marked picked (0 none). Each day's checkbox ("Day N"; on the calendar its date), ticked when done; resource: the
  *  resource's - a day ticked no longer shown, the days done left out -; else the screen's, every day shown (done: told
  *  of a change). */
 function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked?: () => number; resource?: boolean; done?: () => void }) {
@@ -258,9 +258,16 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     const cell = el ("div", "planDay");
     if (n && n === picked) cell.classList.add ("on");
     const when = el ("span", "planDate");
-    if (date) when.append (el ("span", "planWd", WEEKDAYS[date.wd] + " "), String (date.d));
+    // (Its label: on the calendar the date - no "Day N" there -, in the list "Day N"; a date with no plan day, the date alone)
+    const named = () => date ? [el ("span", "planWd", WEEKDAYS[date.wd] + " "), String (date.d)] : [`Day ${n}`];
+    if (date && ! n) {     // (A date with no plan day: its box there unseen, so every date lines up)
+      const c = check (false, () => {}, ...named ());
+      c.classList.add ("planN", "planNone");
+      c.querySelector ("input")!.disabled = true;
+      when.append (c);
+    }
     if (n) {
-      const c = check (isDone (p, n), (on) => { setDone (p, n, on); if (o.resource) draw (); else o.done?. (); }, `Day ${n}`);     // (The resource: a day ticked goes)
+      const c = check (isDone (p, n), (on) => { setDone (p, n, on); if (o.resource) draw (); else o.done?. (); }, ...named ());     // (The resource: a day ticked goes)
       c.classList.add ("planN");
       c.addEventListener ("click", (e) => e.stopPropagation ());     // (Ticking it never picks the day)
       when.append (c);
