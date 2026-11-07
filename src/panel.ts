@@ -10,6 +10,7 @@
 // once. makePanel builds one on its root, its elements found by class within it; the lexicons' choice, files and the
 // main database are shared.
 
+import { creditText } from "./credit";
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
 import { rightShare, wordSplit, splitNow, onSplit, addDock } from "./layout";
@@ -247,7 +248,7 @@ function makePanel (sheet: HTMLElement) {
     if (to === "full") defEl.innerHTML = entry.full;
     else showLexicon (to);
     lexCredit.hidden = ! fuller;
-    if (fuller) lexCredit.textContent = LEXICONS[to].credit;
+    if (fuller) creditText (lexCredit, LEXICONS[to].credit);
   }
 
   /** The word's entries in a fuller lexicon into the panel - its file loaded first if it isn't yet (its progress shown).

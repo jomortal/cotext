@@ -38,6 +38,7 @@ import { sectionHtml, folding, foldEl, setFold } from "./grammar";
 import { topTitle, dropDowns, watchTopBar } from "./topbar";
 import { onSwipe, marginArrows } from "./bars";
 import { ICONS } from "./icons";
+import { creditText } from "./credit";
 
 /** A chapter of a resource: key (kept on the device: a verse-keyed one's "book.chapter", a dictionary's letter, a
  *  grammar's first section's seq), group (the first picker's choice: a book's name; "" none - a dictionary, a
@@ -285,7 +286,7 @@ async function draw (body: HTMLElement) {
         return;
       }
     }
-    creditEl.textContent = opened!.credit;
+    creditText (creditEl, opened!.credit);
     const i = opened!.chapters.findIndex ((c) => c.key === kept.at[id]);
     go (Math.max (0, i));
   };

@@ -49,6 +49,7 @@ import { passageMap } from "./atlas";
 import { timelinePane } from "./timeline";
 import { planPane, planToToday } from "./readingplan";
 import { setIcon } from "./icons";
+import { creditText } from "./credit";
 
 export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas" | "timeline" | "readingplan"; name: string; testaments: string; credit: string;
                    file: string; version: string; books?: string; }     // (books: the book ids it has notes for, space-separated - pipeline/source_books.py; '' or none: every book of its testaments)
@@ -234,7 +235,7 @@ async function show () {
   const src = current ();
   if (! book || ! src) return;
   document.getElementById ("notesAdd")!.hidden = src.kind === "dictionary" || src.kind === "readingplan";     // (A dictionary's + by each entry instead; the reading plan none)
-  creditEl.textContent = src.credit;
+  creditText (creditEl, src.credit);
   const n = ++loading;     // (A file still arriving for a source picked before: not shown)
   if (src.file && ! ownFile (src) && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
     ++updating;     // (Any update still reading the old source: dropped)

@@ -30,6 +30,7 @@
 // 'dictionary'); it's downloaded the first time it's needed (a word tapped, to know whether it has an article) and kept
 // (db.ts' openNotesDb).
 
+import { creditText } from "./credit";
 import { openNotesDb, type Db, type Row } from "./db";
 import { wordMap, type Place } from "./atlas";
 
@@ -206,7 +207,7 @@ function articleBody (main: Db, r: Row, o: Opened, open: (id: string) => void, p
   }
   const note = document.createElement ("p");
   note.className = "credit lexCredit";
-  note.textContent = o.credit;
+  creditText (note, o.credit);
   return [...figure, text, note];
 }
 

@@ -84,6 +84,7 @@
 //   per-chapter printouts ("cotext.study.<book>.<chapter>") are brought in once as printouts of their own, their keys
 //   removed; anything unreadable is skipped.
 
+import { creditText } from "./credit";
 import { setIcon, type IconName } from "./icons";
 import type { Db, Row } from "./db";
 import { chapterWords, verseWords, showChapter, latin, type Book, type Word } from "./reader";
@@ -1374,7 +1375,7 @@ function drawSources () {
   });
   const notes = licenses (ids);
   sourcesEl.replaceChildren (el ("h2", "csHead", bibHeading (style)), ...entries,
-                             ...(notes.length ? [el ("h3", "csArticle", "Licenses"), ...notes.map ((t) => el ("p", "credit", t))] : []));
+                             ...(notes.length ? [el ("h3", "csArticle", "Licenses"), ...notes.map ((t) => { const p = el ("p", "credit"); creditText (p, t); return p; })] : []));
 }
 
 /** An Atlas item's map, made once (atlas.ts' passageMap): its pickers (BASE MAP, POLITICAL BOUNDARIES, ROUTE) moved

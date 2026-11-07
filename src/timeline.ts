@@ -17,6 +17,7 @@
 // - Dates follow Theographic (Floyd Nolen Jones's chronology, after Ussher), said in one line over the timeline: before
 //   the kings approximate and disputed. Every date is shown "c.".
 
+import { creditText } from "./credit";
 import { openNotesDb, type Db } from "./db";
 import { box, px } from "./zoom";
 import { onScreen, closeScreen } from "./study";
@@ -328,7 +329,7 @@ onScreen ("Timeline", async (body) => {
   let d: Data | null = null;
   try { d = await data (); } catch { /* offline the first time */ }
   if (! d) { status.textContent = "The timeline isn't available offline until it's been opened once online."; return; }
-  credit.textContent = d.credit;
+  creditText (credit, d.credit);
   const view = timelineView (d, (it) => { closeScreen (); goVerse (it.book, it.chapter, it.verse); });
   holder.replaceWith (view.el);
   const [book, chapter] = placeNow ();

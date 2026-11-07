@@ -35,6 +35,7 @@
 //   picked place's first, the regions' after them, the book's faint places' last. Colors from style.css' tokens
 //   (--map-*, the accent; the provinces and regions in the verb colors).
 
+import { creditText } from "./credit";
 import { openNotesDb, type Db, type Row } from "./db";
 import { box, px } from "./zoom";
 
@@ -369,12 +370,12 @@ function makeMap () {
     if (picker.options.length !== offered.length || [...picker.options].some ((o, i) => o.value !== offered[i].id))
       picker.replaceChildren (...offered.map ((m) => new Option (m.name, m.id)));
     picker.value = id; cur = id;
-    credits.textContent = maps.find ((m) => m.id === id)?.credit ?? "";
+    creditText (credits, maps.find ((m) => m.id === id)?.credit ?? "");
     // POLITICAL BOUNDARIES: Off or the era's
     const e = eras.get (era);
     eraRow.hidden = ! e;
     if (e) { eraPick.replaceChildren (new Option ("Off", "off"), new Option (e.name, "on")); eraPick.value = bordersOn ? "on" : "off"; }
-    eraCredit.textContent = e && bordersOn ? e.credit : "";
+    creditText (eraCredit, e && bordersOn ? e.credit : "");
     eraCredit.hidden = ! eraCredit.textContent;
     // ROUTE: the book's pick, else its first route (options[0] is None)
     const r = routeRow.hidden ? "" : routePicked.get (book) ?? routePick.options[1].value;

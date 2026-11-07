@@ -46,6 +46,7 @@ import { showCardPanel, hideCardPanel } from "./panel";
 import { onScreen } from "./study";
 import { showDeck, fitDeck, type Card, type DeckShown } from "./cards";
 import { ICONS } from "./icons";
+import { creditText } from "./credit";
 import { translationSources, openSource, type Source } from "./notes";
 import { textBox, translatedWords, TEXT_CREDIT, addStudyReference, draftResource, printoutChoices } from "./chapterstudy";
 import { nativeRef, refPair } from "./refs";
@@ -322,7 +323,7 @@ async function draw (body: HTMLElement) {
       shown = showDeck (deckEl, made, { middle: plus, backOnly: true, noTurn: ".w" }); shownIds = ids;
       if (goTo) { shown.go ((c) => c.id === goTo); goTo = ""; }
     }     // (No REMOVE CARD - the list's ✕ removes one. Turned over: the back alone, the reference on it)
-    credits.textContent = [...used.values ()].filter (Boolean).join (" ");
+    creditText (credits, [...used.values ()].filter (Boolean).join (" "));
   };
   const addBtn = body.querySelector<HTMLButtonElement> ("#vcAddBtn")!;
   drawPick (placeEl, addBtn);

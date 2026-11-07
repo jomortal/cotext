@@ -45,6 +45,7 @@ import type { Book } from "./reader";
 import type { Db } from "./db";
 import { MCHEYNE } from "./mcheyne";
 import { usfm } from "./booknames";
+import { creditText } from "./credit";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
 import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
@@ -477,7 +478,7 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
         return cell;
       }));
     }
-    box.querySelector (".credit")!.textContent = p.base ? FACTORY[p.base].credit : "";
+    creditText (box.querySelector<HTMLElement> (".credit")!, p.base ? FACTORY[p.base].credit : "");
   }
   /** The list's rows drawn up to listed (plus extra more): never past the plan's last day; while it goes on (REPEAT),
    *  the end watched to draw the next stretch. */
