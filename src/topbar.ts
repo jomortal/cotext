@@ -1,4 +1,4 @@
-// A study screen's own top row (the Verse cards', the Study printout's, Vocab's): a title centered (topTitle) - for a set of named things (the Verse cards' decks, the Study printout's printouts) the
+// A study screen's own top row (the Verse cards', the Study printout's, the Reading plan's, Vocab's): a title centered (topTitle) - for a set of named things (the Verse cards' decks, the Study printout's printouts) the
 // open one's name centered, a drop-down arrow beside it (the pickers' own: style.css' --chevron), tapped opening its
 // drop-down under it - SELECT <NOUN> (each by name; picking one opens it), DELETE <NOUN> beside it (the open one, asked
 // first) and + NEW <NOUN> at its right, then NAME (the open one's, edited in place, the title following as it's
@@ -78,6 +78,19 @@ export function nameMenu<T extends Named> (o: NameMenu<T>): { title: HTMLElement
   input.addEventListener ("change", () => { if (! x.name.trim ()) { x.name = o.blank; input.value = o.shown (x); follow (); } });
   nameRow.append (input);
   return { title, button, rows: [pickRow, nameRow] };
+}
+
+/** A checkbox and its label (style.css' .csCheck): ticked if on, each change told to set. Every checkbox is made here -
+ *  the Study printout's option lists (notes, fathers, entries), the Reading plan's DAYS. */
+export function check (on: boolean, set: (v: boolean) => void, ...label: (HTMLElement | string)[]) {
+  const l = make ("label", "csCheck");
+  const box = make ("input");
+  box.type = "checkbox"; box.checked = on;
+  box.addEventListener ("change", () => set (box.checked));
+  const text = make ("span", "csCheckText");
+  text.append (...label);
+  l.append (box, text);
+  return l;
 }
 
 /** The top row's drop-downs, one open at a time: each its button (the title, which keeps its name) and its menu; open:

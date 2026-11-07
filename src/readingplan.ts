@@ -1,61 +1,65 @@
-// Reading plans: a calendar of the day's Bible readings, each a link to its passage. Two views of one calendar
-// (calendar, below):
-// - The resource (notes.ts: "Reading plan" in the resources pane's picker, its own READING group): the open plan's
-//   calendar, read-only - a PLAN picker over it while there's more than one.
-// - ☰ Reading plan (the drawer's screen): the same calendar under a top row naming the open plan (topbar.ts' nameMenu,
-//   as the Verse cards' decks: SELECT PLAN, DELETE PLAN, + NEW PLAN, NAME), and a bottom bar with a pencil in its
-//   middle showing or hiding EDIT - a screen's panel (layout.ts' deckPaneSplit, as the Study printout's editor): the
-//   picked day's readings, each its BOOK, CHAPTER, FROM VERSE, TO CHAPTER, TO VERSE and ✕, then + Add reading. A day
-//   tapped (not on a reading) is picked - its tint - and EDIT opens on it.
-// The calendar: the month's name between ‹ and › (the month before and after), then its days - where its box is at
-// least 560 px wide a week a row, Sunday first, each day its date over its readings; narrower, a day a row, its weekday
-// and date at its left, its readings beside them (style.css' .planCal: a container query, the box's own width, never
-// the device's). Today's date in the accent; each opening shows today's month, today scrolled into view. A reading
-// tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read whole
-// chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so: mcheyne.py).
-// Plans are keyed by the calendar's date (MM-DD; Feb 29 its own day, blank in M'Cheyne's), so a plan repeats yearly.
-// M'Cheyne's (the factory plan, mcheyne.ts) is the plan its edits are laid over: its days kept as they ship, the
-// user's changes kept apart (days) - so a corrected factory plan reaches every device, edited days excepted.
+// Reading plans: numbered days of Bible readings - Day 1, Day 2... -, each reading a link to its passage. Two views of
+// one plan (calendar, below):
+// - The resource (notes.ts: "Reading plan" in the resources pane's picker, its own READING group): the open plan,
+//   read-only - a PLAN picker over it while there's more than one.
+// - ☰ Reading plan (the drawer's screen): the same under a top row naming the open plan (topbar.ts' nameMenu, as the
+//   Verse cards' decks: SELECT PLAN, DELETE PLAN, + NEW PLAN, NAME; then the plan's own START and DAYS, below), and a
+//   bottom bar with a pencil in its middle showing or hiding EDIT - a screen's panel (layout.ts' deckPaneSplit, as the
+//   Study printout's editor): the picked day ("Day 12") and its readings, each its BOOK, CHAPTER, TO CHAPTER and ✕, then
+//   + Add reading and + Add day (a day after the last, picked). A plan day tapped (not on a reading) is picked - its
+//   tint - and EDIT opens on it.
+// Each plan, kept with it: START - "Not on the calendar" (the default) or "On a date" (its MONTH, DAY and YEAR) - and
+// DAYS, a checkbox a weekday (Sun-Sat, all ticked at first, one at least): the weekdays the plan is read on.
+// - Not on the calendar: the days as a list, a day a row - "Day 1" at its left, its readings beside them - at any width.
+// - On the calendar: the month's name between ‹ and › (the month before and after), then its days - where its box is at
+//   least 560 px wide a week a row, Sunday first, each day its date over its plan day and readings; narrower, a day a
+//   row, its weekday, date and plan day at its left, its readings beside them (style.css' .planCal: a container query,
+//   the box's own width, never the device's). Each ticked weekday from the start date on is given the next plan day -
+//   "Day N" and its readings -; a day not ticked, before the start or after the plan's last day is blank. Today's date
+//   in the accent; each opening shows today's month, today scrolled into view.
+// A reading tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read
+// whole chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so:
+// mcheyne.py). M'Cheyne's (the factory plan, mcheyne.ts: its 365 days in order) is the plan its edits are laid over: its
+// days kept as they ship, the user's changes kept apart (days) - so a corrected factory plan reaches every device,
+// edited days excepted.
 // Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, plans: [{ id, name, base?:
-// "mcheyne", days: { "MM-DD": readings } }] } - a day's readings joined by ";", each as parse reads it; a day in days
-// overrides the base's ("" none). Every plan deleted: M'Cheyne's back, unedited.
+// "mcheyne", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
+// Sunday 1 ... Saturday 64), days: { "<day number, 1 first>": readings } }] } - a day's readings joined by ";", each as
+// parse reads it; a day in days overrides the base's ("" none). A plan saved another way (before days were numbered) is
+// dropped. Every plan deleted: M'Cheyne's back, unedited.
 
 import type { Book } from "./reader";
 import { MCHEYNE } from "./mcheyne";
 import { ABBR } from "./booknames";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
-import { nameMenu, dropDowns, watchTopBar } from "./topbar";
+import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
 import { deckPaneSplit } from "./layout";
 
 //==== PLANS ====
 
-interface Plan { id: string; name: string; base?: "mcheyne"; days: Record<string, string>; }
+interface Plan { id: string; name: string; base?: "mcheyne"; count: number; start: string; week: number; days: Record<string, string>; }
 /** One reading: book (its code), whole chapters c1 to c2. */
 interface Reading { code: string; c1: number; c2: number; }
 
 const KEY = "cotext.readingplans";
 const CREDIT = "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4.";
-const DAYS_IN = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-/** M'Cheyne's days by date (MM-DD): its 365, Jan 1 first, laid on a year without Feb 29. */
-const FACTORY: Record<string, string> = {};
-{
-  let i = 0;
-  DAYS_IN.forEach ((n, m) => { for (let d = 1; d <= n; d++) if (! (m === 1 && d === 29)) FACTORY[dateKey (m, d)] = MCHEYNE[i++]; });
-}
-function dateKey (month: number, day: number) { return `${String (month + 1).padStart (2, "0")}-${String (day).padStart (2, "0")}`; }
+const EVERY_DAY = 127;     // (week: every weekday ticked)
 
-const factory = (): Plan => ({ id: "mcheyne", name: "M'Cheyne", base: "mcheyne", days: {} });
+const factory = (): Plan => ({ id: "mcheyne", name: "M'Cheyne", base: "mcheyne", count: MCHEYNE.length, start: "", week: EVERY_DAY, days: {} });
 let plans: Plan[] = [];
 let at = "";
 function load () {
+  plans = [];
   try {
     const s = JSON.parse (localStorage.getItem (KEY) ?? "null");
     if (s && Array.isArray (s.plans)) {
-      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object")
-                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base === "mcheyne" ? { base: p.base } : {}), days: p.days }));
+      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count))
+                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base === "mcheyne" ? { base: p.base } : {}), count: Math.max (0, p.count),
+                                           start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
+                                           week: Number.isInteger (p.week) && p.week > 0 && p.week <= EVERY_DAY ? p.week : EVERY_DAY, days: p.days }));
       at = String (s.at ?? "");
     }
   } catch { /* unreadable or private mode: the factory plan */ }
@@ -69,13 +73,35 @@ load ();
 const now = () => plans.find ((p) => p.id === at)!;
 const shown = (p: Plan) => p.name || "Untitled";
 
-/** A day's readings in a plan: its own edit, else its base's. */
-const dayOf = (p: Plan, key: string): Reading[] =>
-  (key in p.days ? p.days[key] : p.base ? FACTORY[key] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
-function setDay (p: Plan, key: string, rs: Reading[]) {
+/** A plan day's readings (n: 1 first): its own edit, else its base's. */
+const dayOf = (p: Plan, n: number): Reading[] =>
+  (String (n) in p.days ? p.days[n] : p.base ? MCHEYNE[n - 1] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
+function setDay (p: Plan, n: number, rs: Reading[]) {
   const s = rs.map (format).join (";");
-  if (p.base && (FACTORY[key] ?? "") === s) delete p.days[key]; else p.days[key] = s;     // (Back as the base has it: no edit kept)
+  if (p.base && (MCHEYNE[n - 1] ?? "") === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
   save ();
+}
+
+/** The start date's year, month (0 first) and day; null not on the calendar. */
+function startOf (p: Plan): { y: number; m: number; d: number } | null {
+  if (! p.start) return null;
+  const [y, m, d] = p.start.split ("-").map (Number);
+  return { y, m: m - 1, d };
+}
+const dateText = (y: number, m: number, d: number) => `${y}-${String (m + 1).padStart (2, "0")}-${String (d).padStart (2, "0")}`;
+/** The plan day read on a date (1 first), 0 none: each ticked weekday from the start on is the next plan day - the
+ *  ticked weekdays counted from the start to the date (whole weeks at once, then the rest a day at a time). */
+function dayOn (p: Plan, y: number, m: number, d: number): number {
+  const s = startOf (p);
+  if (! s) return 0;
+  const from = Date.UTC (s.y, s.m, s.d), to = Date.UTC (y, m, d);     // (UTC: whole days apart, whatever summer time does)
+  if (to < from || ! (p.week & 1 << new Date (to).getUTCDay ())) return 0;
+  const span = Math.round ((to - from) / 864e5) + 1, first = new Date (from).getUTCDay ();
+  let perWeek = 0;
+  for (let w = 0; w < 7; w++) if (p.week & 1 << w) perWeek++;
+  let n = Math.floor (span / 7) * perWeek;
+  for (let k = 0; k < span % 7; k++) if (p.week & 1 << (first + k) % 7) n++;
+  return n <= p.count ? n : 0;
 }
 
 /** "Gen 1", "Psa 52-54" -> a reading (a verse in it - "Luk 1:1-38", "Isa 9:7-10:4" - read as its chapters); null for
@@ -84,13 +110,13 @@ function parse (s: string): Reading | null {
   const m = s.trim ().match (/^(\w+) (\d+)(?::(\d+))?(?:-(?:(\d+):)?(\d+|end))?$/);
   if (! m || ! books.has (m[1])) return null;
   const c1 = +m[2];
-  const c2 = m[4] ? +m[4] : m[5] && m[5] !== "end" && ! m[3] ? +m[5] : c1;     // (A verse given - an edit kept before plans were by chapters - read as its chapters)
+  const c2 = m[4] ? +m[4] : m[5] && m[5] !== "end" && ! m[3] ? +m[5] : c1;     // (A verse given read as its chapters)
   return { code: m[1], c1, c2: Math.max (c1, c2) };
 }
 function format (r: Reading): string {
   return `${r.code} ${r.c1}` + (r.c2 > r.c1 ? `-${r.c2}` : "");
 }
-/** A reading as the calendar shows it: the book's SBL abbreviation and its span - "Ps 119:1–24", "Gen 9–10". */
+/** A reading as the plan shows it: the book's SBL abbreviation and its span - "Ps 119", "Gen 9–10". */
 function label (r: Reading): string {
   const b = books.get (r.code)!, name = ABBR[b.name] ?? b.name;
   return `${name} ${r.c1}` + (r.c2 > r.c1 ? `–${r.c2}` : "");
@@ -116,10 +142,11 @@ const el = <K extends keyof HTMLElementTagNameMap> (tag: K, cls = "", text = "")
 };
 const today = () => { const d = new Date (); return { y: d.getFullYear (), m: d.getMonth (), d: d.getDate () }; };
 
-/** A calendar of the open plan: el, its box; draw, drawn again (the plan or a day changed) - at month (y, m) if given,
- *  else the month shown. leaving: called before a reading's passage is gone to (the screen closed); pick: a day tapped
- *  (not its readings) - the screen's editor (none in the resource); picked: the day marked picked (its key, "" none). */
-function calendar (o: { leaving?: () => void; pick?: (key: string, y: number) => void; picked?: () => string }) {
+/** The open plan as a calendar (a start date set) or a list of its days (none): el, its box; draw, drawn again (the
+ *  plan or a day changed) - at month (y, m) if given, else the month shown. leaving: called before a reading's passage
+ *  is gone to (the screen closed); pick: a plan day tapped (not its readings) - the screen's editor (none in the
+ *  resource); picked: the plan day marked picked (0 none). */
+function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked?: () => number }) {
   const box = el ("div", "planCal");
   const t = today ();
   let y = t.y, m = t.m;
@@ -134,32 +161,45 @@ function calendar (o: { leaving?: () => void; pick?: (key: string, y: number) =>
   const step = (dir: number) => { m += dir; if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; } draw (); };
   back.addEventListener ("click", () => step (-1));
   next.addEventListener ("click", () => step (1));
-  function draw (at?: { y: number; m: number }) {
-    if (at) ({ y, m } = at);
-    const p = now (), first = new Date (y, m, 1).getDay (), n = new Date (y, m + 1, 0).getDate (), picked = o.picked?. () ?? "";
-    title.textContent = `${MONTHS[m]} ${y}`;
-    days.replaceChildren (...Array.from ({ length: n }, (_, i) => {
-      const d = i + 1, key = dateKey (m, d), wd = (first + i) % 7;
-      const cell = el ("div", "planDay");
-      if (i === 0) cell.style.setProperty ("--planCol", String (first + 1));     // (The 1st under its weekday: the grid's column)
-      if (y === t.y && m === t.m && d === t.d) cell.classList.add ("today");
-      if (key === picked) cell.classList.add ("on");
-      const date = el ("span", "planDate");
-      date.append (el ("span", "planWd", WEEKDAYS[wd] + " "), String (d));
-      const list = el ("span", "planReads");
-      for (const r of dayOf (p, key)) {
-        const a = el ("a", "term", label (r));
-        a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, 1); });
-        list.append (a);
-      }
-      cell.append (date, list);
-      if (o.pick) cell.addEventListener ("click", () => o.pick! (key, y));
-      return cell;
-    }));
+  /** A day's row or cell: its date (dated: weekday and day of the month) and plan day over or beside its readings. */
+  function dayCell (p: Plan, n: number, picked: number, date?: { wd: number; d: number }) {
+    const cell = el ("div", "planDay");
+    if (n && n === picked) cell.classList.add ("on");
+    const when = el ("span", "planDate");
+    if (date) when.append (el ("span", "planWd", WEEKDAYS[date.wd] + " "), String (date.d));
+    if (n) when.append (el ("span", "planN", `Day ${n}`));
+    const list = el ("span", "planReads");
+    if (n) for (const r of dayOf (p, n)) {
+      const a = el ("a", "term", label (r));
+      a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, 1); });
+      list.append (a);
+    }
+    cell.append (when, list);
+    if (o.pick && n) cell.addEventListener ("click", () => o.pick! (n));
+    return cell;
+  }
+  function draw (to?: { y: number; m: number }) {
+    if (to) ({ y, m } = to);
+    const p = now (), dated = !! p.start, picked = o.picked?. () ?? 0;
+    box.classList.toggle ("planList", ! dated);
+    head.hidden = week.hidden = ! dated;
+    if (! dated) {
+      days.replaceChildren (...Array.from ({ length: p.count }, (_, i) => dayCell (p, i + 1, picked)));
+      if (! p.count) days.append (el ("p", "", "No days yet."));
+    } else {
+      const first = new Date (y, m, 1).getDay (), n = new Date (y, m + 1, 0).getDate ();
+      title.textContent = `${MONTHS[m]} ${y}`;
+      days.replaceChildren (...Array.from ({ length: n }, (_, i) => {
+        const d = i + 1, cell = dayCell (p, dayOn (p, y, m, d), picked, { wd: (first + i) % 7, d });
+        if (i === 0) cell.style.setProperty ("--planCol", String (first + 1));     // (The 1st under its weekday: the grid's column)
+        if (y === t.y && m === t.m && d === t.d) cell.classList.add ("today");
+        return cell;
+      }));
+    }
     box.querySelector (".credit")!.textContent = p.base ? CREDIT : "";
   }
-  /** Today's day scrolled into view (where it's this month's). */
-  const toToday = () => days.querySelector (".today")?.scrollIntoView ({ block: "center" });
+  /** Today's day scrolled into view (on the calendar, where it's this month's); else the picked day's. */
+  const toToday = () => (days.querySelector (".today") ?? days.querySelector (".on"))?.scrollIntoView ({ block: "center" });
   draw ();
   return { el: box, draw, toToday };
 }
@@ -190,26 +230,34 @@ export function planPane (fresh: boolean): HTMLElement {
 export const planToToday = () => pane?.cal.toToday ();
 
 //==== THE SCREEN ====
-// ☰ Reading plan: its own top bar (the plan's name, its drop-down), the calendar, EDIT (a screen's panel) and the bar.
-let picked = "";     // (The day being edited: MM-DD)
-let pickedYear = today ().y;
+// ☰ Reading plan: its own top bar (the plan's name, its drop-down), the plan, EDIT (a screen's panel) and the bar.
+let picked = 0;     // (The plan day being edited: 1 first, 0 none - a plan with no days)
+let pickedIn = "";     // (The plan it was picked in: another opened, its own picked afresh)
 let editing = true;     // (EDIT shown: kept on the device)
 const EDIT_KEY = "cotext.readingplans.editor";
 try { editing = localStorage.getItem (EDIT_KEY) !== "0"; } catch { /* private mode */ }
 
 onScreen ("Reading plan", (body) => {
   load ();
-  const t = today ();
-  if (! picked) { picked = dateKey (t.m, t.d); pickedYear = t.y; }
+  /** The picked day kept where it's the open plan's; else today's plan day (on the calendar), else Day 1. */
+  const pickAfresh = () => {
+    const p = now (), t = today ();
+    if (pickedIn === p.id && picked >= 1 && picked <= p.count) return;
+    pickedIn = p.id;
+    picked = Math.min (dayOn (p, t.y, t.m, t.d) || 1, p.count);
+  };
+  pickAfresh ();
   const top = el ("div", "topBar"), row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   top.append (row, menu);
-  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (key, y) => { picked = key; pickedYear = y; show (true); drawEditor (); cal.draw (); } });
-  // EDIT: the picked day's readings, a line each, + Add reading under them
+  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); drawEditor (); cal.draw (); } });
+  // EDIT: the picked day's readings, a line each, + Add reading and + Add day under them
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");
   setIcon (close, "x"); close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
-  const dayName = el ("div", "src"), lines = el ("div", "planLines"), add = el ("button", "pill action", "+ Add reading");
-  editor.append (head, dayName, lines, add);
+  const dayName = el ("div", "src"), lines = el ("div", "planLines"), adds = el ("div", "fieldRow");
+  const add = el ("button", "pill action", "+ Add reading"), addDay = el ("button", "pill action", "+ Add day");
+  adds.append (add, addDay);
+  editor.append (head, dayName, lines, adds);
   const bar = el ("div", "bottomBar"), pencil = el ("button", "pill icon barMid");
   setIcon (pencil, "pencil"); pencil.setAttribute ("aria-label", "Show or hide the editor");
   bar.append (pencil);
@@ -222,7 +270,7 @@ onScreen ("Reading plan", (body) => {
   };
   pencil.addEventListener ("click", () => show (! editing));
   close.addEventListener ("click", () => show (false));
-  const changed = () => { drawEditor (); cal.draw (); };
+  const changed = () => { pickAfresh (); drawEditor (); cal.draw (); };
   add.addEventListener ("click", () => {
     // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
     const rs = dayOf (now (), picked), last = rs[rs.length - 1];
@@ -230,33 +278,63 @@ onScreen ("Reading plan", (body) => {
     rs.push ({ code, c1: c, c2: c });
     setDay (now (), picked, rs); changed ();
   });
+  addDay.addEventListener ("click", () => {
+    // (A day after the plan's last, with no readings, picked - its own edit, so a factory day beyond M'Cheyne's 365 stays blank)
+    const p = now ();
+    p.count++; p.days[p.count] = ""; picked = p.count;
+    save (); changed ();
+    cal.el.querySelector (".planDay.on")?.scrollIntoView ({ block: "nearest" });
+  });
 
-  // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts blank, named "Plan 2"...
+  // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts with no days, named "Plan 2"...;
+  // then START and DAYS, the open plan's
+  const when = el ("div", "fieldRow"), weekdays = el ("div", "field", "Days");
   function drawTop () {
     const named = nameMenu<Plan> ({
       noun: "Plan", all: () => plans, open: now, shown, blank: "Untitled",
       select: (id) => { at = id; save (); drawTop (); changed (); },
-      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, days: {} }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
+      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, count: 0, start: "", week: EVERY_DAY, days: {} }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
       ask: (p) => `Delete the plan "${shown (p)}"?`,
       remove: (p) => { plans = plans.filter ((x) => x !== p); if (! plans.length) plans = [factory ()]; at = plans[0].id; save (); drawTop (); changed (); },
       renamed: () => save () });
     row.replaceChildren (named.title);
-    menu.replaceChildren (...named.rows);
+    drawWhen ();
+    menu.replaceChildren (...named.rows, when, weekdays);
     dropDowns ([{ key: "more", button: named.button, menu }], "");
+  }
+  /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set) and DAYS (a weekday's
+   *  checkbox each; the last ticked can't be unticked) - each change kept and the plan drawn again. */
+  function drawWhen () {
+    const p = now (), s = startOf (p), t = today ();
+    const set = (y: number, m: number, d: number) => { p.start = dateText (y, m, Math.min (d, new Date (y, m + 1, 0).getDate ())); save (); drawWhen (); changed (); };
+    const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => [String (from + k), String (from + k)] as [string, string]);
+    when.replaceChildren (pick ("Start", [["", "Not on the calendar"], ["date", "On a date"]], s ? "date" : "",
+      (v) => { if (v) set (t.y, t.m, t.d); else { p.start = ""; save (); drawWhen (); changed (); } }));
+    if (s) when.append (
+      pick ("Month", MONTHS.map ((n, k) => [String (k), n]), String (s.m), (v) => set (s.y, +v, s.d)),
+      pick ("Day", nums (1, new Date (s.y, s.m + 1, 0).getDate ()), String (s.d), (v) => set (s.y, s.m, +v)),
+      pick ("Year", nums (Math.min (s.y, t.y) - 5, Math.max (s.y, t.y) + 5), String (s.y), (v) => set (+v, s.m, s.d)));
+    const boxes = el ("div", "csFathers");
+    boxes.append (...WEEKDAYS.map ((w, k) => check (!! (p.week & 1 << k), (on) => {
+      const week = on ? p.week | 1 << k : p.week & ~(1 << k);
+      if (week) { p.week = week; save (); changed (); }
+      drawWhen ();     // (The last unticked: ticked again)
+    }, w)));
+    weekdays.replaceChildren ("Days", boxes);
   }
 
   // A reading's line: BOOK, CHAPTER, TO CHAPTER and ✕ - a change kept at once
   function drawEditor () {
-    const p = now (), key = picked, [mm, dd] = key.split ("-").map (Number);
-    const wd = new Date (pickedYear, mm - 1, dd).getDay ();
-    dayName.textContent = `${WEEKDAYS[wd]} ${MONTHS[mm - 1]} ${dd}`;
-    const rs = dayOf (p, key);
+    const p = now (), n = picked;
+    dayName.textContent = n ? `Day ${n}` : "No days yet.";
+    add.hidden = ! n;
+    const rs = n ? dayOf (p, n) : [];
     lines.replaceChildren (...rs.map ((r, i) => {
       const line = el ("div", "csLine"), place = el ("div", "fieldRow planPlace");
       const set = (f: Partial<Reading>) => {
         Object.assign (r, f);
         if (r.c2 < r.c1) r.c2 = r.c1;
-        setDay (p, key, rs); changed ();
+        setDay (p, n, rs); changed ();
       };
       const b = books.get (r.code)!, nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => from + k);
       place.append (
@@ -265,12 +343,12 @@ onScreen ("Reading plan", (body) => {
         pick ("To chapter", nums (r.c1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c2), (v) => set ({ c2: +v })));
       const x = el ("button", "pill icon csRemove");
       setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this reading");
-      x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, key, rs); changed (); });
+      x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, n, rs); changed (); });
       place.append (x);
       line.append (place);
       return line;
     }));
-    if (! rs.length) lines.append (el ("p", "", "No readings this day."));
+    if (n && ! rs.length) lines.append (el ("p", "", "No readings this day."));
   }
   drawTop ();
   show (editing);

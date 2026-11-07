@@ -979,12 +979,14 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
   .csDoc { --word-he: 24px; --word-gr: 22px; }
 }
 
-/* Reading plan (readingplan.ts - the resources' Reading plan and ☰ Reading plan): the calendar - the month's name (a
-   title) between ‹ and ›, then its days: where its box is at least 560 px wide a week a row, Sunday first, the weekdays'
-   captions over them, each day its date over its readings; narrower a day a row, its weekday and date at its left, its
-   readings beside them, wrapping (a container query: the box's own width). Today's date in the accent; the day picked
-   (☰'s EDIT) the accent's tint. The readings are links (.term). EDIT is a screen's panel (.deckPane, .csEditor's
-   spacing), a reading's line an editor's line (.csLine) holding a row of fields (.fieldRow) and its ✕. */
+/* Reading plan (readingplan.ts - the resources' Reading plan and ☰ Reading plan): a plan on the calendar - the month's
+   name (a title) between ‹ and ›, then its days: where its box is at least 560 px wide a week a row, Sunday first, the
+   weekdays' captions over them, each day its date and plan day ("Day 12") over its readings; narrower a day a row, its
+   weekday, date and plan day at its left, its readings beside them, wrapping (a container query: the box's own width).
+   Not on the calendar (.planList): no month, its days a row each at any width, "Day 12" at the left. Today's date in
+   the accent; the day picked (☰'s EDIT) the accent's tint. The readings are links (.term). EDIT is a screen's panel
+   (.deckPane, .csEditor's spacing), a reading's line an editor's line (.csLine) holding a row of fields (.fieldRow) and
+   its ✕; DAYS' weekdays a row of checkboxes (.csFathers' row). */
 #planBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5h16V20H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2'/%3E%3C/svg%3E"); }     /* (A calendar: Reading plan) */
 .planCal { container-type: inline-size; }
 .planPane > .field { margin-bottom: var(--gap); }     /* (PLAN over the calendar, with more than one plan) */
@@ -993,17 +995,18 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planDays { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
 .planDay { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); column-gap: var(--gap-m); padding: var(--row-y) 4px; margin-inline: -4px; border-radius: var(--radius-s); font-size: var(--fs-s); }
 .planDate { color: var(--soft); font-variant-numeric: tabular-nums; }
+.planCal:not(.planList) .planN { display: block; }     /* (On the calendar: the plan day under the date) */
 .planDay.today .planDate { color: var(--accent); font-weight: 700; }
 .planDay.on { background: var(--tint); }
 .planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
 #screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
 .planPlace { padding-bottom: 8px; }
 @container (min-width: 560px) {
-  .planWeek { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 8px; }
-  .planWeek > .src { margin: 0; padding-inline: 4px; }
-  .planDays { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 4px; }
-  .planDay { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 7em; padding: 4px; margin: 0; border-top: var(--rule); }
-  .planDay:first-child { grid-column-start: var(--planCol, 1); }
-  .planWd { display: none; }
-  .planReads { flex-direction: column; flex-wrap: nowrap; gap: 2px; font-size: var(--fs-xs); }
+  .planCal:not(.planList) .planWeek { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 8px; }
+  .planCal:not(.planList) .planWeek > .src { margin: 0; padding-inline: 4px; }
+  .planCal:not(.planList) .planDays { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 4px; }
+  .planCal:not(.planList) .planDay { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 7em; padding: 4px; margin: 0; border-top: var(--rule); }
+  .planCal:not(.planList) .planDay:first-child { grid-column-start: var(--planCol, 1); }
+  .planCal:not(.planList) .planWd { display: none; }
+  .planCal:not(.planList) .planReads { flex-direction: column; flex-wrap: nowrap; gap: 2px; font-size: var(--fs-xs); }
 }

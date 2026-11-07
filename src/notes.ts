@@ -36,8 +36,8 @@
 //   kept while it's picked and given the places as the verses change, the places listed under it with their verses.
 // - The timeline (timeline.ts' timelinePane: the ☰ Timeline's drawing) is centered on the chapter's year, moving to
 //   each new chapter's as the text changes.
-// - The reading plan (READING: readingplan.ts' planPane, the ☰ Reading plan's calendar, read-only) is offered in every
-//   book, not following the text: today's month, a reading tapped going to its passage.
+// - The reading plan (READING: readingplan.ts' planPane, the ☰ Reading plan's days, read-only) is offered in every
+//   book, not following the text: on the calendar today's month, else its days' list; a reading tapped going to its passage.
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
@@ -618,7 +618,7 @@ async function drawTimeline (b: Book) {
   fitTimeline ();
 }
 
-/** The reading plan's calendar (readingplan.ts' planPane): put in at today's month, today in view; already shown (the
+/** The reading plan (readingplan.ts' planPane): put in at today's month (on the calendar), today in view; already shown (the
  *  text moved on - a reading tapped -, the pane opened again), its month kept, the plans read again. */
 function drawPlan () {
   if (shownIds === "readingplan") return;

@@ -92,7 +92,7 @@ import { sourcesFor, placesOf, openSource, noteElement, drawDiagram, FOLDED, typ
 import { passageArticles, bookArticles, articleBlock, searchArticles } from "./dictionary";
 import { passageMap } from "./atlas";
 import { chapterTime } from "./timeline";
-import { nameMenu, dropDowns, watchTopBar } from "./topbar";
+import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
 import { nativeName, ABBR } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { deckPaneSplit } from "./layout";
@@ -1011,17 +1011,6 @@ function quietly (sec: Section, it: Item) {
   save (); render ();
   const name = sectionsEl.querySelector (`.csLine[data-id="${it.id}"] .csName`);
   if (name) name.textContent = nameOf (sec, it);
-}
-/** A checkbox and its label (an option's list: notes, fathers, entries). */
-function check (on: boolean, set: (v: boolean) => void, ...label: HTMLElement[]) {
-  const l = el ("label", "csCheck");
-  const box = el ("input");
-  box.type = "checkbox"; box.checked = on;
-  box.addEventListener ("change", () => set (box.checked));
-  const text = el ("span", "csCheckText");
-  text.append (...label);
-  l.append (box, text);
-  return l;
 }
 
 /** A dictionary item's entries to tick, each its title over a line of it: unticked, left out. */
