@@ -313,20 +313,22 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
 //==== THE RESOURCE ====
 // notes.ts' "Reading plan": one calendar kept while the page lives, shown at today's month whenever the pane draws it
 // afresh; PLAN over it (more than one plan) picks the open plan - the screen's too.
-let pane: { el: HTMLElement; cal: ReturnType<typeof calendar>; pick: HTMLElement } | null = null;
+let pane: { el: HTMLElement; cal: ReturnType<typeof calendar>; pick: HTMLElement; sel: HTMLSelectElement } | null = null;
 /** The resource's calendar, drawn for the plans as they are now (notes.ts puts it in the pane) - at today's month when
  *  fresh (just put in), else at the month it shows. */
 export function planPane (fresh: boolean): HTMLElement {
   if (! pane) {
-    const cal = calendar ({ resource: true }), box = el ("div", "planPane"), pick = el ("label", "field", "Plan");
+    const cal = calendar ({ resource: true }), box = el ("div", "planPane"), pick = el ("label", "field", "Plan"), sel = el ("select", "choose");
+    sel.addEventListener ("change", () => { at = sel.value; save (); pane!.cal.draw (); });
+    pick.append (sel);
     box.append (pick, cal.el);
-    pane = { el: box, cal, pick };
+    pane = { el: box, cal, pick, sel };
   }
   load ();     // (The screen may have changed them)
-  const s = el ("select", "choose");
-  s.append (...plans.map ((p) => new Option (shown (p), p.id, false, p.id === at)));
-  s.addEventListener ("change", () => { at = s.value; save (); pane!.cal.draw (); });
-  pane.pick.replaceChildren ("Plan", s);
+  // (PLAN's choices filled in again in the one picker - never a new one, which would be drawn as the browser's own a
+  // moment before choose.ts' and jolt what's under it)
+  pane.sel.replaceChildren (...plans.map ((p) => new Option (shown (p), p.id, false, p.id === at)));
+  pane.sel.value = at;
   pane.pick.hidden = plans.length < 2;
   const t = today ();
   pane.cal.draw (fresh ? { y: t.y, m: t.m } : undefined);
