@@ -389,7 +389,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
    section takes the word's panel over (.grammarOpen: the word's info hidden) until its ✕ brings the word back - in two
    columns (.twoCol), the lexicon's column only, the word's info staying beside it -; the panel stays at most half the
    screen, scrolling. */
-:is(.sheet, .pane, .learnNote) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+:is(.sheet, .pane, .learnNote, .planCal) .term { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
 .sheet .term.on { font-weight: 700; }
 .gInline { border-top: var(--hair); margin-top: 14px; padding-top: 12px; }
 .sheet.grammarOpen:not(.twoCol) .panelScroll > :not(.gInline), .sheet.grammarOpen:not(.twoCol) > .xRow { display: none; }
@@ -728,7 +728,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    width, 60% of the screen tall wide (300 px at least), narrow at first 40% (270 px), then fitted to the panel by
    notes.ts; the line on its dates under it. */
 #screen[data-screen="Timeline"] .pickerCard { max-width: none; }
-#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Flashcards"], [data-screen="Resource reader"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
+#screen:is([data-screen="Verse cards"], [data-screen="Study printout"], [data-screen="Reading plan"], [data-screen="Flashcards"], [data-screen="Resource reader"]) #screenTop { display: none; }     /* (Verse cards, Study printout, Flashcards: their own top bar, the deck's or printout's name in it - the same kind, .topBar: topbar.ts) */
 .timelineNote { margin: 0; }     /* (A note: .vcHead's rule) */
 .timeline { position: relative;
             height: calc(var(--winH, 100dvh) - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); min-height: 320px; }
@@ -759,7 +759,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .csPlace { display: flex; gap: 8px; padding-bottom: 8px; border-bottom: var(--hair); }     /* (Book, chapter, verses and ✕: one line, never wrapping) */
 .csPlace > .field { flex: none; } .csPlace > .field:first-child { flex: 1 1 0; } .csPlace .chooseBtn { white-space: nowrap; }     /* (BOOK the room the rest leave - its name abbreviated where the whole doesn't fit: choose.ts' data-short -, the others their choices' width) */
 .csPlace > .field:first-child { grid-template-columns: minmax(0, 1fr); } .csPlace > .field:first-child .chooseBtn { width: 100%; box-sizing: border-box; overflow: hidden; }
-.csPlace .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
+:is(.csPlace, .planPlace) .csRemove { margin-left: auto; align-self: end; }     /* (A later section's ✕, removing it: at its reference's end) */
 .csSections, .csSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }     /* (The editor's sections, each its reference, lines, + Add item and menu: spaced as the editor's own parts) */
 .csSection + .csSection { border-top: var(--rule); padding-top: var(--gap-m); }
 .csEditor { gap: 8px; }     /* (One column the pane's width: nothing in it, the menu's long names either, pans it sideways) */
@@ -976,4 +976,33 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
   .csTitle, .csHead, .csDoc .verseHead { break-after: avoid; }
   .csDoc .dictPhoto img { max-height: 9cm; width: auto; }
   .csDoc { --word-he: 24px; --word-gr: 22px; }
+}
+
+/* Reading plan (readingplan.ts - the resources' Reading plan and ☰ Reading plan): the calendar - the month's name (a
+   title) between ‹ and ›, then its days: where its box is at least 560 px wide a week a row, Sunday first, the weekdays'
+   captions over them, each day its date over its readings; narrower a day a row, its weekday and date at its left, its
+   readings beside them, wrapping (a container query: the box's own width). Today's date in the accent; the day picked
+   (☰'s EDIT) the accent's tint. The readings are links (.term). EDIT is a screen's panel (.deckPane, .csEditor's
+   spacing), a reading's line an editor's line (.csLine) holding a row of fields (.fieldRow) and its ✕. */
+#planBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5h16V20H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2'/%3E%3C/svg%3E"); }     /* (A calendar: Reading plan) */
+.planCal { container-type: inline-size; }
+.planPane > .field { margin-bottom: var(--gap); }     /* (PLAN over the calendar, with more than one plan) */
+.planMonth { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
+.planWeek { display: none; }
+.planDays { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
+.planDay { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); column-gap: var(--gap-m); padding: var(--row-y) 4px; margin-inline: -4px; border-radius: var(--radius-s); font-size: var(--fs-s); }
+.planDate { color: var(--soft); font-variant-numeric: tabular-nums; }
+.planDay.today .planDate { color: var(--accent); font-weight: 700; }
+.planDay.on { background: var(--tint); }
+.planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
+#screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
+.planPlace { padding-bottom: 8px; }
+@container (min-width: 560px) {
+  .planWeek { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 8px; }
+  .planWeek > .src { margin: 0; padding-inline: 4px; }
+  .planDays { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 4px; }
+  .planDay { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 7em; padding: 4px; margin: 0; border-top: var(--rule); }
+  .planDay:first-child { grid-column-start: var(--planCol, 1); }
+  .planWd { display: none; }
+  .planReads { flex-direction: column; flex-wrap: nowrap; gap: 2px; font-size: var(--fs-xs); }
 }

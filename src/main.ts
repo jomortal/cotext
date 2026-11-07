@@ -28,6 +28,7 @@ import { initTimeline } from "./timeline";
 import { initChapterStudy } from "./chapterstudy";
 import { initVerseCards } from "./versecards";
 import { initResReader } from "./resreader";     // (☰ Resource reader)
+import { initReadingPlan } from "./readingplan";     // (☰ Reading plan and the resources' Reading plan)
 import "./layout";     // (The layout's dividers)
 import { onSwipe, marginArrows } from "./bars";
 import { box } from "./zoom";
@@ -203,6 +204,7 @@ async function start () {
   initTimeline (db, () => [book?.id ?? 0, chapter], (id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (The Timeline: the chapter read, an item tapped)
   initChapterStudy (db, () => [book, chapter], shown);
   initResReader (db);
+  initReadingPlan (db, books, goVerse);     // (A reading tapped: its passage)
   initVerseCards (db, books, () => book);     // (☰ Verse cards: the Hebrew Bible's and the NT's books to pick from; the book read, for a verse number tapped)     // (☰ Study printout: the chapter read, its first time; the books to pick from)
   onLanguage (switchLanguage);
   let last: string | null = null;

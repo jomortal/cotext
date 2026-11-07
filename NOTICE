@@ -251,6 +251,11 @@ Timeline (☰ Timeline and the word panel's person dates - public/data/notes/tim
   - The text's words tied to its people through STEPBible's TIPNR (STEPBible Data, Tyndale House, Cambridge, CC BY 4.0).
   - Empires: the Atlas' eras (pipeline/atlas_eras.py, above), spanned by the years Theographic gives their chapters.
 
+Reading plan (☰ Reading plan and the resources' Reading plan - src/mcheyne.ts, pipeline/mcheyne.py):
+  - Robert Murray M'Cheyne's Bible Reading Calendar (1842), public domain, from CrossWire's SWORD module MCheyne 1.4
+    (David Haslam, github.com/DavidHaslam/MCheyne-Daily-Bread-SWORD, at commit 54093387eec6834141ca6663126beb3f6d7ab57e).
+    Changes: each day's four readings as references (a reading's parts joined into one span).
+
 Fonts: Ezra SIL 2.51 and Gentium 7.000 (Gentium Plus's successor), (c) SIL International, SIL Open Font License 1.1
 (public/fonts/, with their licences).
 The logo: the Fraktur C (U+212D) from Apparatus SIL Bold, (c) SIL International, SIL Open Font License 1.1, drawn as
