@@ -398,6 +398,7 @@ onScreen ("Reading plan", (body) => {
   // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts with no days, named "Plan 2"...;
   // then START and DAYS, the open plan's
   const when = el ("div", "fieldRow"), weekdays = el ("div", "field", "Days"), options = el ("div", "field");
+  let menuOpen = "";     // (The drop-down open: "more", or "" closed)
   function drawTop () {
     const named = nameMenu<Plan> ({
       noun: "Plan", all: () => plans, open: now, shown, blank: "Untitled",
@@ -415,7 +416,7 @@ onScreen ("Reading plan", (body) => {
     row.replaceChildren (named.title);
     drawWhen ();
     menu.replaceChildren (...named.rows, when, weekdays, options);
-    dropDowns ([{ key: "more", button: named.button, menu }], "");
+    dropDowns ([{ key: "more", button: named.button, menu }], menuOpen, (k) => { menuOpen = k; });     // (Drawn again - a plan picked, made or deleted -: left open as it was)
   }
   /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set) and DAYS (a weekday's
    *  checkbox each; the last ticked can't be unticked) - each change kept and the plan drawn again. */

@@ -70,7 +70,8 @@
   --col-r: max(var(--safe-r), calc((100% - var(--page)) / 2));
   --x-room: 52px;
   --x-w: var(--icon-box);     /* (A ✕ button's width: an icon's box) */
-  --split-w: 14px; --split-half: calc(var(--split-w) / 2); --pane-top: calc(var(--margin) - var(--split-half));     /* (--pane-top: a panel's room above its first line - from the divider's line as much as its side margin) */     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
+  --split-w: 14px; --split-half: calc(var(--split-w) / 2); --pane-top: calc(var(--margin) - var(--split-half));
+  --pick-h: calc(var(--fs-s) * 1.2 + 12px + 2 * var(--rule-w)); --pane-row-y: max(calc((var(--head-h) - var(--pick-h)) / 2), var(--split-half));     /* (--pick-h: a picker's height - its line, 6px above and below, its border; --pane-row-y: a pane's top row (the resources' picker, the search bar) as tall as the top bar - the picker centered in it, this above, below and at its left - never less than the divider's half, so on a phone the picker stays clear of the divider's line, as far from it as from the side) */     /* (--pane-top: a panel's room above its first line - from the divider's line as much as its side margin) */     /* (A divider's width: its line in the middle, the rest room to drag it; half, from its edge to its line) */
   --grip: 36px; --grip-w: 4px;     /* (A divider's grip, over its line: its length and thickness) */
   --head-y: 6px; --head-top: calc(var(--head-y) + env(safe-area-inset-top, 0px));     /* (Above and below the heading's buttons - and every top row's and bottom bar's -, the top's clear of the clock) */
   /* Spacing: --gap between controls in a row or a list; -s a label over its field; -m between a list's or row's
@@ -298,7 +299,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 :where(.sheet, .pane) > .panelScroll > * { max-width: var(--page); margin-inline: auto; }     /* (:where - no weight, so the two columns' widths below win over it) */
 :where(.sheet:not(.twoCol)) > .panelScroll > * { margin-inline: 0 auto; }     /* (A word's panel in one column: at the panel's left, any room beyond --page at its right) */
 .pane > .panelScroll { padding-top: 0; }     /* (Under the frozen top row: its own margin above) */
-.pane > .top { flex: none; margin: 0; padding: var(--pane-top) calc(var(--safe-r) + var(--x-w) + var(--safe-l)) var(--margin) var(--safe-l); }     /* (Its top row frozen over the scroller - the picker as far from the ✕ as from the left edge, and --margin from the divider's line above it, the left edge and what scrolls under it) */
+.pane > .top { flex: none; margin: 0; padding: calc(var(--pane-row-y) - var(--split-half)) calc(var(--safe-r) + var(--x-w) + var(--pane-row-y)) var(--pane-row-y) var(--pane-row-y); }     /* (Its top row frozen over the scroller, as tall as the top bar from the divider's line: the picker centered, --pane-row-y above (less the divider's half, over its line), below and at its left; as far from the ✕) */
 /* Narrow: a slight margin (4px) above and below each panel's scroller, so what scrolls stops just short of its edges
    and lines; the scroller's own padding 4px less, so nothing moves at rest. */
 @media (max-width: 699.98px) {
@@ -620,7 +621,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
    the screen's bottom), over what follows, at most half the screen tall and never past its edge, scrolling on its own; the current choice in the picked color. */
 .chooseWrap { position: relative; display: block; }
 #vcPlace .chooseBtn:disabled, .avPlace .chooseBtn:disabled { opacity: 1; }     /* (A new card's To verse: not greyed out before From verse is picked, only not yet opening) */
-.chooseBtn { text-align: left; padding: 6px 28px 6px 10px; position: relative; cursor: pointer; }
+.chooseBtn { text-align: left; padding: 6px 28px 6px 10px; line-height: 1.2; position: relative; cursor: pointer; }     /* (Its line set, so its height is known: --pick-h) */
 .chooseBtn::after { content: ""; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
 .chooseBtn::after, .topArrow { width: .7em; height: .45em; background: var(--soft); -webkit-mask: var(--chevron) center / contain no-repeat; mask: var(--chevron) center / contain no-repeat; }     /* (The drop-down arrow: --chevron, in the soft color) */
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: var(--z-menu); box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
@@ -678,16 +679,16 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
   #screenMenu { left: var(--safe-l); }
   /* A pane's top row (the notes' picker, the search bar) fixed over its scroller (layout.ts' paneFrame), the ✕ over its
      right end; clear of the notch and the clock. */
-  .pane > .top { padding-top: calc(var(--margin) + env(safe-area-inset-top, 0px)); }     /* (Sideways the panel reaches the screen's top: --margin from it, clear of the clock) */
+  .pane > .top { padding-top: calc(var(--pane-row-y) + env(safe-area-inset-top, 0px)); }     /* (Sideways the panel reaches the screen's top: its row the top bar's, clear of the clock) */
   .pane > .xRow { top: calc(var(--x-top) + env(safe-area-inset-top, 0px)); }
-  body:has(#search:not([hidden])) #notes > .top { padding-top: var(--pad); }     /* (The notes beside or under the search: no clock to clear) */
+  body:has(#search:not([hidden])) #notes > .top { padding-top: calc(var(--pane-row-y) - var(--split-half)); }     /* (The notes beside or under the search: no clock to clear - from the divider's line, as upright) */
   .pane > .panelScroll { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* The search pane (search.ts): its bar the top row's width, beside the ✕, the picker (what's searched) under it; the count, then
    the results - each its reference (.src) over its text (the verse's original or interlinear English, or a source's), what matched in the
    accent - a row to tap (the verse gone to). */
-#searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; }     /* (As tall as the notes' picker) */
+#searchBar { flex: 1; min-width: 0; box-sizing: border-box; padding: 6px 10px; line-height: 1.2; }     /* (As tall as the notes' picker) */
 #searchCount { margin-top: 0; }
 #searchCount:empty { display: none; }
 .hit { display: grid; gap: 2px; width: 100%; padding: var(--row-y) 0; border-top: var(--hair); color: var(--fg); }     /* (A plain button: .chooseItem's rule) */
