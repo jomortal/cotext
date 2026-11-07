@@ -1009,7 +1009,7 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planDay.today .planDate { color: var(--accent); font-weight: 700; }
 .planDay.on { background: var(--tint); }
 .planN.csCheck { min-height: 0; } .planNone input { visibility: hidden; }     /* (A day's done: the checkbox on its "Day N", as tall as the line) */
-.planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
+.planReads { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(7.5em, 100%), 1fr)); gap: var(--gap-s) var(--gap-m); min-width: 0; }     /* (A day's columns in tracks of one width - every day's row as wide, so as many a row and each column in the same place: a straight line down the list at any width, wrapping the same way) */
 .planPart { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-s) 8px; min-width: 0; } .planPart > .csCheck { min-height: 0; gap: 0; align-self: center; }     /* (A column's reading on a day: its checkbox, then the reading - as near it as a checkbox's own label) */
 .planLate { color: var(--soft); }     /* (A late reading (MOVE UNREAD): its reference plain text, muted) */
 #screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
@@ -1021,5 +1021,5 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
   .planCal:not(.planList) .planDay { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 7em; padding: 4px; margin: 0; border-top: var(--rule); }
   .planCal:not(.planList) .planDay:first-child { grid-column-start: var(--planCol, 1); }
   .planCal:not(.planList) .planWd { display: none; }
-  .planCal:not(.planList) .planReads { flex-direction: column; flex-wrap: nowrap; align-items: start; gap: 2px; font-size: var(--fs-xs); }     /* (Each link as wide as its words: the rest of the day tapped picks it for EDIT) */
+  .planCal:not(.planList) .planReads { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: start; gap: 2px; font-size: var(--fs-xs); }     /* (Each link as wide as its words: the rest of the day tapped picks it for EDIT) */
 }
