@@ -44,7 +44,7 @@ import { ABBR } from "./booknames";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
 import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
-import { deckPaneSplit } from "./layout";
+import { deckPaneSplit, menuSplit } from "./layout";
 
 //==== PLANS ====
 
@@ -355,6 +355,7 @@ onScreen ("Reading plan", (body) => {
   pickAfresh ();
   const top = el ("div", "topBar"), row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   top.append (row, menu);
+  menuSplit (menu);     // (Its drop-down sized by a divider, scrolling within: layout.ts)
   const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); drawEditor (); cal.draw (); }, done: () => pane?.cal.draw () });
   // EDIT: the picked day's readings, a line each, + Add reading and + Add day under them
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");

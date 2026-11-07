@@ -30,12 +30,13 @@ import { box, px, winW, winH, onScale } from "./zoom";     // (Every measurement
 
 const KEY = "cotext.splits";
 const root = document.documentElement.style;
-const sizes: { searchH?: number; cardShare?: number; rightShare?: number; deckH?: number; deckW?: number } = {};
+const sizes: { searchH?: number; cardShare?: number; rightShare?: number; deckH?: number; deckW?: number; menuH?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
 if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
 if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
 if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
 if (sizes.deckH) root.setProperty ("--deckH", sizes.deckH + "px");
+if (sizes.menuH) root.setProperty ("--menuH", sizes.menuH + "px");
 if (sizes.deckW) root.setProperty ("--deckW", sizes.deckW + "px");
 /** The window's long side (CSS px), either way up: the panel divider's measure (--long). The window's, not the
  *  screen's - a desktop window or an iPad's Split View can be smaller than the screen. With it the window's width and
@@ -76,6 +77,22 @@ const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo,
  *  title row (.paneHead) over its own scroller (headFrame, returned), and its divider, made and put after it: upright on
  *  its top edge, dragged its height (--deckH, px: 120 up, leaving the room a fifth of the window); sideways on its left
  *  edge, its width (--deckW: 240 up, leaving the room 240). Kept, one size for every screen's panel. */
+/** A top row's drop-down sized by its own divider (style.css' .menuSized - for now the Reading plan's; the kind any top
+ *  drop-down can take): the divider made and put after it, on its bottom edge, shown while it's open; dragged, its height
+ *  (--menuH, px: 80 up, leaving a fifth of the window under it) - its contents scrolling within. Kept, one size for
+ *  every drop-down sized so; until dragged, as tall as its contents (at most the screen's room). */
+export function menuSplit (menu: HTMLElement) {
+  menu.classList.add ("menuSized");
+  const split = document.createElement ("div");
+  split.className = "split menuSplit"; split.setAttribute ("role", "separator"); split.setAttribute ("aria-label", "Resize the menu");
+  split.setAttribute ("aria-orientation", "horizontal");
+  menu.after (split);
+  drag (split, (_x, y) => {
+    const r = box (menu);
+    sizes.menuH = Math.round (clamp (y - r.top, 80, winH () * .8 - r.top)); root.setProperty ("--menuH", sizes.menuH + "px");
+  });
+}
+
 export function deckPaneSplit (pane: HTMLElement): HTMLElement {
   const scroller = headFrame (pane);
   const screen = document.getElementById ("screen")!;

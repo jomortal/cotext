@@ -580,6 +580,11 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .split.deckSplit { display: none; background: none; }     /* (The panel's divider see-through, the top bar's line meeting it) */ .deckPane:not([hidden]) + .deckSplit { display: block; position: fixed; z-index: 33; left: 0; right: 0; bottom: calc(var(--barH) + var(--deckPaneH, 0px) - var(--split-half)); }     /* (Its divider on its top edge: dragged, its height - --deckH, layout.ts' deckPaneSplit; sideways its left edge, its width) */
 .vcMenu:not([hidden]) { display: grid; gap: var(--gap); box-sizing: content-box; max-width: var(--page); margin: 0 auto; padding: 0 var(--safe-r) var(--pad) var(--safe-l);
   max-height: calc(var(--winH, 100dvh) - var(--barH) - 48px - env(safe-area-inset-top, 0px) - var(--pad)); overflow-y: auto; overscroll-behavior: contain; }     /* (Taller than the screen: scrolled within itself - the name's row never scrolls) */     /* (A drop-down: part of the top bar, under the name - the column's width; the bar's line under it) */
+/* A top drop-down sized by its own divider (.menuSized, layout.ts' menuSplit - the Reading plan's for now; any top
+   drop-down can take it): once dragged as tall as --menuH, its contents scrolling within; the divider on its bottom
+   edge, shown while it's open - its line the bar's line under it. */
+.vcMenu.menuSized:not([hidden]) { height: var(--menuH, auto); box-sizing: border-box; }
+.split.menuSplit { display: none; background: none; } .vcMenu:not([hidden]) + .menuSplit { display: block; margin-top: calc(-1 * var(--split-half)); margin-bottom: calc(-1 * var(--split-half)); z-index: 1; }
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
 .vcBook .chooseBtn { min-width: 0; }     /* (BOOK as wide as a long name even while blank - 11em and its padding -, narrowing on a phone to what's left of the line) */
