@@ -1014,5 +1014,5 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
   .planCal:not(.planList) .planDay { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 7em; padding: 4px; margin: 0; border-top: var(--rule); }
   .planCal:not(.planList) .planDay:first-child { grid-column-start: var(--planCol, 1); }
   .planCal:not(.planList) .planWd { display: none; }
-  .planCal:not(.planList) .planReads { flex-direction: column; flex-wrap: nowrap; gap: 2px; font-size: var(--fs-xs); }
+  .planCal:not(.planList) .planReads { flex-direction: column; flex-wrap: nowrap; align-items: start; gap: 2px; font-size: var(--fs-xs); }     /* (Each link as wide as its words: the rest of the day tapped picks it for EDIT) */
 }
