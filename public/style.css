@@ -993,11 +993,12 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planMonth { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
 .planWeek { display: none; }
 .planDays { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 8px; }
-.planDay { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); column-gap: var(--gap-m); padding: var(--row-y) 4px; margin-inline: -4px; border-radius: var(--radius-s); font-size: var(--fs-s); }
+.planDay { display: grid; grid-template-columns: 6em minmax(0, 1fr); column-gap: var(--gap-m); padding: var(--row-y) 4px; margin-inline: -4px; border-radius: var(--radius-s); font-size: var(--fs-s); }
 .planDate { color: var(--soft); font-variant-numeric: tabular-nums; }
 .planCal:not(.planList) .planN { display: block; }     /* (On the calendar: the plan day under the date) */
 .planDay.today .planDate { color: var(--accent); font-weight: 700; }
 .planDay.on { background: var(--tint); }
+.planN.csCheck { min-height: 0; gap: 4px; } .pill.planDone { font-size: var(--fs-xs); padding-block: 0; }     /* (A day's done: the screen's checkbox on its "Day N", as tall as the line; the resource's DONE, small, after its readings) */
 .planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
 #screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
 .planPlace { padding-bottom: 8px; }

@@ -10,6 +10,9 @@
 //   tint - and EDIT opens on it.
 // Each plan, kept with it: START - "Not on the calendar" (the default) or "On a date" (its MONTH, DAY and YEAR) - and
 // DAYS, a checkbox a weekday (Sun-Sat, all ticked at first, one at least): the weekdays the plan is read on.
+// DONE: the resource gives each day a DONE button - tapped, the day is marked done and no longer shown there (on the
+// calendar its date stays, blank; in the list its row goes). The screen shows every day, each its "Day N" a checkbox,
+// ticked when done - unticked, the day shows in the resource again.
 // - Not on the calendar: the days as a list, a day a row - "Day 1" at its left, its readings beside them - at any width.
 // - On the calendar: the month's name between ‹ and › (the month before and after), then its days - where its box is at
 //   least 560 px wide a week a row, Sunday first, each day its date over its plan day and readings; narrower, a day a
@@ -24,7 +27,7 @@
 // edited days excepted.
 // Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, plans: [{ id, name, base?:
 // "mcheyne", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
-// Sunday 1 ... Saturday 64), days: { "<day number, 1 first>": readings } }] } - a day's readings joined by ";", each as
+// Sunday 1 ... Saturday 64), days: { "<day number, 1 first>": readings }, done: the plan days marked done }] } - a day's readings joined by ";", each as
 // parse reads it; a day in days overrides the base's ("" none). A plan saved another way (before days were numbered) is
 // dropped. Every plan deleted: M'Cheyne's back, unedited.
 
@@ -38,7 +41,7 @@ import { deckPaneSplit } from "./layout";
 
 //==== PLANS ====
 
-interface Plan { id: string; name: string; base?: "mcheyne"; count: number; start: string; week: number; days: Record<string, string>; }
+interface Plan { id: string; name: string; base?: "mcheyne"; count: number; start: string; week: number; days: Record<string, string>; done: number[]; }
 /** One reading: book (its code), whole chapters c1 to c2. */
 interface Reading { code: string; c1: number; c2: number; }
 
@@ -48,7 +51,7 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const EVERY_DAY = 127;     // (week: every weekday ticked)
 
-const factory = (): Plan => ({ id: "mcheyne", name: "M'Cheyne", base: "mcheyne", count: MCHEYNE.length, start: "", week: EVERY_DAY, days: {} });
+const factory = (): Plan => ({ id: "mcheyne", name: "M'Cheyne", base: "mcheyne", count: MCHEYNE.length, start: "", week: EVERY_DAY, days: {}, done: [] });
 let plans: Plan[] = [];
 let at = "";
 function load () {
@@ -59,7 +62,8 @@ function load () {
       plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count))
                      .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base === "mcheyne" ? { base: p.base } : {}), count: Math.max (0, p.count),
                                            start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
-                                           week: Number.isInteger (p.week) && p.week > 0 && p.week <= EVERY_DAY ? p.week : EVERY_DAY, days: p.days }));
+                                           week: Number.isInteger (p.week) && p.week > 0 && p.week <= EVERY_DAY ? p.week : EVERY_DAY, days: p.days,
+                                           done: Array.isArray (p.done) ? p.done.filter ((n) => Number.isInteger (n)) : [] }));
       at = String (s.at ?? "");
     }
   } catch { /* unreadable or private mode: the factory plan */ }
@@ -73,6 +77,13 @@ load ();
 const now = () => plans.find ((p) => p.id === at)!;
 const shown = (p: Plan) => p.name || "Untitled";
 
+/** Whether plan day n is marked done (the resource's DONE; the screen's checkbox), and marking it. */
+const isDone = (p: Plan, n: number) => p.done.includes (n);
+function setDone (p: Plan, n: number, on: boolean) {
+  p.done = p.done.filter ((x) => x !== n);
+  if (on) p.done.push (n);
+  save ();
+}
 /** A plan day's readings (n: 1 first): its own edit, else its base's. */
 const dayOf = (p: Plan, n: number): Reading[] =>
   (String (n) in p.days ? p.days[n] : p.base ? MCHEYNE[n - 1] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
@@ -145,8 +156,9 @@ const today = () => { const d = new Date (); return { y: d.getFullYear (), m: d.
 /** The open plan as a calendar (a start date set) or a list of its days (none): el, its box; draw, drawn again (the
  *  plan or a day changed) - at month (y, m) if given, else the month shown. leaving: called before a reading's passage
  *  is gone to (the screen closed); pick: a plan day tapped (not its readings) - the screen's editor (none in the
- *  resource); picked: the plan day marked picked (0 none). */
-function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked?: () => number }) {
+ *  resource); picked: the plan day marked picked (0 none). resource: the resource's - each day a DONE button, the days
+ *  done not shown; else the screen's - each day's "Day N" a checkbox, ticked when done (done: told of a change). */
+function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked?: () => number; resource?: boolean; done?: () => void }) {
   const box = el ("div", "planCal");
   const t = today ();
   let y = t.y, m = t.m;
@@ -167,12 +179,24 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     if (n && n === picked) cell.classList.add ("on");
     const when = el ("span", "planDate");
     if (date) when.append (el ("span", "planWd", WEEKDAYS[date.wd] + " "), String (date.d));
-    if (n) when.append (el ("span", "planN", `Day ${n}`));
+    if (n && o.resource) when.append (el ("span", "planN", `Day ${n}`));
+    else if (n) {
+      const c = check (isDone (p, n), (on) => { setDone (p, n, on); o.done?. (); }, `Day ${n}`);
+      c.classList.add ("planN");
+      c.addEventListener ("click", (e) => e.stopPropagation ());     // (Ticking it never picks the day)
+      when.append (c);
+    }
     const list = el ("span", "planReads");
     if (n) for (const r of dayOf (p, n)) {
       const a = el ("a", "term", label (r));
       a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, 1); });
       list.append (a);
+    }
+    if (n && o.resource) {
+      const done = el ("button", "pill planDone", "Done");
+      done.type = "button";
+      done.addEventListener ("click", (e) => { e.stopPropagation (); setDone (p, n, true); draw (); });
+      list.append (done);
     }
     cell.append (when, list);
     if (o.pick && n) cell.addEventListener ("click", () => o.pick! (n));
@@ -184,13 +208,14 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     box.classList.toggle ("planList", ! dated);
     head.hidden = week.hidden = ! dated;
     if (! dated) {
-      days.replaceChildren (...Array.from ({ length: p.count }, (_, i) => dayCell (p, i + 1, picked)));
-      if (! p.count) days.append (el ("p", "", "No days yet."));
+      const ns = Array.from ({ length: p.count }, (_, i) => i + 1).filter ((n) => ! o.resource || ! isDone (p, n));     // (The resource: the days done left out)
+      days.replaceChildren (...ns.map ((n) => dayCell (p, n, picked)));
+      if (! ns.length) days.append (el ("p", "", p.count ? "Every day done." : "No days yet."));
     } else {
       const first = new Date (y, m, 1).getDay (), n = new Date (y, m + 1, 0).getDate ();
       title.textContent = `${MONTHS[m]} ${y}`;
       days.replaceChildren (...Array.from ({ length: n }, (_, i) => {
-        const d = i + 1, cell = dayCell (p, dayOn (p, y, m, d), picked, { wd: (first + i) % 7, d });
+        const d = i + 1, on = dayOn (p, y, m, d), cell = dayCell (p, o.resource && isDone (p, on) ? 0 : on, picked, { wd: (first + i) % 7, d });     // (The resource: a day done blank)
         if (i === 0) cell.style.setProperty ("--planCol", String (first + 1));     // (The 1st under its weekday: the grid's column)
         if (y === t.y && m === t.m && d === t.d) cell.classList.add ("today");
         return cell;
@@ -212,7 +237,7 @@ let pane: { el: HTMLElement; cal: ReturnType<typeof calendar>; pick: HTMLElement
  *  fresh (just put in), else at the month it shows. */
 export function planPane (fresh: boolean): HTMLElement {
   if (! pane) {
-    const cal = calendar ({}), box = el ("div", "planPane"), pick = el ("label", "field", "Plan");
+    const cal = calendar ({ resource: true }), box = el ("div", "planPane"), pick = el ("label", "field", "Plan");
     box.append (pick, cal.el);
     pane = { el: box, cal, pick };
   }
@@ -249,7 +274,7 @@ onScreen ("Reading plan", (body) => {
   pickAfresh ();
   const top = el ("div", "topBar"), row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   top.append (row, menu);
-  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); drawEditor (); cal.draw (); } });
+  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); drawEditor (); cal.draw (); }, done: () => pane?.cal.draw () });
   // EDIT: the picked day's readings, a line each, + Add reading and + Add day under them
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");
   setIcon (close, "x"); close.setAttribute ("aria-label", "Close the editor");
@@ -293,7 +318,7 @@ onScreen ("Reading plan", (body) => {
     const named = nameMenu<Plan> ({
       noun: "Plan", all: () => plans, open: now, shown, blank: "Untitled",
       select: (id) => { at = id; save (); drawTop (); changed (); },
-      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, count: 0, start: "", week: EVERY_DAY, days: {} }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
+      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, count: 0, start: "", week: EVERY_DAY, days: {}, done: [] }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
       ask: (p) => `Delete the plan "${shown (p)}"?`,
       remove: (p) => { plans = plans.filter ((x) => x !== p); if (! plans.length) plans = [factory ()]; at = plans[0].id; save (); drawTop (); changed (); },
       renamed: () => save () });
