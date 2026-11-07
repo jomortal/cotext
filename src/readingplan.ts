@@ -88,8 +88,9 @@ const factoryCount = (b: Base) => FACTORY[b].runs ? chaptersOf (b).length : FACT
 
 //==== COMBINED PLAN ====
 // A plan of plans - a polymeter. COMBINED PLAN ticked in a plan's drop-down makes it one: its own days set aside (kept,
-// back once unticked; no EDIT of its days), its drop-down lists every other plan that isn't combined, each with an
-// INCLUDE checkbox and, included, its REPEAT - the combined plan's own for that plan, apart from the plan's own REPEAT.
+// back once unticked; no EDIT of its days), its drop-down lists PLANS - the plans it includes, a line each: its PLAN
+// picker (to swap it for one not included), its REPEAT (the combined plan's own for that plan, apart from the plan's
+// own REPEAT) and ✕ (taken out) -, then + ADD PLAN (the first plan not yet included - not combined itself - added).
 // Day N of a combined plan reads Day N of every plan included, in the order included - each plan's own days, its own
 // START, DAYS and REPEAT ignored -; a plan with REPEAT ticked there starts over after its last day (plans of different
 // lengths cycling against each other), unticked it stops (nothing of it from then). A combined plan with a plan
@@ -432,23 +433,28 @@ onScreen ("Reading plan", (body) => {
       drawWhen ();     // (The last unticked: ticked again)
     }, w)));
     weekdays.replaceChildren ("Days", boxes);
-    // REPEAT (on the calendar only) and COMBINED PLAN - ticked, the plans it can include, each INCLUDE and its REPEAT there
+    // REPEAT (on the calendar only) and COMBINED PLAN - ticked, its plans and + ADD PLAN
     const ticks = el ("div", "csFathers");
     if (s) ticks.append (check (!! p.repeat, (on) => { p.repeat = on; save (); changed (); }, "Repeat"));
     ticks.append (check (isCombined (p), (on) => { p.combined = on; p.members ??= []; save (); drawWhen (); changed (); }, "Combined plan"));
     if (! isCombined (p)) { options.replaceChildren (ticks); return; }
-    const ms = p.members!;
-    const rows = plans.filter ((x) => x !== p && ! isCombined (x)).map ((x) => {
-      const row = el ("div", "csFathers planMember"), m = ms.find ((k) => k.id === x.id);
-      row.append (check (!! m, (on) => {
-        p.members = ms.filter ((k) => k.id !== x.id);
-        if (on) p.members.push ({ id: x.id, repeat: false });     // (Included without REPEAT; the last included last)
-        save (); drawWhen (); changed ();
-      }, shown (x)));
-      if (m) row.append (check (m.repeat, (on) => { m.repeat = on; save (); changed (); }, "Repeat"));
+    // (PLANS: a line a plan included, in order - its PLAN picker (it, or any plan not yet included), its REPEAT and ✕ -,
+    // then + ADD PLAN: the first plan not included added, without REPEAT, picked from then in its line)
+    const free = () => plans.filter ((x) => x !== p && ! isCombined (x) && ! p.members!.some ((k) => k.id === x.id));
+    const rows = membersOf (p).map (({ p: x }) => {
+      const m = p.members!.find ((k) => k.id === x.id)!, row = el ("div", "fieldRow planPlace planMember");
+      row.append (pick ("Plan", [x, ...free ()].map ((y): [string, string] => [y.id, shown (y)]), x.id, (v) => { m.id = v; save (); drawWhen (); changed (); }),
+                  check (m.repeat, (on) => { m.repeat = on; save (); changed (); }, "Repeat"));
+      const out = el ("button", "pill icon csRemove");
+      setIcon (out, "x"); out.setAttribute ("aria-label", `Take ${shown (x)} out of this plan`);
+      out.addEventListener ("click", () => { p.members = p.members!.filter ((k) => k !== m); save (); drawWhen (); changed (); });
+      row.append (out);
       return row;
     });
-    options.replaceChildren (ticks, el ("div", "field", "Plans"), ...rows);
+    const addPlan = el ("button", "pill action", "+ Add plan");
+    addPlan.hidden = ! free ().length;
+    addPlan.addEventListener ("click", () => { const x = free ()[0]; if (! x) return; p.members!.push ({ id: x.id, repeat: false }); save (); drawWhen (); changed (); });
+    options.replaceChildren (ticks, el ("div", "field", "Plans"), ...rows, addPlan);
   }
 
   // A reading's line: BOOK, CHAPTER, TO CHAPTER and ✕ - a change kept at once

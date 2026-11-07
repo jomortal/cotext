@@ -619,7 +619,7 @@ async function drawTimeline (b: Book) {
 }
 
 /** The reading plan (readingplan.ts' planPane): put in at today's month (on the calendar), today in view; already shown (the
- *  text moved on - a reading tapped -, the pane opened again), its month kept, the plans read again. */
+ *  text moved on - a reading tapped -, the pane opened again), its month and scroll kept, the plans read again. */
 function drawPlan () {
   if (shownIds === "readingplan") return;
   shownIds = "readingplan"; shownVerse = "";
@@ -630,8 +630,10 @@ function drawPlan () {
   bodyEl.classList.remove ("gBody");
   const fresh = ! bodyEl.querySelector (".planPane");
   if (fresh) clearInterlinear ();
+  const top = notesScroll.scrollTop;
   const el = planPane (fresh);
   if (fresh) { bodyEl.replaceChildren (el); planToToday (); }
+  else notesScroll.scrollTop = top;     // (Drawn again in place - a reading tapped: kept where it was read - Safari would put it back at the top)
 }
 
 /** Under 700 px wide, the timeline as tall as the panel's room under its top (its canvas takes every drag, so the panel
