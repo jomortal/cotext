@@ -45,6 +45,7 @@ import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
 import { nameMenu, dropDowns, watchTopBar, check } from "./topbar";
 import { deckPaneSplit, menuSplit } from "./layout";
+import { box } from "./zoom";
 
 //==== PLANS ====
 
@@ -177,9 +178,18 @@ function partDay (p: Plan, part: string, n: number): Reading[] {
   const m = x.p, k = x.repeat ? (m.count ? (n - 1) % m.count + 1 : 0) : n <= m.count ? n : 0;
   return k ? dayOf (m, k) : [];
 }
-function setDay (p: Plan, n: number, rs: Reading[]) {
+function setDay (p: Plan, n: number, rs: Reading[], keep = true) {
   const s = rs.map (format).join (";");
   if (p.base && factoryDay (p.base, n) === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
+  if (keep) save ();
+}
+/** Plan day n taken out: the days after it each a day earlier (kept as edits where they differ from the base's), the
+ *  plan a day shorter, the days marked read moved with them. */
+function deleteDay (p: Plan, n: number) {
+  for (let k = n; k < p.count; k++) setDay (p, k, dayOf (p, k + 1), false);
+  delete p.days[p.count];
+  p.count--;
+  p.done[""] = (p.done[""] ?? []).filter ((x) => x !== n).map ((x) => x > n ? x - 1 : x);
   save ();
 }
 
@@ -458,20 +468,20 @@ onScreen ("Reading plan", (body) => {
   const top = el ("div", "topBar"), row = el ("div", "topRow"), menu = el ("div", "vcMenu");
   top.append (row, menu);
   menuSplit (menu);     // (Its drop-down sized by a divider, scrolling within: layout.ts)
-  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); drawEditor (); cal.draw (); }, done: () => paneDraw () });
-  // EDIT: the picked day's readings, a line each, + Add reading and + Add day under them
+  const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); cal.draw (); toDay (n); }, done: () => paneDraw () });
+  // EDIT: every day of the plan at once - each its "Day N", its readings a line each and + Add reading -, then + Add day
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");
   setIcon (close, "x"); close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
-  const dayName = el ("div", "src"), lines = el ("div", "planLines"), adds = el ("div", "fieldRow");
-  const add = el ("button", "pill action", "+ Add reading"), addDay = el ("button", "pill action", "+ Add day");
-  adds.append (add, addDay);
-  editor.append (head, dayName, lines, adds);
+  const lines = el ("div", "planEditDays"), adds = el ("div", "fieldRow");
+  const addDay = el ("button", "pill action", "+ Add day");
+  adds.append (addDay);
+  editor.append (head, lines, adds);
   const bar = el ("div", "bottomBar"), pencil = el ("button", "pill icon barMid");
   setIcon (pencil, "pencil"); pencil.setAttribute ("aria-label", "Show or hide the editor");
   bar.append (pencil);
   body.append (top, cal.el, editor, bar);
-  deckPaneSplit (editor);
+  const edScroll = deckPaneSplit (editor);
   watchTopBar (top);
   const show = (on: boolean) => {
     editing = on; editor.hidden = ! on; pencil.setAttribute ("aria-pressed", String (on));
@@ -480,19 +490,15 @@ onScreen ("Reading plan", (body) => {
   pencil.addEventListener ("click", () => show (! editing));
   close.addEventListener ("click", () => show (false));
   const changed = () => { pickAfresh (); drawEditor (); cal.draw (); paneDraw (); };     // (The resource too, if made)
-  add.addEventListener ("click", () => {
-    // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
-    const rs = dayOf (now (), picked), last = rs[rs.length - 1];
-    const code = last?.code ?? "Gen", c = last ? Math.min (last.c2 + 1, books.get (code)!.chapters) : 1;
-    rs.push ({ code, c1: c, c2: c });
-    setDay (now (), picked, rs); changed ();
-  });
+  /** One day edited: only its own block drawn again (the list kept where it is), the calendars after it. */
+  const dayChanged = (n: number) => { drawDay (n); cal.draw (); paneDraw (); };
   addDay.addEventListener ("click", () => {
     // (A day after the plan's last, with no readings, picked - its own edit, so a factory day beyond M'Cheyne's 365 stays blank)
     const p = now ();
     p.count++; p.days[p.count] = ""; picked = p.count;
     save (); changed ();
     cal.el.querySelector (".planDay.on")?.scrollIntoView ({ block: "nearest" });
+    toDay (p.count);
   });
 
   // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts with no days, named "Plan 2"...;
@@ -556,21 +562,42 @@ onScreen ("Reading plan", (body) => {
   }
 
   // A reading's line: BOOK, CHAPTER, TO CHAPTER and ✕ - a change kept at once
+  /** EDIT, every day of the open plan: a block a day ("Day N" over its lines and + Add reading), its pickers made only as
+   *  it nears the view (a year of them at once is too many), kept once made; drawn afresh for another plan or setting,
+   *  the list kept where it was scrolled. A combined plan's are read-only: its plans' (edited in each). */
+  let edPlan = "";
+  const filled = new IntersectionObserver ((es) => { for (const e of es) if (e.isIntersecting) { filled.unobserve (e.target); drawDay (+(e.target as HTMLElement).dataset.n!); } },
+                                           { root: edScroll, rootMargin: "800px 0px" });
   function drawEditor () {
-    const p = now (), n = picked;
-    dayName.textContent = n ? `Day ${n}` : "No days yet.";
-    add.hidden = ! n || isCombined (p); addDay.hidden = isCombined (p);
-    if (isCombined (p)) {     // (Read-only: its readings are the plans' in it, edited there)
-      lines.replaceChildren (el ("p", "", "A combined plan's readings are its plans' - edited in each plan."));
-      return;
-    }
-    const rs = n ? dayOf (p, n) : [];
-    lines.replaceChildren (...rs.map ((r, i) => {
+    const p = now (), keep = edPlan === p.id ? edScroll.scrollTop : 0;
+    edPlan = p.id;
+    filled.disconnect ();
+    addDay.hidden = isCombined (p);
+    if (isCombined (p)) { lines.replaceChildren (el ("p", "", "A combined plan's readings are its plans' - edited in each plan.")); return; }
+    const last = lastDay (p);
+    lines.replaceChildren (...Array.from ({ length: last }, (_, k) => {
+      const d = el ("div", "planEditDay");
+      d.dataset.n = String (k + 1);
+      d.append (el ("div", "src", `Day ${k + 1}`));
+      filled.observe (d);
+      return d;
+    }));
+    if (! last) lines.append (el ("p", "", "No days yet."));
+    edScroll.scrollTop = keep;
+  }
+  /** Day n's block: "Day N" and DELETE DAY (the day deleted, the ones after it a day earlier), its lines (BOOK, CHAPTER,
+   *  TO CHAPTER, ✕ - a change kept at once) and + Add reading. */
+  function drawDay (n: number) {
+    const d = lines.querySelector<HTMLElement> (`.planEditDay[data-n="${n}"]`), p = now ();
+    if (! d || isCombined (p)) return;
+    filled.unobserve (d);
+    const rs = dayOf (p, n);
+    const rows = rs.map ((r, i) => {
       const line = el ("div", "csLine"), place = el ("div", "fieldRow planPlace");
       const set = (f: Partial<Reading>) => {
         Object.assign (r, f);
         if (r.c2 < r.c1) r.c2 = r.c1;
-        setDay (p, n, rs); changed ();
+        setDay (p, n, rs); dayChanged (n);
       };
       const b = books.get (r.code)!, nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => from + k);
       place.append (
@@ -579,12 +606,27 @@ onScreen ("Reading plan", (body) => {
         pick ("To chapter", nums (r.c1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c2), (v) => set ({ c2: +v })));
       const x = el ("button", "pill icon csRemove");
       setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this reading");
-      x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, n, rs); changed (); });
+      x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, n, rs); dayChanged (n); });
       place.append (x);
       line.append (place);
       return line;
-    }));
-    if (n && ! rs.length) lines.append (el ("p", "", "No readings this day."));
+    });
+    const add = el ("button", "pill action", "+ Add reading");
+    add.addEventListener ("click", () => {
+      // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
+      const last = rs[rs.length - 1], code = last?.code ?? "Gen", c = last ? Math.min (last.c2 + 1, books.get (code)!.chapters) : 1;
+      rs.push ({ code, c1: c, c2: c });
+      setDay (p, n, rs); dayChanged (n);
+    });
+    const head = el ("div", "planEditHead"), del = el ("button", "pill", "Delete day");     // (In words, as DELETE PLAN: not a reading's ✕)
+    del.addEventListener ("click", () => { deleteDay (p, n); if (picked > p.count) picked = p.count; changed (); });     // (The days after it renumbered: drawn again, the list where it was)
+    head.append (el ("div", "src", `Day ${n}`), del);
+    d.replaceChildren (head, ...rows, ...(rs.length ? [] : [el ("p", "", "No readings this day.")]), add);
+  }
+  /** Day n's block brought to the top of EDIT (a day picked on the calendar). */
+  function toDay (n: number) {
+    const d = lines.querySelector<HTMLElement> (`.planEditDay[data-n="${n}"]`);
+    if (d) edScroll.scrollTop += box (d).top - box (edScroll).top;
   }
   drawTop ();
   screenPlan = () => { if (! top.isConnected) return; drawTop (); pickAfresh (); drawEditor (); cal.draw (); };     // (The screen not shown: drawn afresh when opened)

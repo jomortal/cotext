@@ -996,6 +996,7 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
    its ✕. A combined plan's day: a checkbox a plan (.planPart). */
 #planBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5h16V20H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2'/%3E%3C/svg%3E"); }     /* (A calendar: Reading plan) */
 .planCal { container-type: inline-size; }
+.planEditDays { display: grid; gap: var(--gap); } .planEditDay { display: grid; gap: var(--gap-s); min-height: 2em; } .planEditHead { display: flex; align-items: center; justify-content: space-between; }     /* (EDIT: every day a block - "Day N" and DELETE DAY over its lines and + Add reading) */
 .planPane > .field { margin-bottom: var(--gap); }     /* (PLAN over the calendar, with more than one plan) */
 .planMonth { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
 .planWeek { display: none; }
