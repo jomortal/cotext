@@ -204,7 +204,7 @@ async function start () {
   initTimeline (db, () => [book?.id ?? 0, chapter], (id, c, v) => { const b = books.find ((x) => x.id === id); if (b) goVerse (b, c, v); });     // (The Timeline: the chapter read, an item tapped)
   initChapterStudy (db, () => [book, chapter], shown);
   initResReader (db);
-  initReadingPlan (books, goVerse);     // (A reading tapped: its passage)
+  initReadingPlan (books, goVerse, db);     // (A reading tapped: its passage; QUICK FILL's word counts)
   initVerseCards (db, books, () => book);     // (☰ Verse cards: the Hebrew Bible's and the NT's books to pick from; the book read, for a verse number tapped)     // (☰ Study printout: the chapter read, its first time; the books to pick from)
   onLanguage (switchLanguage);
   let last: string | null = null;
