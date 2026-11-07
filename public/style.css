@@ -993,10 +993,11 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
    Not on the calendar (.planList): no month, its days a row each at any width, "Day 12" at the left. Today's date in
    the accent; the day picked (☰'s EDIT) the accent's tint. The readings are links (.term). EDIT is a screen's panel
    (.deckPane, .csEditor's spacing), a reading's line an editor's line (.csLine) holding a row of fields (.fieldRow) and
-   its ✕. A combined plan's day: a checkbox a plan (.planPart). */
+   its ✕. A day of a plan of several columns: a checkbox a column's reading (.planPart). */
 #planBtn { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5h16V20H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2'/%3E%3C/svg%3E"); }     /* (A calendar: Reading plan) */
 .planCal { container-type: inline-size; }
-.planEditDays { display: grid; gap: var(--gap); } .planEditDay { display: grid; gap: var(--gap-s); min-height: 2em; } .planEditHead { display: flex; align-items: center; justify-content: space-between; }     /* (EDIT: every day a block - "Day N" and DELETE DAY over its lines and + Add reading) */
+.planEdit { container-type: inline-size; } .planEditCols { display: grid; gap: var(--gap-wide); } .planEditCol, .planEditLines { display: grid; gap: var(--gap-s); align-content: start; min-width: 0; } .planEditLine { min-height: 2em; } .planEditHead { display: flex; align-items: center; justify-content: space-between; }     /* (EDIT: a column a block - "Column N" and DELETE COLUMN over its lines, "Day N" over each reading's fields, and + Add reading) */
+@container (min-width: 560px) { .planEditCols { grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); } }     /* (EDIT wide enough: its columns side by side, as many as fit a row; narrower, one under another - the panel's own width) */
 .planPane > .field { margin-bottom: var(--gap); }     /* (PLAN over the calendar, with more than one plan) */
 .planMonth { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
 .planWeek { display: none; }
@@ -1008,7 +1009,7 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planDay.on { background: var(--tint); }
 .planN.csCheck { min-height: 0; } .planNone input { visibility: hidden; }     /* (A day's done: the checkbox on its "Day N", as tall as the line) */
 .planReads { display: flex; flex-wrap: wrap; gap: var(--gap-s) var(--gap-m); min-width: 0; }
-.planPart { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-s) 8px; min-width: 0; } .planPart > .csCheck { min-height: 0; gap: 0; align-self: center; }     /* (A combined plan's part: its checkbox, then its plan's readings - as near it as a checkbox's own label) */
+.planPart { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-s) 8px; min-width: 0; } .planPart > .csCheck { min-height: 0; gap: 0; align-self: center; }     /* (A column's reading on a day: its checkbox, then the reading - as near it as a checkbox's own label) */
 .planLate { color: var(--soft); }     /* (A late reading (MOVE UNREAD): its reference plain text, muted) */
 #screen[data-screen="Reading plan"] .planDay { cursor: pointer; }     /* (A day tapped: picked for EDIT) */
 .planPlace { padding-bottom: 8px; }

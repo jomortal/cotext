@@ -1,42 +1,43 @@
-// Reading plans: numbered days of Bible readings - Day 1, Day 2... -, each reading a link to its passage. Two views of
-// one plan (calendar, below):
+// Reading plans: numbered days of Bible readings - Day 1, Day 2... -, each reading a link to its passage. A plan is
+// columns of readings: each column a list, its first reading Day 1's, its second Day 2's...; Day N reads the Nth reading
+// of every column (a column shorter than N, or whose Nth is None - an empty slot -, has nothing that day), the plan as
+// long as its longest column. One column: a reading a day; several: several a day - a combined plan made in one plan
+// (COLUMNS, below). Two views of one plan (calendar, below):
 // - The resource (notes.ts: "Reading plan" in the resources pane's picker, its own READING group): the open plan,
 //   read-only - a PLAN picker over it while there's more than one.
 // - ☰ Reading plan (the drawer's screen): the same under a top row naming the open plan (topbar.ts' nameMenu, as the
-//   Verse cards' decks: SELECT PLAN, DELETE PLAN, + NEW PLAN, NAME; then the plan's own START, REPEAT, MOVE UNREAD
-//   TO NEXT DAY and COMBINED PLAN, below), and a
-//   bottom bar with a pencil in its middle showing or hiding EDIT - a screen's panel (layout.ts' deckPaneSplit, as the
-//   Study printout's editor): the picked day ("Day 12") and its readings, each its BOOK, CHAPTER, TO CHAPTER and ✕, then
-//   + Add reading and + Add day (a day after the last, picked). A plan day tapped (not on a reading) is picked - its
-//   tint - and EDIT opens on it.
+//   Verse cards' decks: SELECT PLAN, DELETE PLAN, + NEW PLAN, NAME; then the plan's own START, REPEAT and MOVE UNREAD
+//   TO NEXT DAY), and a bottom bar with a pencil in its middle showing or hiding EDIT - a screen's panel (layout.ts'
+//   deckPaneSplit, as the Study printout's editor): the plan's columns (EDIT, below). A plan day tapped (not on a
+//   reading) is picked - its tint - and EDIT brought to it.
 // Each plan, kept with it: START - "Not on the calendar" (the default) or "On a date" (its MONTH, DAY and YEAR: every
-// date from it on a reading day); REPEAT and MOVE UNREAD TO NEXT DAY, shown on the calendar only: REPEAT - after its
-// last day the plan starts over at Day 1 (unticked, it stops) -, MOVE UNREAD (READ, below); COMBINED PLAN (a plan of
-// plans: COMBINED PLAN, below).
-// READ: each day's part a checkbox - a plan's day one, on its label ("Day N" in the list, its date on the calendar); a
-// combined plan's a checkbox for each plan in it -, ticked when read - in either view (the resource too) ticking hides
-// nothing: the part stays shown, its box ticked.
+// date from it on a reading day); REPEAT and MOVE UNREAD TO NEXT DAY, shown on the calendar only: REPEAT - each column
+// starting over at its own end (columns of different lengths cycling against each other - a polymeter -, so the plan
+// never ends; unticked, each column stops at its end) -, MOVE UNREAD (READ, below).
+// READ: each column's reading on a day a checkbox - a one-column plan's on the day's label ("Day N" in the list, its
+// date on the calendar), several columns' a checkbox each, before its reading -, ticked when read - in either view (the
+// resource too) ticking hides nothing: the reading stays shown, its box ticked.
 // - Not on the calendar: the days as a list, a day a row - "Day 1" at its left, its readings beside them - at any width.
 // - On the calendar: the month's name between ‹ and › (the month before and after), then its days - where its box is at
 //   least 560 px wide a week a row, Sunday first, each day its date over its readings; narrower, a day a
 //   row, its weekday and date at its left, its readings beside them (style.css' .planCal: a container query,
 //   the box's own width, never the device's). Each date from the start on is given the next plan day's readings (no "Day N" shown on the
-//   calendar: the date is its name; MOVE UNREAD: the next unread); a date before the start or after the plan's last day is blank. Today's date
+//   calendar: the date is its name; MOVE UNREAD: each column's next unread); a date before the start or after the plan's last day is blank. Today's date
 //   in the accent; each opening shows today's month, today scrolled into view.
 // A reading tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read
 // whole chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so:
-// mcheyne.py). The factory plans (FACTORY: M'Cheyne's, mcheyne.ts - its 365 days in order -; the New Testament (260
-// days), the Psalms (150) and the Old Testament but the Psalms (779), a chapter a day each; and Combined, a combined
-// plan of those three, each repeating - so it never ends: a year past the last day done listed) are what their edits are
-// laid over: their days kept as they ship, the user's changes kept apart (days) - so a corrected factory plan reaches
-// every device, edited days excepted.
+// mcheyne.py). The factory plans (FACTORY: M'Cheyne's, mcheyne.ts - four columns, his four readings a day by position,
+// an empty slot where a split chapter was read whole the day before -; the New Testament (260 days), the Psalms (150)
+// and the Old Testament but the Psalms (779), a chapter a day each, one column; and NT, Psalms and OT, those three as
+// its three columns, REPEAT on) are what their edits are laid over: a plan's columns kept only once edited (cols),
+// else its base's as they ship - so a corrected factory plan reaches every device where it isn't edited.
 // Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, removed: the factory plans deleted
-// here (not offered again), plans: [{ id, name, base?: a FACTORY key, count: its number of days, start: "YYYY-MM-DD"
-// ("" not on the calendar), repeat, moveUnread, combined, members: [{ id, repeat }], days: { "<day number, 1 first>":
-// readings }, done: { part: the plan days marked read }, read: { part: the dates marked read (MOVE UNREAD) } }] } - a day's readings joined
-// by ";", each as parse reads it; a day in days overrides the base's ("" none). A plan saved another way (before days
-// were numbered) or whose base is no longer made is dropped; marks kept another way (before parts) dropped. A factory plan new to the device is added to its plans;
-// every plan deleted, the factory plans back, unedited.
+// here (not offered again), plans: [{ id, name, base?: a FACTORY key, cols?: its columns (each its readings in order,
+// Day 1 first, each as parse reads it, "" an empty slot; none: the base's), start: "YYYY-MM-DD" ("" not on the
+// calendar), repeat, moveUnread, done: { column: the plan days marked read }, read: { column: the dates marked read
+// (MOVE UNREAD) } }] } - a column by its number, 0 first. A plan whose base is no longer made is dropped; one kept
+// another way (before columns) keeps its name and settings, its days lost. A factory plan new to the device is added to
+// its plans; every plan deleted, the factory plans back, unedited.
 
 import type { Book } from "./reader";
 import { MCHEYNE } from "./mcheyne";
@@ -49,94 +50,77 @@ import { box } from "./zoom";
 
 //==== PLANS ====
 
-/** A plan. repeat: on the calendar, starting over at Day 1 after its last day (else stopping); combined: a combined
- *  plan (below); members: the plans it includes (kept while it isn't combined too), each with its REPEAT there;
- *  moveUnread: MOVE UNREAD TO NEXT DAY (READ, below); done: by part ("" the plan's own, else an included plan's id),
- *  the plan days marked read; read: by part, the dates (YYYY-MM-DD) its reading was marked read on (MOVE UNREAD). */
-interface Plan { id: string; name: string; base?: Base; count: number; start: string; repeat?: boolean; combined?: boolean; members?: Member[]; days: Record<string, string>;
+/** A plan. cols: its columns once edited (none: its base's - colsOf); repeat: on the calendar, each column starting
+ *  over at its own end (else stopping); moveUnread: MOVE UNREAD TO NEXT DAY (READ, below); done: by column ("0"
+ *  first), the plan days marked read; read: by column, the dates (YYYY-MM-DD) its reading was marked read on (MOVE
+ *  UNREAD). */
+interface Plan { id: string; name: string; base?: Base; cols?: string[][]; start: string; repeat?: boolean;
                  moveUnread?: boolean; done: Record<string, number[]>; read: Record<string, string[]>; }
-interface Member { id: string; repeat: boolean; }
 /** One reading: book (its code), whole chapters c1 to c2. */
 interface Reading { code: string; c1: number; c2: number; }
 
 const KEY = "cotext.readingplans";
 let books = new Map<string, Book> ();     // (The Hebrew Bible's and the NT's, by code: initReadingPlan)
 let bookList: Book[] = [];
-/** The factory plans, by base (each one's id): each its name, credit and either days (mcheyne.ts: Day 1 first), runs -
+/** The factory plans, by base (each one's id): each its name, credit, repeat (REPEAT ticked as it ships) and either
+ *  days (mcheyne.ts: Day 1 first, each day its slots joined by ";" - slot k column k) or runs - a column each, its
  *  books ([first, last] book codes, in the Bible's order) read a chapter a day, its days worked out from the books'
- *  chapter counts - or combine: a combined plan of those plans, each repeating. Each is offered on every device until
- *  deleted there (removed, below); all deleted, they come back. */
-type Base = "mcheyne" | "nt" | "psalms" | "ot" | "combined";
-const FACTORY: Record<Base, { name: string; credit: string; days?: string[]; runs?: [string, string][]; combine?: Base[] }> = {
+ *  chapter counts. Each is offered on every device until deleted there (removed, below); all deleted, they come back. */
+type Base = "mcheyne" | "nt" | "psalms" | "ot" | "three";
+const NT: [string, string][] = [["Mat", "Rev"]], PS: [string, string][] = [["Psa", "Psa"]], OT: [string, string][] = [["Gen", "Job"], ["Pro", "Mal"]];
+const FACTORY: Record<Base, { name: string; credit: string; repeat?: boolean; days?: string[]; runs?: [string, string][][] }> = {
   mcheyne: { name: "M'Cheyne", days: MCHEYNE, credit: "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4." },
-  nt: { name: "New Testament", runs: [["Mat", "Rev"]], credit: "Reading plan: the New Testament, a chapter a day (260 days)." },
-  psalms: { name: "Psalms", runs: [["Psa", "Psa"]], credit: "Reading plan: the Psalms, a psalm a day (150 days)." },
-  ot: { name: "Old Testament", runs: [["Gen", "Job"], ["Pro", "Mal"]], credit: "Reading plan: the Old Testament but the Psalms, a chapter a day (779 days)." },
-  combined: { name: "Combined", combine: ["nt", "psalms", "ot"], credit: "" },
+  nt: { name: "New Testament", runs: [NT], credit: "Reading plan: the New Testament, a chapter a day (260 days)." },
+  psalms: { name: "Psalms", runs: [PS], credit: "Reading plan: the Psalms, a psalm a day (150 days)." },
+  ot: { name: "Old Testament", runs: [OT], credit: "Reading plan: the Old Testament but the Psalms, a chapter a day (779 days)." },
+  three: { name: "NT, Psalms and OT", runs: [NT, PS, OT], repeat: true, credit: "Reading plan: the New Testament, the Psalms and the Old Testament but the Psalms, a chapter of each a day, each starting over at its own end." },
 };
-/** A run plan's chapters in order ("Gen 1", ...), from the books' chapter counts - worked out once the books are known
- *  (initReadingPlan; none before). */
-const runChapters = new Map<Base, string[]> ();
-function chaptersOf (b: Base): string[] {
-  const runs = FACTORY[b].runs;
-  if (! runs || ! bookList.length) return [];
-  if (! runChapters.has (b)) {
+/** A factory plan's columns as it ships - worked out once (a run plan's once the books are known: initReadingPlan;
+ *  none before). */
+const baseColumns = new Map<Base, string[][]> ();
+function baseCols (b: Base): string[][] {
+  const f = FACTORY[b];
+  if (f.runs && ! bookList.length) return [];
+  if (! baseColumns.has (b)) {
     const at = (code: string) => bookList.findIndex ((x) => x.code === code);
-    runChapters.set (b, runs.flatMap (([a, z]) => bookList.slice (at (a), at (z) + 1).flatMap ((x) => Array.from ({ length: x.chapters }, (_, i) => `${x.code} ${i + 1}`))));
+    baseColumns.set (b, f.runs
+      ? f.runs.map ((runs) => runs.flatMap (([a, z]) => bookList.slice (at (a), at (z) + 1).flatMap ((x) => Array.from ({ length: x.chapters }, (_, i) => `${x.code} ${i + 1}`))))
+      : Array.from ({ length: Math.max (0, ...(f.days ?? []).map ((d) => d.split (";").length)) }, (_, c) => (f.days ?? []).map ((d) => d.split (";")[c] ?? "")));
   }
-  return runChapters.get (b)!;
+  return baseColumns.get (b)!;
 }
-/** A factory day's readings as stored (n: 1 first; "" none), and its number of days. */
-const factoryDay = (b: Base, n: number): string => (FACTORY[b].runs ? chaptersOf (b) : FACTORY[b].days ?? [])[n - 1] ?? "";
-const factoryCount = (b: Base) => FACTORY[b].runs ? chaptersOf (b).length : FACTORY[b].days?.length ?? 0;
+/** A plan's columns: its own once edited, else its base's (read-only: own() before changing them). */
+const colsOf = (p: Plan): string[][] => p.cols ?? (p.base ? baseCols (p.base) : []);
+/** A plan's columns made its own to change (a copy of its base's at the first edit). */
+const own = (p: Plan): string[][] => p.cols ??= colsOf (p).map ((c) => [...c]);
+const repeating = (p: Plan) => !! p.start && !! p.repeat;     // (REPEAT: on the calendar only)
 
-//==== COMBINED PLAN ====
-// A plan of plans - a polymeter. COMBINED PLAN ticked in a plan's drop-down makes it one: its own days set aside (kept,
-// back once unticked; no EDIT of its days), its drop-down lists PLANS - the plans it includes, a line each: its PLAN
-// picker (to swap it for one not included), its REPEAT (the combined plan's own for that plan, apart from the plan's
-// own REPEAT) and ✕ (taken out) -, then + ADD PLAN (the first plan not yet included - not combined itself - added).
-// Day N of a combined plan reads Day N of every plan included, in the order included - each plan's own days, its own
-// START and REPEAT ignored -; a plan with REPEAT ticked there starts over after its last day (plans of different
-// lengths cycling against each other), unticked it stops (nothing of it from then). A combined plan with a plan
-// repeating in it never ends - listed a year past the last day done. Its own START, REPEAT, MOVE UNREAD (on the calendar) and
-// READ are its own - a checkbox for each plan in it, each marked read apart (with MOVE UNREAD each moving on its own); its readings are read-only - edited in the plans included. There may be several. The factory one,
-// Combined, includes the New Testament, the Psalms and the Old Testament, each repeating: a chapter of each a day,
-// never ending.
-const isCombined = (p: Plan) => !! p.combined;
-/** The plans in a combined plan (those still kept and not combined themselves), each with its REPEAT there. */
-const membersOf = (c: Plan) => (c.members ?? []).flatMap ((m) => { const p = plans.find ((x) => x.id === m.id && ! isCombined (x)); return p ? [{ p, repeat: m.repeat }] : []; });
-
-/** A plan's last day; Infinity for a combined plan with a plan repeating in it (never ending). */
+/** A plan's last day: its longest column's; Infinity while REPEAT has a column starting over (never ending). */
 function lastDay (p: Plan): number {
-  if (! isCombined (p)) return p.count;
-  const ms = membersOf (p);
-  return ms.some ((m) => m.repeat && m.p.count) ? Infinity : Math.max (0, ...ms.map ((m) => m.p.count));
+  const cols = colsOf (p);
+  return repeating (p) && cols.some ((c) => c.length) ? Infinity : Math.max (0, ...cols.map ((c) => c.length));
 }
-const endless = (p: Plan) => lastDay (p) === Infinity;
-/** The days a plan's list shows: all of them; an endless plan's a year past the last day done. */
-const listed = (p: Plan) => endless (p) ? Math.max (0, ...Object.values (p.done).flat ()) + 365 : lastDay (p);
 const BASES = Object.keys (FACTORY) as Base[];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, count: factoryCount (b), start: "", days: {}, done: {}, read: {},
-                                     ...(FACTORY[b].combine ? { combined: true, members: FACTORY[b].combine!.map ((id) => ({ id, repeat: true })) } : {}) });
+const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, start: "", repeat: !! FACTORY[b].repeat, done: {}, read: {} });
 let plans: Plan[] = [];
 let removed: Base[] = [];     // (The factory plans deleted on this device: not offered again until every plan is)
 let at = "";
-/** The plans as kept (each load after the books are known gives a run plan its days: count at least its base's). */
+/** The plans as kept. */
 function load () {
   plans = []; removed = [];
   try {
     const s = JSON.parse (localStorage.getItem (KEY) ?? "null");
     if (s && Array.isArray (s.plans)) {
-      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count) && (! p.base || p.base in FACTORY))     // (A factory plan no longer made: dropped)
-                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base && p.base in FACTORY ? { base: p.base } : {}),
-                                           count: Math.max (0, p.count, p.base ? factoryCount (p.base) : 0),
+      const cols = (v: unknown) => Array.isArray (v) && v.every ((c) => Array.isArray (c) && c.every ((r) => typeof r === "string")) ? v as string[][] : undefined;
+      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && (! p.base || p.base in FACTORY))     // (A factory plan no longer made: dropped)
+                     .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base ? { base: p.base } : {}),
+                                           ...(cols (p.cols) ? { cols: cols (p.cols) } : p.base ? {} : { cols: [[]] }),     // (A plan of the user's kept another way: one empty column)
                                            start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
-                                           repeat: p.repeat === true,
-                                           combined: p.combined === true, members: Array.isArray (p.members) ? p.members.filter ((m) => m && typeof m.id === "string").map ((m) => ({ id: m.id, repeat: m.repeat === true })) : [],
-                                           days: p.days, moveUnread: p.moveUnread === true, done: marks (p.done, (n) => Number.isInteger (n)),
+                                           repeat: p.repeat === true, moveUnread: p.moveUnread === true,
+                                           done: marks (p.done, (n) => Number.isInteger (n)),
                                            read: marks (p.read, (d) => /^\d{4}-\d\d-\d\d$/.test (d)) }));
       at = String (s.at ?? "");
       removed = Array.isArray (s.removed) ? s.removed.filter ((b: Base) => b in FACTORY) : [];
@@ -146,7 +130,7 @@ function load () {
   if (! plans.length) { removed = []; plans = BASES.map (factory); }
   if (! plans.some ((p) => p.id === at)) at = plans[0].id;
 }
-/** A plan's kept marks by part, each list's entries checked (anything else: none). */
+/** A plan's kept marks by column, each list's entries checked (anything else: none). */
 function marks<T> (v: unknown, ok: (x: T) => boolean): Record<string, T[]> {
   const out: Record<string, T[]> = {};
   if (v && typeof v === "object" && ! Array.isArray (v))
@@ -154,42 +138,60 @@ function marks<T> (v: unknown, ok: (x: T) => boolean): Record<string, T[]> {
   return out;
 }
 function save () {
+  // (A factory plan's columns edited back to as it ships: not kept, so a corrected one reaches it)
+  for (const p of plans) if (p.base && p.cols && JSON.stringify (p.cols) === JSON.stringify (baseCols (p.base))) delete p.cols;
   try { localStorage.setItem (KEY, JSON.stringify ({ at, plans, removed })); } catch { /* private mode: not kept */ }
 }
 load ();
 const now = () => plans.find ((p) => p.id === at)!;
 const shown = (p: Plan) => p.name || "Untitled";
 
-/** A plan's parts, each read and marked on its own: a plan's one ("" - its days), a combined plan's a plan included
- *  each (by its id). */
-const partsOf = (p: Plan) => isCombined (p) ? membersOf (p).map (({ p: m }) => m.id) : [""];
-/** A plan day's readings (n: 1 first): its own edit, else its base's; a combined plan's, each plan's it includes
- *  (partDay). */
-function dayOf (p: Plan, n: number): Reading[] {
-  if (isCombined (p)) return partsOf (p).flatMap ((part) => partDay (p, part, n));
-  return (String (n) in p.days ? p.days[n] : p.base ? factoryDay (p.base, n) : "").split (";").map (parse).filter ((r): r is Reading => !! r);
+//==== COLUMNS ====
+// A plan's columns, read side by side: Day N the Nth reading of each (an empty slot - BOOK None - nothing that day in
+// that column, its later readings keeping their days). Each column is read and marked on its own (READ); with REPEAT
+// each starts over at its own end. Edited in EDIT (the screen, below): a reading set, removed (the column's later
+// readings a day earlier), added at a column's end (its next day); a column added (empty) or removed.
+/** A plan's parts, each read and marked on its own: a column each, by its number ("0" first). */
+interface Part { key: string; col: string[]; }
+const partsOf = (p: Plan): Part[] => colsOf (p).map ((col, c) => ({ key: String (c), col }));
+/** A column's reading on plan day n (1 first): its Nth - or, REPEAT ticked, n counted round its own length -; none
+ *  past its end or for an empty slot. */
+function partDay (p: Plan, part: Part, n: number): Reading[] {
+  const len = part.col.length, k = n <= len ? n : repeating (p) && len ? (n - 1) % len + 1 : 0;
+  const r = k ? parse (part.col[k - 1]) : null;
+  return r ? [r] : [];
 }
-/** A part's readings on plan day n: a plan's own, its day n; a plan included in a combined plan, its day n - or n
- *  counted round (its REPEAT there ticked), else none past its last day. */
-function partDay (p: Plan, part: string, n: number): Reading[] {
-  if (! isCombined (p)) return part ? [] : dayOf (p, n);
-  const x = membersOf (p).find (({ p: m }) => m.id === part);
-  if (! x) return [];
-  const m = x.p, k = x.repeat ? (m.count ? (n - 1) % m.count + 1 : 0) : n <= m.count ? n : 0;
-  return k ? dayOf (m, k) : [];
+/** Column c's reading i (0 first) set ("" an empty slot). */
+function setSlot (p: Plan, c: number, i: number, s: string) { own (p)[c][i] = s; save (); }
+/** Column c's reading i taken out: its later readings each a day earlier, the days marked read in it moved with them. */
+function removeSlot (p: Plan, c: number, i: number) {
+  own (p)[c].splice (i, 1);
+  const k = String (c), n = i + 1;
+  if (p.done[k]) p.done[k] = p.done[k].filter ((x) => x !== n).map ((x) => x > n ? x - 1 : x);
+  save ();
 }
-function setDay (p: Plan, n: number, rs: Reading[], keep = true) {
-  const s = rs.map (format).join (";");
-  if (p.base && factoryDay (p.base, n) === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
-  if (keep) save ();
+/** A reading added at column c's end - its next day -: the chapter after its last reading (Genesis 1 in an empty
+ *  column), then changed in its pickers. */
+function addSlot (p: Plan, c: number) {
+  const col = own (p)[c], last = [...col].reverse ().map (parse).find ((r) => r);
+  const code = last?.code ?? "Gen", ch = last ? Math.min (last.c2 + 1, books.get (code)!.chapters) : 1;
+  col.push (format ({ code, c1: ch, c2: ch }));
+  save ();
 }
-/** Plan day n taken out: the days after it each a day earlier (kept as edits where they differ from the base's), the
- *  plan a day shorter, the days marked read moved with them. */
-function deleteDay (p: Plan, n: number) {
-  for (let k = n; k < p.count; k++) setDay (p, k, dayOf (p, k + 1), false);
-  delete p.days[p.count];
-  p.count--;
-  p.done[""] = (p.done[""] ?? []).filter ((x) => x !== n).map ((x) => x > n ? x - 1 : x);
+/** A column added after the last, empty. */
+function addCol (p: Plan) {
+  const k = String (own (p).push ([]) - 1);
+  delete p.done[k]; delete p.read[k];
+  save ();
+}
+/** Column c taken out: the columns after it renumbered, their marks with them. */
+function removeCol (p: Plan, c: number) {
+  const n = own (p).length;
+  p.cols!.splice (c, 1);
+  for (const marks of [p.done, p.read] as Record<string, unknown[]>[]) {
+    for (let k = c; k < n - 1; k++) { if (marks[k + 1]) marks[k] = marks[k + 1]; else delete marks[k]; }
+    delete marks[n - 1];
+  }
   save ();
 }
 
@@ -201,44 +203,35 @@ function startOf (p: Plan): { y: number; m: number; d: number } | null {
 }
 const dateText = (y: number, m: number, d: number) => `${y}-${String (m + 1).padStart (2, "0")}-${String (d).padStart (2, "0")}`;
 /** The plan day read on a date (1 first), 0 none - MOVE UNREAD unticked: each date from the start on is the next plan
- *  day (the start Day 1), past the last day none, or (REPEAT) counted round from Day 1 (wrap). */
+ *  day (the start Day 1), past the last day none (REPEAT: its columns count round on their own - partDay). */
 function dayOn (p: Plan, y: number, m: number, d: number): number {
   const s = startOf (p);
   if (! s) return 0;
   const from = Date.UTC (s.y, s.m, s.d), to = Date.UTC (y, m, d);     // (UTC: whole days apart, whatever summer time does)
-  return to < from ? 0 : wrap (p, Math.round ((to - from) / 864e5) + 1);
-}
-/** Plan day n as read: itself up to the last day; past it none, or (REPEAT) counted round from Day 1. */
-function wrap (p: Plan, n: number): number {
-  const last = lastDay (p);
-  if (n <= last) return n;
-  return p.repeat && last ? (n - 1) % last + 1 : 0;     // (REPEAT: past the last day, Day 1 again)
+  const n = Math.round ((to - from) / 864e5) + 1;
+  return to < from || n > lastDay (p) ? 0 : n;
 }
 
 //==== READ ====
-// Each part of a day - a plan's day, or in a combined plan each plan's share of it (all its readings that day) - has a
-// checkbox, ticked once read - in the resource as on the screen: a part ticked stays shown, its box ticked (to untick
-// there).
-// MOVE UNREAD unticked: Day N on its fixed date (dayOn); a part marked read is kept by plan day (done).
+// Each column's reading on a day has a checkbox, ticked once read - in the resource as on the screen: a reading ticked
+// stays shown, its box ticked (to untick there). A one-column plan's box is on the day's label.
+// MOVE UNREAD unticked: Day N on its fixed date (dayOn); a reading marked read is kept by plan day (done).
 // MOVE UNREAD TO NEXT DAY (on the calendar only): the plan follows what's been read, not the date. Walking the dates
-// from the start, each part's next unread plan day goes on each date; a date gone by whose part wasn't marked read
-// keeps showing it - late: its references plain text, not links, its checkbox there to mark it read on that date (I
+// from the start, each column's next unread plan day goes on each date; a date gone by whose reading wasn't marked read
+// keeps showing it - late: its reference plain text, not a link, its checkbox there to mark it read on that date (I
 // read it yesterday) - and the same plan day goes on to the next date, so every missed date shows the same reading and
 // today the first unread; marked read on a past date, the dates after it move on. Today and the dates to come are
-// projected as if each is read on its day. In a combined plan each
-// plan included moves on its own (one left unread held back while the others go on). A part marked read is kept by date
-// (read): a date marked read counts its part read there, whatever plan day it shows. A part with no readings that day
-// (a blank day, a plan included past its end) takes the date without a checkbox.
-/** A part on a date or plan day: its plan day n (as read: wrap), read (marked), late (a date gone by, not read: MOVE
- *  UNREAD). */
-interface Slot { part: string; n: number; read: boolean; late: boolean; }
-/** The parts on plan day n (MOVE UNREAD unticked, or not on the calendar): a plan's one (even a blank day), a combined
- *  plan's those with readings that day. */
-const slotsOfDay = (p: Plan, n: number): Slot[] => ! n ? [] : partsOf (p).filter ((part) => ! isCombined (p) || partDay (p, part, n).length)
-  .map ((part) => ({ part, n, read: (p.done[part] ?? []).includes (n), late: false }));
+// projected as if each is read on its day. Each column moves on its own (one left unread held back while the others go
+// on). A reading marked read is kept by date (read): a date marked read counts its column read there, whatever plan day
+// it shows. A column with nothing that day (an empty slot, past its end) takes the date without a checkbox.
+/** A column on a date or plan day: its plan day n, read (marked), late (a date gone by, not read: MOVE UNREAD). */
+interface Slot { part: Part; n: number; read: boolean; late: boolean; }
+/** The columns with a reading on plan day n (MOVE UNREAD unticked, or not on the calendar). */
+const slotsOfDay = (p: Plan, n: number): Slot[] => ! n ? [] : partsOf (p).filter ((part) => partDay (p, part, n).length)
+  .map ((part) => ({ part, n, read: (p.done[part.key] ?? []).includes (n), late: false }));
 const moving = (p: Plan) => !! p.start && !! p.moveUnread;
-/** The parts on each date of month (y, m) by date text (none: no parts) - MOVE UNREAD's walk from the start (above), else
- *  each date's plan day's. */
+/** The columns on each date of month (y, m) by date text (none: no readings) - MOVE UNREAD's walk from the start
+ *  (above), else each date's plan day's. */
 function monthSlots (p: Plan, y: number, m: number): Map<string, Slot[]> {
   const out = new Map<string, Slot[]> (), n = new Date (y, m + 1, 0).getDate ();
   if (! moving (p)) {
@@ -246,15 +239,15 @@ function monthSlots (p: Plan, y: number, m: number): Map<string, Slot[]> {
     return out;
   }
   const s = startOf (p)!, t = today (), now = Date.UTC (t.y, t.m, t.d), first = Date.UTC (y, m, 1), end = Date.UTC (y, m, n);
-  const parts = partsOf (p), next = parts.map (() => 1);     // (Each part's next plan day, counted on past the last: wrap)
+  const parts = partsOf (p), next = parts.map (() => 1), last = lastDay (p);     // (Each column's next plan day)
   for (let at = Date.UTC (s.y, s.m, s.d); at <= end; at += 864e5) {
     const day = new Date (at);
     const key = dateText (day.getUTCFullYear (), day.getUTCMonth (), day.getUTCDate ()), slots: Slot[] = [];
     parts.forEach ((part, i) => {
-      const k = wrap (p, next[i]);
-      if (! k) return;     // (Past the end, not repeating: nothing more)
+      const k = next[i];
+      if (k > last) return;     // (Past the end, not repeating: nothing more)
       if (! partDay (p, part, k).length) { next[i]++; return; }     // (Nothing to read: the date taken, no checkbox)
-      const read = (p.read[part] ?? []).includes (key), past = at < now;
+      const read = (p.read[part.key] ?? []).includes (key), past = at < now;
       slots.push ({ part, n: k, read, late: past && ! read });
       if (read || ! past) next[i]++;     // (A date gone by unread: the same plan day on the next date)
     });
@@ -262,17 +255,17 @@ function monthSlots (p: Plan, y: number, m: number): Map<string, Slot[]> {
   }
   return out;
 }
-/** A part marked read or not: on its date (MOVE UNREAD: date given), else on its plan day. */
+/** A column's reading marked read or not: on its date (MOVE UNREAD: date given), else on its plan day. */
 function setRead (p: Plan, s: Slot, date: string, on: boolean) {
   const [list, x] = moving (p) && date ? [p.read, date] as const : [p.done, s.n] as const;
-  const xs = ((list as Record<string, (string | number)[]>)[s.part] ?? []).filter ((v) => v !== x);
+  const xs = ((list as Record<string, (string | number)[]>)[s.part.key] ?? []).filter ((v) => v !== x);
   if (on) xs.push (x);
-  (list as Record<string, (string | number)[]>)[s.part] = xs;
+  (list as Record<string, (string | number)[]>)[s.part.key] = xs;
   save ();
 }
 
 /** "Gen 1", "Psa 52-54" -> a reading (a verse in it - "Luk 1:1-38", "Isa 9:7-10:4" - read as its chapters); null for
- *  anything else. */
+ *  anything else ("" an empty slot). */
 function parse (s: string): Reading | null {
   const m = s.trim ().match (/^(\w+) (\d+)(?::(\d+))?(?:-(?:(\d+):)?(\d+|end))?$/);
   if (! m || ! books.has (m[1])) return null;
@@ -329,9 +322,9 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
   back.addEventListener ("click", () => step (-1));
   next.addEventListener ("click", () => step (1));
   /** A day's row or cell: its label - on the calendar its date (dated: weekday, day of the month, its date text), in
-   *  the list "Day N" (n) - and its parts' readings (READ, above). A plan's one part's checkbox is on the label; a
-   *  combined plan's a checkbox each, before its plan's readings (the label's box there unseen, so every date lines up,
-   *  as a date with no parts). A late part's readings are plain text, not links. */
+   *  the list "Day N" (n) - and its columns' readings (READ, above). A one-column plan's checkbox is on the label;
+   *  several columns' a checkbox each, before its reading (the label's box there unseen, so every date lines up, as a
+   *  day with nothing to read). A late reading is plain text, not a link. */
   function dayCell (p: Plan, n: number, slots: Slot[], picked: number, date?: { wd: number; d: number; key: string }) {
     const cell = el ("div", "planDay");
     if (n && n === picked) cell.classList.add ("on");
@@ -346,19 +339,19 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     };
     const reads = (s: Slot, into: HTMLElement) => {
       for (const r of partDay (p, s.part, s.n)) {
-        if (s.late) { into.append (el ("span", "planLate", label (r))); continue; }     // (Late: its reference plain, a part to mark read)
+        if (s.late) { into.append (el ("span", "planLate", label (r))); continue; }     // (Late: its reference plain, to mark read)
         const a = el ("a", "term", label (r));
         a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, 1); });
         into.append (a);
       }
     };
-    const one = ! isCombined (p) && slots.length === 1;
+    const one = partsOf (p).length === 1 && slots.length === 1;
     if (one) {
       const c = box (slots[0], ...named ());
       c.classList.add ("planN");
       when.append (c);
       reads (slots[0], list);
-    } else if (date || slots.length) {     // (No checkbox on the label: its box there unseen)
+    } else if (date || n) {     // (No checkbox on the label: its box there unseen)
       const c = check (false, () => {}, ...named ());
       c.classList.add ("planN", "planNone");
       c.querySelector ("input")!.disabled = true;
@@ -387,7 +380,7 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     box.classList.toggle ("planList", ! dated);
     head.hidden = week.hidden = ! dated;
     if (! dated) {
-      const rows = Array.from ({ length: listed (p) }, (_, i) => i + 1).map ((n) => dayCell (p, n, slotsOfDay (p, n), picked));
+      const rows = Array.from ({ length: lastDay (p) }, (_, i) => i + 1).map ((n) => dayCell (p, n, slotsOfDay (p, n), picked));
       days.replaceChildren (...rows);
       if (! rows.length) days.append (el ("p", "", "No days yet."));
     } else {
@@ -448,7 +441,7 @@ export const planToToday = () => pane?.cal.toToday ();
 
 //==== THE SCREEN ====
 // ☰ Reading plan: its own top bar (the plan's name, its drop-down), the plan, EDIT (a screen's panel) and the bar.
-let picked = 0;     // (The plan day being edited: 1 first, 0 none - a plan with no days)
+let picked = 0;     // (The plan day picked on the calendar: 1 first, 0 none - a plan with no days)
 let pickedIn = "";     // (The plan it was picked in: another opened, its own picked afresh)
 let editing = true;     // (EDIT shown: kept on the device)
 const EDIT_KEY = "cotext.readingplans.editor";
@@ -469,13 +462,14 @@ onScreen ("Reading plan", (body) => {
   top.append (row, menu);
   menuSplit (menu);     // (Its drop-down sized by a divider, scrolling within: layout.ts)
   const cal = calendar ({ leaving: closeScreen, picked: () => picked, pick: (n) => { picked = n; show (true); cal.draw (); toDay (n); }, done: () => paneDraw () });
-  // EDIT: every day of the plan at once - each its "Day N", its readings a line each and + Add reading -, then + Add day
+  // EDIT: the plan's columns - each its readings a line a day and + Add reading -, then + Add column
   const editor = el ("div", "deckPane csEditor"), head = el ("div", "top paneHead"), close = el ("button", "pill icon");
   setIcon (close, "x"); close.setAttribute ("aria-label", "Close the editor");
   head.append (el ("h2", "title", "Edit"), close);
-  const lines = el ("div", "planEditDays"), adds = el ("div", "fieldRow");
-  const addDay = el ("button", "pill action", "+ Add day");
-  adds.append (addDay);
+  const lines = el ("div", "planEdit"), cols = el ("div", "planEditCols"), adds = el ("div", "fieldRow");
+  lines.append (cols);
+  const addColumn = el ("button", "pill action", "+ Add column");
+  adds.append (addColumn);
   editor.append (head, lines, adds);
   const bar = el ("div", "bottomBar"), pencil = el ("button", "pill icon barMid");
   setIcon (pencil, "pencil"); pencil.setAttribute ("aria-label", "Show or hide the editor");
@@ -490,30 +484,22 @@ onScreen ("Reading plan", (body) => {
   pencil.addEventListener ("click", () => show (! editing));
   close.addEventListener ("click", () => show (false));
   const changed = () => { pickAfresh (); drawEditor (); cal.draw (); paneDraw (); };     // (The resource too, if made)
-  /** One day edited: only its own block drawn again (the list kept where it is), the calendars after it. */
-  const dayChanged = (n: number) => { drawDay (n); cal.draw (); paneDraw (); };
-  addDay.addEventListener ("click", () => {
-    // (A day after the plan's last, with no readings, picked - its own edit, so a factory day beyond M'Cheyne's 365 stays blank)
-    const p = now ();
-    p.count++; p.days[p.count] = ""; picked = p.count;
-    save (); changed ();
-    cal.el.querySelector (".planDay.on")?.scrollIntoView ({ block: "nearest" });
-    toDay (p.count);
-  });
+  /** A reading edited: EDIT already changed where it must (only what changed drawn again, the list kept where it is),
+   *  the calendars drawn again. */
+  const edited = () => { pickAfresh (); cal.draw (); paneDraw (); };
 
-  // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts with no days, named "Plan 2"...;
-  // then START, the open plan's
+  // The top row: the plan's name and its drop-down (topbar.ts) - a new plan starts with one empty column, named
+  // "Plan 2"...; then START, REPEAT and MOVE UNREAD, the open plan's
   const when = el ("div", "fieldRow"), options = el ("div", "field");
   let menuOpen = "";     // (The drop-down open: "more", or "" closed)
   function drawTop () {
     const named = nameMenu<Plan> ({
       noun: "Plan", all: () => plans, open: now, shown, blank: "Untitled",
       select: (id) => { at = id; save (); drawTop (); changed (); },
-      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, count: 0, start: "", days: {}, done: {}, read: {} }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
+      make: () => { const p: Plan = { id: Date.now ().toString (36), name: `Plan ${plans.length + 1}`, cols: [[]], start: "", done: {}, read: {} }; plans.push (p); at = p.id; save (); drawTop (); changed (); },
       ask: (p) => `Delete the plan "${shown (p)}"?`,
       remove: (p) => {
         plans = plans.filter ((x) => x !== p);
-        for (const c of plans) if (c.members) c.members = c.members.filter ((m) => m.id !== p.id);     // (Taken out of the combined plans)
         if (p.base && ! plans.some ((x) => x.base === p.base)) removed.push (p.base);
         if (! plans.length) { removed = []; plans = BASES.map (factory); }
         at = plans[0].id; save (); drawTop (); changed ();
@@ -524,8 +510,8 @@ onScreen ("Reading plan", (body) => {
     menu.replaceChildren (...named.rows, when, options);
     dropDowns ([{ key: "more", button: named.button, menu }], menuOpen, (k) => { menuOpen = k; });     // (Drawn again - a plan picked, made or deleted -: left open as it was)
   }
-  /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set) - each change kept and the
-   *  plan drawn again. */
+  /** START (not on the calendar, or on a date: MONTH, DAY, YEAR - today's when first set), then on the calendar REPEAT
+   *  and MOVE UNREAD TO NEXT DAY - each change kept and the plan drawn again. */
   function drawWhen () {
     const p = now (), s = startOf (p), t = today ();
     const set = (y: number, m: number, d: number) => { p.start = dateText (y, m, Math.min (d, new Date (y, m + 1, 0).getDate ())); save (); drawWhen (); changed (); };
@@ -536,96 +522,126 @@ onScreen ("Reading plan", (body) => {
       pick ("Month", MONTHS.map ((n, k) => [String (k), n]), String (s.m), (v) => set (s.y, +v, s.d)),
       pick ("Day", nums (1, new Date (s.y, s.m + 1, 0).getDate ()), String (s.d), (v) => set (s.y, s.m, +v)),
       pick ("Year", nums (Math.min (s.y, t.y) - 5, Math.max (s.y, t.y) + 5), String (s.y), (v) => set (+v, s.m, s.d)));
-    // REPEAT and MOVE UNREAD TO NEXT DAY (on the calendar only) and COMBINED PLAN - ticked, its plans and + ADD PLAN
     const ticks = el ("div", "csFathers");
     if (s) ticks.append (check (!! p.repeat, (on) => { p.repeat = on; save (); changed (); }, "Repeat"),
                          check (!! p.moveUnread, (on) => { p.moveUnread = on; save (); changed (); }, "Move unread to next day"));
-    ticks.append (check (isCombined (p), (on) => { p.combined = on; p.members ??= []; save (); drawWhen (); changed (); }, "Combined plan"));
-    if (! isCombined (p)) { options.replaceChildren (ticks); return; }
-    // (PLANS: a line a plan included, in order - its PLAN picker (it, or any plan not yet included), its REPEAT and ✕ -,
-    // then + ADD PLAN: the first plan not included added, without REPEAT, picked from then in its line)
-    const free = () => plans.filter ((x) => x !== p && ! isCombined (x) && ! p.members!.some ((k) => k.id === x.id));
-    const rows = membersOf (p).map (({ p: x }) => {
-      const m = p.members!.find ((k) => k.id === x.id)!, row = el ("div", "fieldRow planPlace planMember");
-      row.append (pick ("Plan", [x, ...free ()].map ((y): [string, string] => [y.id, shown (y)]), x.id, (v) => { m.id = v; save (); drawWhen (); changed (); }),
-                  check (m.repeat, (on) => { m.repeat = on; save (); changed (); }, "Repeat"));
-      const out = el ("button", "pill icon csRemove");
-      setIcon (out, "x"); out.setAttribute ("aria-label", `Take ${shown (x)} out of this plan`);
-      out.addEventListener ("click", () => { p.members = p.members!.filter ((k) => k !== m); save (); drawWhen (); changed (); });
-      row.append (out);
-      return row;
-    });
-    const addPlan = el ("button", "pill action", "+ Add plan");
-    addPlan.hidden = ! free ().length;
-    addPlan.addEventListener ("click", () => { const x = free ()[0]; if (! x) return; p.members!.push ({ id: x.id, repeat: false }); save (); drawWhen (); changed (); });
-    options.replaceChildren (ticks, el ("div", "field", "Plans"), ...rows, addPlan);
+    options.replaceChildren (ticks);
+    options.hidden = ! s;
   }
 
-  // A reading's line: BOOK, CHAPTER, TO CHAPTER and ✕ - a change kept at once
-  /** EDIT, every day of the open plan: a block a day ("Day N" over its lines and + Add reading), its pickers made only as
-   *  it nears the view (a year of them at once is too many), kept once made; drawn afresh for another plan or setting,
-   *  the list kept where it was scrolled. A combined plan's are read-only: its plans' (edited in each). */
+  /** EDIT, the open plan's columns: a block a column (where EDIT has room, side by side: style.css' .planEdit) - over
+   *  it, with several, "Column N" and DELETE COLUMN -, its readings a line each ("Day N", then BOOK - None an empty
+   *  slot -, CHAPTER, TO CHAPTER and ✕), then + Add reading. A line's pickers are made only as it nears the view (a year
+   *  of them at once is too many), kept once made. Drawn afresh for another plan or setting, the list kept where it
+   *  was scrolled; an edit redraws only what it changes - each line and column finding its place (data-c, data-i) when
+   *  used, so a removal only renumbers those after it. */
   let edPlan = "";
-  const filled = new IntersectionObserver ((es) => { for (const e of es) if (e.isIntersecting) { filled.unobserve (e.target); drawDay (+(e.target as HTMLElement).dataset.n!); } },
+  const filled = new IntersectionObserver ((es) => { for (const e of es) if (e.isIntersecting) fillLine (e.target as HTMLElement); },
                                            { root: edScroll, rootMargin: "800px 0px" });
   function drawEditor () {
     const p = now (), keep = edPlan === p.id ? edScroll.scrollTop : 0;
     edPlan = p.id;
     filled.disconnect ();
-    addDay.hidden = isCombined (p);
-    if (isCombined (p)) { lines.replaceChildren (el ("p", "", "A combined plan's readings are its plans' - edited in each plan.")); return; }
-    const last = lastDay (p);
-    lines.replaceChildren (...Array.from ({ length: last }, (_, k) => {
-      const d = el ("div", "planEditDay");
-      d.dataset.n = String (k + 1);
-      d.append (el ("div", "src", `Day ${k + 1}`));
-      filled.observe (d);
-      return d;
-    }));
-    if (! last) lines.append (el ("p", "", "No days yet."));
+    cols.replaceChildren (...colsOf (p).map ((_, c) => colBlock (c)));
+    heads ();
     edScroll.scrollTop = keep;
   }
-  /** Day n's block: "Day N" and DELETE DAY (the day deleted, the ones after it a day earlier), its lines (BOOK, CHAPTER,
-   *  TO CHAPTER, ✕ - a change kept at once) and + Add reading. */
-  function drawDay (n: number) {
-    const d = lines.querySelector<HTMLElement> (`.planEditDay[data-n="${n}"]`), p = now ();
-    if (! d || isCombined (p)) return;
-    filled.unobserve (d);
-    const rs = dayOf (p, n);
-    const rows = rs.map ((r, i) => {
-      const line = el ("div", "csLine"), place = el ("div", "fieldRow planPlace");
-      const set = (f: Partial<Reading>) => {
-        Object.assign (r, f);
-        if (r.c2 < r.c1) r.c2 = r.c1;
-        setDay (p, n, rs); dayChanged (n);
-      };
-      const b = books.get (r.code)!, nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => from + k);
-      place.append (
-        pick ("Book", bookList.map ((x) => [x.code, x.name, ABBR[x.name]]), r.code, (v) => set ({ code: v, c1: 1, c2: 1 })),
-        pick ("Chapter", nums (1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c1), (v) => set ({ c1: +v, c2: Math.max (r.c2, +v) })),
-        pick ("To chapter", nums (r.c1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c2), (v) => set ({ c2: +v })));
-      const x = el ("button", "pill icon csRemove");
-      setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this reading");
-      x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, n, rs); dayChanged (n); });
-      place.append (x);
-      line.append (place);
-      return line;
+  /** A line's place: its column's number and its own (0 first), read when it's used. */
+  const where = (line: HTMLElement) => ({ c: +line.closest<HTMLElement> (".planEditCol")!.dataset.c!, i: +line.dataset.i! });
+  /** Column c's block: its head (shown with several columns), its lines (to be filled as they near the view) and
+   *  + Add reading (a reading on its next day, filled at once). */
+  function colBlock (c: number): HTMLElement {
+    const p = now (), block = el ("div", "planEditCol"), head = el ("div", "planEditHead"), list = el ("div", "planEditLines");
+    block.dataset.c = String (c);
+    const del = el ("button", "pill", "Delete column");     // (In words, as DELETE PLAN: not a reading's ✕)
+    del.addEventListener ("click", () => {
+      const k = +block.dataset.c!;
+      removeCol (p, k);
+      block.remove ();
+      cols.querySelectorAll<HTMLElement> (".planEditCol").forEach ((b, j) => { b.dataset.c = String (j); });
+      heads (); edited ();
     });
+    head.append (el ("div", "src"), del);
+    list.append (...colsOf (p)[c].map ((_, i) => stub (i)));
     const add = el ("button", "pill action", "+ Add reading");
     add.addEventListener ("click", () => {
-      // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
-      const last = rs[rs.length - 1], code = last?.code ?? "Gen", c = last ? Math.min (last.c2 + 1, books.get (code)!.chapters) : 1;
-      rs.push ({ code, c1: c, c2: c });
-      setDay (p, n, rs); dayChanged (n);
+      const k = +block.dataset.c!;
+      addSlot (p, k);
+      const line = stub (colsOf (p)[k].length - 1);
+      list.append (line); fillLine (line);
+      line.scrollIntoView ({ block: "nearest" });
+      edited ();
     });
-    const head = el ("div", "planEditHead"), del = el ("button", "pill", "Delete day");     // (In words, as DELETE PLAN: not a reading's ✕)
-    del.addEventListener ("click", () => { deleteDay (p, n); if (picked > p.count) picked = p.count; changed (); });     // (The days after it renumbered: drawn again, the list where it was)
-    head.append (el ("div", "src", `Day ${n}`), del);
-    d.replaceChildren (head, ...rows, ...(rs.length ? [] : [el ("p", "", "No readings this day.")]), add);
+    block.append (head, list, add);
+    return block;
   }
-  /** Day n's block brought to the top of EDIT (a day picked on the calendar). */
+  /** The columns' heads: "Column N" and DELETE COLUMN, shown only with several columns. */
+  function heads () {
+    const bs = cols.querySelectorAll<HTMLElement> (".planEditCol");
+    bs.forEach ((b, j) => {
+      const h = b.querySelector<HTMLElement> (".planEditHead")!;
+      h.hidden = bs.length < 2;
+      h.querySelector (".src")!.textContent = `Column ${j + 1}`;
+    });
+    if (! bs.length) cols.replaceChildren (el ("p", "", "No columns yet."));
+  }
+  /** Line i of a column, its pickers not yet made: "Day N", watched to be filled. */
+  function stub (i: number): HTMLElement {
+    const line = el ("div", "csLine planEditLine");
+    line.dataset.i = String (i);
+    line.append (el ("div", "src", `Day ${i + 1}`));
+    filled.observe (line);
+    return line;
+  }
+  /** A line's pickers: BOOK (None: an empty slot - nothing that day in this column, CHAPTER and TO CHAPTER hidden),
+   *  CHAPTER, TO CHAPTER and ✕ (the reading taken out, the column's later readings a day earlier) - a change kept at
+   *  once, only this line drawn again (a removal renumbers the lines after it). */
+  function fillLine (line: HTMLElement) {
+    filled.unobserve (line);
+    const p = now (), { c, i } = where (line), r = parse (colsOf (p)[c]?.[i] ?? "");
+    const place = el ("div", "fieldRow planPlace");
+    const set = (x: Reading | null) => {
+      if (x && x.c2 < x.c1) x.c2 = x.c1;
+      const at = where (line);
+      setSlot (p, at.c, at.i, x ? format (x) : "");
+      fillLine (line); edited ();
+    };
+    const nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => [String (from + k), String (from + k)] as [string, string]);
+    place.append (pick ("Book", [["", "None", "—"], ...bookList.map ((x): [string, string, string] => [x.code, x.name, ABBR[x.name]])], r?.code ?? "",
+                        (v) => set (v ? { code: v, c1: 1, c2: 1 } : null)));
+    if (r) {
+      const b = books.get (r.code)!;
+      place.append (pick ("Chapter", nums (1, b.chapters), String (r.c1), (v) => set ({ ...r, c1: +v, c2: Math.max (r.c2, +v) })),
+                    pick ("To chapter", nums (r.c1, b.chapters), String (r.c2), (v) => set ({ ...r, c2: +v })));
+    }
+    const x = el ("button", "pill icon csRemove");
+    setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this reading");
+    x.addEventListener ("click", () => {
+      const at = where (line), list = line.parentElement!;
+      removeSlot (p, at.c, at.i);
+      line.remove ();
+      list.querySelectorAll<HTMLElement> (".planEditLine").forEach ((l, j) => {     // (Those after it a day earlier)
+        if (j < at.i) return;
+        l.dataset.i = String (j);
+        l.querySelector (".src")!.textContent = `Day ${j + 1}`;
+      });
+      edited ();
+    });
+    place.append (x);
+    line.replaceChildren (el ("div", "src", `Day ${i + 1}`), place);
+  }
+  addColumn.addEventListener ("click", () => {
+    const p = now ();
+    addCol (p);
+    if (! cols.querySelector (".planEditCol")) cols.replaceChildren ();     // ("No columns yet." gone)
+    const block = colBlock (colsOf (p).length - 1);
+    cols.append (block); heads ();
+    block.scrollIntoView ({ block: "nearest" });
+    edited ();
+  });
+  /** Plan day n's first line brought to the top of EDIT (a day picked on the calendar). */
   function toDay (n: number) {
-    const d = lines.querySelector<HTMLElement> (`.planEditDay[data-n="${n}"]`);
+    const d = lines.querySelector<HTMLElement> (`.planEditLine[data-i="${n - 1}"]`);
     if (d) edScroll.scrollTop += box (d).top - box (edScroll).top;
   }
   drawTop ();
