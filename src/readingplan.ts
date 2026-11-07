@@ -36,7 +36,7 @@
 // Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, removed: the factory plans deleted
 // here (not offered again), plans: [{ id, name, base?: a FACTORY key, cols?: its columns (each its readings in order,
 // Day 1 first, each as parse reads it, "" an empty slot; none: the base's), start: "YYYY-MM-DD" ("" not on the
-// calendar), repeat, moveUnread, done: { column: the plan days marked read }, read: { column: the dates marked read
+// calendar), repeat, fixedDates (MOVE UNREAD unticked - ticked by default), done: { column: the plan days marked read }, read: { column: the dates marked read
 // (MOVE UNREAD), quick: { column: its QUICK FILL - on, days, sections } } }] } - a column by its number, 0 first. A plan whose base is no longer made is dropped; one kept
 // another way (before columns) keeps its name and settings, its days lost. A factory plan new to the device is added to
 // its plans; every plan deleted, the factory plans back, unedited.
@@ -54,11 +54,12 @@ import { box } from "./zoom";
 //==== PLANS ====
 
 /** A plan. cols: its columns once edited (none: its base's - colsOf); repeat: each column starting
- *  over at its own end (else stopping); moveUnread: MOVE UNREAD TO NEXT DAY (READ, below); done: by column ("0"
+ *  over at its own end (else stopping); fixedDates: MOVE UNREAD TO NEXT DAY unticked (READ, below - ticked
+ *  unless so); done: by column ("0"
  *  first), the plan days marked read; read: by column, the dates (YYYY-MM-DD) its reading was marked read on (MOVE
  *  UNREAD). */
 interface Plan { id: string; name: string; base?: Base; cols?: string[][]; start: string; repeat?: boolean;
-                 moveUnread?: boolean; done: Record<string, number[]>; read: Record<string, string[]>; quick?: Record<string, Quick>; }
+                 fixedDates?: boolean; done: Record<string, number[]>; read: Record<string, string[]>; quick?: Record<string, Quick>; }
 /** A column's QUICK FILL (QUICK FILL, below), by column ("0" first) in its plan's quick: on (ticked), days (DAYS: how
  *  many days to read them in, 1 or more) and sections (each FROM BOOK to TO BOOK, by code, in the order added). */
 interface Quick { on: boolean; days: number; sections: { from: string; to: string }[]; }
@@ -125,7 +126,7 @@ function load () {
                      .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base ? { base: p.base } : {}),
                                            ...(cols (p.cols) ? { cols: cols (p.cols) } : p.base ? {} : { cols: [[]] }),     // (A plan of the user's kept another way: one empty column)
                                            start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
-                                           repeat: p.repeat === true, moveUnread: p.moveUnread === true,
+                                           repeat: p.repeat === true, fixedDates: p.fixedDates === true,
                                            done: marks (p.done, (n) => Number.isInteger (n)),
                                            read: marks (p.read, (d) => /^\d{4}-\d\d-\d\d$/.test (d)),
                                            quick: quicks (p.quick) }));
@@ -297,7 +298,7 @@ interface Slot { part: Part; n: number; read: boolean; late: boolean; }
 /** The columns with a reading on plan day n (MOVE UNREAD unticked, or not on the calendar). */
 const slotsOfDay = (p: Plan, n: number): Slot[] => ! n ? [] : partsOf (p).filter ((part) => partDay (p, part, n).length)
   .map ((part) => ({ part, n, read: (p.done[part.key] ?? []).includes (n), late: false }));
-const moving = (p: Plan) => !! p.start && !! p.moveUnread;
+const moving = (p: Plan) => !! p.start && ! p.fixedDates;     // (MOVE UNREAD ticked unless unticked: the default)
 /** The columns on each date of month (y, m) by date text (none: no readings) - MOVE UNREAD's walk from the start
  *  (above), else each date's plan day's. */
 function monthSlots (p: Plan, y: number, m: number): Map<string, Slot[]> {
@@ -611,7 +612,7 @@ onScreen ("Reading plan", (body) => {
       pick ("Year", nums (Math.min (s.y, t.y) - 5, Math.max (s.y, t.y) + 5), String (s.y), (v) => set (+v, s.m, s.d)));
     const ticks = el ("div", "csFathers");
     ticks.append (check (!! p.repeat, (on) => { p.repeat = on; save (); changed (); }, "Repeat"));
-    if (s) ticks.append (check (!! p.moveUnread, (on) => { p.moveUnread = on; save (); changed (); }, "Move unread to next day"));
+    if (s) ticks.append (check (! p.fixedDates, (on) => { p.fixedDates = ! on; save (); changed (); }, "Move unread to next day"));
     options.replaceChildren (ticks);
   }
 
