@@ -52,7 +52,10 @@ try { kept = { ...kept, ...JSON.parse (localStorage.getItem (KEY) ?? "{}") }; ke
 const save = () => { try { localStorage.setItem (KEY, JSON.stringify (kept)); } catch { /* private mode: not kept */ } };
 
 const passed = (l: Lesson) => (kept.best[l.id] ?? 0) >= PASS;
-const open = (c: Course, i: number) => kept.all || i === 0 || passed (c.lessons[i - 1]);
+/** For now every lesson open (the user's choice, 2026-11-07), OPEN ALL LESSONS not shown; false: each opening once the
+ *  one before is passed, OPEN ALL LESSONS opening them all. */
+const ALL_OPEN = true;
+const open = (c: Course, i: number) => ALL_OPEN || kept.all || i === 0 || passed (c.lessons[i - 1]);
 const pct = (x: number) => `${Math.round (x * 100)}%`;
 const course = () => COURSES.find ((c) => c.id === kept.course) ?? COURSES.find ((c) => c.lang === (currentTestament () === "OT" ? "H" : "G"))!;
 
@@ -87,7 +90,7 @@ async function draw (screenBody: HTMLElement) {
   const path = () => {
     const c = course ();
     body.innerHTML = `<div class="fieldRow"><label class="field">Course<select class="choose">${COURSES.map ((x) => `<option value="${x.id}">${esc (x.name)}</option>`).join ("")}</select></label></div>
-      <div class="bar"><button class="pill" data-k="all" aria-pressed="${!! kept.all}">Open all lessons</button></div>
+      <div class="bar"${ALL_OPEN ? " hidden" : ""}><button class="pill" data-k="all" aria-pressed="${!! kept.all}">Open all lessons</button></div>
       <div class="learnPath"></div><p class="credit"></p>`;
     body.querySelector ("[data-k=all]")!.addEventListener ("click", () => { kept.all = ! kept.all; save (); path (); });
     const pick = body.querySelector<HTMLSelectElement> ("select")!;
