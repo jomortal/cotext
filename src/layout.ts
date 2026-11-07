@@ -78,7 +78,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.min (hi, Math.max (lo,
  *  its top edge, dragged its height (--deckH, px: 120 up, leaving the room a fifth of the window); sideways on its left
  *  edge, its width (--deckW: 240 up, leaving the room 240). Kept, one size for every screen's panel. */
 /** A top row's drop-down sized by its own divider (style.css' .menuSized - for now the Reading plan's; the kind any top
- *  drop-down can take): the divider made and put after it, on its bottom edge, shown while it's open; dragged, its height
+ *  drop-down can take): laid over what's under the top bar (the room under it unmoved), the divider made and put after
+ *  it, on its bottom edge, shown while it's open; dragged, its height
  *  (--menuH, px: 80 up, leaving a fifth of the window under it) - its contents scrolling within. Kept, one size for
  *  every drop-down sized so; until dragged, as tall as its contents (at most the screen's room). */
 export function menuSplit (menu: HTMLElement) {
@@ -86,7 +87,10 @@ export function menuSplit (menu: HTMLElement) {
   const split = document.createElement ("div");
   split.className = "split menuSplit"; split.setAttribute ("role", "separator"); split.setAttribute ("aria-label", "Resize the menu");
   split.setAttribute ("aria-orientation", "horizontal");
-  menu.after (split);
+  const over = document.createElement ("div");     // (The two laid over what's under the bar, not pushing it down)
+  over.className = "menuOver";
+  menu.before (over);
+  over.append (menu, split);
   drag (split, (_x, y) => {
     const r = box (menu);
     sizes.menuH = Math.round (clamp (y - r.top, 80, winH () * .8 - r.top)); root.setProperty ("--menuH", sizes.menuH + "px");

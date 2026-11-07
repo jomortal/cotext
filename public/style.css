@@ -584,7 +584,8 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 /* A top drop-down sized by its own divider (.menuSized, layout.ts' menuSplit - the Reading plan's for now; any top
    drop-down can take it): once dragged as tall as --menuH, its contents scrolling within; the divider on its bottom
    edge, shown while it's open - its line the bar's line under it. */
-.vcMenu.menuSized:not([hidden]) { height: var(--menuH, auto); box-sizing: border-box; }
+.vcMenu.menuSized:not([hidden]) { height: var(--menuH, auto); box-sizing: border-box; align-content: start; }
+.menuOver { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); border-bottom: var(--rule); } .menuOver:has(> .vcMenu[hidden]) { display: none; }     /* (Over what's under the bar - the bar's own height, and so the room under it (--topH), unchanged -, its line under it) */
 .split.menuSplit { display: none; background: none; } .vcMenu:not([hidden]) + .menuSplit { display: block; margin-top: calc(-1 * var(--split-half)); margin-bottom: calc(-1 * var(--split-half)); z-index: 1; }
 #screen[data-screen="Verse cards"] { overflow-x: hidden; }
 .vcDeckName { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-s); }     /* (A card's reference and its ✕ in the verse list, together) */
