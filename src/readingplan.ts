@@ -22,19 +22,18 @@
 //   in the accent; each opening shows today's month, today scrolled into view.
 // A reading tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read
 // whole chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so:
-// mcheyne.py). The factory plans (FACTORY: M'Cheyne's, mcheyne.ts, and Three Readings - Psalms and the NT, Genesis-2
-// Chronicles, Ezra-Malachi, a chapter or two each a day: threeplan.ts, threeplan.py - each 365 days in order) are what
-// their edits are laid over: their days kept as they ship, the user's changes kept apart (days) - so a corrected factory
+// mcheyne.py). The factory plans (FACTORY: M'Cheyne's, mcheyne.ts - its 365 days in order -, and Three Cycles - the NT,
+// the Psalms and the rest of the OT, a chapter of each a day, each starting over when done, so it never ends: a year
+// past the last day done listed) are what their edits are laid over: their days kept as they ship, the user's changes kept apart (days) - so a corrected factory
 // plan reaches every device, edited days excepted.
 // Kept on the device: localStorage cotext.readingplans = { at: the open plan's id, removed: the factory plans deleted
-// here (not offered again), plans: [{ id, name, base?: "mcheyne" | "three", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
+// here (not offered again), plans: [{ id, name, base?: "mcheyne" | "cycles", count: its number of days, start: "YYYY-MM-DD" ("" not on the calendar), week: the weekdays read (bits,
 // Sunday 1 ... Saturday 64), days: { "<day number, 1 first>": readings }, done: the plan days marked done }] } - a day's readings joined by ";", each as
 // parse reads it; a day in days overrides the base's ("" none). A plan saved another way (before days were numbered) is
 // dropped. A factory plan new to the device is added to its plans; every plan deleted, the factory plans back, unedited.
 
 import type { Book } from "./reader";
 import { MCHEYNE } from "./mcheyne";
-import { THREEPLAN } from "./threeplan";
 import { ABBR } from "./booknames";
 import { setIcon } from "./icons";
 import { onScreen, closeScreen } from "./study";
@@ -48,19 +47,41 @@ interface Plan { id: string; name: string; base?: Base; count: number; start: st
 interface Reading { code: string; c1: number; c2: number; }
 
 const KEY = "cotext.readingplans";
-/** The factory plans, by base: each its name, days (mcheyne.ts, threeplan.ts - Day 1 first) and credit. Each is offered on
- *  every device until deleted there (removed, below); all deleted, they come back. */
-type Base = "mcheyne" | "three";
-const FACTORY: Record<Base, { name: string; days: string[]; credit: string }> = {
+/** The factory plans, by base: each its name, credit and either days (mcheyne.ts: Day 1 first) or cycles - runs of
+ *  books ([first, last] book codes, in the Bible's order), each read a chapter a day and started over once done, all at
+ *  once, so the plan never ends: day n reads chapter n of each, counted round. Each is offered on every device until
+ *  deleted there (removed, below); all deleted, they come back. */
+type Base = "mcheyne" | "cycles";
+const FACTORY: Record<Base, { name: string; credit: string; days?: string[]; cycles?: [string, string][][] }> = {
   mcheyne: { name: "M'Cheyne", days: MCHEYNE, credit: "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4." },
-  three: { name: "Three Readings", days: THREEPLAN, credit: "Reading plan generated for COTEXT: Psalms and the New Testament; Genesis to 2 Chronicles; Ezra to Malachi." },
+  cycles: { name: "Three Cycles", cycles: [[["Mat", "Rev"]], [["Psa", "Psa"]], [["Gen", "Job"], ["Pro", "Mal"]]],
+            credit: "Reading plan: the New Testament (260 days), the Psalms (150) and the rest of the Old Testament (779), a chapter of each a day, each starting over when done." },
 };
+/** A cycle's chapters in order ("Gen 1", ...), from the books' chapter counts - worked out once. */
+const cycleChapters = new Map<[string, string][], string[]> ();
+function chaptersOf (runs: [string, string][]): string[] {
+  if (! cycleChapters.has (runs)) {
+    const at = (code: string) => bookList.findIndex ((b) => b.code === code);
+    cycleChapters.set (runs, runs.flatMap (([a, z]) => bookList.slice (at (a), at (z) + 1).flatMap ((b) => Array.from ({ length: b.chapters }, (_, i) => `${b.code} ${i + 1}`))));
+  }
+  return cycleChapters.get (runs)!;
+}
+/** A factory day's readings as stored (n: 1 first; "" none). */
+function factoryDay (b: Base, n: number): string {
+  const f = FACTORY[b];
+  if (f.cycles) return f.cycles.map ((runs) => { const cs = chaptersOf (runs); return cs.length ? cs[(n - 1) % cs.length] : ""; }).join (";");
+  return f.days![n - 1] ?? "";
+}
+/** Whether a plan never ends (a factory plan of cycles): every day from Day 1 on has readings. */
+const endless = (p: Plan) => !! p.base && !! FACTORY[p.base].cycles;
+/** The days a plan's list shows: all of them; an endless plan's a year past the last day done. */
+const listed = (p: Plan) => endless (p) ? Math.max (0, ...p.done) + 365 : p.count;
 const BASES = Object.keys (FACTORY) as Base[];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const EVERY_DAY = 127;     // (week: every weekday ticked)
 
-const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, count: FACTORY[b].days.length, start: "", week: EVERY_DAY, days: {}, done: [] });
+const factory = (b: Base): Plan => ({ id: b, name: FACTORY[b].name, base: b, count: FACTORY[b].days?.length ?? 0, start: "", week: EVERY_DAY, days: {}, done: [] });
 let plans: Plan[] = [];
 let removed: Base[] = [];     // (The factory plans deleted on this device: not offered again until every plan is)
 let at = "";
@@ -69,7 +90,7 @@ function load () {
   try {
     const s = JSON.parse (localStorage.getItem (KEY) ?? "null");
     if (s && Array.isArray (s.plans)) {
-      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count))
+      plans = s.plans.filter ((p: Plan) => p && typeof p.id === "string" && p.days && typeof p.days === "object" && Number.isInteger (p.count) && (! p.base || p.base in FACTORY))     // (A factory plan no longer made: dropped)
                      .map ((p: Plan) => ({ id: p.id, name: String (p.name ?? ""), ...(p.base && p.base in FACTORY ? { base: p.base } : {}), count: Math.max (0, p.count),
                                            start: /^\d{4}-\d\d-\d\d$/.test (p.start) ? p.start : "",
                                            week: Number.isInteger (p.week) && p.week > 0 && p.week <= EVERY_DAY ? p.week : EVERY_DAY, days: p.days,
@@ -98,10 +119,10 @@ function setDone (p: Plan, n: number, on: boolean) {
 }
 /** A plan day's readings (n: 1 first): its own edit, else its base's. */
 const dayOf = (p: Plan, n: number): Reading[] =>
-  (String (n) in p.days ? p.days[n] : p.base ? FACTORY[p.base].days[n - 1] ?? "" : "").split (";").map (parse).filter ((r): r is Reading => !! r);
+  (String (n) in p.days ? p.days[n] : p.base ? factoryDay (p.base, n) : "").split (";").map (parse).filter ((r): r is Reading => !! r);
 function setDay (p: Plan, n: number, rs: Reading[]) {
   const s = rs.map (format).join (";");
-  if (p.base && (FACTORY[p.base].days[n - 1] ?? "") === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
+  if (p.base && factoryDay (p.base, n) === s) delete p.days[n]; else p.days[n] = s;     // (Back as the base has it: no edit kept)
   save ();
 }
 
@@ -124,7 +145,7 @@ function dayOn (p: Plan, y: number, m: number, d: number): number {
   for (let w = 0; w < 7; w++) if (p.week & 1 << w) perWeek++;
   let n = Math.floor (span / 7) * perWeek;
   for (let k = 0; k < span % 7; k++) if (p.week & 1 << (first + k) % 7) n++;
-  return n <= p.count ? n : 0;
+  return endless (p) || n <= p.count ? n : 0;
 }
 
 /** "Gen 1", "Psa 52-54" -> a reading (a verse in it - "Luk 1:1-38", "Isa 9:7-10:4" - read as its chapters); null for
@@ -214,7 +235,7 @@ function calendar (o: { leaving?: () => void; pick?: (n: number) => void; picked
     box.classList.toggle ("planList", ! dated);
     head.hidden = week.hidden = ! dated;
     if (! dated) {
-      const ns = Array.from ({ length: p.count }, (_, i) => i + 1).filter ((n) => ! o.resource || ! isDone (p, n));     // (The resource: the days done left out)
+      const ns = Array.from ({ length: listed (p) }, (_, i) => i + 1).filter ((n) => ! o.resource || ! isDone (p, n));     // (The resource: the days done left out)
       days.replaceChildren (...ns.map ((n) => dayCell (p, n, picked)));
       if (! ns.length) days.append (el ("p", "", p.count ? "Every day done." : "No days yet."));
     } else {
@@ -273,9 +294,9 @@ onScreen ("Reading plan", (body) => {
   /** The picked day kept where it's the open plan's; else today's plan day (on the calendar), else Day 1. */
   const pickAfresh = () => {
     const p = now (), t = today ();
-    if (pickedIn === p.id && picked >= 1 && picked <= p.count) return;
+    if (pickedIn === p.id && picked >= 1 && (endless (p) || picked <= p.count)) return;
     pickedIn = p.id;
-    picked = Math.min (dayOn (p, t.y, t.m, t.d) || 1, p.count);
+    picked = endless (p) ? dayOn (p, t.y, t.m, t.d) || 1 : Math.min (dayOn (p, t.y, t.m, t.d) || 1, p.count);
   };
   pickAfresh ();
   const top = el ("div", "topBar"), row = el ("div", "topRow"), menu = el ("div", "vcMenu");
@@ -287,6 +308,7 @@ onScreen ("Reading plan", (body) => {
   head.append (el ("h2", "title", "Edit"), close);
   const dayName = el ("div", "src"), lines = el ("div", "planLines"), adds = el ("div", "fieldRow");
   const add = el ("button", "pill action", "+ Add reading"), addDay = el ("button", "pill action", "+ Add day");
+  addDay.hidden = endless (now ());
   adds.append (add, addDay);
   editor.append (head, dayName, lines, adds);
   const bar = el ("div", "bottomBar"), pencil = el ("button", "pill icon barMid");
@@ -301,7 +323,7 @@ onScreen ("Reading plan", (body) => {
   };
   pencil.addEventListener ("click", () => show (! editing));
   close.addEventListener ("click", () => show (false));
-  const changed = () => { pickAfresh (); drawEditor (); cal.draw (); };
+  const changed = () => { pickAfresh (); addDay.hidden = endless (now ()); drawEditor (); cal.draw (); };     // (+ ADD DAY: none for an endless plan)
   add.addEventListener ("click", () => {
     // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
     const rs = dayOf (now (), picked), last = rs[rs.length - 1];
