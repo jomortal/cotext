@@ -11,9 +11,8 @@
 // least 560 px wide a week a row, Sunday first, each day its date over its readings; narrower, a day a row, its weekday
 // and date at its left, its readings beside them (style.css' .planCal: a container query, the box's own width, never
 // the device's). Today's date in the accent; each opening shows today's month, today scrolled into view. A reading
-// tapped goes to its first chapter and verse (main.ts' goVerse; from the screen, back to the Bible first). The OT's
-// readings go to the Hebrew Bible, verse numbers as the plan gives them (M'Cheyne's: the English Bible's - a few
-// chapters' last verses are numbered differently in the Hebrew).
+// tapped goes to its first chapter (main.ts' goVerse; from the screen, back to the Bible first). Plans read whole
+// chapters only - a reading a book's chapter or run of chapters, never part of one (M'Cheyne's made so: mcheyne.py).
 // Plans are keyed by the calendar's date (MM-DD; Feb 29 its own day, blank in M'Cheyne's), so a plan repeats yearly.
 // M'Cheyne's (the factory plan, mcheyne.ts) is the plan its edits are laid over: its days kept as they ship, the
 // user's changes kept apart (days) - so a corrected factory plan reaches every device, edited days excepted.
@@ -21,7 +20,6 @@
 // "mcheyne", days: { "MM-DD": readings } }] } - a day's readings joined by ";", each as parse reads it; a day in days
 // overrides the base's ("" none). Every plan deleted: M'Cheyne's back, unedited.
 
-import type { Db } from "./db";
 import type { Book } from "./reader";
 import { MCHEYNE } from "./mcheyne";
 import { ABBR } from "./booknames";
@@ -33,9 +31,8 @@ import { deckPaneSplit } from "./layout";
 //==== PLANS ====
 
 interface Plan { id: string; name: string; base?: "mcheyne"; days: Record<string, string>; }
-/** One reading: book (its code), from chapter c1 verse v1 to chapter c2 verse v2 - v1 0 the start of c1, v2 0 the end
- *  of c2 (both 0: whole chapters c1 to c2). */
-interface Reading { code: string; c1: number; v1: number; c2: number; v2: number; }
+/** One reading: book (its code), whole chapters c1 to c2. */
+interface Reading { code: string; c1: number; c2: number; }
 
 const KEY = "cotext.readingplans";
 const CREDIT = "Reading plan: Robert Murray M'Cheyne's Bible Reading Calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4.";
@@ -81,36 +78,32 @@ function setDay (p: Plan, key: string, rs: Reading[]) {
   save ();
 }
 
-/** "Gen 1", "Psa 52-54", "Luk 1:1-38", "Isa 9:7-10:4", "Gen 1:5-end" -> a reading; null for anything else. */
+/** "Gen 1", "Psa 52-54" -> a reading (a verse in it - "Luk 1:1-38", "Isa 9:7-10:4" - read as its chapters); null for
+ *  anything else. */
 function parse (s: string): Reading | null {
   const m = s.trim ().match (/^(\w+) (\d+)(?::(\d+))?(?:-(?:(\d+):)?(\d+|end))?$/);
   if (! m || ! books.has (m[1])) return null;
   const c1 = +m[2];
-  if (! m[3]) return { code: m[1], c1, v1: 0, c2: m[5] && m[5] !== "end" ? +m[5] : c1, v2: 0 };     // (Whole chapters)
-  return { code: m[1], c1, v1: +m[3], c2: m[4] ? +m[4] : c1, v2: m[5] && m[5] !== "end" ? +m[5] : m[5] ? 0 : +m[3] };
+  const c2 = m[4] ? +m[4] : m[5] && m[5] !== "end" && ! m[3] ? +m[5] : c1;     // (A verse given - an edit kept before plans were by chapters - read as its chapters)
+  return { code: m[1], c1, c2: Math.max (c1, c2) };
 }
 function format (r: Reading): string {
-  if (! r.v1 && ! r.v2) return `${r.code} ${r.c1}` + (r.c2 > r.c1 ? `-${r.c2}` : "");
-  return `${r.code} ${r.c1}:${r.v1 || 1}-` + (r.c2 !== r.c1 ? `${r.c2}:` : "") + (r.v2 || "end");
+  return `${r.code} ${r.c1}` + (r.c2 > r.c1 ? `-${r.c2}` : "");
 }
 /** A reading as the calendar shows it: the book's SBL abbreviation and its span - "Ps 119:1–24", "Gen 9–10". */
 function label (r: Reading): string {
   const b = books.get (r.code)!, name = ABBR[b.name] ?? b.name;
-  if (! r.v1 && ! r.v2) return `${name} ${r.c1}` + (r.c2 > r.c1 ? `–${r.c2}` : "");
-  const end = r.v2 || "end";
-  return `${name} ${r.c1}:${r.v1 || 1}` + (r.c2 !== r.c1 ? `–${r.c2}:${end}` : r.v2 === r.v1 ? "" : `–${end}`);
+  return `${name} ${r.c1}` + (r.c2 > r.c1 ? `–${r.c2}` : "");
 }
 
 //==== THE CALENDAR ====
 
 let books = new Map<string, Book> ();     // (The Hebrew Bible's and the NT's, by code)
 let bookList: Book[] = [];
-let db: Db;
 let goVerse: (b: Book, c: number, v: number) => void = () => {};
-/** main.ts: the books (the Hebrew Bible's and the NT's are a plan's), the database (the editor's verse counts) and
- *  going to a verse. */
-export function initReadingPlan (d: Db, bs: Book[], go: (b: Book, c: number, v: number) => void) {
-  db = d; goVerse = go;
+/** main.ts: the books (the Hebrew Bible's and the NT's are a plan's) and going to a verse. */
+export function initReadingPlan (bs: Book[], go: (b: Book, c: number, v: number) => void) {
+  goVerse = go;
   bookList = bs.filter ((b) => b.testament !== "LXX");
   books = new Map (bookList.map ((b) => [b.code, b]));
 }
@@ -156,7 +149,7 @@ function calendar (o: { leaving?: () => void; pick?: (key: string, y: number) =>
       const list = el ("span", "planReads");
       for (const r of dayOf (p, key)) {
         const a = el ("a", "term", label (r));
-        a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, r.v1 || 1); });
+        a.addEventListener ("click", (e) => { e.stopPropagation (); o.leaving?. (); goVerse (books.get (r.code)!, r.c1, 1); });
         list.append (a);
       }
       cell.append (date, list);
@@ -234,7 +227,7 @@ onScreen ("Reading plan", (body) => {
     // (A new reading: the chapter after the day's last reading, else Genesis 1 - then changed in its pickers)
     const rs = dayOf (now (), picked), last = rs[rs.length - 1];
     const code = last?.code ?? "Gen", c = last ? Math.min (last.c2 + 1, books.get (code)!.chapters) : 1;
-    rs.push ({ code, c1: c, v1: 0, c2: c, v2: 0 });
+    rs.push ({ code, c1: c, c2: c });
     setDay (now (), picked, rs); changed ();
   });
 
@@ -252,29 +245,24 @@ onScreen ("Reading plan", (body) => {
     dropDowns ([{ key: "more", button: named.button, menu }], "");
   }
 
-  // A reading's line: BOOK, CHAPTER, FROM VERSE (Start), TO CHAPTER, TO VERSE (End) and ✕ - a change kept at once
-  async function drawEditor () {
+  // A reading's line: BOOK, CHAPTER, TO CHAPTER and ✕ - a change kept at once
+  function drawEditor () {
     const p = now (), key = picked, [mm, dd] = key.split ("-").map (Number);
     const wd = new Date (pickedYear, mm - 1, dd).getDay ();
     dayName.textContent = `${WEEKDAYS[wd]} ${MONTHS[mm - 1]} ${dd}`;
     const rs = dayOf (p, key);
-    const counts = await Promise.all (rs.map ((r) => Promise.all ([verseCount (r.code, r.c1), verseCount (r.code, r.c2)])));
-    if (key !== picked || p !== now ()) return;     // (Another day or plan meanwhile: its own drawing)
     lines.replaceChildren (...rs.map ((r, i) => {
       const line = el ("div", "csLine"), place = el ("div", "fieldRow planPlace");
       const set = (f: Partial<Reading>) => {
         Object.assign (r, f);
         if (r.c2 < r.c1) r.c2 = r.c1;
-        if (r.c2 === r.c1 && r.v2 && r.v2 < r.v1) r.v2 = 0;     // (An end before its start: to the chapter's end)
         setDay (p, key, rs); changed ();
       };
       const b = books.get (r.code)!, nums = (from: number, to: number) => Array.from ({ length: to - from + 1 }, (_, k) => from + k);
       place.append (
-        pick ("Book", bookList.map ((x) => [x.code, x.name, ABBR[x.name]]), r.code, (v) => set ({ code: v, c1: 1, v1: 0, c2: 1, v2: 0 })),
-        pick ("Chapter", nums (1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c1), (v) => set ({ c1: +v, v1: 0, c2: Math.max (r.c2, +v), v2: 0 })),
-        pick ("From verse", [["0", "Start"], ...nums (1, counts[i][0]).map ((v): [string, string] => [String (v), String (v)])], String (r.v1), (v) => set ({ v1: +v })),
-        pick ("To chapter", nums (r.c1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c2), (v) => set ({ c2: +v, v2: 0 })),
-        pick ("To verse", [["0", "End"], ...nums (1, counts[i][1]).map ((v): [string, string] => [String (v), String (v)])], String (r.v2), (v) => set ({ v2: +v })));
+        pick ("Book", bookList.map ((x) => [x.code, x.name, ABBR[x.name]]), r.code, (v) => set ({ code: v, c1: 1, c2: 1 })),
+        pick ("Chapter", nums (1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c1), (v) => set ({ c1: +v, c2: Math.max (r.c2, +v) })),
+        pick ("To chapter", nums (r.c1, b.chapters).map ((c) => [String (c), String (c)]), String (r.c2), (v) => set ({ c2: +v })));
       const x = el ("button", "pill icon csRemove");
       setIcon (x, "x"); x.setAttribute ("aria-label", "Remove this reading");
       x.addEventListener ("click", () => { rs.splice (i, 1); setDay (p, key, rs); changed (); });
@@ -298,12 +286,4 @@ function pick (label: string, options: [string, string, string?][], value: strin
   s.addEventListener ("change", () => set (s.value));
   l.append (s);
   return l;
-}
-
-/** A chapter's verses (its last verse's number), read once. */
-const counted = new Map<string, Promise<number>> ();
-function verseCount (code: string, c: number): Promise<number> {
-  const k = `${code}.${c}`;
-  if (! counted.has (k)) counted.set (k, db.all ("SELECT MAX(verse) AS n FROM words WHERE book = ? AND chapter = ?", [books.get (code)!.id, c]).then ((r) => Number (r[0]?.n ?? 0)));
-  return counted.get (k)!;
 }

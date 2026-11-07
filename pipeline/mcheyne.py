@@ -7,13 +7,14 @@ book and its chapters as published: "Genesis 1", "Psalms 52, 53, 54", "Isaiah 9:
 28:1-19", "Jude". The lines' shown text is read, not their osisRef attributes (nine of those are mistyped: Ps.2 for
 Psalms 52, Jer.0 for Jeremiah 50...).
 
-Each line becomes one reading, its parts joined into one span from the first part's start to the last's end:
-  "Gen 1"  chapter 1;  "Psa 52-54"  chapters 52 to 54;  "Luk 1:1-38"  verses 1-38;  "Isa 9:7-10:4"  9:7 to 10:4
-(COTEXT's book codes - the main database's books.code -, the verses in the English numbering the calendar uses).
-Checked: 365 days of four readings; every book one of the 66, every chapter within it, every part following on from
-the one before; every verse within its chapter's count (from the main database's words, where it's built - English
-and Hebrew numbering differ at a few chapters' ends, so a verse past the Hebrew count is only warned about); and the
-whole OT read once, the NT and the Psalms twice.
+Each line becomes one reading of whole chapters (COTEXT's plans read by chapters alone): its parts joined into one span,
+then each chapter given to the reading where it starts - the one with its verse 1 -, so a chapter the calendar splits
+over days is read whole on its first day and the days after lose that reading: "Luke 1:1-38" -> "Luk 1", "Luke
+1:39-80" -> none; "Isaiah 8, 9:1-7" -> "Isa 8-9", "Isaiah 9:7-21, 10:1-4" -> "Isa 10", "Isaiah 10:5-34" -> none;
+Psalm 119, split over seven days, read whole on the first.
+  "Gen 1"  chapter 1;  "Psa 52-54"  chapters 52 to 54  (COTEXT's book codes - the main database's books.code).
+Checked: 365 days of four lines; every book one of the 66, every chapter within it, every part following on from the
+one before; and, as chapters, the whole OT read once, the NT and the Psalms twice.
 
 Output: src/mcheyne.ts - MCHEYNE, 365 strings (Jan 1 first; a day's four readings joined by ";").
 Run on its own: python3 pipeline/mcheyne.py (the download kept in pipeline/downloads/).
@@ -22,7 +23,6 @@ import collections
 import hashlib
 import pathlib
 import re
-import sqlite3
 import urllib.request
 
 ROOT = pathlib.Path (__file__).resolve ().parent.parent
@@ -91,38 +91,25 @@ def main ():
         if len (lines) != 4: raise SystemExit (f"{m[1]}.{m[2]}: {len (lines)} readings")
         days.append ([reading (l) for l in lines])
     if len (days) != 365: raise SystemExit (f"{len (days)} days")
-    # Verse counts (the main database, where built): a range's end "to the chapter's end" filled in, every verse checked
-    counts = {}
-    db = ROOT / "public" / "data" / "cotext.db"
-    if db.exists ():
-        with sqlite3.connect (db) as con:
-            counts = {(b - 1, c): n for b, c, n in con.execute ("SELECT book, chapter, MAX(verse) FROM words WHERE book <= 66 GROUP BY book, chapter")}
-    out = []
-    for i, day in enumerate (days):
+    # Whole chapters: each chapter of a reading whose verse 1 it reads (a later chapter, or its first from the start)
+    out, read = [], collections.Counter ()
+    for day in days:
         row = []
         for b, c1, v1, c2, v2 in day:
-            if v2 == -1:
-                v2 = counts.get ((b, c2))
-                if not v2: raise SystemExit (f"Day {i + 1}: {BOOKS[b][0]} {c2}'s verses unknown (build the main database first)")
-            for c, v in ((c1, v1), (c2, v2)):
-                if v and counts and v > counts.get ((b, c), 0): print (f"Note: {BOOKS[b][0]} {c}:{v} past the Hebrew numbering's {counts.get ((b, c))}")
-            code = BOOKS[b][1]
-            if v1 == 0: row.append (f"{code} {c1}" + (f"-{c2}" if c2 != c1 else ""))
-            else: row.append (f"{code} {c1}:{v1}-" + (f"{c2}:" if c2 != c1 else "") + str (v2))
+            cs = [c for c in range (c1, c2 + 1) if c > c1 or v1 in (0, 1)]
+            if not cs: continue     # (Only a split chapter's later part: read whole on its first day)
+            for c in cs: read[(b, c)] += 1
+            row.append (f"{BOOKS[b][1]} {cs[0]}" + (f"-{cs[-1]}" if cs[-1] != cs[0] else ""))
         out.append (";".join (row))
     # Coverage: every chapter read - the OT once, the NT and the Psalms twice
-    read = collections.Counter ()
-    for day in days:
-        for b, c1, v1, c2, v2 in day:
-            for c in range (c1, c2 + 1): read[(b, c)] += 1 if v1 == 0 or c not in (c1, c2) else 0     # (A chapter read in parts: checked by partial)
-    partial = collections.Counter ((b, c) for day in days for b, c1, v1, c2, v2 in day if v1 for c in {c1, c2})
     for b in range (66):
         want = 2 if b >= 39 or b == 18 else 1
         for c in range (1, CHAPTERS[b] + 1):
-            if read[(b, c)] < want and not partial[(b, c)]: raise SystemExit (f"{BOOKS[b][0]} {c} read {read[(b, c)]} times")
+            if read[(b, c)] != want: raise SystemExit (f"{BOOKS[b][0]} {c} read {read[(b, c)]} times")
     OUT.write_text ("// M'Cheyne's Bible reading calendar (1842; public domain), from CrossWire's SWORD module MCheyne 1.4 -\n"
                     "// GENERATED by pipeline/mcheyne.py: edit that, not this. A day a string, Jan 1 first (365; no Feb 29): its four\n"
-                    "// readings joined by \";\", each \"<book code> <chapter>[-<chapter>]\" or \"<code> <c>:<v>-[<c>:]<v>\" (readingplan.ts' parse).\n"
+                    "// readings joined by \";\" (four, fewer where a chapter split over days was read whole the day before), each\n"
+                    "// \"<book code> <chapter>[-<chapter>]\" (readingplan.ts' parse).\n"
                     "export const MCHEYNE = [\n" + "".join (f'  "{d}",\n' for d in out) + "];\n", encoding = "utf-8")
     print (f"{OUT}: {len (out)} days, {sum (len (d) for d in days)} readings")
 
