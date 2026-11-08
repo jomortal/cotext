@@ -12,7 +12,8 @@
 //   open at a time.
 // - Which verses show, and how the panel follows the text - the same on every screen, whatever its size:
 //   - A translation, and the Hebrew OT beside the Septuagint: every verse of the chapter, in step with the text both
-//     ways (TWO-WAY SCROLLING, below).
+//     ways (TWO-WAY SCROLLING, below); a translation's verses the text hasn't (Mark 16:9-20...) in their place too, marked
+//     "Not in the Greek text" ("Hebrew" in the OT) at the first of each run.
 //   - A spotty source (SPOTTY, below: notes on under half the book's verses - HOTTP, John Lightfoot, Ramban, STEPBible's
 //     and some books' Dead Sea Scrolls, church fathers, Rashi...): the whole book's notes at once, each verse's under
 //     its chapter:verse, following the text one way (ONE-WAY FOLLOWING).
@@ -283,8 +284,22 @@ async function drawNotes () {
   shownVerse = key;
   const n = ++updating, still = () => n === updating;
   const hebrewKeyed = hebrewSide (src, b);
-  const per = await placesOf (src, b, chapter, vs);
+  const per: { v: number; where: number[][]; extra?: boolean }[] = await placesOf (src, b, chapter, vs);
   if (! still ()) return;
+  // A translation's verses the text hasn't (Mark 16:9-20, Matthew 17:21, John 5:4...: in later Greek manuscripts, so in
+  // the KJV and others), shown in their place among the chapter's, marked as not in the text - keyed by the text's own
+  // verses (not the Septuagint's)
+  if (src.kind === "translation" && ! hebrewKeyed && db) {
+    const have = new Set (vs);
+    const rows = await db.all (`SELECT DISTINCT start % 1000 AS v FROM notes WHERE book = ? AND start BETWEEN ? AND ? ORDER BY start`,
+                               [b.id, chapter * 1000, chapter * 1000 + 999]);
+    if (! still ()) return;
+    for (const { v } of rows as { v: number }[]) {
+      if (have.has (v) || v === 0) continue;
+      const at = per.findIndex ((p) => p.v > v);
+      per.splice (at < 0 ? per.length : at, 0, { v, where: [[b.id, chapter, v]], extra: true });
+    }
+  }
   blocks = []; forget ();
   refEl.textContent = `${b.name} ${chapter}`;
   const all = per.flatMap ((p) => p.where);
@@ -348,13 +363,17 @@ async function drawNotes () {
   const kind = src.kind;
   const none = kind === "translation" ? "Not in this translation." : kind === "version" ? "Not in this version."
              : kind === "syntax" ? "No diagram for this verse." : "No notes on this verse.";
+  let extraBefore = false;
   for (const g of groups) {
-    const box = verseBlock (`${chapter}:${g.v}`, g.v);
-    bodyEl.append (box); blocks.push ([g.v, box]);
+    const extra = per.find ((p) => p.v === g.v)?.extra;
+    const box = verseBlock (`${chapter}:${g.v}`, extra ? undefined : g.v);     // (Not in the text: no row there to follow - read with the verse before)
+    bodyEl.append (box); if (! extra) blocks.push ([g.v, box]);
+    if (extra && ! extraBefore) box.insertAdjacentHTML ("beforeend", `<p class="src">Not in the ${b.testament === "NT" ? "Greek" : "Hebrew"} text</p>`);     // (Once a run: Mark 16:9-20's at 16:9)
+    extraBefore = !! extra;
     if (! g.where.length) { box.insertAdjacentHTML ("beforeend", LXX_ONLY); continue; }
     if (! g.notes.length) {
       // (A verse whose note began at an earlier verse shown above, or with none at all: left out)
-      if (seen.size) { box.remove (); blocks.pop (); continue; }
+      if (seen.size) { box.remove (); if (! extra) blocks.pop (); continue; }
       box.insertAdjacentHTML ("beforeend", `<p>${none}</p>`);
       continue;
     }
