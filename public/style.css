@@ -629,7 +629,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseList { display: grid; position: fixed; min-width: 10em; z-index: var(--z-menu); box-sizing: border-box;     /* (Placed by choose.ts: under or over its button, as tall as the room) */
               -webkit-overflow-scrolling: touch;
               background: var(--bg); }     /* (A box, an overlay: #voicePick's and #options' rules) */
-.chooseList.inline { position: static; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists) */
+.chooseList.inline { position: static; z-index: auto; box-shadow: none; max-height: none; overflow: visible; margin: 6px 0 4px; }     /* (In the page: the book picker's lists, Learn's choices - not an overlay, so not over the panels: a grid's item keeps a z-index though static) */
 .chooseList.inline .chooseItem { font-size: var(--fs-l); padding: 11px 12px; }
 /* One line: the English, then the book's Hebrew or Greek name in the text's own font (the Hebrew isolated, so it
    reads right to left within the line), muted beside the English. */
