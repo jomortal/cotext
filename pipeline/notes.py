@@ -41,7 +41,7 @@ Apparatus:
 Translations (eBible.org's USFM, pinned by hash; a "note" per verse, its text): web World English Bible, bsb Berean
   Standard Bible, kjv King James Version (1769), asv American Standard Version (1901), ylt Young's Literal
   Translation, darby Darby - all public domain -, lsv Literal Standard Version (Covenant Press, CC BY-SA 4.0), net
-  NET Bible (Biblical Studies Press: quoted for non-commercial use without its notes, each verse followed by "(NET)"
+  NET Bible (Biblical Studies Press: quoted for non-commercial use without its notes, each chapter's last verse followed by "(NET)"
   linked to netbible.org, as its terms ask), emtv English Majority Text Version (NT) and wyc Wycliffe in modern
   spelling (CC BY-NC-ND 4.0: verbatim), brenton Brenton's Septuagint (public domain; lxx_rows maps its verses).
   Footnotes, headings and Strong's tags left out (usfm_rows). From Sefaria (notes_sefaria.py): njps the NJPS Tanakh,
@@ -854,8 +854,8 @@ def usfm_rows(src_id, text_v0, after=""):
     left out; a poetry line or paragraph inside a verse a <br>; words supplied by the translators (\\add: the KJV's
     italics) and \\it in italics, \\bd bold. A Psalm title (\\d) is verse 0, as the text numbers it; where the
     translation runs its title into verse 1 (Young's, the LSV), that verse is shown on verse 0 too (text_v0: the
-    text's (book, chapter) with a verse 0). A combined verse (\\v 15-16) is a range. after: HTML put after each
-    verse's text (the NET's "(NET)", linked as its terms ask)."""
+    text's (book, chapter) with a verse 0). A combined verse (\\v 15-16) is a range. after: HTML put after the text
+    of each chapter's last verse - once a chapter, not every verse (the NET's "(NET)", linked as its terms ask)."""
     out = {}
     with zipfile.ZipFile(DL / src_id / (TRANSLATIONS[src_id] + "_usfm.zip")) as z:
         for name in z.namelist():
@@ -893,13 +893,15 @@ def usfm_rows(src_id, text_v0, after=""):
                             cur.append("<br>")
                         brk = False
                         cur.append(usfm_text(part))
-    rows = []
+    rows, last = [], {}
+    for (b, c, v1, v2) in out:
+        last[(b, c)] = max(last.get((b, c), 0), v2)
     for (b, c, v1, v2), parts in out.items():
         body = re.sub(r"\s+", " ", " ".join(parts)).replace(" <br> ", "<br>").strip()
         body = re.sub(r"^(<br>)+|(<br>)+$", "", body)
         if body:
             start = 0 if v1 == 1 and (b, c) in text_v0 and (b, c, 0, 0) not in out else v1
-            rows.append((b, ref(c, start), ref(c, v2), 0, "", f"<p>{body}{after}</p>"))
+            rows.append((b, ref(c, start), ref(c, v2), 0, "", f"<p>{body}{after if v2 == last[(b, c)] else ''}</p>"))
     have = {(r[0], r[1]): r for r in rows if r[1] == r[2]}
     for (b, c, v), (c2, v2) in ELSEWHERE.items():
         if (b, ref(c, v)) not in have and (r := have.get((b, ref(c2, v2)))):
