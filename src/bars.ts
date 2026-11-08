@@ -13,11 +13,11 @@ export const barRoom = (bar: HTMLElement | null) => ! bar || SIDE_BAR.matches ? 
 
 /** A swipe across el steps as the bars' ‹ and › do: step (1) to the left (the next), step (-1) to the right (the
  *  previous) - one finger, at least 60 px across, more than twice as far across as down (not a scroll), within 0.8 s,
- *  nothing selected. */
-export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void) {
+ *  nothing selected; with starts, only one begun on an element it accepts. */
+export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void, starts?: (t: Element) => boolean) {
   let from: { x: number; y: number; t: number } | null = null;
   el.addEventListener ("touchstart", (e) => {
-    from = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp } : null;
+    from = e.touches.length === 1 && (! starts || starts (e.target as Element)) ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp } : null;
   }, { passive: true });
   el.addEventListener ("touchcancel", () => { from = null; });
   el.addEventListener ("touchend", (e) => {

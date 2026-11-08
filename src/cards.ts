@@ -1,7 +1,7 @@
 // Flashcards: one card at a time, centered in the screen's room (fitDeck) - its front, tapped to turn it over (its back
 // shown under it, or alone: backOnly), tapped again to turn it back (no Flip button). Its buttons in one bar at the
 // screen's foot - the Bible view's play bar's kind (.bottomBar; down the right side sideways: bars.ts' SIDE_BAR) -: BACK and
-// NEXT as ‹ and › at its ends (wrapping round; a swipe across the card does the same: bars.ts' onSwipe), SHUFFLE
+// NEXT as ‹ and › at its ends (wrapping round; a swipe across the screen - the card or beside it - does the same: bars.ts' onSwipe), SHUFFLE
 // (mixes it) and START OVER (back in its first order at the first card) as icons between them, and in its middle the
 // screen's own button: the Verse cards' + (NEW VERSE), or Flashcards' card action (REMOVE FROM LIST or + KNOWN WORDS:
 // takes the card out and tells the deck's owner - vocab.ts takes the word off that list). A speaker on a card says its
@@ -23,6 +23,11 @@ export interface Card { front: string; back: string; /* HTML */ }
  *  matches doesn't turn the card (the Verse cards' words, tapped for their panel). */
 export interface DeckOptions<C> { remove?: { label: string; done: (c: C) => void }; middle?: HTMLElement; backOnly?: boolean; noTurn?: string; }
 
+/** A swipe anywhere on a deck's screen - the card or beside it - steps the deck shown (the last showDeck's), not one begun
+ *  on its top bar, bottom bar, a panel or an open list, or while no deck's card shows (another screen, no cards). */
+let swiped: (by: 1 | -1) => void = () => {}, swipeOn = false, shownCard: HTMLElement | null = null;
+const deckSwipe = (t: Element) => !! shownCard?.offsetParent && ! t.closest (".topBar, .bottomBar, .deckPane, .deckSplit, .chooseList, .csMenu, input, textarea, select");
+
 /** Shows a deck in el: the card, its count and the bar (above). */
 export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOptions<C> = {}): DeckShown<C> {
   const first = [...cards];
@@ -34,6 +39,7 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOp
   const card = el.querySelector<HTMLElement> (".card")!, front = el.querySelector<HTMLElement> (".cardFront")!;
   const back = el.querySelector<HTMLElement> (".cardBack")!, count = el.querySelector<HTMLElement> (".cardCount")!;
   const bar = el.querySelector<HTMLElement> ("#screen .bottomBar")!;
+  shownCard = card;
   if (o.middle) { o.middle.classList.add ("barMid"); bar.querySelector ("[data-k=over]")!.before (o.middle); }
   const show = () => {
     if (! deck.length) { front.textContent = "✓"; front.hidden = false; back.hidden = false; back.textContent = "No cards left"; count.textContent = ""; return; }
@@ -55,7 +61,8 @@ export function showDeck<C extends Card> (el: HTMLElement, cards: C[], o: DeckOp
   on ("shuffle", () => { deck = shuffle (deck); at = 0; });
   on ("over", () => { deck = first.filter ((c) => deck.includes (c)); at = 0; });
   el.querySelector ("[data-k=remove]")?.addEventListener ("click", () => { const [c] = deck.splice (at, 1); if (c) o.remove!.done (c); show (); });     // (Under the card, not in the bar)
-  onSwipe (card, (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ());     // (A swipe across the card steps as ‹ and ›)
+  swiped = (by) => bar.querySelector<HTMLElement> (by > 0 ? "[data-k=next]" : "[data-k=back]")!.click ();     // (A swipe across the screen steps as ‹ and ›: below)
+  if (! swipeOn) { swipeOn = true; onSwipe (document.getElementById ("screen")!, (by) => swiped (by), deckSwipe); }
   // (With a mouse, the card narrower than the screen's room: ‹ and › in its margins, at the card's middle height - bars.ts)
   marginArrows (document.getElementById ("screen")!, card, bar.querySelector<HTMLElement> ("[data-k=back]")!, bar.querySelector<HTMLElement> ("[data-k=next]")!, "column");
   show ();

@@ -35,7 +35,7 @@
 //   "ΚΑΤΑ ΙΩΑΝΝΗΝ Γʹ:ΙϚʹ"; the Septuagint's own book and numbering, Psalms and Jeremiah's differing: "ΨΑΛΜΟΙ ΚΒʹ:Αʹ"); turned over, the back alone
 //   - those references, the translation's verses (each numbered in a range; its name only in the credits below), the original. The card centered on the
 //   screen, its buttons in a bar at the screen's foot, as the Bible view's play bar (its size, clear of the swipe-up
-//   edge; its words larger than a pill's): BACK and NEXT as ‹ and › at its ends (as the chapters'; a swipe across the card does the same), SHUFFLE, + (NEW VERSE) in its middle and START OVER between them (cards.ts' showDeck). A tap on it turns it over
+//   edge; its words larger than a pill's): BACK and NEXT as ‹ and › at its ends (as the chapters'; a swipe across the screen, the card or beside it, does the same), SHUFFLE, + (NEW VERSE) in its middle and START OVER between them (cards.ts' showDeck). A tap on it turns it over
 //   or back, except on a word of its original: a word of the original tapped opens the Bible's word's panel, at its place
 //   over this screen (panel.ts' showCardPanel - tapped again, the card changed or the screen left, it closes). The VERSE LIST panel (the bar's list icon): the add row at its top (BOOK, CHAPTER, VERSES, + ADD VERSE), then (while the deck has cards) the cards in the order added, laid out as the decks: each reference and ✕ removing it. The credits of what the cards show under it.
 // - KEPT on the device (localStorage "cotext.versecards": the decks - each its cards and settings - and the one open).

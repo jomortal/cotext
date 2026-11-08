@@ -21,7 +21,7 @@
 //   and its meaning on that verb. The one picked (the frequency list at first) shown as flashcards (cards.ts' showDeck).
 // - A WORD'S CARD: front the word with a speaker that says it, turned over its concise meaning alone (the word hidden) -
 //   or, with ENGLISH TO HEBREW / GREEK, the other way round (the first things to learn the same way; not the paradigms).
-//   A tap turns it, a swipe across it or ‹ › steps; under it its action: REMOVE FROM LIST (in My vocab off that list, in
+//   A tap turns it, a swipe across the screen (it or beside it) or ‹ › steps; under it its action: REMOVE FROM LIST (in My vocab off that list, in
 //   Known words no longer known) or, in the frequency lists, + KNOWN WORDS (made known, into Known words); none in the
 //   first things to learn or the paradigms.
 // - THE WORD LIST (the bar's middle icon; closed at first, so the answers stay hidden while quizzing): in a panel of its
