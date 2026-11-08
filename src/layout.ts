@@ -23,7 +23,9 @@
 //   --rightShare (rightShareTo), the same place as the divider between the word's panel's two parts; one over the
 //   other the search (or the word's info) on top, #paneSplit (horizontal) at the search's share of the height
 //   (--searchH). "one": the word's panel one column, the notes and the search one at a time.
-// Each divider set by dragging (pointer events: a finger, a pen or a mouse alike), kept on the device (localStorage).
+// Each divider set by dragging (pointer events: a finger, a pen or a mouse alike), kept on the device (localStorage); a
+// panel's own (the text's panel, a screen's panel, a sized drop-down) flicked the shrinking way, or dragged past its
+// smallest size, closes it instead (drag's Fling).
 
 import { SIDE_BAR } from "./bars";
 import { box, px, winW, winH, onScale } from "./zoom";     // (Every measurement in the page's CSS px, whatever the UI's scale)
@@ -32,12 +34,13 @@ const KEY = "cotext.splits";
 const root = document.documentElement.style;
 const sizes: { searchH?: number; cardShare?: number; rightShare?: number; deckH?: number; deckW?: number; menuH?: number } = {};
 try { Object.assign (sizes, JSON.parse (localStorage.getItem (KEY) ?? "{}")); } catch { /* none kept, or private mode */ }
-if (sizes.searchH) root.setProperty ("--searchH", String (sizes.searchH));
-if (sizes.cardShare) root.setProperty ("--cardShare", String (sizes.cardShare));
-if (sizes.rightShare) root.setProperty ("--rightShare", String (sizes.rightShare));
-if (sizes.deckH) root.setProperty ("--deckH", sizes.deckH + "px");
-if (sizes.menuH) root.setProperty ("--menuH", sizes.menuH + "px");
-if (sizes.deckW) root.setProperty ("--deckW", sizes.deckW + "px");
+/** The sizes onto :root's properties (one unset, its property removed: the size until first dragged). */
+const applySizes = () => {
+  const set = (k: string, v: number | undefined, unit = "") => v ? root.setProperty (k, v + unit) : root.removeProperty (k);
+  set ("--searchH", sizes.searchH); set ("--cardShare", sizes.cardShare); set ("--rightShare", sizes.rightShare);
+  set ("--deckH", sizes.deckH, "px"); set ("--menuH", sizes.menuH, "px"); set ("--deckW", sizes.deckW, "px");
+};
+applySizes ();
 /** The window's long side (CSS px), either way up: the panel divider's measure (--long). The window's, not the
  *  screen's - a desktop window or an iPad's Split View can be smaller than the screen. With it the window's width and
  *  height (--winW, --winH: style.css' THE SCALE - in place of vw and vh). */
@@ -49,18 +52,39 @@ export type Split = "row" | "column" | "one";
 let split = "" as Split;     // (Set as the module ends: setSplit)
 const keep = () => { try { localStorage.setItem (KEY, JSON.stringify (sizes)); } catch { /* private mode: not kept */ } };
 
-/** A divider dragged: move (x, y) called with the pointer's place (CSS px: zoom.ts) each frame it moves; kept when let go. */
-function drag (el: HTMLElement, move: (x: number, y: number) => void) {
+/** A movable panel's closing by its divider: the way it shrinks (its divider moving down, up or right), the pointer
+ *  past its smallest size by PAST px (where (x, y) the panel would be at its smallest, and PAST more), and closing it. */
+interface Fling { toward: () => "down" | "up" | "right"; past: (x: number, y: number) => boolean; shut: () => void; }
+const PAST = 48;     // (px beyond the smallest size: the panel closes there)
+const FLING = 0.6;   // (px / ms: let go moving the shrinking way at least this fast over its last 100 ms - a flick, not held still first - it closes)
+
+/** A divider dragged: move (x, y) called with the pointer's place (CSS px: zoom.ts) each frame it moves; kept when let
+ *  go. With fling, let go after a flick the shrinking way, or past its smallest size (Fling), the panel closes, its size
+ *  as it was before the drag. */
+function drag (el: HTMLElement, move: (x: number, y: number) => void, fling?: Fling) {
   el.addEventListener ("pointerdown", (e) => {
     e.preventDefault ();
     el.setPointerCapture (e.pointerId);
     el.classList.add ("on");
-    const onMove = (m: PointerEvent) => move (px (m.clientX), px (m.clientY));
-    const end = () => {
+    const before = { ...sizes }, track = [{ x: px (e.clientX), y: px (e.clientY), t: e.timeStamp }];     // (The pointer's last 100 ms)
+    const onMove = (m: PointerEvent) => {
+      const x = px (m.clientX), y = px (m.clientY);
+      track.push ({ x, y, t: m.timeStamp }); while (track.length > 2 && m.timeStamp - track[0].t > 100) track.shift ();
+      move (x, y);
+    };
+    const end = (u: PointerEvent) => {
       el.classList.remove ("on");
       el.removeEventListener ("pointermove", onMove);
       el.removeEventListener ("pointerup", end);
       el.removeEventListener ("pointercancel", end);
+      if (fling && u.type === "pointerup" && track.length) {
+        const a = track[0], b = track[track.length - 1], w = fling.toward ();
+        const v = u.timeStamp - b.t > 80 ? 0 : (w === "right" ? b.x - a.x : w === "down" ? b.y - a.y : a.y - b.y) / Math.max (b.t - a.t, 1);     // (Held still before letting go: no flick)
+        if (v >= FLING || fling.past (b.x, b.y)) {
+          for (const k of Object.keys (sizes) as (keyof typeof sizes)[]) sizes[k] = before[k];
+          applySizes (); setSplit (); fling.shut (); return;
+        }
+      }
       keep ();
     };
     el.addEventListener ("pointermove", onMove);
@@ -94,7 +118,8 @@ export function menuSplit (menu: HTMLElement) {
   drag (split, (_x, y) => {
     const r = box (menu);
     sizes.menuH = Math.round (clamp (y - r.top, 80, winH () * .8 - r.top)); root.setProperty ("--menuH", sizes.menuH + "px");
-  });
+  }, { toward: () => "up", past: (_x, y) => y - box (menu).top < 80 - PAST,
+       shut: () => menu.closest (".topBar")?.querySelector<HTMLElement> ("[aria-expanded=true]")?.click () });
 }
 
 export function deckPaneSplit (pane: HTMLElement): HTMLElement {
@@ -110,7 +135,9 @@ export function deckPaneSplit (pane: HTMLElement): HTMLElement {
     const r = box (pane);
     if (SIDE_BAR.matches) { sizes.deckW = Math.round (clamp (r.right - x, 240, r.right - 240)); root.setProperty ("--deckW", sizes.deckW + "px"); }
     else { sizes.deckH = Math.round (clamp (r.bottom - y, 120, r.bottom - winH () / 5)); root.setProperty ("--deckH", sizes.deckH + "px"); }
-  });
+  }, { toward: () => SIDE_BAR.matches ? "right" : "down",
+       past: (x, y) => { const r = box (pane); return SIDE_BAR.matches ? r.right - x < 240 - PAST : r.bottom - y < 120 - PAST; },
+       shut: () => pane.querySelector<HTMLElement> (":scope > .paneHead > button:last-of-type")?.click () });     // (Its title row's ✕)
   return scroller;
 }
 
@@ -139,8 +166,6 @@ export function wordSplit (el: HTMLElement, scroll: HTMLElement, relayout: () =>
 }
 const wordSplits: HTMLElement[] = [];
 const notesEl = document.getElementById ("notes")!, searchEl = document.getElementById ("search")!;
-// Sideways, the divider between the text and the panel (cardShareTo); upright it isn't shown (#sheetSplit is).
-drag (document.getElementById ("notesSplit")!, (x) => cardShareTo (winW () - x));
 // The search's height against the notes' (both open; the search on top): its share (%) of the room the two have
 // between them (style.css gives them flex-grow by it), from the search's top to the divider's middle, each pane keeping
 // 120 px at least - SPLIT "column". Side by side ("row": the search at the right): the divider's place, --rightShare
@@ -182,6 +207,11 @@ const countDocks = () => {
 };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
+// That divider flicked down (sideways right) or past its smallest (20 % of the long side), the panel closes - every one
+// open (the notes and the search sharing the place both), by its ✕ as countDocks closes one.
+const panelFling: Fling = { toward: () => SIDE_BAR.matches ? "right" : "down",
+  past: (x, y) => (SIDE_BAR.matches ? winW () - x : winH () - y) < long () * .2 - PAST,
+  shut: () => { for (const o of docks.filter ((d) => ONE.includes (d.id) && ! d.hidden)) o.querySelector<HTMLElement> (":scope > .xRow button, :scope > .top > #notesClose")?.click (); } };
 // The divider dragged between the text and the panel - its middle d px from the window's foot (upright) or right
 // edge (sideways), as a share of the window's long side, 20-80 %, kept for both orientations (--cardShare:
 // style.css), so it stays put as the device turns.
@@ -245,6 +275,8 @@ function headFrame (pane: HTMLElement): HTMLElement {
   pane.append (body);
   return body;
 }
+// Sideways, the divider between the text and the panel (cardShareTo); upright it isn't shown (#sheetSplit is).
+drag (document.getElementById ("notesSplit")!, (x) => cardShareTo (winW () - x), panelFling);
 // Upright, the divider between the text and the panel (cardShareTo); sideways it isn't shown (#notesSplit is).
-drag (document.getElementById ("sheetSplit")!, (_x, y) => cardShareTo (winH () - y));
+drag (document.getElementById ("sheetSplit")!, (_x, y) => cardShareTo (winH () - y), panelFling);
 setSplit (); addEventListener ("resize", setSplit); SIDE_BAR.addEventListener ("change", setSplit); onScale (setSplit);
