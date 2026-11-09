@@ -52,3 +52,8 @@ export function usfm (code: string): string {
 }
 const LXX_USFM: Record<string, string> = { "1Es": "1ES", Sol: "SNG", Sip: "SIR", Est: "ESG", Tbs: "TOB", Joe: "JOL", Nah: "NAM",
   Epj: "LJE", Eze: "EZK", Dan: "DAN OG", Dat: "DAN", Sus: "SUS OG", Sut: "SUS", Bel: "BEL OG", Bet: "BEL", "1En": "ENO", Ode: "ODA" };
+
+/** A book's code in the page's address (main.ts: #GEN.1, #DAN-OG.3): its USFM code, the space written as a hyphen. The
+ *  same for a Hebrew book and its Septuagint one (GEN), so the address names the passage, not the text: which text
+ *  shows is the HEBREW / GREEK switch's. */
+export const addressCode = (code: string) => usfm (code).replace (" ", "-");

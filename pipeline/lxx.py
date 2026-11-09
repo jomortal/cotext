@@ -56,6 +56,8 @@ FIRST_ID = 67
 
 # (Swete's code, its name as the picker shows it, lxx-morph's file (None: Rahlfs lacks it), the Hebrew Bible's book
 # - build_db's code - or None). Swete's order. Nehemiah is 2 Esdras 11-23 in Rahlfs (and Swete), its own book here.
+# Daniel, Susanna and Bel's two texts: Theodotion's, the one usually read, by the plain name (Daniel); the Old
+# Greek's marked "(Old Greek)" - as their short codes (booknames.ts' usfm: DAN, DAN OG).
 BOOKS = [
     ("Gen", "Genesis", "genesis", "Gen"), ("Exo", "Exodus", "exodus", "Exo"), ("Lev", "Leviticus", "leviticus", "Lev"),
     ("Num", "Numbers", "numbers", "Num"), ("Deu", "Deuteronomy", "deuteronomy", "Deu"),
@@ -77,10 +79,10 @@ BOOKS = [
     ("Isa", "Isaiah", "isaiah", "Isa"), ("Jer", "Jeremiah", "jeremiah-lxx", "Jer"), ("Bar", "Baruch", "baruch", None),
     ("Lam", "Lamentations", "lamentations", "Lam"), ("Epj", "Letter of Jeremiah", "letter-of-jeremiah", None),
     ("Eze", "Ezekiel", "ezekiel", "Ezk"), ("Dan", "Daniel (Old Greek)", "daniel", "Dan"),
-    ("Dat", "Daniel (Theodotion)", "daniel-theodotion", "Dan"), ("Sus", "Susanna (Old Greek)", "susanna", None),
-    ("Sut", "Susanna (Theodotion)", "susanna-theodotion", None),
+    ("Dat", "Daniel", "daniel-theodotion", "Dan"), ("Sus", "Susanna (Old Greek)", "susanna", None),
+    ("Sut", "Susanna", "susanna-theodotion", None),
     ("Bel", "Bel and the Dragon (Old Greek)", "bel-and-the-dragon", None),
-    ("Bet", "Bel and the Dragon (Theodotion)", "bel-and-the-dragon-theodotion", None),
+    ("Bet", "Bel and the Dragon", "bel-and-the-dragon-theodotion", None),
     ("1Ma", "1 Maccabees", "1-maccabees", None), ("2Ma", "2 Maccabees", "2-maccabees", None),
     ("3Ma", "3 Maccabees", "3-maccabees", None), ("4Ma", "4 Maccabees", "4-maccabees", None),
     ("Pss", "Psalms of Solomon", "psalms-of-solomon", None), ("1En", "Enoch", None, None), ("Ode", "Odes", "odes", None),

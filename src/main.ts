@@ -1,5 +1,6 @@
-// COTEXT's start: opens the database, then shows a chapter - the one in the address (#Gen.1, #Jhn.1, #LXXGen.1), else
-// the last one read (kept in localStorage), else Genesis 1. The heading's ‹ and › step through chapters (across the
+// COTEXT's start: opens the database, then shows a chapter - the one in the address (#GEN.1, #JHN.1, #DAN-OG.3: the
+// passage alone, by its book's short code - booknames.ts' addressCode -, in the text the HEBREW / GREEK switch picks),
+// else the last one read (kept in localStorage, in the same form), else Genesis 1. The heading's ‹ and › step through chapters (across the
 // books of the language picked: the Hebrew OT or the Septuagint, then the NT), its middle button opens the picker; ☰ the study drawer (study.ts), ⋯ the helps' menu (helps.ts); ▶ reads aloud (audio.ts),
 // the two icons at the play bar's right open the notes panel (notes.ts) and the search pane (search.ts).
 
@@ -8,7 +9,7 @@ import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
 import { openPicker, togglePicker } from "./picker";
-import { usfm, nativeName } from "./booknames";
+import { usfm, nativeName, addressCode } from "./booknames";
 import { nativeRef, refPair } from "./refs";
 import { initHelps, prepareHelps, setBook, applyHelps } from "./helps";
 import { setTestament, currentLanguage, onLanguage, languageButtons } from "./study";
@@ -88,7 +89,7 @@ async function go (b: Book, c: number) {
   document.title = `${b.name} ${c} - COTEXT`;
   setBook (b);
   setTestament (b.testament);
-  setAudioTestament (b.testament);     // (Reading stops)
+  setAudioTestament (b.testament, b.code, c);     // (Reading stops)
   setGrammarTestament (b.testament);
   setChartPassage (words);     // (The Verb chart offers the chapter's verbs)
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
@@ -99,7 +100,7 @@ async function go (b: Book, c: number) {
   // Brenton's, by its own numbers - notes.ts)
   setNotesPassage (b, c);
   setSearchPassage (b);     // (After the notes: the search offers their sources for the testament)
-  const ref = `${b.code}.${c}`;
+  const ref = `${addressCode (b.code)}.${c}`;     // (The passage, not the text: #GEN.1 for the Hebrew's and the Septuagint's)
   history.replaceState (null, "", "#" + ref);
   try { localStorage.setItem (LAST, ref); } catch { /* private mode: not kept */ }
 }
@@ -114,12 +115,18 @@ async function goVerse (b: Book, c: number, v: number) {
   if (row) main.scrollTo ({ top: box (row).top - box (main).top + main.scrollTop - 6 });     // (CSS px, as scrollTop: zoom.ts)
 }
 
-/** "Gen.1" -> that book and chapter, if the book has it (a chapter within its count: one of Enoch's it lacks goes to
- *  its first - go). */
+/** "GEN.1" (an address: booknames.ts' addressCode, any case) -> that book and chapter, if the book has it (a chapter
+ *  within its count: one of Enoch's it lacks goes to its first - go). Of the books with that code, the text picked's
+ *  (HEBREW / GREEK: GEN the Hebrew's Genesis or the Septuagint's); a book only the other text has (DAN-OG, the Old
+ *  Greek's Daniel, while on HEBREW) in that text, the switch following it (go: setTestament). The chapter the same
+ *  number in either. */
 function parseRef (ref: string | null): [Book, number] | null {
-  const m = ref?.match (/^(\w+)\.(\d+)$/);
-  const b = m && books.find ((x) => x.code === m[1]);
-  return b && +m![2] >= 1 && +m![2] <= b.chapters ? [b, +m![2]] : null;
+  const m = ref?.match (/^([\w-]+)\.(\d+)$/);
+  if (! m) return null;
+  const code = m[1].toUpperCase (), list = shown ();
+  const all = books.filter ((x) => addressCode (x.code) === code);
+  const b = all.find ((x) => list.includes (x)) ?? all[0];
+  return b && +m[2] >= 1 && +m[2] <= b.chapters ? [b, +m[2]] : null;
 }
 
 /** A book's chapters: 1 to its last, but for Enoch's fragments only those it has (read once). */
@@ -225,7 +232,7 @@ start ();
 /** The service worker, and staying up to date: a Home Screen app has no reload, so a new version must arrive by itself.
     Each time the app opens or comes back to the front it asks for a new worker (registration.update); a new one takes
     over at once (sw.js: skipWaiting, clients.claim), and when it does the page reloads into the new version - once,
-    keeping its place (the chapter is in the address: #Gen.1). The first worker ever taking over doesn't reload. */
+    keeping its place (the chapter is in the address: #GEN.1). The first worker ever taking over doesn't reload. */
 function registerWorker() {
   if (! ("serviceWorker" in navigator)) return;
   const hadWorker = !! navigator.serviceWorker.controller;

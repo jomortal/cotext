@@ -280,8 +280,11 @@ export function sayText (text: string) {
 }
 
 /** The testament shown: voices and their language follow it (Hebrew for the OT, Greek for the NT and the
- *  Septuagint). Called on each chapter shown (reading stops). */
-export function setAudioTestament (t: Testament) {
+ *  Septuagint). Called on each chapter shown (reading stops), with its book's code (the database's: Gen, LXXGen - the
+ *  recordings' names) and chapter. */
+let passage: [string, number] | null = null;
+export function setAudioTestament (t: Testament, code: string, chapter: number) {
+  passage = [code, chapter];
   stopReading ();
   if (t !== testament) testament = t;
   showVoice ();
@@ -359,8 +362,8 @@ async function startRecording (from: HTMLElement, rows: HTMLElement[], restart: 
   if (! player) player = new Audio ();
   player.src = SILENCE;     // (iOS lets a page start sound only from a tap: silence played now, within it, lets this
   player.play ().catch (() => { /* element play the recording once it has loaded) */ });
-  const m = location.hash.match (/^#(\w+)\.(\d+)$/);     // (The chapter shown: main.ts keeps it in the address)
-  const v = version (), all = m ? (await bookTimings (`${v}/${m[1]}`))?.[m[2]] : undefined;
+  const m = passage;     // (The chapter shown: main.ts' go)
+  const v = version (), all = m ? (await bookTimings (`${v}/${m[0]}`))?.[m[1]] : undefined;
   if (id !== recSession) return;
   // The rows' verses, each its row: ▶ from the verse at the top of the view to the end.
   const byVerse = new Map (rows.map ((r) => [Number (r.dataset.verse), r] as const));
