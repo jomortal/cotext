@@ -77,7 +77,7 @@ The user often works from the iPad or iPhone via Remote Control; the Mac is the 
 - **Scope:** do only what's asked. Anything beyond the direct ask that takes more than about a minute is asked first, with an estimate in minutes.
 - **A change asked for is a change everywhere:** when the user points out something to change, it's changed everywhere the same kind of thing appears, in the same change - through that kind's one rule (below), never only on the screen shown. Every like case is checked before it's reported done.
 - **Checking:** the one check is that it works; ask before any thorough testing.
-- **Git:** commit each finished change with a short message; push only when asked. "Push to beta" means both: the beta published (`python3 serve.py --publish`) and the commits pushed to GitHub (`git push origin main`).
+- **Git:** commit each finished change with a short message; push only when asked. "Push to beta" means both: the beta published (`python3 serve.py --publish`) and the commits pushed to GitHub (`git push origin main`). The publish leaves out what `beta-exclude.txt` lists: resources (a note_sources id a line) and screens (`screen: NAME`: its ☰ button taken out, so the beta has no way in - Learn, the user's pick 2026-11-09).
 - **Old versions:** when something is replaced, delete the old version - try things out and move on.
 
 ## Rules for the page (public/style.css, src/*.ts)

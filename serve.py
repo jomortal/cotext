@@ -26,6 +26,23 @@ if sys.argv[1:] == ["--publish"]:     # (dist/ copied over beta/, replacing it w
     # of its SHA-256) written into the beta's app.js in place of dev's, so devices fetch the beta's own core.
     out = [ln.split("#")[0].strip() for ln in (HERE / "beta-exclude.txt").read_text().splitlines()]
     out = [x for x in out if x]
+    # The screens kept out of the beta ("screen: NAME" lines): their ☰ button (data-screen="NAME") taken from the beta's
+    # index.html - the only way in - and the beta's service worker given its own shell hash, so devices fetch that page.
+    screens = [x.split(":", 1)[1].strip() for x in out if x.startswith("screen:")]
+    out = [x for x in out if not x.startswith("screen:")]
+    if screens:
+        page = HERE / "beta" / "index.html"
+        html = page.read_text()
+        for name in screens:
+            html, n = re.subn(r'[ \t]*<button[^>]*data-screen="' + re.escape(name) + r'"[^>]*>.*?</button>\n?', "", html)
+            if n != 1:
+                sys.exit(f"beta: the ☰ button for {name} not found in index.html - not published right")
+        page.write_text(html)
+        sw = HERE / "beta" / "sw.js"
+        js, n = re.subn(r'"cotext-shell-([0-9a-f]+)"', lambda m: f'"cotext-shell-{m.group(1)}-{hashlib.sha256(html.encode()).hexdigest()[:8]}"', sw.read_text())
+        if n != 1:
+            sys.exit("beta: the shell's name not found in sw.js - not published right")
+        sw.write_text(js)
     core = HERE / "beta" / "data" / "db" / "core.db"
     if out:
         old_ver = hashlib.sha256(core.read_bytes()).hexdigest()[:12]
@@ -43,7 +60,7 @@ if sys.argv[1:] == ["--publish"]:     # (dist/ copied over beta/, replacing it w
         if n != 1:
             sys.exit("beta: core's version not found in app.js - not published right; run the publish again after a build")
         app.write_text(js)
-    print("COTEXT beta published from dist/" + (f" (without {', '.join(out)})" if out else ""))
+    print("COTEXT beta published from dist/" + (f" (without {', '.join(out + screens)})" if out or screens else ""))
     sys.exit()
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
 DIST = HERE / (sys.argv[2] if len(sys.argv) > 2 else "dist")     # (The folder served: dist/, or beta/ for the beta)

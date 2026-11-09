@@ -1,1 +1,3 @@
 # Resources kept out of the beta (serve.py --publish): a note_sources id a line. The user's picks, 2026-11-04.
+# Screens kept out of the beta: "screen: NAME", NAME its ☰ button's data-screen. The user's pick, 2026-11-09.
+screen: Learn
