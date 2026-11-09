@@ -181,6 +181,14 @@ To prepare first (trust as much as polish):
 
 ## Other open items
 
+- [ ] **One verse numbering for every main text** (further down the road, the user's plan 2026-11-09; no setting to
+      switch it back): every text on the main page in the normal (Hebrew and English) chapters and verses, the address
+      too (`#PSA.23` "The Lord is my shepherd" in every text). The Greek laid out in it by lxx_heb, verse by verse:
+      Jeremiah in the Hebrew order; Greek-only passages in place, marked "Only in the Greek text"; normal verses the
+      Greek lacks a short "Not in the Greek text"; the Greek's own number small beside the normal one (to confirm with
+      the user). Search, the notes pane, verse cards, printouts and reading plans by the normal numbers. HEBREW / GREEK
+      becomes a list of texts, so an English (or other) translation can be the main text later. About 1-2 hours.
+
 - [ ] **Manuscripts** (further down the list): a resources choice listing the manuscripts with the verse shown (oldest
       first, date, a page thumbnail), COTEXT's own viewer (zoom, drag, next / previous page, the verse marked where the
       transcription knows it), the images live from their holders (online only) - the Virtual Manuscript Room (INTF:
