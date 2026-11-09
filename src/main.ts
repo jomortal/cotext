@@ -152,10 +152,11 @@ function groups (): [string | Node[], Book[]][] {
 }
 
 // The Septuagint's books in the traditional English order (Genesis to Malachi, by the Hebrew book each matches;
-// Daniel's two Greek forms together) - only those the Hebrew Bible has: the Apocrypha and the other books it lacks
-// are left out (the user's choice), though their text stays in the database.
+// Daniel's two Greek forms together, Theodotion's - the default - before the Old Greek's: the later id first) - only
+// those the Hebrew Bible has: the Apocrypha and the other books it lacks are left out (the user's choice), though
+// their text stays in the database.
 function lxxBooks (): Book[] {
-  return books.filter ((b) => b.testament === "LXX" && b.heb).sort ((a, b) => a.heb - b.heb || a.id - b.id);
+  return books.filter ((b) => b.testament === "LXX" && b.heb).sort ((a, b) => a.heb - b.heb || b.id - a.id);
 }
 
 /** The chapter before (-1) or after (+1), across the books shown; nothing past the first or Revelation 22. */
