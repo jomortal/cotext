@@ -43,10 +43,12 @@ export function nativeName (code: string): [string, "he" | "gr"] | null {
 /** Each book's USFM code, three letters in capitals (GEN, 1SA, MRK) - the one abbreviation everywhere a book is
  *  shortened: the heading's place when the full name would wrap (main.ts), a reading plan's readings and the book
  *  pickers' short form. The Hebrew Bible's and the NT's codes are USFM's already (Gen, 1Sa, Mrk); the Septuagint's
- *  (LXX...) mapped to USFM's - its two texts of a book (Old Greek, Theodotion) both one code, marked OG / TH. */
+ *  (LXX...) mapped to USFM's. Its two texts of Daniel, Susanna and Bel: Theodotion's, the default (the one switching
+ *  from the Hebrew opens), the book's plain code (DAN, as the Hebrew's - the language isn't marked); the Old Greek's
+ *  marked OG (DAN OG). */
 export function usfm (code: string): string {
   const c = code.startsWith ("LXX") ? LXX_USFM[code.slice (3)] ?? code.slice (3) : code;
   return c.toUpperCase ();
 }
 const LXX_USFM: Record<string, string> = { "1Es": "1ES", Sol: "SNG", Sip: "SIR", Est: "ESG", Tbs: "TOB", Joe: "JOL", Nah: "NAM",
-  Epj: "LJE", Eze: "EZK", Dan: "DAG OG", Dat: "DAG TH", Sus: "SUS OG", Sut: "SUS TH", Bel: "BEL OG", Bet: "BEL TH", "1En": "ENO", Ode: "ODA" };
+  Epj: "LJE", Eze: "EZK", Dan: "DAN OG", Dat: "DAN", Sus: "SUS OG", Sut: "SUS", Bel: "BEL OG", Bet: "BEL", "1En": "ENO", Ode: "ODA" };
