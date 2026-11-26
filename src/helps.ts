@@ -9,7 +9,6 @@
 // - HIDE KNOWN WORDS off ignores those hand choices (kept, for turning back on); SHOW MY VOCAB (on at first) keeps every
 //   word in My vocab helped - its gloss and parsing - whatever the slider says.
 // - INTERLINEAR, PARSING and TRANSLITERATION show or hide that line under every word (transliteration off at first).
-// - QUICK INFO (off at first): a word's short info in a pop-up while the finger is on it (quickinfo.ts).
 // Settings and choices are kept on the device (localStorage).
 
 import { setIcon } from "./icons";
@@ -30,7 +29,6 @@ interface Settings {
   translit?: boolean;                   // TRANSLITERATION: each word in Latin letters under it, and in the word's panel (default off)
   verbColors?: boolean;
   showVocab?: boolean;                  // SHOW MY VOCAB: the words in My vocab always helped, over the slider (default on)                 // VERB COLORS: verbs' parsing colored by form (Hebrew) or tense (Greek) (default on)
-  quickInfo?: boolean;                  // QUICK INFO: a word's short info shown while it's touched (quickinfo.ts) (default off)
 }
 
 const s: Settings = { slider: 0, scope: "whole", mine: true, modes: {} };
@@ -162,8 +160,6 @@ export const SLIDER_STEPS = 50;
 export function freqWords (pos: number): number { return wordsAt (Math.min (pos, SLIDER_STEPS)); }
 export function freqSays (n: number): string { return n === 0 ? "Helps for every word" : `Helps hidden for the <b>${n.toLocaleString ()}</b> most common words`; }
 
-/** QUICK INFO on (quickinfo.ts). */
-export const quickInfoOn = () => s.quickInfo === true;
 /** Called when anything here changes (the panel relabels its button). */
 export function onHelpsChange (f: () => void) { listeners.push (f); }
 
@@ -205,7 +201,6 @@ export function applyHelps () {
   document.body.classList.toggle ("noParse", s.parse === false);
   document.body.classList.toggle ("showTranslit", s.translit === true);
   document.body.classList.toggle ("noVerbColors", s.verbColors === false);
-  document.body.classList.toggle ("quickInfo", s.quickInfo === true);
   updateMenu ();
 }
 
@@ -220,7 +215,7 @@ const optionsBtn = document.getElementById ("optionsBtn")!;
 const options = document.getElementById ("options")!;
 const glossBtn = document.getElementById ("showGloss")!, parseBtn = document.getElementById ("showParse")!;
 const translitBtn = document.getElementById ("showTranslit")!, colorsBtn = document.getElementById ("verbColors")!;
-const vocabBtn = document.getElementById ("showVocab")!, quickBtn = document.getElementById ("quickInfo")!;
+const vocabBtn = document.getElementById ("showVocab")!;
 const mineBtn = document.getElementById ("mine")!;
 const scopeBtn = document.getElementById ("scope")!;
 const slider = document.getElementById ("freq") as HTMLInputElement;
@@ -232,7 +227,6 @@ function updateMenu () {
   translitBtn.setAttribute ("aria-pressed", String (s.translit === true));
   colorsBtn.setAttribute ("aria-pressed", String (s.verbColors !== false));
   vocabBtn.setAttribute ("aria-pressed", String (s.showVocab !== false));
-  quickBtn.setAttribute ("aria-pressed", String (s.quickInfo === true));
   mineBtn.setAttribute ("aria-pressed", String (s.mine));
   const where = s.scope === "book" ? book.name : `whole ${book.testament}`;
   scopeBtn.textContent = `Frequency: ${where}`;
@@ -259,8 +253,6 @@ translitBtn.addEventListener ("click", () => { s.translit = s.translit !== true;
 // VERB COLORS: the verbs' parsing colored by form (Hebrew) or tense (Greek), or all plain (body.noVerbColors).
 colorsBtn.addEventListener ("click", () => { s.verbColors = s.verbColors === false; changed (); });
 vocabBtn.addEventListener ("click", () => { s.showVocab = s.showVocab === false; changed (); });
-// QUICK INFO: a word touched shows its short info until the finger lifts (quickinfo.ts; body.quickInfo: style.css).
-quickBtn.addEventListener ("click", () => { s.quickInfo = s.quickInfo !== true; changed (); });
 // ABOUT VERB COLORS: what each color means (reader.ts's verbForm groups, style.css's .vf- colors), Hebrew then Greek.
 document.getElementById ("aboutColors")!.addEventListener ("click", () => { optionsBtn.click (); openScreen ("About verb colors"); });
 const KEY_ROWS = (rows: [string, string, string][]) => `<div class="colorKey">${rows.map (([vf, name, what]) =>

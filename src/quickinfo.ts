@@ -1,4 +1,4 @@
-// QUICK INFO (the ⋯ menu; off at first, kept on the device: helps.ts): a word of the text touched - a finger, a pen or a
+// A word touched (how every word of the text answers a touch - once the ⋯ menu's QUICK INFO, made the only way): a word of the text touched - a finger, a pen or a
 // mouse - shows its info at once in the word's own panel, in its place, as a tap would (panel.ts' peek: #sheet for the
 // text read, #besideSheet for the notes' Hebrew OT), until the finger lifts. Lifted, the panel closes and whatever it
 // covered (the notes, the search) comes back, as the word tapped again does (layout.ts' reopenUnderWord) - or, where the
@@ -9,12 +9,10 @@
 // - moved past SLOP sooner: a scroll (or a swipe turning the chapter) - the panel closes as on lifting, and the text scrolls;
 // - held still till HOLD: the panel stays until the finger lifts, and the finger slid onto another word of the same
 //   text shows that word instead - the text doesn't scroll meanwhile (its touchmove's default prevented).
-// Off, nothing here acts: a tap opens the word's panel as before.
 
 import type { Db } from "./db";
 import { wordOf } from "./reader";
 import type { Peek } from "./panel";
-import { quickInfoOn } from "./helps";
 import { px } from "./zoom";
 
 const HOLD = 300;     // (ms: shorter a tap or a scroll, longer a look)
@@ -53,7 +51,7 @@ export function quickInfo (text: HTMLElement, db: Db, panel: Peek) {
   wired.add (text);
   text.addEventListener ("pointerdown", (e) => {
     const word = (e.target as Element).closest (".w");
-    if (! quickInfoOn () || ! e.isPrimary || e.button !== 0 || ! word || ! text.contains (word)) return;
+    if (! e.isPrimary || e.button !== 0 || ! word || ! text.contains (word)) return;
     end ("moved");
     const p = { id: e.pointerId, x: px (e.clientX), y: px (e.clientY), text, db, panel, prior: panel.shown (), word, held: false, timer: 0 };
     p.timer = window.setTimeout (() => { p.held = true; }, HOLD);
@@ -62,11 +60,11 @@ export function quickInfo (text: HTMLElement, db: Db, panel: Peek) {
   });
   // (Only a tap on the word already shown reaches the word's own click (reader.ts): any other press has shown its word
   // already, or closed it)
-  text.addEventListener ("click", (e) => { if (quickInfoOn () && ! letClick) e.stopPropagation (); }, { capture: true });
+  text.addEventListener ("click", (e) => { if (! letClick) e.stopPropagation (); }, { capture: true });
   // (A held finger slides from word to word: the text doesn't scroll under it, nor a long press select or call a menu)
   text.addEventListener ("touchmove", (e) => { if (press?.held) e.preventDefault (); }, { passive: false });
   text.addEventListener ("touchend", (e) => { if (afterHold) e.preventDefault (); }, { passive: false });     // (No swipe after a hold - bars.ts' onSwipe)
-  text.addEventListener ("contextmenu", (e) => { if (quickInfoOn ()) e.preventDefault (); });
+  text.addEventListener ("contextmenu", (e) => { e.preventDefault (); });
 }
 
 addEventListener ("pointermove", (e) => {

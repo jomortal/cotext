@@ -385,7 +385,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .sheet .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
 .sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: var(--x-room); }     /* (The word as written: its own row, clear of the ✕) */
 /* QUICK INFO on: a word held is a look - no text selected or menu called by a long press. */
-body.quickInfo .w { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.w { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .sheet .btns { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; justify-content: flex-end; }
 .sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 
