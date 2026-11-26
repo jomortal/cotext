@@ -2,7 +2,7 @@
 // ("Qal perfect, 3rd masculine singular" - each term a grammar explains tappable, its section opening below: grammar.ts)
 // and its entry in the brief lexicon (TBESH for Hebrew, TBESG for Greek -
 // STEPBible's, keyed by the same extended Strong's as the text). "+ My vocab" adds it to the words being learned (vocab.ts); "+ Known words" marks the word known
-// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ (or tapping the word again) hides it.
+// (helps.ts: its gloss hidden, every form of it, everywhere; ✓ In known words, tapped again, takes it off); the meaning to learn (the vocab gloss: a line under the dictionary form, over + My vocab, always shown); the entry as LEXICON picks it - the brief lexicon (at first) or a fuller lexicon's (Hebrew: Brown-Driver-Briggs, the UBS Dictionary of Biblical Hebrew, Jastrow, Klein; Greek: Abbott-Smith, Thayer, the Middle Liddell, Liddell-Scott-Jones, Dodson, the UBS Dictionary of the Greek New Testament - the UBS ones marking the sense used here); the word as written (shown even when it's the dictionary form itself; ✕ frozen at the panel's upper right while the rest scrolls), then its dictionary form (with + Known words), each with a speaker that says it (audio.ts) - a verb's with "Verb chart" beside it, opening the chart on that verb at its stem (chart.ts), then "Search", listing every verse of the word's testament with that root in the search pane (search.ts, its picker set to Root word), then "Dictionary" where the root has an article in the Tyndale Open Bible Dictionary - on the word itself or its subject (dictionary.ts: the article, or a choice of them, over the word's info as the Verb chart is; its scripture references going to the verse), then "Map" where the word names a place (atlas.ts: the place on a small map, over the word's info as the Verb chart is), then "Finds" where the word names a person or place an archaeology find bears (dictionary.ts: the find - its photo, facts and Wikipedia's lead - or a choice of them). ✕ hides it; tapping the word again hides it too, bringing back the resources or search it covered.
 // Two of them, each its own: #sheet for a word of the text read - and for a word on a verse card (without Search and
 // Dictionary: .onCard, the same panel at the same place, over the Verse cards screen - layout.ts, style.css) -, above
 // the notes panel, and a second (cloned from #sheet's markup, under the notes, above the search) for a word of the
@@ -13,7 +13,7 @@
 import { creditText } from "./credit";
 import { openNotesDb, type Db, type Row } from "./db";
 import { latin, translitOf, type Word } from "./reader";
-import { rightShare, wordSplit, splitNow, onSplit, addDock } from "./layout";
+import { rightShare, wordSplit, splitNow, onSplit, addDock, reopenUnderWord, forgetUnderWord } from "./layout";
 import { searchRoot } from "./search";
 import { onHelpsChange, knownWords, setKnown, unsetKnown } from "./helps";
 import { sayText, sayWord } from "./audio";
@@ -70,7 +70,8 @@ besideSheet.id = "besideSheet";
 document.getElementById ("besideSplit")!.after (besideSheet);     // (Under the notes, in their column)
 addDock (besideSheet);     // (One of the panels shown one at a time: layout.ts)
 
-/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it) and hide. */
+/** A word's panel on its root element (#sheet or its clone): show (a word tapped; the same word again hides it, the
+ *  resources or search it covered opened again - layout.ts' reopenUnderWord) and hide (its ✕: the text takes the screen). */
 function makePanel (sheet: HTMLElement) {
   const q = <T extends HTMLElement = HTMLElement> (c: string) => sheet.querySelector<T> ("." + c)!;
   const grammar = grammarIn (sheet);
@@ -131,7 +132,7 @@ function makePanel (sheet: HTMLElement) {
   let picked: HTMLElement | null = null;
   let pickedStrong = "";
 
-  q ("close").addEventListener ("click", hide);
+  q ("close").addEventListener ("click", () => { hide (); forgetUnderWord (); });     // (✕: closed for good, nothing reopened)
   // The panel's contents scroll inside it (.panelScroll), its ✕ row left outside, fixed in the corner (style.css).
   const sheetScroll = document.createElement ("div");
   sheetScroll.className = "panelScroll";
@@ -305,7 +306,7 @@ function makePanel (sheet: HTMLElement) {
   /** The word tapped shown - once its entries are read (another word tapped by then: left to that one). onCard: a verse
    *  card's word (no Search or Dictionary; .onCard sets the panel over the Verse cards screen - style.css). */
   async function show (db: Db, w: Word, wordEl: HTMLElement, onCard = false) {
-    if (picked === wordEl && ! sheet.hidden) { hide (); return; }
+    if (picked === wordEl && ! sheet.hidden) { hide (); reopenUnderWord (); return; }     // (Tapped again: back to the pane it covered)
     lean = onCard;
     picked?.classList.remove ("on");
     picked = wordEl;

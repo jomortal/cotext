@@ -203,8 +203,19 @@ const countDocks = () => {
   const closing = open.filter ((o) => ! opened.includes (o) && ! opened.some ((d) => together (d, o)));
   if (! pane && closing.filter ((o) => PANES.includes (o.id)).length === 2) paired = split !== "one";     // (A word closing both)
   else if (closing.length) paired = false;
+  // (A word's panel opening: the panes it closes kept, to come back when the word is tapped again - reopenUnderWord)
+  underWord = opened.some ((d) => WORDS.includes (d.id)) ? closing.filter ((o) => PANES.includes (o.id)).map ((o) => o.id) : [];
   for (const o of closing) o.querySelector<HTMLElement> (":scope > .xRow button, :scope > .top > #notesClose")?.click ();     // (The one open before closed by its own ✕ - unless the two share the place: SPLIT; the resources' ✕ on its picker's row, notes.ts)
 };
+// A word's panel opened over a pane (the notes, the search): the panes it closed. The same word tapped again (panel.ts)
+// closes its panel and opens them again, as they were; its ✕ closes it for good, the text taking the screen.
+const WORDS = ["sheet", "besideSheet"];
+let underWord: string[] = [];
+export const reopenUnderWord = () => {
+  const ids = underWord; underWord = [];
+  for (const id of ids) if (document.getElementById (id)!.hidden) document.getElementById (id + "Btn")!.click ();     // (By its own button, as if tapped)
+};
+export const forgetUnderWord = () => { underWord = []; };
 countDocks ();
 for (const d of docks) new MutationObserver (countDocks).observe (d, { attributes: true, attributeFilter: ["hidden"] });
 // That divider flicked down (sideways right) or past its smallest (20 % of the long side), the panel closes - every one
