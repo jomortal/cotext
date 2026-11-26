@@ -47,9 +47,8 @@ const keysOf = (grammar: string): Set<string> => mapped.get (grammar) ?? new Set
 /** Writes a spelled-out parsing into el: each comma's part its own unbreakable span (.seg: style.css), so the line wraps
  *  only after a comma or a +, or before a bracket ("Qal perfect, / 3rd masculine singular") - and the panel's
  *  two-column test (panel.ts) can measure the widest part. terms: the stretches [start, end, make] made by make (a
- *  grammar's tappable term: showParsing) - inside a term too, a term across a break a piece on each side; none, plain
- *  (QUICK INFO's pop-up: quickinfo.ts). */
-export function spelledInto (el: HTMLElement, spelled: string, terms: [number, number, (piece: string) => Node][] = []) {
+ *  grammar's tappable term: showParsing) - inside a term too, a term across a break a piece on each side. */
+function spelledInto (el: HTMLElement, spelled: string, terms: [number, number, (piece: string) => Node][]) {
   el.textContent = "";
   let seg = document.createElement ("span");
   seg.className = "seg";

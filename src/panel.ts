@@ -63,28 +63,6 @@ for (const l of ["H", "G"] as const) try { lexChoice[l] = localStorage.getItem (
 let mainDb: Db | null = null;
 const lexDbs: Record<string, Promise<Db>> = {};     // (Each lexicon's file, once opened)
 
-/** What the head of a word's panel shows from the database: its root's lexicon row (lemma, translit, gloss, entry,
- *  concise) and its parsing's (spelled, terms) - each undefined where the database has none. */
-export interface Head { lex: Row | undefined; parsing: Row | undefined; }
-export const readHead = (db: Db, w: Word): Promise<Head> => Promise.all ([
-  db.all ("SELECT lemma, translit, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]),
-  db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph])]).then (([[lex], [parsing]]) => ({ lex, parsing }));
-/** The head's short info, the one way it's written - the word's panel's and QUICK INFO's pop-up's (quickinfo.ts): the word
- *  as written (its Hebrew or Greek direction), in Latin letters (shown with TRANSLITERATION), its English as the
- *  interlinear gives it here, its parsing spelled out (by parsingInto: the panel's grammar.showParsing, its terms
- *  tappable; the pop-up's plain spelledInto) and the meaning to learn (the vocab gloss: build_db.py's concise()). */
-export interface HeadParts { form: HTMLElement; formTranslit: HTMLElement; formGloss: HTMLElement; full: HTMLElement; vocabGloss: HTMLElement; }
-export function fillHead (p: HeadParts, w: Word, { lex, parsing }: Head,
-                          parsingInto: (el: HTMLElement, spelled: string, terms: string | null, hebrew: boolean) => void) {
-  const hebrew = w.strong.startsWith ("H");
-  p.form.textContent = w.text;
-  p.form.dir = hebrew ? "rtl" : "ltr";
-  p.formTranslit.textContent = translitOf (w);
-  p.formGloss.textContent = w.gloss ?? "";
-  parsingInto (p.full, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);
-  p.vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
-}
-
 // The second panel: #sheet's markup as the page has it (before makePanel below changes it), under the notes panel.
 const textSheet = document.getElementById ("sheet")!;
 const besideSheet = textSheet.cloneNode (true) as HTMLElement;
@@ -338,11 +316,12 @@ function makePanel (sheet: HTMLElement) {
     const tables = hebrew ? ["SELECT 'bdb' AS lexicon, entries FROM bdb WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?",
                               "SELECT lexicon, entries FROM sefaria_lex WHERE strong = ?"]
                            : ["SELECT lexicon, entries FROM greek_lex WHERE strong = ?", "SELECT lexicon, entries FROM ubs_lex WHERE strong = ?"];
-    const [head, ...extras] = await Promise.all ([
-      readHead (db, w),
+    const [[lex], [parsing], ...extras] = await Promise.all ([
+      db.all ("SELECT lemma, translit, gloss, entry, concise FROM lexicon WHERE strong = ?", [w.strong]),
+      db.all ("SELECT spelled, terms FROM parsings WHERE morph = ?", [w.morph]),
       ...tables.map ((q) => db.all (q, [w.strong]).catch (() => []))]);     // (A database built without a lexicon's tables: that lexicon not offered)
     if (picked !== wordEl) return;
-    const extraRows = extras.flat (), lex = head.lex;
+    const extraRows = extras.flat ();
     pickedStrong = w.strong;
     label ();
     setVocabWord (w.strong);
@@ -379,7 +358,12 @@ function makePanel (sheet: HTMLElement) {
     // (The word's testament by its book: 1-39 the Hebrew OT, 40-66 the NT, 67 on the Septuagint - build_db.py)
     searchFor = [w.strong, lemmaEl.textContent ?? ""];
     lemmaEl.dir = hebrew ? "rtl" : "ltr";
-    fillHead ({ form: formEl, formTranslit, formGloss, full: fullEl, vocabGloss }, w, head, grammar.showParsing);     // (Its parsing's terms tappable: grammar.ts)
+    formEl.textContent = w.text;
+    formEl.dir = lemmaEl.dir;
+    formTranslit.textContent = translitOf (w);
+    formGloss.textContent = w.gloss ?? "";
+    grammar.showParsing (fullEl, String (parsing?.spelled ?? ""), parsing?.terms as string | null, hebrew);     // (Its terms tappable: grammar.ts)
+    vocabGloss.textContent = String (lex?.concise || lex?.gloss || "");
     rootTranslit.textContent = lex ? latin (hebrew, String (lex.lemma ?? ""), lex.translit as string | null) : translitOf (w);
     entry = { full: String (lex?.entry || lex?.gloss || ""),
               extra, hebrew, place: [w.book, w.chapter, w.verse, w.word] };     // (Where the word stands: the reader's text, or one beside it in the notes)
@@ -404,7 +388,14 @@ function makePanel (sheet: HTMLElement) {
     picked = null;
   }
 
-  return { show, hide, onCard: () => lean && ! sheet.hidden };
+  /** QUICK INFO's hold (quickinfo.ts): show (a word while touched), shown (the word the panel shows now, or null) and
+   *  close (the finger lifted: closed, the resources or search it covered opened again - as the word tapped again does;
+   *  still loading, nothing was covered: only forgotten). */
+  const peek = { show: (db: Db, w: Word, wordEl: HTMLElement) => { if (picked !== wordEl || sheet.hidden) show (db, w, wordEl); },     // (Never the tapped-again toggle)
+                 shown: () => sheet.hidden ? null : picked,
+                 close: () => { const was = ! sheet.hidden; hide (); if (was) reopenUnderWord (); } };
+
+  return { show, hide, onCard: () => lean && ! sheet.hidden, peek };
 }
 const progress: ((id: string, p: number) => void)[] = [];     // (Every panel's: a lexicon file's loading progress)
 
@@ -413,6 +404,9 @@ const textPanel = makePanel (textSheet), besidePanel = makePanel (besideSheet);
 export const showPanel = textPanel.show, hidePanel = textPanel.hide;
 /** A word of the notes panel's Hebrew OT tapped (interlinear.ts): the second panel, under the notes. */
 export const showBesidePanel = besidePanel.show, hideBesidePanel = besidePanel.hide;
+/** QUICK INFO's hold on a word of the text read (main.ts) and of the notes' Hebrew OT (interlinear.ts): its panel's peek. */
+export type Peek = typeof textPanel.peek;
+export const peekPanel = textPanel.peek, peekBesidePanel = besidePanel.peek;
 /** A word of a verse card's text tapped (versecards.ts): the first panel, at its place, over the Verse cards screen. */
 export const showCardPanel = (db: Db, w: Word, wordEl: HTMLElement) => textPanel.show (db, w, wordEl, true);
 /** The first panel closed if it shows a verse card's word (the card changed, the screen left). */
