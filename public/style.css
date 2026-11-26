@@ -641,7 +641,7 @@ table.chart .guess { opacity: .45; }     /* (A form not in the text, filled in b
 .chooseItem, .hit, .atlasName { font: inherit; text-align: start; border: 0; background: transparent; cursor: pointer; }
 .chooseItem { font-size: var(--fs-s); padding: 9px 10px; border-top: var(--hair); color: var(--fg); }
 .chooseItem:first-child { border-top: 0; }
-.chooseItem[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
+.chooseItem[aria-pressed="true"], .hit[aria-pressed="true"] { color: var(--accent); font-weight: 600; }     /* (A note open in My notes: its row) */
 /* The Pronunciation guide (pronounce.ts): a row a letter - the letter, its name and sound, its speaker. */
 .sayRow { grid-template-columns: 3.2em minmax(0, 1fr) auto; align-items: center; }     /* (A list's row: .guideRow's rule) */
 .sayRow .sayLetter { font-size: var(--fs-2xl); }
@@ -1000,6 +1000,8 @@ body:has(#sheet.onCard:not([hidden])) #screen:has(.bottomBar) { bottom: calc(var
 .planEdit { container-type: inline-size; } .planEditCols { display: grid; gap: var(--gap-wide); } .planEditCol, .planEditLines { display: grid; gap: var(--gap-s); align-content: start; min-width: 0; } .planEditLine { min-height: 2em; } .planEditHead { display: flex; align-items: center; justify-content: space-between; } .planEditHead > .pill { margin-left: auto; }     /* (EDIT: a column a block - "Column N" and DELETE COLUMN over its lines, "Day N" over each reading's fields, and + Add reading) */
 .planTabs { margin-bottom: var(--gap-wide); } .planEditCol.planOff, .planEditHead > .src { display: none; }     /* (EDIT narrow: a tab a column - the picked one's block shown, its tab naming it -, + Add column after them) */
 @container (min-width: 560px) { .planEditCols { grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); } .planEditCol.planOff { display: grid; } .planEditHead > .src { display: block; } .planTab { display: none; } }     /* (EDIT wide enough - the panel's own width -: no tabs, its columns side by side, as many as fit a row) */
+/* My notes (mynotes.ts): the note box over its SAVE, + NEW NOTE and DELETE, then SAVED NOTES - its rows plain buttons (.hit). */
+.myNoteBox { min-height: 8em; } .myNoteBar { margin-bottom: var(--gap-wide); }
 .planPane > .field { margin-bottom: var(--gap); }     /* (PLAN over the calendar, with more than one plan) */
 .planMonth { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
 .planWeek { display: none; }

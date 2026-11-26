@@ -39,6 +39,8 @@
 //   each new chapter's as the text changes.
 // - The reading plan (READING: readingplan.ts' planPane, the ☰ Reading plan's days, read-only) is offered in every
 //   book, not following the text: on the calendar today's month, else its days' list; a reading tapped going to its passage.
+// - My notes (NOTES: mynotes.ts' notesPane) - the reader's own notes, written, saved and opened again - is offered in
+//   every book and tied to no passage: the same notes and what's typed whatever the text shows.
 
 import { openNotesDb, type Db } from "./db";
 import type { Book } from "./reader";
@@ -49,10 +51,11 @@ import { passageArticles, entry, bookArticles, verseLinks, markVerse } from "./d
 import { passageMap } from "./atlas";
 import { timelinePane } from "./timeline";
 import { planPane, planToToday } from "./readingplan";
+import { notesPane } from "./mynotes";
 import { setIcon } from "./icons";
 import { creditText } from "./credit";
 
-export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas" | "timeline" | "readingplan"; name: string; testaments: string; credit: string;
+export interface Source { id: string; kind: "original" | "commentary" | "dictionary" | "apparatus" | "translation" | "version" | "syntax" | "atlas" | "timeline" | "readingplan" | "mynotes"; name: string; testaments: string; credit: string;
                    file: string; version: string; books?: string; }     // (books: the book ids it has notes for, space-separated - pipeline/source_books.py; '' or none: every book of its testaments)
 
 //==== BESIDE THE SEPTUAGINT ====
@@ -99,6 +102,8 @@ let loading = 0;                                   // (A load's number: a later 
 let shownVerse = "";      // The verses shown ("1,2,3"): redrawn only when they change
 /** The reading plan (readingplan.ts): no file, every book's - after the database's sources, so never the first offered. */
 const READING_PLAN: Source = { id: "readingplan", kind: "readingplan", name: "Reading plan", testaments: "OT NT LXX", file: "", version: "", credit: "" };
+/** My notes (mynotes.ts): no file, every book's, after the reading plan. */
+const MY_NOTES: Source = { id: "mynotes", kind: "mynotes", name: "My notes", testaments: "OT NT LXX", file: "", version: "", credit: "" };
 let shownIds: string | null = null;               // The notes drawn (their ids; null: none yet): redrawn only when they change
 let blocks: [number, HTMLElement][] = [];          // Each verse shown and where its notes start in the panel (TWO-WAY SCROLLING)
 
@@ -114,13 +119,13 @@ export async function initNotes (db: Db) {
 
 /** The chapter shown (main.ts): the picker's sources follow its book (those with notes for it); the notes its verses.
  *  The source picked stays picked wherever it has notes; in a book it has none for, the first offered shows meanwhile,
- *  and the picked one comes back in the next book it covers. The timeline or the reading plan picked stays picked in
- *  the other testaments too. */
+ *  and the picked one comes back in the next book it covers. The timeline, the reading plan or My notes picked stays
+ *  picked in the other testaments too. */
 export function setNotesPassage (b: Book, c: number) {
-  const was = book?.id, everywhere = ["timeline", "readingplan"].includes (current ()?.kind ?? "") ? current ()!.id : "";
+  const was = book?.id, everywhere = ["timeline", "readingplan", "mynotes"].includes (current ()?.kind ?? "") ? current ()!.id : "";
   book = b; chapter = c;
   heb = hebrewOf (b);
-  if (everywhere && picked[scope ()] !== everywhere) {     // (The timeline and the reading plan, covering every book, stay picked into another testament - the timeline following the text, the plan's readings tapped)
+  if (everywhere && picked[scope ()] !== everywhere) {     // (The timeline, the reading plan and My notes, covering every book, stay picked into another testament - the timeline following the text, the plan's readings tapped)
     picked[scope ()] = everywhere;
     try { localStorage.setItem (KEY, JSON.stringify (picked)); } catch { /* private mode: not kept */ }
   }
@@ -135,7 +140,7 @@ export function setNotesPassage (b: Book, c: number) {
 
 /** Sources as a picker's choices (the notes' picker, the search's resources - search.ts): grouped by kind (optgroups;
  *  the dictionaries, the atlas and the timeline together as BIBLE BACKGROUND, the apparatus and the ancient versions as TEXTUAL
- *  STUDIES), in the user's order (the timeline right after the atlas; the reading plan last, READING), each by its name; a group with none left out. */
+ *  STUDIES), in the user's order (the timeline right after the atlas; then the reading plan, READING, and My notes, NOTES, last), each by its name; a group with none left out. */
 export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
   const group = (kinds: string, label: string) => {
     const g = document.createElement ("optgroup");
@@ -148,7 +153,7 @@ export function sourceGroups (list: Source[]): HTMLOptGroupElement[] {
   };
   return [...group ("original", "Original text"), ...group ("syntax", "Syntax"), ...group ("dictionary atlas timeline", "Bible Background"),
           ...group ("apparatus version", "Textual Studies"), ...group ("commentary", "Commentaries"), ...group ("translation", "Translations"),
-          ...group ("readingplan", "Reading")];
+          ...group ("readingplan", "Reading"), ...group ("mynotes", "Notes")];
 }
 
 /** The sources the search pane searches (search.ts): those for the whole Bible read - the Old Testament as picked
@@ -184,7 +189,7 @@ function offeredFor (b: Book): Source[] {
   return h ? [HEBREW_OT, ...sources.filter ((s) => (offers (s, "OT") && ! NOT_BESIDE_LXX.has (s.id) && covers (s, h)) || (offers (s, "LXX") && covers (s, b)))]
     : sources.filter ((s) => offers (s, b.testament) && covers (s, b));
 }
-const mine = () => book ? [...offeredFor (book), READING_PLAN] : [];     // (The reading plan the pane's alone: not the printout's - sourcesFor)
+const mine = () => book ? [...offeredFor (book), READING_PLAN, MY_NOTES] : [];     // (The reading plan and My notes the pane's alone: not the printout's - sourcesFor)
 const current = () => mine ().find ((s) => s.id === picked[scope ()]) ?? mine ()[0];
 
 pick.addEventListener ("change", () => {
@@ -235,7 +240,7 @@ function withAdd (el: HTMLElement, src: string, id: string, title: string): HTML
 async function show () {
   const src = current ();
   if (! book || ! src) return;
-  document.getElementById ("notesAdd")!.hidden = src.kind === "dictionary" || src.kind === "readingplan";     // (A dictionary's + by each entry instead; the reading plan none)
+  document.getElementById ("notesAdd")!.hidden = src.kind === "dictionary" || src.kind === "readingplan" || src.kind === "mynotes";     // (A dictionary's + by each entry instead; the reading plan and My notes none)
   creditText (creditEl, src.credit);
   const n = ++loading;     // (A file still arriving for a source picked before: not shown)
   if (src.file && ! ownFile (src) && open?.id !== src.id) {     // (The Hebrew OT has no file: it's the main database's)
@@ -278,6 +283,7 @@ async function drawNotes () {
   bookShown = "";     // (Anything else drawn: the book's list gone)
   if (src.kind === "timeline") { drawTimeline (b); return; }
   if (src.kind === "readingplan") { drawPlan (); return; }
+  if (src.kind === "mynotes") { drawMyNotes (); return; }
   const vs = versesNow ();
   const key = vs.join (",");
   if (key === shownVerse) return;     // (The same chapter: following meanwhile, follow's frame, below)
@@ -654,6 +660,19 @@ function drawPlan () {
   const el = planPane (fresh);
   if (fresh) { bodyEl.replaceChildren (el); planToToday (); }
   else notesScroll.scrollTop = top;     // (Drawn again in place - a reading tapped: kept where it was read - Safari would put it back at the top)
+}
+
+/** My notes (mynotes.ts' notesPane): the one pane, kept: put back as it was when the text moves on, what's typed kept. */
+function drawMyNotes () {
+  if (shownIds === "mynotes") return;
+  shownIds = "mynotes"; shownVerse = "";
+  ++updating;
+  oneWayFrom ("");
+  blocks = []; forget ();
+  refEl.textContent = "";
+  bodyEl.classList.remove ("gBody");
+  clearInterlinear ();
+  bodyEl.replaceChildren (notesPane ());
 }
 
 /** Under 700 px wide, the timeline as tall as the panel's room under its top (its canvas takes every drag, so the panel
