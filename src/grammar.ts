@@ -44,6 +44,25 @@ function current (lang: Lang): string {
 
 const keysOf = (grammar: string): Set<string> => mapped.get (grammar) ?? new Set ();
 
+/** Writes a spelled-out parsing into el: each comma's part its own unbreakable span (.seg: style.css), so the line wraps
+ *  only after a comma or a +, or before a bracket ("Qal perfect, / 3rd masculine singular") - and the panel's
+ *  two-column test (panel.ts) can measure the widest part. terms: the stretches [start, end, make] made by make (a
+ *  grammar's tappable term: showParsing) - inside a term too, a term across a break a piece on each side; none, plain
+ *  (QUICK INFO's pop-up: quickinfo.ts). */
+export function spelledInto (el: HTMLElement, spelled: string, terms: [number, number, (piece: string) => Node][] = []) {
+  el.textContent = "";
+  let seg = document.createElement ("span");
+  seg.className = "seg";
+  el.append (seg);
+  const text = (t: string, term?: (piece: string) => Node) => t.split (/(?<=,) | (?=\()|(?<= \+) /).forEach ((piece, i) => {
+    if (i) { el.append (" "); seg = document.createElement ("span"); seg.className = "seg"; el.append (seg); }
+    seg.append (term ? term (piece) : piece);
+  });
+  let at = 0;
+  for (const [a, b, make] of terms) { text (spelled.slice (at, a)); text (spelled.slice (a, b), make); at = b; }
+  text (spelled.slice (at));
+}
+
 /** A word's panel's grammar (sheet: the panel's root; its elements found by class within it): showParsing writes the
  *  parsing's terms in, a term tapped opens its section over the word's info; hideGrammar closes it. */
 export function grammarIn (sheet: HTMLElement) {
@@ -84,40 +103,28 @@ export function grammarIn (sheet: HTMLElement) {
   }
   const showPick = () => { pick.closest ("label")!.hidden = pick.options.length < 2; };     // (One grammar for the language: nothing to pick)
 
-  /** Writes the spelled-out parsing into `el`, each term the chosen grammar explains a tappable span. `terms`: the
+  /** Writes the spelled-out parsing into `el` (spelledInto), each term the chosen grammar explains a tappable span. `terms`: the
    *  parsing's JSON [[start, end, key], ...]. Any section open from the word before is closed. */
   function showParsing (el: HTMLElement, spelled: string, terms: string | null, hebrew: boolean) {
     shown = [el, spelled, terms, hebrew];
     hideGrammar ();
-    el.textContent = "";
     if (lang !== (hebrew ? "H" : "G")) setLang (hebrew ? "H" : "G");
     const g = current (lang);
     const keys = keysOf (g);
-    // Each comma's part its own unbreakable span (.seg: style.css), so the line wraps only after a comma or before a bracket ("Qal perfect, /
-    // 3rd masculine singular") - and the panel's two-column test (panel.ts) can measure the widest part.
-    let seg = document.createElement ("span");
-    seg.className = "seg";
-    el.append (seg);
-    // (After a comma or a +, or before a bracket: "Hiphil wayyiqtol / (sequential imperfect),") - inside a term too: a term
-    // across a break is a span on each side, each opening its section)
-    const text = (t: string, term?: (piece: string) => Node) => t.split (/(?<=,) | (?=\()|(?<= \+) /).forEach ((piece, i) => {
-      if (i) { el.append (" "); seg = document.createElement ("span"); seg.className = "seg"; el.append (seg); }
-      seg.append (term ? term (piece) : piece);
-    });
+    const tapped: [number, number, (piece: string) => Node][] = [];
     let at = 0;
     for (const [a, b, key] of JSON.parse (terms || "[]") as [number, number, string][]) {
       if (! keys.has (key) || a < at) continue;
-      text (spelled.slice (at, a));
-      text (spelled.slice (a, b), piece => {
+      tapped.push ([a, b, piece => {
         const s = document.createElement ("span");
         s.className = "term";
         s.dataset.key = key;
         s.textContent = piece;
         s.addEventListener ("click", () => openSection (g, key, s));
-        return s; });
+        return s; }]);
       at = b;
     }
-    text (spelled.slice (at));
+    spelledInto (el, spelled, tapped);
   }
 
   /** The key's sections in the grammar, over the word's info: the first section's heading as the title, the § numbers

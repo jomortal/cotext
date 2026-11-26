@@ -12,6 +12,7 @@ import type { Db } from "./db";
 import { showChapter, verseWords, type Book } from "./reader";
 import { helpsBeside } from "./helps";
 import { showBesidePanel, hideBesidePanel } from "./panel";
+import { quickInfo } from "./quickinfo";
 
 /** Draws book's verses (refs: [chapter, verse], in order) into el as the interlinear (once they're read: still(), false
  *  when they're no longer wanted by then, draws nothing). */
@@ -20,6 +21,7 @@ export async function drawInterlinear (el: HTMLElement, db: Db, book: Book, refs
   if (! still ()) return;
   hideBesidePanel ();     // (A word of the verses drawn before: gone)
   showChapter (el, book, refs[0]?.[0] ?? 1, words, (w, wordEl) => showBesidePanel (db, w, wordEl));
+  quickInfo (el, db);     // (QUICK INFO, as in the text read)
   helpsBeside (el, book);
 }
 

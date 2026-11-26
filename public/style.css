@@ -142,8 +142,8 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .head { position: relative; }
 /* The ⋯ menu: an overlay under the heading, over the text - opening it never moves the words; at most what's left of
    the screen, scrolling. */
-/* An overlay (the ⋯ menu, a picker's list): over the page, its shadow under it, scrolling on its own. */
-#options, .chooseList, .csMenu { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
+/* An overlay (the ⋯ menu, a picker's list, QUICK INFO's pop-up): over the page, its shadow under it, scrolling on its own. */
+#options, .chooseList, .csMenu, .quickPop { background: var(--bg); box-shadow: var(--shadow); overflow-y: auto; overscroll-behavior: contain; }
 #options { position: absolute; top: 100%; left: 0; right: 0; z-index: 6; box-sizing: border-box;
            border-bottom: var(--rule); max-height: calc(var(--winH, 100dvh) - 100%);
            padding: var(--pad) var(--col-r) var(--pad) var(--col-l); }
@@ -214,7 +214,7 @@ p { margin: 0; color: var(--soft); font-size: var(--fs-s); line-height: var(--lh
 .translit { display: none; font-size: var(--fs-xs); font-style: italic; color: var(--soft); direction: ltr; text-align: center; }
 /* The ⋯ menu's INTERLINEAR, PARSING and TRANSLITERATION (helps.ts): each word's lines shown or not. */
 body.showTranslit .w .translit { display: block; }
-body.showTranslit .sheet .formTranslit { display: block; grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); text-align: start; }     /* (The word's panel: under the word as written and under its root, over their English) */
+body.showTranslit :is(.sheet, .quickPop) .formTranslit { display: block; grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); text-align: start; }     /* (The word's panel: under the word as written and under its root, over their English) */
 body.noGloss :is(.w, .vnum) .gloss, body.noParse .w .parse { display: none; }
 .parse { font-size: var(--fs-xs); font-weight: 600; letter-spacing: .02em; direction: ltr; font-variant-numeric: tabular-nums; }
 /* Helps hidden (helps.ts: the slider or "+ Known words"). */
@@ -260,7 +260,7 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 .vnum.playing { color: var(--accent); }
 #voicePick, .choose { font: inherit; font-size: var(--fs-s); padding: 4px; background: var(--bg); color: var(--fg); max-width: 100%; }
 /* A box (a picker, its list, the printout's preview and options): a kept line round it, rounded. */
-#voicePick, .choose, .chooseList, .csMenu { border: var(--rule); border-radius: var(--radius); }
+#voicePick, .choose, .chooseList, .csMenu, .quickPop { border: var(--rule); border-radius: var(--radius); }
 #audioSettings { flex: 1 1 100%; }
 
 /* The panes (.pane: the notes panel, notes.ts, and the search pane, search.ts - built alike, layout.ts' paneFrame):
@@ -307,9 +307,9 @@ body:has(.dock:not([hidden]), #picker:not([hidden])) #playBar { border-top: var(
 }
 .gInline .top, .gInline .field { padding-right: var(--x-room); }     /* (GRAMMAR above the section's heading: both clear of the ✕) */
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-m); }
-.sheet .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
-.sheet .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
-.sheet .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; line-height: var(--lh); }     /* (Room between its lines when it wraps) */
+:is(.sheet, .quickPop) .lemma { font-family: var(--grk); font-size: var(--word-gr); }     /* (The word and its dictionary form: as big as the text's words) */
+:is(.sheet, .quickPop) .lemma[dir="rtl"] { font-family: var(--heb); font-size: var(--word-he); }
+:is(.sheet, .quickPop) .full { font-weight: 600; font-size: var(--fs-m); margin-top: 4px; line-height: var(--lh); }     /* (Room between its lines when it wraps) */
 .src { margin-top: 12px; }     /* (A caption: .ref's rule) */
 .sheet .def { font-size: var(--fs-m); line-height: var(--lh); margin-top: 4px; font-family: var(--ui); }
 .sheet .def b { font-family: var(--grk); }
@@ -376,14 +376,21 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 
 /* The word's panel, its head as two rows lined up: the word as written (✕ over its right, .xRow), then its root
    (dictionary form) with + Known words - each with its speaker; the buttons in a column at the right. */
-.sheet .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
+:is(.sheet, .quickPop) .heads { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
 .sheet .heads > .pill { justify-self: end; }
 .sheet .heads > .btns { grid-column: 1 / -1; justify-self: stretch; justify-content: flex-start; contain: inline-size; }     /* (+ My vocab and + Known words: a line under the root word) */
-.sheet .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
-.sheet .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
+:is(.sheet, .quickPop) .formGloss { grid-column: 1 / -1; margin-top: -6px; font-size: var(--fs-s); color: var(--soft); }     /* (The interlinear's English, a line under the word as written, its parsing under that: panel.ts) */
+:is(.sheet, .quickPop) .heads > .full { grid-column: 1 / -1; margin: -4px 0 4px; }
 .full .seg { white-space: nowrap; }     /* (The spelled-out parsing wraps only after a comma: grammar.ts) */
-.sheet .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
+:is(.sheet, .quickPop) .heads > .vocabGloss { grid-column: 1 / -1; font-size: var(--fs-m); }     /* (The meaning to learn, a line under the root word, over + My vocab: panel.ts) */
 .sheet .heads > .root:first-child { grid-column: 1 / -1; padding-right: var(--x-room); }     /* (The word as written: its own row, clear of the ✕) */
+/* QUICK INFO's pop-up (.quickPop, quickinfo.ts): the word's panel's head (above) in an overlay's box, beside the word touched -
+   placed by quickinfo.ts, never over the word; every touch through it, to the words under it. */
+.quickPop { position: fixed; z-index: var(--z-menu); box-sizing: border-box; padding: var(--gap) var(--margin);
+             max-width: min(22em, calc(var(--winW, 100vw) - 2 * var(--margin))); pointer-events: none; }
+.quickPop .heads > * { grid-column: 1 / -1; }     /* (Each piece a line: no buttons beside them, as in the panel) */
+/* QUICK INFO on: a word held is a look - no text selected or menu called by a long press. */
+body.quickInfo .w { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .sheet .btns { display: flex; gap: var(--gap) var(--gap-l); flex-wrap: wrap; justify-content: flex-end; }
 .sheet .pill { white-space: nowrap; }     /* (A button's name on one line: the root's Verb chart, the buttons beside it stacking when the row is narrow) */
 

@@ -8,6 +8,7 @@ import "./icons";     // (First: the page's own icon buttons drawn before any mo
 import { openDb, type Db, type Row } from "./db";
 import { chapterWords, showChapter, type Book } from "./reader";
 import { showPanel, hidePanel } from "./panel";
+import { quickInfo } from "./quickinfo";
 import { openPicker, togglePicker } from "./picker";
 import { usfm, nativeName, addressCode } from "./booknames";
 import { nativeRef, refPair } from "./refs";
@@ -93,6 +94,7 @@ async function go (b: Book, c: number) {
   setGrammarTestament (b.testament);
   setChartPassage (words);     // (The Verb chart offers the chapter's verbs)
   showChapter (chapterEl, b, c, words, (w, el) => showPanel (db, w, el));
+  quickInfo (chapterEl, db);     // (QUICK INFO: a word's short info while touched - once for the chapter's element)
   applyHelps ();
   document.querySelector ("main")!.scrollTo (0, 0);     // (main scrolls, not the page: style.css)
   // (After the scroll to the top: the notes panel shows the first verse. An LXX book with a Hebrew counterpart has the

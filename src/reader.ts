@@ -46,6 +46,10 @@ export async function verseWords (db: Db, book: number, chapter: number, verse: 
   return await db.all (`${WORDS} WHERE w.book = ? AND w.chapter = ? AND w.verse = ? ORDER BY w.word`, [book, chapter, verse]) as unknown as Word[];
 }
 
+const drawnWords = new WeakMap<Element, Word> ();
+/** The word a drawn word's element shows (showChapter's): QUICK INFO finds the word under the finger by it. */
+export const wordOf = (el: Element) => drawnWords.get (el);
+
 /** Draws the chapter (or any run of verses: interlinear.ts) into el; onTap gets the tapped word and its element. */
 export function showChapter (el: HTMLElement, book: Book, chapter: number, words: Word[],
                              onTap: (w: Word, wordEl: HTMLElement) => void) {
@@ -77,6 +81,7 @@ export function showChapter (el: HTMLElement, book: Book, chapter: number, words
     wordEl.append (span ("orig", w.text), span ("translit", translitOf (w)),
                    span ("gloss", w.gloss), span ("parse", w.code ?? ""));
     wordEl.addEventListener ("click", () => onTap (w, wordEl));
+    drawnWords.set (wordEl, w);
     verseEl!.append (wordEl);
   }
 }

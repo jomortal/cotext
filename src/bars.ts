@@ -13,7 +13,8 @@ export const barRoom = (bar: HTMLElement | null) => ! bar || SIDE_BAR.matches ? 
 
 /** A swipe across el steps as the bars' ‹ and › do: step (1) to the left (the next), step (-1) to the right (the
  *  previous) - one finger, at least 60 px across, more than twice as far across as down (not a scroll), within 0.8 s,
- *  nothing selected; with starts, only one begun on an element it accepts. */
+ *  nothing selected, no other handler taking the touch (its touchend's default prevented: a QUICK INFO hold,
+ *  quickinfo.ts); with starts, only one begun on an element it accepts. */
 export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void, starts?: (t: Element) => boolean) {
   let from: { x: number; y: number; t: number } | null = null;
   el.addEventListener ("touchstart", (e) => {
@@ -23,7 +24,7 @@ export function onSwipe (el: HTMLElement, step: (by: 1 | -1) => void, starts?: (
   el.addEventListener ("touchend", (e) => {
     const f = from, t = e.changedTouches[0];
     from = null;
-    if (! f || e.touches.length || e.timeStamp - f.t > 800 || document.getSelection ()?.isCollapsed === false) return;
+    if (! f || e.defaultPrevented || e.touches.length || e.timeStamp - f.t > 800 || document.getSelection ()?.isCollapsed === false) return;
     const dx = t.clientX - f.x, dy = t.clientY - f.y;
     if (Math.abs (dx) >= 60 && Math.abs (dx) > 2 * Math.abs (dy)) step (dx < 0 ? 1 : -1);
   }, { passive: true });
